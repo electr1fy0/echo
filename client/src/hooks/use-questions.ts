@@ -33,15 +33,11 @@ export function useQuestions() {
   };
 
   const submitQuestion = async () => {
-    const resp = await fetch("http://localhost:8080/question/create", {
-      method: "GET",
+    await fetch("http://localhost:8080/question/create", {
+      method: "POST",
       body: JSON.stringify(question),
       headers: { "Content-Type": "application/json" },
     });
-
-    const data = await resp.json();
-    setQuestions(data);
-    console.log(data);
     fetchQuestions();
   };
 

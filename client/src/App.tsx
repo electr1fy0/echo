@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { useQuestions } from "./hooks/use-questions";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
+import { Button } from "./components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -13,27 +14,20 @@ import type { Question } from "./types";
 type AccordionProps = {
   questions: Question[];
 };
-export function AccordionDemo({ questions }: AccordionProps) {
-  console.log("qns: ", questions);
+
+function AccordionDemo({ questions }: AccordionProps) {
   return (
-    <Accordion
-      type="single"
-      collapsible
-      className="w-full"
-      defaultValue="item-1"
-    >
-      {questions.map((q, i) => {
-        return (
-          <AccordionItem value={`${i}`} id={`${i}`}>
-            <AccordionTrigger className="font-normal text-base text-neutral-700">
-              {q.title}
-            </AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance text-neutral-600 ">
-              <p>{q.content}</p>
-            </AccordionContent>
-          </AccordionItem>
-        );
-      })}
+    <Accordion type="single" collapsible className="w-full">
+      {questions.map((q, i) => (
+        <AccordionItem key={i} value={`${i}`}>
+          <AccordionTrigger className="font-normal text-base text-neutral-700">
+            {q.title}
+          </AccordionTrigger>
+          <AccordionContent className="text-neutral-600">
+            {q.content}
+          </AccordionContent>
+        </AccordionItem>
+      ))}
     </Accordion>
   );
 }
@@ -52,21 +46,31 @@ function App() {
   }, []);
 
   return (
-    <div className="flex justify-start items-center flex-col min-h-screen gap-4">
-      <div className="max-w-xl w-full">
-        <div className="w-full  mt-40 space-y-2">
-          <h1 className="text-neutral-700 ml-1 text-lg "> Ask a Query</h1>
-          <Input placeholder="Enter Title"></Input>
-          <Textarea
-            placeholder="Enter Description"
-            className="resize-none h-20"
-          ></Textarea>
-        </div>
-        <main className="w-full">
-          <AccordionDemo questions={questions}></AccordionDemo>
-        </main>
+    <div className="flex flex-col items-center min-h-screen">
+      <div className="max-w-xl w-full mt-40 space-y-4">
+        <h1 className="text-neutral-700 text-lg">Ask a Query</h1>
+
+        <Input
+          placeholder="Enter Title"
+          value={question.title}
+          onChange={(e) => updateQuestion({ title: e.target.value })}
+        />
+
+        <Textarea
+          placeholder="Enter Description"
+          className="resize-none h-20"
+          value={question.content}
+          onChange={(e) => updateQuestion({ content: e.target.value })}
+        />
+
+        <Button variant="outline" onClick={submitQuestion}>
+          Submit
+        </Button>
+
+        <AccordionDemo questions={questions} />
       </div>
     </div>
   );
 }
+
 export default App;
