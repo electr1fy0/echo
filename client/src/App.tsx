@@ -23,16 +23,12 @@ export function AccordionDemo({ questions }: AccordionProps) {
       defaultValue="item-1"
     >
       {questions.map((q, i) => {
-        console.log(i);
         return (
-          <AccordionItem value="item-1">
-            <AccordionTrigger>{q.title}</AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-4 text-balance">
-              <h3>
-                Our flagship product combines cutting-edge technology with sleek
-                design. Built with premium materials, it offers unparalleled
-                performance and reliability.
-              </h3>
+          <AccordionItem value={`${i}`} id={`${i}`}>
+            <AccordionTrigger className="font-normal text-base text-neutral-700">
+              {q.title}
+            </AccordionTrigger>
+            <AccordionContent className="flex flex-col gap-4 text-balance text-neutral-600 ">
               <p>{q.content}</p>
             </AccordionContent>
           </AccordionItem>
@@ -53,7 +49,7 @@ function App() {
 
   useEffect(() => {
     fetchQuestions();
-  }, [questions]);
+  }, []);
 
   return (
     <div className="flex justify-start items-center flex-col min-h-screen gap-4">

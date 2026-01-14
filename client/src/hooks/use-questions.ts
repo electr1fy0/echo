@@ -27,7 +27,8 @@ export function useQuestions() {
       `http://localhost:8080/question/list?${params.toString()}`,
     );
 
-    const data = resp.text();
+    const data = await resp.json();
+    setQuestions(data);
     console.log(data);
   };
 
