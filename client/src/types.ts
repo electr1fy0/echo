@@ -1,5 +1,10 @@
 export interface Question {
-  title: string;
+  uid: string;
   content: string;
-  time?: Date;
+  timeCreated?: Date;
+}
+export interface Answer {
+  content: string;
+  timeCreated?: Date;
+  questionUid: string;
 }
