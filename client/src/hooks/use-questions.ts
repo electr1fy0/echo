@@ -24,7 +24,7 @@ export function useQuestions() {
 
   const fetchQuestions = async () => {
     const resp = await fetch(
-      `http://localhost:8080/question/list?${params.toString()}`,
+      `http://localhost:8080/questions?${params.toString()}`,
     );
 
     const data = await resp.json();
@@ -33,7 +33,7 @@ export function useQuestions() {
   };
 
   const submitQuestion = async () => {
-    await fetch("http://localhost:8080/question/create", {
+    await fetch("http://localhost:8080/questions", {
       method: "POST",
       body: JSON.stringify(question),
       headers: { "Content-Type": "application/json" },

@@ -17,23 +17,27 @@ type AccordionProps = {
 };
 
 function AccordionList({ questions }: AccordionProps) {
-  const [reply, setReply] = useState({ content: "", questionUid: "" });
+  const [reply, setReply] = useState<Answer>({ content: "" });
   const [answers, setAnswers] = useState<Answer[]>([]);
 
   const getAnswers = async () => {
-    const resp = await fetch("http://localhost:8080/reply/list", {
+    const resp = await fetch("http://localhost:8080/replies", {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
     const data = await resp.json();
     setAnswers(data);
   };
-  const submitReply = async () => {
-    await fetch("http://localhost:8080/reply", {
-      method: "POST",
-      body: JSON.stringify(reply),
-      headers: { "Content-Type": "application/json" },
-    });
+  const submitReply = async (uid: string) => {
+    console.log(uid);
+    await fetch(
+      `http://localhost:8080/questions/${encodeURIComponent(uid)}/replies`,
+      {
+        method: "POST",
+        body: JSON.stringify(reply),
+        headers: { "Content-Type": "application/json" },
+      },
+    );
   };
   const updateReply = (fields: Partial<Answer>) => {
     setReply((prev) => {
@@ -61,14 +65,12 @@ function AccordionList({ questions }: AccordionProps) {
             <div className="relative mt-10 ">
               <Input
                 placeholder="Answer bro's query"
-                onChange={(e) =>
-                  updateReply({ content: e.target.value, questionUid: q.uid })
-                }
+                onChange={(e) => updateReply({ content: e.target.value })}
               />
               <Button
                 variant="outline"
                 className="absolute right-0 top-1/2 -translate-y-1/2  py-1 px-3 text-sm"
-                onClick={submitReply}
+                onClick={() => submitReply(q.uid)}
               >
                 Reply
               </Button>

@@ -6,5 +6,4 @@ export interface Question {
 export interface Answer {
   content: string;
   timeCreated?: Date;
-  questionUid: string;
 }

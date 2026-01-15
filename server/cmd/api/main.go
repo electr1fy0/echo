@@ -32,20 +32,23 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /auth/register", nil)
-	mux.HandleFunc("POST /auth/login", nil)
-	mux.HandleFunc("POST /auth/logout", nil)
-	mux.HandleFunc("GET /users/{id}", nil)
-	mux.HandleFunc("PATCH /users/{id}", nil)
-	mux.HandleFunc("POST /users/{id}/questions", nil)
-	mux.HandleFunc("POST /questions/{id}/vote", nil)
-	mux.HandleFunc("DELETE /questions/{id}/vote", nil)
-	mux.HandleFunc("POST /questions", nil)
-	mux.HandleFunc("GET /questions", nil)
-	mux.HandleFunc("GET /questions/{id}", nil)
-	mux.HandleFunc("DELETE /questions/{id}", nil)
-	mux.HandleFunc("POST /questions/{id}/replies", nil)
-	mux.HandleFunc("GET /questions/{id}/replies", nil)
+	mux.HandleFunc("POST /auth/register", h.Register)
+	mux.HandleFunc("POST /auth/login", h.Login)
+	mux.HandleFunc("POST /auth/logout", h.Logout)
+
+	mux.HandleFunc("GET /users/{uid}", h.GetUser)
+	mux.HandleFunc("PATCH /users/{uid}", h.UpdateUser)
+
+	mux.HandleFunc("/questions/{id}/vote", h.UpdateVote)
+
+	mux.HandleFunc("POST /questions", h.CreateQuestion)
+	mux.HandleFunc("GET /questions", h.ListQuestions)
+
+	mux.HandleFunc("GET /questions/{uid}", h.GetQuestion)
+	mux.HandleFunc("DELETE /questions/{uid}", h.DeleteQuestion)
+
+	mux.HandleFunc("POST /questions/{uid}/replies", h.CreateReply)
+	mux.HandleFunc("GET /questions/{uid}/replies", h.ListReplies)
 
 	srv := &http.Server{
 		Addr:    ":8080",

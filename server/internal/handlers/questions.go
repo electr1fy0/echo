@@ -27,7 +27,21 @@ type Answer struct {
 	QuestionUID uuid.UUID   `json:"questionUid"`
 }
 
-func (h *APIHandler) createHandler(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) UpdateVote(w http.ResponseWriter, r *http.Request) {
+
+}
+func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func (h *APIHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
+
+}
+func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	defer r.Body.Close()
@@ -42,23 +56,30 @@ func (h *APIHandler) createHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("all good"))
 }
 
-func (h *APIHandler) replyHandler(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	var ans Answer
 	if err := json.NewDecoder(r.Body).Decode(&ans); err != nil {
 		http.Error(w, "failed to decode reply", http.StatusBadRequest)
 		return
 	}
 
+	uid := r.PathValue("uid")
+	var err error
+	ans.QuestionUID, err = uuid.Parse(uid)
+	if err != nil {
+		http.Error(w, "invalid uid", http.StatusBadRequest)
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	_, err := h.DB.Exec(ctx, "insert into answers (content, question_uid) values ($1, $2)", ans.Content, ans.QuestionUID)
+	_, err = h.DB.Exec(ctx, "insert into answers (content, question_uid) values ($1, $2)", ans.Content, ans.QuestionUID)
 	if err != nil {
 		http.Error(w, "failed to save reply to db", http.StatusInternalServerError)
 		return
 	}
 }
 
-func (h *APIHandler) listHandler(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	q := r.URL.Query()
