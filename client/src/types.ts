@@ -4,6 +4,7 @@ export interface Question {
   timeCreated?: Date;
 }
 export interface Answer {
+  uid: string;
   content: string;
   timeCreated?: Date;
 }

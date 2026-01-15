@@ -2,87 +2,120 @@ import { useEffect, useState } from "react";
 import { useQuestions } from "./hooks/use-questions";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "./components/ui/button";
-
+import { Input } from "./components/ui/input";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-
 import type { Question, Answer } from "./types";
-import { Input } from "./components/ui/input";
-type AccordionProps = {
-  questions: Question[];
-};
 
-function AccordionList({ questions }: AccordionProps) {
-  const [reply, setReply] = useState<Answer>({ content: "" });
-  const [answers, setAnswers] = useState<Answer[]>([]);
+function QuestionItem({
+  q,
+  answers,
+  onOpen,
+}: {
+  q: Question;
+  answers: Answer[];
+  onOpen: (id: string) => void;
+}) {
+  const [content, setContent] = useState("");
 
-  const getAnswers = async () => {
-    const resp = await fetch("http://localhost:8080/replies", {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    const data = await resp.json();
-    setAnswers(data);
-  };
-  const submitReply = async (uid: string) => {
-    console.log(uid);
+  const submitReply = async () => {
+    if (!content.trim()) return;
     await fetch(
-      `http://localhost:8080/questions/${encodeURIComponent(uid)}/replies`,
+      `http://localhost:8080/questions/${encodeURIComponent(q.uid)}/replies`,
       {
         method: "POST",
-        body: JSON.stringify(reply),
+        body: JSON.stringify({ content }),
         headers: { "Content-Type": "application/json" },
       },
     );
+    setContent("");
+    onOpen(q.uid);
   };
-  const updateReply = (fields: Partial<Answer>) => {
-    setReply((prev) => {
-      return { ...prev, ...fields };
-    });
+
+  return (
+    <AccordionItem key={q.uid} value={q.uid}>
+      <AccordionTrigger className="font-normal text-base text-neutral-700">
+        {q.content}
+      </AccordionTrigger>
+      <AccordionContent className="text-neutral-600 relative min-h-24">
+        <div className="space-y-2">
+          {answers ? (
+            answers.map((a) => (
+              <div
+                key={a.uid}
+                className="border-b ml-0.5 border-neutral-100 pb-1"
+              >
+                {a.content}
+              </div>
+            ))
+          ) : (
+            <div className=" text-neutral-500 ml-1.5 ">No replies</div>
+          )}
+        </div>
+        <div className="relative mt-10 flex gap-2">
+          <Input
+            placeholder="Answer bro's query"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+          <Button variant="outline" onClick={submitReply}>
+            Reply
+          </Button>
+        </div>
+      </AccordionContent>
+    </AccordionItem>
+  );
+}
+
+function AccordionList({ questions }: { questions: Question[] }) {
+  const [answersByQid, setAnswersByQid] = useState<Record<string, Answer[]>>(
+    {},
+  );
+  const [openQids, setOpenQids] = useState<string[]>([]);
+
+  const getAnswers = async (qid: string) => {
+    const resp = await fetch(
+      `http://localhost:8080/questions/${encodeURIComponent(qid)}/replies`,
+      {
+        method: "GET",
+      },
+    );
+    const data = await resp.json();
+    setAnswersByQid((prev) => ({ ...prev, [qid]: data }));
   };
+
   if (questions.length < 1)
     return (
-      <div className="text-neutral-500 text-center">
-        Be the first to ask a query.
-      </div>
+      <div className="text-neutral-500 text-center">Be the first to ask.</div>
     );
+
   return (
-    <Accordion className="w-full">
-      {questions.map((q, i) => (
-        <AccordionItem key={i} value={`${i}`}>
-          <AccordionTrigger
-            className="font-normal text-base text-neutral-700"
-            // onClick={}
-          >
-            {q.content}
-          </AccordionTrigger>
-          <AccordionContent className="text-neutral-600 relative min-h-24">
-            <div>{q.content}</div>
-            <div className="relative mt-10 ">
-              <Input
-                placeholder="Answer bro's query"
-                onChange={(e) => updateReply({ content: e.target.value })}
-              />
-              <Button
-                variant="outline"
-                className="absolute right-0 top-1/2 -translate-y-1/2  py-1 px-3 text-sm"
-                onClick={() => submitReply(q.uid)}
-              >
-                Reply
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+    <Accordion
+      className="w-full"
+      value={openQids}
+      onValueChange={(next) => {
+        setOpenQids(next);
+        const newlyOpened = next.find((id) => !openQids.includes(id));
+        if (newlyOpened) getAnswers(newlyOpened);
+      }}
+    >
+      {questions.map((q) => (
+        <QuestionItem
+          key={q.uid}
+          q={q}
+          answers={answersByQid[q.uid]}
+          onOpen={getAnswers}
+        />
       ))}
     </Accordion>
   );
 }
 
-function App() {
+export default function App() {
   const {
     fetchQuestions,
     submitQuestion,
@@ -107,16 +140,11 @@ function App() {
           value={question.content}
           onChange={(e) => updateQuestion({ content: e.target.value })}
         />
-
-        <Button variant="default" onClick={submitQuestion}>
-          Ask Query
-        </Button>
-        <div className="my-20">
+        <Button onClick={submitQuestion}>Ask Query</Button>
+        <div className="mt-20">
           <AccordionList questions={questions} />
         </div>
       </div>
     </div>
   );
 }
-
-export default App;

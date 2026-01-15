@@ -3,7 +3,6 @@ import type { Question } from "@/types";
 
 export function useQuestions() {
   const [question, setQuestion] = useState<Question>({
-    title: "",
     content: "",
   });
 

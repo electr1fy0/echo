@@ -21,17 +21,39 @@ type Question struct {
 }
 
 type Answer struct {
-	UID         uuid.UUID   `json:"uid"`
-	Content     string      `json:"content"`
-	TimeCreated time.Ticker `json:"timeCreated"`
-	QuestionUID uuid.UUID   `json:"questionUid"`
+	UID         uuid.UUID `json:"uid"`
+	Content     string    `json:"content"`
+	TimeCreated time.Time `json:"timeCreated"`
+	QuestionUID uuid.UUID `json:"questionUid"`
 }
 
 func (h *APIHandler) UpdateVote(w http.ResponseWriter, r *http.Request) {
 
 }
 func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+	defer r.Body.Close()
+	var answer []Answer
+	uid := r.PathValue("uid")
 
+	rows, err := h.DB.Query(ctx, "select uid, content, time_created from answers where question_uid = $1", uid)
+	defer rows.Close()
+	if err != nil {
+		http.Error(w, "failed to query replies: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for rows.Next() {
+		var ans Answer
+		if err := rows.Scan(&ans.UID, &ans.Content, &ans.TimeCreated); err != nil {
+			http.Error(w, "failed to read rows of replies: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+		answer = append(answer, ans)
+	}
+
+	json.NewEncoder(w).Encode(answer)
 }
 
 func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
