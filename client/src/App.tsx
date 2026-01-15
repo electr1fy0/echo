@@ -52,7 +52,7 @@ function AccordionList({ questions }: AccordionProps) {
         <AccordionItem key={i} value={`${i}`}>
           <AccordionTrigger
             className="font-normal text-base text-neutral-700"
-            onClick={}
+            // onClick={}
           >
             {q.content}
           </AccordionTrigger>
