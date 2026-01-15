@@ -50,11 +50,16 @@ func main() {
 	mux.HandleFunc("POST /questions/{uid}/replies", h.CreateReply)
 	mux.HandleFunc("GET /questions/{uid}/replies", h.ListReplies)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: middleware.CORS(mux),
 	}
 
-	fmt.Println("starting server on :8080")
+	fmt.Println("starting server on :" + port)
 	log.Fatal(srv.ListenAndServe())
 }

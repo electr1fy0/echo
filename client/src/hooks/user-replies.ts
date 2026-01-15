@@ -1,5 +1,6 @@
 import type { Answer } from "@/types";
 import { useState } from "react";
+import { API_URL } from "@/config";
 
 export function useReplies() {
   const [replyContent, setReplyContent] = useState("");
@@ -12,7 +13,7 @@ export function useReplies() {
     const reply: Answer = { content: replyContent };
     if (!replyContent.trim()) return;
     const resp = await fetch(
-      `http://localhost:8080/questions/${encodeURIComponent(qid)}/replies`,
+      `${API_URL}/questions/${encodeURIComponent(qid)}/replies`,
       {
         method: "POST",
         body: JSON.stringify(reply),
@@ -24,7 +25,7 @@ export function useReplies() {
   };
   const getReplies = async (qid: string) => {
     const resp = await fetch(
-      `http://localhost:8080/questions/${encodeURIComponent(qid)}/replies`,
+      `${API_URL}/questions/${encodeURIComponent(qid)}/replies`,
       {
         method: "GET",
       },

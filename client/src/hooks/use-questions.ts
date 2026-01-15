@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Question } from "@/types";
+import { API_URL } from "@/config";
 
 export function useQuestions() {
   const [question, setQuestion] = useState<Question>({
@@ -23,7 +24,7 @@ export function useQuestions() {
 
   const fetchQuestions = async () => {
     const resp = await fetch(
-      `http://localhost:8080/questions?${params.toString()}`,
+      `${API_URL}/questions?${params.toString()}`,
     );
 
     const data = await resp.json();
@@ -32,7 +33,7 @@ export function useQuestions() {
   };
 
   const submitQuestion = async () => {
-    await fetch("http://localhost:8080/questions", {
+    await fetch(`${API_URL}/questions`, {
       method: "POST",
       body: JSON.stringify(question),
       headers: { "Content-Type": "application/json" },

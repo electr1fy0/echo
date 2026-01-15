@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuestions } from "./hooks/use-questions";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "./components/ui/button";
@@ -9,8 +9,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
 import type { Question, Answer } from "./types";
 import { useReplies } from "./hooks/user-replies";
+import { API_URL } from "@/config";
 
 type QuestionItemProps = {
   question: Question;
@@ -79,7 +81,7 @@ function AccordionList({ questions }: { questions: Question[] }) {
 
   const getAnswers = async (qid: string) => {
     const resp = await fetch(
-      `http://localhost:8080/questions/${encodeURIComponent(qid)}/replies`,
+      `${API_URL}/questions/${encodeURIComponent(qid)}/replies`,
     );
     const data = await resp.json();
     setRepliesByQid((prev) => ({ ...prev, [qid]: data }));
