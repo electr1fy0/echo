@@ -9,22 +9,27 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var db *pgxpool.Pool
+var (
+	db  *pgxpool.Pool
+	err error
+)
 
 type Question struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
-
+	UID         uuid.UUID `json:"uid"`
+	Content     string    `json:"content"`
 	TimeCreated time.Time `json:"timeCreated"`
 }
 
-var (
-	conn, err = pgx.Connect(context.Background(), os.Getenv("POSTGRES_CONN_STR"))
-)
+type Answer struct {
+	UID         uuid.UUID   `json:"uid"`
+	Content     string      `json:"content"`
+	TimeCreated time.Ticker `json:"timeCreated"`
+	QuestionUID uuid.UUID   `json:"questionUid"`
+}
 
 func createHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -33,7 +38,7 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	var question Question
 	json.NewDecoder(r.Body).Decode(&question)
 
-	_, err := db.Exec(ctx, "insert into questions (title, content) values ($1, $2)", question.Title, question.Content)
+	_, err := db.Exec(ctx, "insert into questions (content) values ($1)", question.Content)
 	if err != nil {
 		http.Error(w, "failed to insert data: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -56,6 +61,22 @@ func CORSMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func replyHandler(w http.ResponseWriter, r *http.Request) {
+	var ans Answer
+	if err := json.NewDecoder(r.Body).Decode(&ans); err != nil {
+		http.Error(w, "failed to decode reply", http.StatusBadRequest)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	_, err := db.Exec(ctx, "insert into answers (content, question_uid) values ($1, $2)", ans.Content, ans.QuestionUID)
+	if err != nil {
+		http.Error(w, "failed to save reply to db", http.StatusInternalServerError)
+		return
+	}
+}
+
 func listHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -63,13 +84,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	limit := q.Get("limit")
 	offset := q.Get("offset")
 
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("failed to connect to db"))
-		return
-	}
-
-	rows, err := db.Query(ctx, "select title, content, time_created from questions limit $1 offset $2", limit, offset)
+	rows, err := db.Query(ctx, "select uid, content, time_created from questions limit $1 offset $2", limit, offset)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -80,7 +95,7 @@ func listHandler(w http.ResponseWriter, r *http.Request) {
 	questions := make([]Question, 0)
 	for rows.Next() {
 		var q Question
-		err := rows.Scan(&q.Title, &q.Content, &q.TimeCreated)
+		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated)
 		if err != nil {
 			fmt.Println("failed to scan row", err)
 			return
@@ -104,6 +119,7 @@ func main() {
 
 	http.HandleFunc("/question/create", CORSMiddleware(createHandler))
 	http.HandleFunc("/question/list", CORSMiddleware(listHandler))
+	http.HandleFunc("/reply", CORSMiddleware(replyHandler))
 
 	fmt.Println("starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
