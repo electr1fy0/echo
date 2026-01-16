@@ -1,5 +1,10 @@
-import { useEffect } from "react";
-import { useQuestions } from "./hooks/use-questions";
+import { useState } from "react";
+import {
+  useQuestionDraft,
+  useQuestionsQuery,
+  useCreateQuestion,
+} from "./hooks/use-questions";
+import { useRepliesQuery, useCreateReply } from "./hooks/use-replies";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
@@ -10,29 +15,31 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import type { Question, Answer } from "./types";
-import { useReplies } from "./hooks/user-replies";
-import { API_URL } from "@/config";
+import type { Question } from "./types";
 
 type QuestionItemProps = {
   question: Question;
-  answers: Answer[];
-  submitReply: (qid: string) => Promise<void>;
-  getAnswers: (qid: string) => Promise<void>;
   replyContent: string;
   setReplyContent: (v: string) => void;
 };
 
 function QuestionItem({
   question,
-  answers,
-  submitReply,
-  getAnswers,
   replyContent,
   setReplyContent,
 }: QuestionItemProps) {
+  const { data: answers = [] } = useRepliesQuery(question.uid);
+  const { mutate: submitReply, isPending } = useCreateReply(question.uid ?? "");
+
+  const handleSubmit = () => {
+    if (!replyContent.trim()) return;
+    submitReply(replyContent, {
+      onSuccess: () => setReplyContent(""),
+    });
+  };
+
   return (
-    <AccordionItem value={question.uid}>
+    <AccordionItem value={question.uid ?? ""}>
       <AccordionTrigger className="font-normal">
         {question.content}
       </AccordionTrigger>
@@ -54,13 +61,7 @@ function QuestionItem({
             onChange={(e) => setReplyContent(e.target.value)}
           />
 
-          <Button
-            variant="outline"
-            onClick={async () => {
-              await submitReply(question.uid ?? "");
-              await getAnswers(question.uid ?? "");
-            }}
-          >
+          <Button variant="outline" onClick={handleSubmit} disabled={isPending}>
             Reply
           </Button>
         </div>
@@ -68,41 +69,16 @@ function QuestionItem({
     </AccordionItem>
   );
 }
-function AccordionList({ questions }: { questions: Question[] }) {
-  const {
-    openQids,
-    setOpenQids,
-    repliesByQid,
-    setRepliesByQid,
-    submitReply,
-    replyContent,
-    setReplyContent,
-  } = useReplies();
 
-  const getAnswers = async (qid: string) => {
-    const resp = await fetch(
-      `${API_URL}/questions/${encodeURIComponent(qid)}/replies`,
-    );
-    const data = await resp.json();
-    setRepliesByQid((prev) => ({ ...prev, [qid]: data }));
-  };
+function AccordionList({ questions }: { questions: Question[] }) {
+  const [replyContent, setReplyContent] = useState("");
 
   return (
-    <Accordion
-      value={openQids}
-      onValueChange={(next) => {
-        const newlyOpened = next.find((q) => !openQids.includes(q));
-        if (newlyOpened) getAnswers(newlyOpened);
-        setOpenQids(next);
-      }}
-    >
+    <Accordion>
       {questions.map((q) => (
         <QuestionItem
           key={q.uid}
           question={q}
-          answers={repliesByQid[q.uid ?? ""]}
-          submitReply={submitReply}
-          getAnswers={getAnswers}
           replyContent={replyContent}
           setReplyContent={setReplyContent}
         />
@@ -112,17 +88,15 @@ function AccordionList({ questions }: { questions: Question[] }) {
 }
 
 export default function App() {
-  const {
-    fetchQuestions,
-    submitQuestion,
-    updateQuestion,
-    question,
-    questions,
-  } = useQuestions();
+  const { data: questions = [], isLoading, error } = useQuestionsQuery(0, 10);
+  const { mutate: submitQuestion, isPending } = useCreateQuestion();
+  const { question, updateQuestion, setQuestion } = useQuestionDraft();
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
+  const handleSubmit = () => {
+    submitQuestion(question, {
+      onSuccess: () => setQuestion({ content: "" }),
+    });
+  };
 
   return (
     <div className="flex flex-col items-center min-h-screen">
@@ -136,11 +110,21 @@ export default function App() {
           value={question.content}
           onChange={(e) => updateQuestion({ content: e.target.value })}
         />
-        <Button className="font-normal" onClick={submitQuestion}>
+        <Button
+          className="font-normal"
+          onClick={handleSubmit}
+          disabled={isPending}
+        >
           Ask Query
         </Button>
         <div className="mt-20">
-          <AccordionList questions={questions} />
+          {isLoading ? (
+            <p className="text-neutral-500 text-sm">Loading questions...</p>
+          ) : error ? (
+            <p className="text-red-500 text-sm">Failed to load questions</p>
+          ) : (
+            <AccordionList questions={questions} />
+          )}
         </div>
       </div>
     </div>
