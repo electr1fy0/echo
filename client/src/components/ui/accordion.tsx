@@ -43,7 +43,7 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <HugeiconsIcon
+        {/*<HugeiconsIcon
           icon={ArrowDown01Icon}
           strokeWidth={2}
           data-slot="accordion-trigger-icon"
@@ -54,7 +54,7 @@ function AccordionTrigger({
           strokeWidth={2}
           data-slot="accordion-trigger-icon"
           className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline"
-        />
+        />*/}
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   );

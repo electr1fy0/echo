@@ -48,10 +48,31 @@ function QuestionItem({
   };
 
   return (
-    <AccordionItem value={question.uid ?? ""}>
-      <AccordionTrigger className="font-normal">
-        {question.content}
-      </AccordionTrigger>
+    <AccordionItem value={question.uid ?? ""} className="w-full pr-2">
+      <div className="flex items-center justify-between">
+        <AccordionTrigger className="font-normal ">
+          <div>{question.content}</div>
+        </AccordionTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <Button
+              variant="ghost"
+              size="xs"
+              className="dark:text-neutral-300 pb-2 "
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log("more");
+              }}
+            >
+              ...
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <AccordionContent>
         {answers?.map((a) => (
@@ -83,7 +104,7 @@ function AccordionList({ questions }: { questions: Question[] }) {
   const [replyContent, setReplyContent] = useState("");
 
   return (
-    <Accordion>
+    <Accordion className="dark:bg-[#1D1D1D]">
       {questions.map((q) => (
         <QuestionItem
           key={q.uid}
@@ -101,7 +122,7 @@ export function ModeToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger>
         <Button variant="ghost" size="icon">
           <HugeiconsIcon
             icon={Sun02Icon}
