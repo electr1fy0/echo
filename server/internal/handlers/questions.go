@@ -38,11 +38,11 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	uid := r.PathValue("uid")
 
 	rows, err := h.DB.Query(ctx, "select uid, content, time_created from answers where question_uid = $1", uid)
-	defer rows.Close()
 	if err != nil {
 		http.Error(w, "failed to query replies: "+err.Error(), http.StatusBadRequest)
 		return
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var ans Answer
@@ -61,6 +61,15 @@ func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
+	uid := r.PathValue("uid")
+
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	_, err := h.DB.Exec(ctx, "delete from questions where uid =  $1", uid)
+	if err != nil {
+		http.Error(w, "failed to save reply to db", http.StatusInternalServerError)
+		return
+	}
 
 }
 func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {

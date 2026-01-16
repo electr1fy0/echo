@@ -3,6 +3,7 @@ import {
   useQuestionDraft,
   useQuestionsQuery,
   useCreateQuestion,
+  useDeleteQuestion,
 } from "./hooks/use-questions";
 import { useRepliesQuery, useCreateReply } from "./hooks/use-replies";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,12 +31,14 @@ type QuestionItemProps = {
   question: Question;
   replyContent: string;
   setReplyContent: (v: string) => void;
+  onDelete: (id: string) => void;
 };
 
 function QuestionItem({
   question,
   replyContent,
   setReplyContent,
+  onDelete,
 }: QuestionItemProps) {
   const { data: answers = [] } = useRepliesQuery(question.uid);
   const { mutate: submitReply, isPending } = useCreateReply(question.uid ?? "");
@@ -69,7 +72,15 @@ function QuestionItem({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(question.uid ?? "");
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -100,7 +111,13 @@ function QuestionItem({
   );
 }
 
-function AccordionList({ questions }: { questions: Question[] }) {
+function AccordionList({
+  questions,
+  onDelete,
+}: {
+  questions: Question[];
+  onDelete: (id: string) => void;
+}) {
   const [replyContent, setReplyContent] = useState("");
 
   return (
@@ -111,6 +128,7 @@ function AccordionList({ questions }: { questions: Question[] }) {
           question={q}
           replyContent={replyContent}
           setReplyContent={setReplyContent}
+          onDelete={onDelete}
         />
       ))}
     </Accordion>
@@ -152,8 +170,9 @@ export function ModeToggle() {
 
 export default function App() {
   const { data: questions = [], isLoading, error } = useQuestionsQuery(0, 10);
-  const { mutate: submitQuestion, isPending } = useCreateQuestion();
+  const { mutate: submitQuestion, isCreatePending } = useCreateQuestion();
   const { question, updateQuestion, setQuestion } = useQuestionDraft();
+  const { mutate: deleteQuestion, isDelPending } = useDeleteQuestion();
 
   const handleSubmit = () => {
     submitQuestion(question, {
@@ -182,7 +201,7 @@ export default function App() {
         <Button
           className="font-normal"
           onClick={handleSubmit}
-          disabled={isPending}
+          disabled={isCreatePending}
         >
           Ask Query
         </Button>
@@ -192,7 +211,10 @@ export default function App() {
           ) : error ? (
             <p className="text-red-500 text-sm">Failed to load questions</p>
           ) : (
-            <AccordionList questions={questions} />
+            <AccordionList
+              questions={questions}
+              onDelete={(id) => deleteQuestion(id)}
+            />
           )}
         </div>
       </div>

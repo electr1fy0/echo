@@ -21,3 +21,13 @@ export async function createQuestion(question: Partial<Question>) {
 
   if (!res.ok) throw new Error("Failed to create question");
 }
+
+export async function deleteQuestion(questionId: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}`,
+    {
+      method: "DELETE",
+    },
+  );
+  if (!res.ok) throw new Error("Failed to delete question");
+}

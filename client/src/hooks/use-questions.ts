@@ -1,7 +1,11 @@
 import { useState } from "react";
 import type { Question } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchQuestions, createQuestion } from "@/api/questions";
+import {
+  fetchQuestions,
+  createQuestion,
+  deleteQuestion,
+} from "@/api/questions";
 
 export function useQuestionsQuery(offset = 0, limit = 10) {
   return useQuery({
@@ -22,6 +26,18 @@ export function useCreateQuestion() {
   });
 }
 
+export function useDeleteQuestion() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (questionId: string) => deleteQuestion(questionId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
+  });
+}
+
 export function useQuestionDraft() {
   const [question, setQuestion] = useState<Question>({ content: "" });
 
@@ -29,5 +45,5 @@ export function useQuestionDraft() {
     setQuestion((prev) => ({ ...prev, ...fields }));
   };
 
-  return { question, updateQuestion, setQuestion };
+  return { question, updateQuestion, setQuestion, useDeleteQuestion };
 }
