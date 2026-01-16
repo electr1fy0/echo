@@ -14,8 +14,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Sun02Icon, MoonIcon } from "@hugeicons/core-free-icons";
 
 import type { Question } from "./types";
+import { useTheme } from "./components/theme-provider";
 
 type QuestionItemProps = {
   question: Question;
@@ -48,7 +57,7 @@ function QuestionItem({
         {answers?.map((a) => (
           <div
             key={a.uid}
-            className="border-b text-neutral-600 py-2 text-sm border-neutral-200"
+            className="border-b text-neutral-600 dark:text-neutral-400 py-2 text-sm border-neutral-200 dark:border-neutral-800"
           >
             {a.content}
           </div>
@@ -87,6 +96,39 @@ function AccordionList({ questions }: { questions: Question[] }) {
   );
 }
 
+export function ModeToggle() {
+  const { setTheme } = useTheme();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <HugeiconsIcon
+            icon={Sun02Icon}
+            className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
+          />
+          <HugeiconsIcon
+            icon={MoonIcon}
+            className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
+          />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function App() {
   const { data: questions = [], isLoading, error } = useQuestionsQuery(0, 10);
   const { mutate: submitQuestion, isPending } = useCreateQuestion();
@@ -100,10 +142,16 @@ export default function App() {
 
   return (
     <div className="flex flex-col items-center min-h-screen">
-      <div className="max-w-xl w-full mt-40 space-y-4 mb-40 ">
-        <h1 className="text-neutral-800 text-lg py-0 my-0">Echo</h1>
-        <h2 className="text-neutral-600 text-sm">An Open QnA platform</h2>
-
+      <div className="max-w-xl w-full mt-40 space-y-4 mb-40 relative">
+        <div className="absolute top-0 right-0">
+          <ModeToggle />
+        </div>
+        <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0">
+          Echo
+        </h1>
+        <h2 className="text-neutral-600 dark:text-neutral-400 text-sm">
+          An Open QnA platform
+        </h2>
         <Textarea
           placeholder="Why do cats always land on their feet?"
           className="resize-none h-20"
