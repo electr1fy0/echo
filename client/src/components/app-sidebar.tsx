@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { useNavigate, useLocation } from "react-router";
 import {
   Home01Icon,
   Search01Icon,
   Add01Icon,
   FavouriteIcon,
   User02Icon,
+  Logout01Icon,
 } from "@hugeicons/core-free-icons";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useQuestionDraft } from "@/hooks/use-questions";
+import { useSignout } from "@/hooks/use-auth";
 
 type NavItem = {
   icon: typeof Home01Icon;
@@ -78,13 +81,12 @@ function CreateQueryDialog({
   );
 }
 
-import { useNavigate, useLocation } from "react-router";
-
 export function AppSidebar() {
   const isMobile = useIsMobile();
   const [createOpen, setCreateOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { mutate: handleLogout } = useSignout();
 
   const navItems: NavItem[] = [
     {
@@ -147,6 +149,16 @@ export function AppSidebar() {
                 )}
               </button>
             ))}
+            <button
+              className="flex items-center justify-center p-2 rounded-xl transition-colors text-neutral-500 hover:text-red-500 dark:hover:text-red-400"
+              aria-label="Logout"
+            >
+              <HugeiconsIcon
+                icon={Logout01Icon}
+                className="size-7"
+                strokeWidth={1.5}
+              />
+            </button>
           </div>
         </nav>
         <CreateQueryDialog open={createOpen} onOpenChange={setCreateOpen} />
@@ -156,7 +168,8 @@ export function AppSidebar() {
 
   return (
     <>
-      <aside className="sticky top-0 h-screen flex flex-col items-center justify-center py-6 px-3 border-r border-neutral-200 dark:border-neutral-800">
+      <aside className="sticky top-0 h-screen flex flex-col items-center justify-between py-6 px-3 border-r border-neutral-200 dark:border-neutral-800">
+        <div />
         <nav className="flex flex-col items-center gap-5">
           {navItems.map((item) => (
             <button
@@ -181,6 +194,19 @@ export function AppSidebar() {
             </button>
           ))}
         </nav>
+        <button
+          className="flex items-center justify-center size-14 rounded-xl transition-colors text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+          aria-label="Logout"
+          onClick={() => {
+            handleLogout();
+          }}
+        >
+          <HugeiconsIcon
+            icon={Logout01Icon}
+            className="size-6"
+            strokeWidth={1.5}
+          />
+        </button>
       </aside>
       <CreateQueryDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>

@@ -97,8 +97,23 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *APIHandler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) Signout(w http.ResponseWriter, r *http.Request) {
 
+	cookie, err := r.Cookie("jwt-auth")
+	if err != nil {
+		http.Error(w, "failed to log out"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "jwt-auth",
+		Value:    cookie.Value,
+		Expires:  time.Now(),
+		MaxAge:   -1,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   false,
+		Path:     "/",
+	})
 }
 
 func (h *APIHandler) Verify(w http.ResponseWriter, r *http.Request) {

@@ -34,7 +34,7 @@ func main() {
 
 	mux.HandleFunc("POST /auth/signup", h.Signup)
 	mux.HandleFunc("POST /auth/signin", h.Signin)
-	mux.HandleFunc("POST /auth/signout", h.Logout)
+	mux.HandleFunc("GET /auth/signout", middleware.Auth(h.Signout))
 	mux.HandleFunc("GET /auth/verify", middleware.Auth(h.Verify))
 
 	mux.HandleFunc("GET /users/{uid}", h.GetUser)

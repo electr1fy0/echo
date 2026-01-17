@@ -30,7 +30,20 @@ export async function signup(payload: AuthPayload) {
   });
 
   if (!res.ok) {
-    throw new Error("singup failed");
+    throw new Error("signup failed");
+  }
+  console.log(res);
+  return res.text();
+}
+
+export async function signout() {
+  const res = await fetch(`${API_URL}/auth/signout`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    throw new Error("signout failed");
   }
   console.log(res);
   return res.text();
