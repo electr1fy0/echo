@@ -103,7 +103,13 @@ export function AppSidebar() {
       hasBackground: true,
       onClick: () => setCreateOpen(true),
     },
-    { icon: FavouriteIcon, label: "Notifications", hasBadge: true },
+    {
+      icon: FavouriteIcon,
+      label: "Notifications",
+      hasBadge: true,
+      active: location.pathname === "/notifications",
+      onClick: () => navigate("/notifications"),
+    },
     {
       icon: User02Icon,
       label: "Profile",

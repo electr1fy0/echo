@@ -1,8 +1,19 @@
 package handlers
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+)
 
-func (h *APIHandler) Register(w http.ResponseWriter, r *http.Request) {
+type User struct {
+	Username string
+	Email    string
+	Password string
+}
+
+func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
+	var user User
+	json.NewDecoder(r.Body).Decode(&user)
 
 }
 

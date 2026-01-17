@@ -32,7 +32,7 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /auth/register", h.Register)
+	mux.HandleFunc("POST /auth/signup", h.Signup)
 	mux.HandleFunc("POST /auth/login", h.Login)
 	mux.HandleFunc("POST /auth/logout", h.Logout)
 

@@ -4,8 +4,11 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Home } from "@/pages/home";
 import { Profile } from "@/pages/profile";
 import { Search } from "@/pages/search";
+import { Notifications } from "@/pages/notifications";
+import { Auth } from "@/pages/auth";
+import { Landing } from "@/pages/landing";
 
-function Layout() {
+function AuthenticatedLayout() {
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
@@ -18,6 +21,7 @@ function Layout() {
           <Route path="/home" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </main>
     </div>
@@ -27,7 +31,11 @@ function Layout() {
 export default function App() {
   return (
     <BrowserRouter>
-      <Layout />
+      <Routes>
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/*" element={<AuthenticatedLayout />} />
+      </Routes>
     </BrowserRouter>
   );
 }
