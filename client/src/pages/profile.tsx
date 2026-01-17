@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { QuestionList } from "@/components/question-list";
+import { QuestionList } from "@/components/questions/question-list";
 import { useQuestionsQuery, useDeleteQuestion } from "@/hooks/use-questions";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, PencilEdit02Icon } from "@hugeicons/core-free-icons";

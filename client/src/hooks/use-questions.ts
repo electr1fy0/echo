@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Question } from "@/types";
+import type { QuestionDraft } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchQuestions,
@@ -38,12 +38,16 @@ export function useDeleteQuestion() {
   });
 }
 
-export function useQuestionDraft() {
-  const [question, setQuestion] = useState<Question>({ content: "" });
+const EMPTY_DRAFT: QuestionDraft = { content: "" };
 
-  const updateQuestion = (fields: Partial<Question>) => {
-    setQuestion((prev) => ({ ...prev, ...fields }));
+export function useQuestionDraft() {
+  const [draft, setDraft] = useState<QuestionDraft>(EMPTY_DRAFT);
+
+  const updateDraft = (fields: Partial<QuestionDraft>) => {
+    setDraft((prev) => ({ ...prev, ...fields }));
   };
 
-  return { question, updateQuestion, setQuestion, useDeleteQuestion };
+  const resetDraft = () => setDraft(EMPTY_DRAFT);
+
+  return { draft, updateDraft, resetDraft };
 }

@@ -30,31 +30,6 @@ type Answer struct {
 func (h *APIHandler) UpdateVote(w http.ResponseWriter, r *http.Request) {
 
 }
-func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	defer r.Body.Close()
-	var answer []Answer
-	uid := r.PathValue("uid")
-
-	rows, err := h.DB.Query(ctx, "select uid, content, time_created from answers where question_uid = $1", uid)
-	if err != nil {
-		http.Error(w, "failed to query replies: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var ans Answer
-		if err := rows.Scan(&ans.UID, &ans.Content, &ans.TimeCreated); err != nil {
-			http.Error(w, "failed to read rows of replies: "+err.Error(), http.StatusBadRequest)
-			return
-		}
-		answer = append(answer, ans)
-	}
-
-	json.NewEncoder(w).Encode(answer)
-}
 
 func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 
@@ -85,29 +60,6 @@ func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write([]byte("all good"))
-}
-
-func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
-	var ans Answer
-	if err := json.NewDecoder(r.Body).Decode(&ans); err != nil {
-		http.Error(w, "failed to decode reply", http.StatusBadRequest)
-		return
-	}
-
-	uid := r.PathValue("uid")
-	var err error
-	ans.QuestionUID, err = uuid.Parse(uid)
-	if err != nil {
-		http.Error(w, "invalid uid", http.StatusBadRequest)
-		return
-	}
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-	_, err = h.DB.Exec(ctx, "insert into answers (content, question_uid) values ($1, $2)", ans.Content, ans.QuestionUID)
-	if err != nil {
-		http.Error(w, "failed to save reply to db", http.StatusInternalServerError)
-		return
-	}
 }
 
 func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {

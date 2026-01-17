@@ -1,19 +1,19 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { QuestionList } from "@/components/question-list";
+import { QuestionList } from "@/components/questions/question-list";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Question } from "@/types";
 
 const MOCK_QUESTIONS: Question[] = [
-    { uid: "1", content: "Why do cats always land on their feet?", timeCreated: new Date() },
-    { uid: "2", content: "What is the best way to learn React?", timeCreated: new Date() },
-    { uid: "3", content: "How does the event loop work in JavaScript?", timeCreated: new Date() },
-    { uid: "4", content: "What are the differences between SQL and NoSQL databases?", timeCreated: new Date() },
-    { uid: "5", content: "Can someone explain closure in simple terms?", timeCreated: new Date() },
-    { uid: "6", content: "Best practices for accessible web design?", timeCreated: new Date() },
-    { uid: "7", content: "Why is TypeScript becoming so popular?", timeCreated: new Date() },
-    { uid: "8", content: "How to deploy a Node.js app to production?", timeCreated: new Date() },
+    { uid: "1", content: "Why do cats always land on their feet?", timeCreated: new Date(), upvotes: 5 },
+    { uid: "2", content: "What is the best way to learn React?", timeCreated: new Date(), upvotes: 12 },
+    { uid: "3", content: "How does the event loop work in JavaScript?", timeCreated: new Date(), upvotes: 8 },
+    { uid: "4", content: "What are the differences between SQL and NoSQL databases?", timeCreated: new Date(), upvotes: 3 },
+    { uid: "5", content: "Can someone explain closure in simple terms?", timeCreated: new Date(), upvotes: 15 },
+    { uid: "6", content: "Best practices for accessible web design?", timeCreated: new Date(), upvotes: 7 },
+    { uid: "7", content: "Why is TypeScript becoming so popular?", timeCreated: new Date(), upvotes: 20 },
+    { uid: "8", content: "How to deploy a Node.js app to production?", timeCreated: new Date(), upvotes: 4 },
 ];
 
 export function Search() {
@@ -25,7 +25,6 @@ export function Search() {
             q.content.toLowerCase().includes(query.toLowerCase())
         );
     }, [query]);
-
 
     const handleDelete = (id: string) => {
         console.log("Deleting question with id:", id);

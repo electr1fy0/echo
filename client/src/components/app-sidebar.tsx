@@ -15,11 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useQuestionDraft, useCreateQuestion } from "@/hooks/use-questions";
+import { useQuestionDraft } from "@/hooks/use-questions";
 
 type NavItem = {
   icon: typeof Home01Icon;
@@ -37,37 +36,38 @@ function CreateQueryDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { question, updateQuestion, setQuestion } = useQuestionDraft();
-  const { mutate: submitQuestion, isPending } = useCreateQuestion();
+  const { draft, updateDraft, resetDraft } = useQuestionDraft();
+  const [isPending, setIsPending] = useState(false);
 
   const handleSubmit = () => {
-    if (!question.content?.trim()) return;
-    submitQuestion(question, {
-      onSuccess: () => {
-        setQuestion({ content: "" });
-        onOpenChange(false);
-      },
-    });
+    if (!draft.content.trim()) return;
+    setIsPending(true);
+    setTimeout(() => {
+      console.log("Mock question submitted:", draft.content);
+      resetDraft();
+      setIsPending(false);
+      onOpenChange(false);
+    }, 1000);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>New Query</DialogTitle>
         </DialogHeader>
-        <div className="mt-4">
+        <div className="py-4">
           <Textarea
-            placeholder="Ask a question from your community"
-            className="resize-none h-32 bg-transparent rounded-2xl  dark:placeholder:text-neutral-600 placeholder:text-neutral-400"
-            value={question.content}
-            onChange={(e) => updateQuestion({ content: e.target.value })}
+            placeholder="What's on your mind?"
+            className="w-full resize-none bg-transparent focus-visible:ring-0 p-0 text-base border-none shadow-none min-h-[100px] placeholder:text-neutral-400"
+            value={draft.content}
+            onChange={(e) => updateDraft({ content: e.target.value })}
+            autoFocus
           />
         </div>
         <DialogFooter>
-          <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isPending}>
-            <HugeiconsIcon icon={Add01Icon} className="mr-1 size-4" />
             {isPending ? "Posting..." : "Ask Query"}
           </Button>
         </DialogFooter>

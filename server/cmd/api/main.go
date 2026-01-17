@@ -48,6 +48,8 @@ func main() {
 	mux.HandleFunc("DELETE /questions/{uid}", h.DeleteQuestion)
 
 	mux.HandleFunc("POST /questions/{uid}/replies", h.CreateReply)
+	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}", h.DeleteReply)
+	mux.HandleFunc("UPDATE /questions/{quid}/replies/{ruid}", h.UpdateReply)
 	mux.HandleFunc("GET /questions/{uid}/replies", h.ListReplies)
 
 	port := os.Getenv("PORT")

@@ -6,7 +6,7 @@ import {
 } from "@/hooks/use-questions";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { QuestionList } from "@/components/question-list";
+import { QuestionList } from "@/components/questions/question-list";
 import { Add01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -14,12 +14,12 @@ export function Home() {
   const { data: questions = [], isLoading, error } = useQuestionsQuery(0, 10);
   const { mutate: submitQuestion, isPending: isCreatePending } =
     useCreateQuestion();
-  const { question, updateQuestion, setQuestion } = useQuestionDraft();
+  const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: deleteQuestion } = useDeleteQuestion();
 
   const handleSubmit = () => {
-    submitQuestion(question, {
-      onSuccess: () => setQuestion({ content: "" }),
+    submitQuestion(draft, {
+      onSuccess: resetDraft,
     });
   };
 
@@ -34,8 +34,8 @@ export function Home() {
       <Textarea
         placeholder="Why do cats always land on their feet?"
         className="resize-none h-20"
-        value={question.content}
-        onChange={(e) => updateQuestion({ content: e.target.value })}
+        value={draft.content}
+        onChange={(e) => updateDraft({ content: e.target.value })}
       />
 
       <div className="flex justify-end">
