@@ -179,7 +179,7 @@ export function AppSidebar() {
                 "relative flex items-center justify-center size-14 rounded-xl transition-colors",
                 item.hasBackground && "bg-neutral-200 dark:bg-neutral-800",
                 item.active
-                  ? "text-neutral-900 dark:text-white"
+                  ? "text-neutral-900 dark:text-white bg-neutral-100 dark:bg-neutral-800/50"
                   : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
               )}
             >

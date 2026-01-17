@@ -6,7 +6,8 @@ export interface Question {
   content: string;
   timeCreated?: Date;
   author: string;
-  upvotes?: number;
+  upvotes: number;
+  isUpvoted: boolean;
 }
 
 export interface User {
@@ -35,6 +36,5 @@ export interface ReplyDraft {
 }
 
 export interface UpvoteState {
-  count: number;
   isUpvoted: boolean;
 }

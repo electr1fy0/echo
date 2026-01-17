@@ -41,13 +41,14 @@ func main() {
 	mux.HandleFunc("GET /users", middleware.Auth(h.GetProfile))
 	mux.HandleFunc("PATCH /users", middleware.Auth(h.UpdateUser))
 
-	mux.HandleFunc("/questions/{id}/vote", middleware.Auth(h.UpdateVote))
+	mux.HandleFunc("/questions/{uid}/vote", middleware.Auth(h.UpdateVote))
 
 	mux.HandleFunc("POST /questions", middleware.Auth(h.CreateQuestion))
-	mux.HandleFunc("GET /questions", h.ListQuestions)
+	mux.HandleFunc("GET /questions", middleware.Auth(h.ListQuestions))
 	mux.HandleFunc("GET /users/questions", middleware.Auth(h.ListUserQuestions))
 
 	mux.HandleFunc("GET /questions/{uid}", h.GetQuestion)
+	mux.HandleFunc("GET /questions/search", h.SearchQuestions)
 	mux.HandleFunc("DELETE /questions/{uid}", middleware.Auth(h.DeleteQuestion))
 
 	mux.HandleFunc("POST /questions/{uid}/replies", middleware.Auth(h.CreateReply))

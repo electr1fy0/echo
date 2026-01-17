@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
-import { useUpvote } from "@/hooks/use-upvote";
+import { useUpdateVote } from "@/hooks/use-upvote";
 import type { Question } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -32,8 +32,7 @@ export function QuestionItem({ question, onDelete }: QuestionItemProps) {
   const questionId = question.uid ?? "";
   const { data: replies = [] } = useRepliesQuery(questionId || undefined);
   const { mutate: deleteReply } = useDeleteReply();
-  const upvote = useUpvote({ initialCount: question.upvotes ?? 0 });
-
+  const { mutate: handleVote } = useUpdateVote();
   if (!questionId) {
     return null;
   }
@@ -41,15 +40,17 @@ export function QuestionItem({ question, onDelete }: QuestionItemProps) {
   return (
     <AccordionItem value={questionId} className="w-full">
       <AccordionTrigger className="font-normal pr-4 hover:no-underline">
-        <div className="flex-1 text-left pt-1.5">{question.content}</div>
+        <div className="flex-1 text-left pt-1.5 dark:text-neutral-300 text-neutral-900">
+          {question.content}
+        </div>
         <div
           onClick={(e) => e.stopPropagation()}
           className="flex items-center gap-2"
         >
           <UpvoteButton
-            count={upvote.count}
-            isUpvoted={upvote.isUpvoted}
-            onToggle={upvote.toggle}
+            count={question.upvotes}
+            isUpvoted={question.isUpvoted}
+            onToggle={() => handleVote(questionId)}
             className="border border-neutral-200 w-14 text-right dark:border-neutral-800 rounded-full h-7 px-2.5 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors mr-2"
           />
           <DropdownMenu>

@@ -1,27 +1,25 @@
-import { useState } from "react";
-import type { UpvoteState } from "@/types";
+// import type { UpvoteState } from "@/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateVotes } from "@/api/questions";
 
-type UseUpvoteOptions = {
-    initialCount?: number;
-    initialUpvoted?: boolean;
-};
+// type UseUpvoteOptions = {
+//   initialCount?: number;
+//   initialUpvoted?: boolean;
+// };
 
-type UseUpvoteReturn = UpvoteState & {
-    toggle: () => void;
-};
-export function useUpvote({
-    initialCount = 0,
-    initialUpvoted = false,
-}: UseUpvoteOptions = {}): UseUpvoteReturn {
-    const [count, setCount] = useState(initialCount);
-    const [isUpvoted, setIsUpvoted] = useState(initialUpvoted);
+// type UseUpvoteReturn = UpvoteState & {
+//   toggle: () => void;
+// };
 
-    const toggle = () => {
-        setIsUpvoted((prev) => {
-            setCount((c) => (prev ? c - 1 : c + 1));
-            return !prev;
-        });
-    };
-
-    return { count, isUpvoted, toggle };
+export function useUpdateVote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (qid: string) => updateVotes(qid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["search-questions"] });
+    },
+  });
 }
+

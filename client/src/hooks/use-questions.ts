@@ -6,6 +6,7 @@ import {
   createQuestion,
   deleteQuestion,
   fetchUserQuestions,
+  searchQuestions,
 } from "@/api/questions";
 
 export function useQuestionsQuery(offset = 0, limit = 10) {
@@ -18,7 +19,7 @@ export function useQuestionsQuery(offset = 0, limit = 10) {
 
 export function useUserQuestionsQuery(offset = 0, limit = 10) {
   return useQuery({
-    queryKey: ["user-questions", offset, limit],
+    queryKey: ["user-questions", "question", offset, limit],
     queryFn: () => fetchUserQuestions(offset, limit),
     staleTime: 30_000,
   });
@@ -31,6 +32,7 @@ export function useCreateQuestion() {
     mutationFn: createQuestion,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
     },
   });
 }
@@ -43,6 +45,7 @@ export function useDeleteQuestion() {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
     },
   });
 }
@@ -59,4 +62,13 @@ export function useQuestionDraft() {
   const resetDraft = () => setDraft(EMPTY_DRAFT);
 
   return { draft, updateDraft, resetDraft };
+}
+
+export function useSearchQuestions(query: string, offset = 0, limit = 20) {
+  return useQuery({
+    queryKey: ["search-questions", query, offset, limit],
+    queryFn: () => searchQuestions(query, offset, limit),
+    enabled: query.length > 0,
+    staleTime: 30_000,
+  });
 }

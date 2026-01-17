@@ -7,7 +7,9 @@ export async function fetchQuestions(offset: number, limit: number) {
     limit: limit.toString(),
   });
 
-  const res = await fetch(`${API_URL}/questions?${params}`);
+  const res = await fetch(`${API_URL}/questions?${params}`, {
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("Failed to fetch questions");
   return res.json() as Promise<Question[]>;
 }
@@ -45,4 +47,24 @@ export async function deleteQuestion(questionId: string) {
     },
   );
   if (!res.ok) throw new Error("Failed to delete question");
+}
+
+export async function searchQuestions(query: string, offset = 0, limit = 20) {
+  const params = new URLSearchParams({
+    q: query,
+    offset: offset.toString(),
+    limit: limit.toString(),
+  });
+
+  const res = await fetch(`${API_URL}/questions/search?${params}`);
+  if (!res.ok) throw new Error("Failed to search questions");
+  return res.json() as Promise<Question[]>;
+}
+
+export async function updateVotes(qid: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(qid)}/vote`,
+    { method: "post", credentials: "include" },
+  );
+  if (!res.ok) throw new Error("Failed to update votes");
 }
