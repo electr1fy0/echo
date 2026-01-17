@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { AuthPayload } from "@/api/auth";
 import {
   Card,
   CardContent,
@@ -10,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useSignin, useSignup } from "@/hooks/use-auth";
 
 function SkeletonSidebar() {
   return (
@@ -58,6 +60,25 @@ function SkeletonHome() {
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [user, setUser] = useState<AuthPayload>({
+    email: "",
+    username: "",
+    password: "",
+  });
+
+  function updateUser(fields: Partial<AuthPayload>) {
+    setUser((prev) => {
+      return { ...prev, ...fields };
+    });
+  }
+  const { mutate: signIn, isPending: isInPending } = useSignin();
+  const { mutate: signUp, isPending: isUpPending } = useSignup();
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (isSignUp) signUp(user);
+    else signIn(user);
+  }
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -86,13 +107,47 @@ export function Auth() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <Input id="email" type="email" placeholder="Email" />
-              <Input id="password" type="password" placeholder="Password" />
-            </div>
-            <Button className="w-full">
-              {isSignUp ? "Sign up" : "Sign in"}
-            </Button>
+            <form className="space-y-3 " onSubmit={handleSubmit}>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Username"
+                className="text-sm"
+                onChange={(e) => {
+                  updateUser({ username: e.target.value });
+                }}
+              />
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email"
+                className="text-sm"
+                onChange={(e) => {
+                  updateUser({ email: e.target.value });
+                }}
+              />
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password"
+                className="text-sm"
+                onChange={(e) => {
+                  updateUser({ password: e.target.value });
+                }}
+              />
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={isInPending || isUpPending}
+              >
+                {isInPending || isUpPending
+                  ? "Loading..."
+                  : isSignUp
+                    ? "Sign up"
+                    : "Sign in"}
+              </Button>
+            </form>
+
             <button
               onClick={() => setIsSignUp(!isSignUp)}
               className="block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"

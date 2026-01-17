@@ -7,6 +7,7 @@ import { Search } from "@/pages/search";
 import { Notifications } from "@/pages/notifications";
 import { Auth } from "@/pages/auth";
 import { Landing } from "@/pages/landing";
+import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
 
 function AuthenticatedLayout() {
   return (
@@ -32,9 +33,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/*" element={<AuthenticatedLayout />} />
+        <Route element={<GuestRoute />}>
+          <Route path="/landing" element={<Landing />} />
+          <Route path="/auth" element={<Auth />} />
+        </Route>
+        
+        <Route element={<ProtectedRoute />}>
+          <Route path="/*" element={<AuthenticatedLayout />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

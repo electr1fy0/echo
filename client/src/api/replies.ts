@@ -16,6 +16,7 @@ export async function createReply(questionId: string, reply: Partial<Reply>) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reply),
+      credentials: "include",
     },
   );
   if (!res.ok) throw new Error("Failed to create reply");
@@ -29,6 +30,7 @@ export async function deleteReply(
     `${API_URL}/questions/${encodeURIComponent(questionID)}/replies/${encodeURIComponent(replyId)}`,
     {
       method: "DELETE",
+      credentials: "include",
     },
   );
   if (!res.ok) throw new Error("failed to delete reply");

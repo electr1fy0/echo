@@ -24,12 +24,12 @@ export function ReplyItem({ reply, onDelete }: ReplyItemProps) {
   const upvote = useUpvote({ initialCount: reply.upvotes ?? 0 });
 
   return (
-    <div className="flex items-center gap-3 border-b text-neutral-600 dark:text-neutral-400 py-2.5 text-sm border-neutral-200 dark:border-neutral-700 group">
+    <div className="flex pr-2.5 items-center gap-3 border-b  text-neutral-600 dark:text-neutral-400 py-2.5 text-sm border-neutral-200 dark:border-neutral-700 group">
       <UpvoteButton
         count={upvote.count}
         isUpvoted={upvote.isUpvoted}
         onToggle={upvote.toggle}
-        className="h-3 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
+        className="h-3 py-2 text-xs  text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
       />
       <span className="flex-1">{reply.content}</span>
       <DropdownMenu>

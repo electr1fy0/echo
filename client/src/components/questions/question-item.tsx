@@ -83,15 +83,19 @@ export function QuestionItem({ question, onDelete }: QuestionItemProps) {
       </AccordionTrigger>
 
       <AccordionContent>
-        {(replies ?? []).map((reply, index) => (
-          <ReplyItem
-            key={reply.uid ?? index}
-            reply={reply}
-            onDelete={() =>
-              deleteReply({ questionId, replyId: reply.uid ?? "" })
-            }
-          />
-        ))}
+        {replies ? (
+          replies.map((reply, index) => (
+            <ReplyItem
+              key={reply.uid ?? index}
+              reply={reply}
+              onDelete={() =>
+                deleteReply({ questionId, replyId: reply.uid ?? "" })
+              }
+            />
+          ))
+        ) : (
+          <div className="text-sm ml-1 text-neutral-500">No replies</div>
+        )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
     </AccordionItem>

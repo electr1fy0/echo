@@ -17,6 +17,7 @@ export async function createQuestion(draft: QuestionDraft) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(draft),
+    credentials: "include",
   });
 
   if (!res.ok) throw new Error("Failed to create question");
@@ -27,6 +28,7 @@ export async function deleteQuestion(questionId: string) {
     `${API_URL}/questions/${encodeURIComponent(questionId)}`,
     {
       method: "DELETE",
+      credentials: "include",
     },
   );
   if (!res.ok) throw new Error("Failed to delete question");

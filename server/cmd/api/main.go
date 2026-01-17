@@ -33,23 +33,24 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /auth/signup", h.Signup)
-	mux.HandleFunc("POST /auth/login", h.Login)
-	mux.HandleFunc("POST /auth/logout", h.Logout)
+	mux.HandleFunc("POST /auth/signin", h.Signin)
+	mux.HandleFunc("POST /auth/signout", h.Logout)
+	mux.HandleFunc("GET /auth/verify", middleware.Auth(h.Verify))
 
 	mux.HandleFunc("GET /users/{uid}", h.GetUser)
-	mux.HandleFunc("PATCH /users/{uid}", h.UpdateUser)
+	mux.HandleFunc("PATCH /users/{uid}", middleware.Auth(h.UpdateUser))
 
-	mux.HandleFunc("/questions/{id}/vote", h.UpdateVote)
+	mux.HandleFunc("/questions/{id}/vote", middleware.Auth(h.UpdateVote))
 
-	mux.HandleFunc("POST /questions", h.CreateQuestion)
+	mux.HandleFunc("POST /questions", middleware.Auth(h.CreateQuestion))
 	mux.HandleFunc("GET /questions", h.ListQuestions)
 
 	mux.HandleFunc("GET /questions/{uid}", h.GetQuestion)
-	mux.HandleFunc("DELETE /questions/{uid}", h.DeleteQuestion)
+	mux.HandleFunc("DELETE /questions/{uid}", middleware.Auth(h.DeleteQuestion))
 
-	mux.HandleFunc("POST /questions/{uid}/replies", h.CreateReply)
-	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}", h.DeleteReply)
-	mux.HandleFunc("UPDATE /questions/{quid}/replies/{ruid}", h.UpdateReply)
+	mux.HandleFunc("POST /questions/{uid}/replies", middleware.Auth(h.CreateReply))
+	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}", middleware.Auth(h.DeleteReply))
+	mux.HandleFunc("UPDATE /questions/{quid}/replies/{ruid}", middleware.Auth(h.UpdateReply))
 	mux.HandleFunc("GET /questions/{uid}/replies", h.ListReplies)
 
 	port := os.Getenv("PORT")
