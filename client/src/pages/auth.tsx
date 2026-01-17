@@ -112,6 +112,8 @@ export function Auth() {
                 id="username"
                 type="text"
                 placeholder="Username"
+                aria-label="Username"
+                autoComplete="username"
                 className="text-sm"
                 onChange={(e) => {
                   updateUser({ username: e.target.value });
@@ -121,6 +123,8 @@ export function Auth() {
                 id="email"
                 type="email"
                 placeholder="Email"
+                aria-label="Email"
+                autoComplete="email"
                 className="text-sm"
                 onChange={(e) => {
                   updateUser({ email: e.target.value });
@@ -130,6 +134,8 @@ export function Auth() {
                 id="password"
                 type="password"
                 placeholder="Password"
+                aria-label="Password"
+                autoComplete={isSignUp ? "new-password" : "current-password"}
                 className="text-sm"
                 onChange={(e) => {
                   updateUser({ password: e.target.value });
@@ -141,7 +147,7 @@ export function Auth() {
                 disabled={isInPending || isUpPending}
               >
                 {isInPending || isUpPending
-                  ? "Loading..."
+                  ? "Loading…"
                   : isSignUp
                     ? "Sign up"
                     : "Sign in"}

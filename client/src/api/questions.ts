@@ -12,6 +12,19 @@ export async function fetchQuestions(offset: number, limit: number) {
   return res.json() as Promise<Question[]>;
 }
 
+export async function fetchUserQuestions(offset: number, limit: number) {
+  const params = new URLSearchParams({
+    offset: offset.toString(),
+    limit: limit.toString(),
+  });
+
+  const res = await fetch(`${API_URL}/users/questions?${params}`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch user questions");
+  return res.json() as Promise<Question[]>;
+}
+
 export async function createQuestion(draft: QuestionDraft) {
   const res = await fetch(`${API_URL}/questions`, {
     method: "POST",

@@ -37,7 +37,7 @@ export default function App() {
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
         </Route>
-        
+
         <Route element={<ProtectedRoute />}>
           <Route path="/*" element={<AuthenticatedLayout />} />
         </Route>

@@ -25,14 +25,15 @@ export function Home() {
 
   return (
     <div className="max-w-xl w-full mt-40 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
-      <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0">
+      <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Echo
       </h1>
-      <h2 className="text-neutral-600 dark:text-neutral-400 text-sm">
+      <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
         An Open QnA platform
       </h2>
       <Textarea
         placeholder="Why do cats always land on their feet?"
+        aria-label="Question content"
         className="resize-none h-20"
         value={draft.content}
         onChange={(e) => updateDraft({ content: e.target.value })}
@@ -50,7 +51,7 @@ export function Home() {
       </div>
       <div className="mt-20">
         {isLoading ? (
-          <p className="text-neutral-500 text-sm">Loading questions...</p>
+          <p className="text-neutral-500 text-sm">Loading questions…</p>
         ) : error ? (
           <p className="text-red-500 text-sm">Failed to load questions</p>
         ) : (

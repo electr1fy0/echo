@@ -15,7 +15,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   const [content, setContent] = useState("");
   const { mutate: submitReply, isPending } = useCreateReply();
 
-  const handleSubmit = (e: React.FormEvent | React.MouseEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
 
@@ -31,16 +31,16 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   };
 
   return (
-    <form className="flex gap-4 mt-4">
+    <form className="flex gap-4 mt-4" onSubmit={handleSubmit}>
       <Input
         value={content}
         placeholder="Answer bro's query"
+        aria-label="Reply content"
         className="text-sm "
         onChange={(e) => setContent(e.target.value)}
       />
       <Button
         variant="outline"
-        onClick={handleSubmit}
         disabled={isPending}
         type="submit"
         className=""

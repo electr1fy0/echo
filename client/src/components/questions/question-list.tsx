@@ -8,7 +8,7 @@ type QuestionListProps = {
 };
 
 export function QuestionList({ questions, onDelete }: QuestionListProps) {
-  return (
+  return questions.length > 0 ? (
     <Accordion className="dark:bg-[#1D1D1D]">
       {questions.map((question, index) => (
         <QuestionItem
@@ -18,5 +18,7 @@ export function QuestionList({ questions, onDelete }: QuestionListProps) {
         />
       ))}
     </Accordion>
+  ) : (
+    <div className="text-neutral-500 text-center">Ask the first question.</div>
   );
 }

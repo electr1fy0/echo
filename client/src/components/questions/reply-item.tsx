@@ -37,6 +37,7 @@ export function ReplyItem({ reply, onDelete }: ReplyItemProps) {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="More options"
             className="size-4 opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 transition-opacity"
           >
             <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />

@@ -1,7 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
-import { useQuestionsQuery, useDeleteQuestion } from "@/hooks/use-questions";
+import {
+  useUserQuestionsQuery,
+  useDeleteQuestion,
+} from "@/hooks/use-questions";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, PencilEdit02Icon } from "@hugeicons/core-free-icons";
 import {
@@ -14,30 +17,64 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-const INITIAL_USER = {
-  name: "Ayush",
-  email: "ayush@example.com",
-  bio: "Full-stack developer | Open source enthusiast | Building cool things",
-  avatar: "https://github.com/electr1fy0.png",
-  stats: {
-    answered: 42,
-    posted: 12,
-  },
-};
+import { useFetchProfile, useUpdateProfile } from "@/hooks/use-profile";
+import type { User } from "@/types";
 
 export function Profile() {
-  const [user, setUser] = useState(INITIAL_USER);
+  const {
+    data: user,
+    isLoading: isProfileLoading,
+    error: profileError,
+  } = useFetchProfile();
+  const {
+    mutate: updateProfile,
+    isLoading: isUpdateLoading,
+    error: updateError,
+  } = useUpdateProfile();
+
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const { data: questions = [], isLoading, error } = useQuestionsQuery(0, 10);
+  const {
+    data: questions = [],
+    isLoading: isQnLoading,
+    error: qnError,
+  } = useUserQuestionsQuery(0, 10);
+
   const { mutate: deleteQuestion } = useDeleteQuestion();
 
-  const [editForm, setEditForm] = useState(user);
+  const [editForm, setEditForm] = useState<User>({
+    username: "",
+    email: "",
+    bio: "",
+    avatar: "",
+    answered: 0,
+    posted: 0,
+  });
 
-  const handleSave = () => {
-    setUser(editForm);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfile(editForm);
     setIsEditOpen(false);
   };
+
+  const updateDraft = (fields: Partial<User>) => {
+    setEditForm((prev) => {
+      return { ...prev, ...fields };
+    });
+  };
+
+  if (isProfileLoading) {
+    return (
+      <div className="mt-20 text-sm text-neutral-500">Loading profile…</div>
+    );
+  }
+
+  if (profileError || !user) {
+    return (
+      <div className="mt-20 text-sm text-red-500">Failed to load profile</div>
+    );
+  }
+  const avatarSrc =
+    user.avatar != "" ? user.avatar : `https://github.com/${user.username}.png`;
 
   return (
     <div className="max-w-xl w-full mt-20 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
@@ -45,8 +82,8 @@ export function Profile() {
         <div className="flex w-full justify-between items-start">
           <div className="size-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
             <img
-              src={user.avatar}
-              alt={user.name}
+              src={avatarSrc}
+              alt={user.username}
               className="size-full object-cover"
             />
           </div>
@@ -66,7 +103,7 @@ export function Profile() {
 
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-            {user.name}
+            {user.username}
           </h1>
           <div className="flex items-center gap-2 text-neutral-500 text-sm">
             <HugeiconsIcon icon={Mail01Icon} className="size-4" />
@@ -81,7 +118,7 @@ export function Profile() {
         <div className="flex gap-6 pt-2">
           <div className="flex flex-col">
             <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-              {user.stats.answered}
+              {user.answered}
             </span>
             <span className="text-xs text-neutral-500">Answered</span>
           </div>
@@ -101,9 +138,9 @@ export function Profile() {
           Recent Activity
         </h3>
 
-        {isLoading ? (
+        {isQnLoading ? (
           <p className="text-neutral-500 text-sm">Loading activity...</p>
-        ) : error ? (
+        ) : qnError ? (
           <p className="text-red-500 text-sm">Failed to load activity</p>
         ) : (
           <QuestionList
@@ -118,17 +155,18 @@ export function Profile() {
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <form className="grid gap-4 py-4" onSubmit={(e) => handleSubmit(e)}>
             <div className="grid gap-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Name
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
               </label>
               <Input
-                id="name"
-                value={editForm.name}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, name: e.target.value }))
-                }
+                id="email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => {
+                  updateDraft({ email: e.target.value });
+                }}
                 className="select-text"
               />
             </div>
@@ -139,9 +177,9 @@ export function Profile() {
               <Textarea
                 id="bio"
                 value={editForm.bio}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, bio: e.target.value }))
-                }
+                onChange={(e) => {
+                  updateDraft({ bio: e.target.value });
+                }}
                 className="h-24 select-text"
               />
             </div>
@@ -151,20 +189,21 @@ export function Profile() {
               </label>
               <Input
                 id="avatar"
-                value={editForm.avatar}
-                onChange={(e) =>
-                  setEditForm((prev) => ({ ...prev, avatar: e.target.value }))
-                }
                 className="select-text"
+                value={editForm.avatar}
+                onChange={(e) => {
+                  updateDraft({ bio: e.target.value });
+                }}
               />
             </div>
-          </div>
-          <DialogFooter>
-            <DialogClose render={<Button variant="ghost" />}>
-              Cancel
-            </DialogClose>
-            <Button onClick={handleSave}>Save Changes</Button>
-          </DialogFooter>
+            <DialogFooter>
+              <DialogClose render={<Button variant="outline" />}>
+                Cancel
+              </DialogClose>
+
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

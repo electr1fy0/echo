@@ -5,12 +5,21 @@ import {
   fetchQuestions,
   createQuestion,
   deleteQuestion,
+  fetchUserQuestions,
 } from "@/api/questions";
 
 export function useQuestionsQuery(offset = 0, limit = 10) {
   return useQuery({
     queryKey: ["questions", offset, limit],
     queryFn: () => fetchQuestions(offset, limit),
+    staleTime: 30_000,
+  });
+}
+
+export function useUserQuestionsQuery(offset = 0, limit = 10) {
+  return useQuery({
+    queryKey: ["questions", offset, limit],
+    queryFn: () => fetchUserQuestions(offset, limit),
     staleTime: 30_000,
   });
 }
