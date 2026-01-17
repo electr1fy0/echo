@@ -77,7 +77,7 @@ export function Profile() {
     user.avatar != "" ? user.avatar : `https://github.com/${user.username}.png`;
 
   return (
-    <div className="max-w-xl w-full mt-20 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-xl w-full mt-24 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           <div className="size-24 rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">

@@ -59,14 +59,16 @@ function CreateQueryDialog({
         <div className="py-4">
           <Textarea
             placeholder="What's on your mind?"
-            className="w-full resize-none bg-transparent focus-visible:ring-0 p-0 text-base border-none shadow-none min-h-[100px] placeholder:text-neutral-400"
+            className="w-full resize-none bg-transparent focus-visible:ring-0 p-0 text-base border-none rounded-none shadow-none min-h-16 placeholder:text-neutral-400"
             value={draft.content}
             onChange={(e) => updateDraft({ content: e.target.value })}
             autoFocus
           />
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? "Posting..." : "Ask Query"}
           </Button>

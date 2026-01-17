@@ -18,7 +18,7 @@ export function useQuestionsQuery(offset = 0, limit = 10) {
 
 export function useUserQuestionsQuery(offset = 0, limit = 10) {
   return useQuery({
-    queryKey: ["questions", offset, limit],
+    queryKey: ["user-questions", offset, limit],
     queryFn: () => fetchUserQuestions(offset, limit),
     staleTime: 30_000,
   });
