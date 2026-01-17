@@ -123,6 +123,7 @@ func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 
 func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer r.Body.Close()
 	defer cancel()
 	q := r.URL.Query()
 	limit := q.Get("limit")
@@ -137,10 +138,12 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid sub", http.StatusUnauthorized)
 		return
 	}
+
 	rows, err := h.DB.Query(ctx, `
 	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
 	exists (select 1 from votes v2 where v2.question_uid = q.uid and v2.username = $3) as is_upvoted
-	 from questions q left join votes v on q.uid = v.question_uid
+	from questions q left join votes v
+	on q.uid = v.question_uid
 	group by q.uid, q.content, q.time_created
 	limit $1 offset $2`, limit, offset, sub)
 	if err != nil {

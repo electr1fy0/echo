@@ -114,7 +114,7 @@ export function Auth() {
                 placeholder="Username"
                 aria-label="Username"
                 autoComplete="username"
-                className="text-sm"
+                className="text-sm pl-3"
                 onChange={(e) => {
                   updateUser({ username: e.target.value });
                 }}
@@ -125,7 +125,7 @@ export function Auth() {
                 placeholder="Email"
                 aria-label="Email"
                 autoComplete="email"
-                className="text-sm"
+                className="text-sm pl-3"
                 onChange={(e) => {
                   updateUser({ email: e.target.value });
                 }}
@@ -136,7 +136,7 @@ export function Auth() {
                 placeholder="Password"
                 aria-label="Password"
                 autoComplete={isSignUp ? "new-password" : "current-password"}
-                className="text-sm"
+                className="text-sm pl-3"
                 onChange={(e) => {
                   updateUser({ password: e.target.value });
                 }}
@@ -163,7 +163,7 @@ export function Auth() {
             <div className="pt-4 border-t mt-4 border-border">
               <Link
                 to="/landing"
-                className="block text-center text-xs text-muted-foreground hover:underline"
+                className="block text-center text-xs text-muted-foreground/60 hover:underline"
               >
                 Read more about Echo
               </Link>

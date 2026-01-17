@@ -39,9 +39,21 @@ export function QuestionItem({ question, onDelete }: QuestionItemProps) {
 
   return (
     <AccordionItem value={questionId} className="w-full">
-      <AccordionTrigger className="font-normal pr-4 hover:no-underline">
-        <div className="flex-1 text-left pt-1.5 dark:text-neutral-300 text-neutral-900">
-          {question.content}
+      <AccordionTrigger className="font-normal pr-4 hover:no-underline items-start gap-2">
+        <div className="size-7 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden shrink-0 mr-2 mt-0.5">
+          <img
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${question.author || questionId}`}
+            alt=""
+            className="size-full object-cover"
+          />
+        </div>
+        <div className="flex-1 text-left min-w-0 mr-3">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            {question.author || "Anonymous"}
+          </p>
+          <p className="text-sm text-neutral-900 dark:text-neutral-100 mt-0.5">
+            {question.content}
+          </p>
         </div>
         <div
           onClick={(e) => e.stopPropagation()}
