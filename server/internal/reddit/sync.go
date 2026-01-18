@@ -91,6 +91,8 @@ func ShouldSync(ctx context.Context, db *pgxpool.Pool, chamberUID uuid.UUID) (bo
 
 func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) error {
 	log.Printf("[reddit] starting sync for r/%s", state.Subreddit)
+	// Update last_sync_at immediately to lock
+	_, _ = db.Exec(ctx, `UPDATE reddit_sync_state SET last_sync_at = $1 WHERE uid = $2`, time.Now(), state.UID)
 	posts, err := fetchPosts(state.Subreddit)
 	if err != nil {
 		log.Printf("[reddit] failed to fetch posts: %v", err)
@@ -156,9 +158,9 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 	allIDs := append(state.ImportedPostIDs, newPostIDs...)
 	_, err = db.Exec(ctx, `
 		UPDATE reddit_sync_state
-		SET last_sync_at = $1, imported_post_ids = $2
-		WHERE uid = $3
-	`, time.Now(), allIDs, state.UID)
+		SET imported_post_ids = $1
+		WHERE uid = $2
+	`, allIDs, state.UID)
 	return err
 }
 
