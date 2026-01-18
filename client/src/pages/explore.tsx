@@ -171,7 +171,6 @@ export function Explore() {
                 </>
             )}
 
-            {/* Create Chamber Dialog */}
             <CreateChamberDialog
                 open={createChamberOpen}
                 onOpenChange={setCreateChamberOpen}

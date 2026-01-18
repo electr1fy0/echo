@@ -36,19 +36,17 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	if page == "" {
 		page = "0"
 	}
-	// Simple offset based on fixed limit 50 for now
-	// Ideally use limit/offset params like other endpoints
 	limit := 50
-	offset := 0 // Parse page if needed, but sticking to simple limit for MVP
+	offset := 0
 
 	query := `
-		SELECT 
-			n.uid, 
-			n.user_username, 
-			n.actor_username, 
-			n.type, 
-			n.reference_uid, 
-			n.is_read, 
+		SELECT
+			n.uid,
+			n.user_username,
+			n.actor_username,
+			n.type,
+			n.reference_uid,
+			n.is_read,
 			n.created_at,
 			u.avatar,
 			COALESCE(q.content, a.content, '') as content
@@ -71,7 +69,7 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	notifications := []Notification{}
 	for rows.Next() {
 		var n Notification
-		var avatar *string // Handle nullable
+		var avatar *string
 		err := rows.Scan(
 			&n.UID,
 			&n.UserUsername,

@@ -192,7 +192,6 @@ function CreateQueryDialog({
   const [selectedChamber, setSelectedChamber] = useState<string>("");
 
   const { data: allChambers = [] } = useListChambers();
-  // Filter only joined chambers for posting
   const chambers = allChambers.filter((c) => c.isJoined);
 
   const handleSubmit = () => {

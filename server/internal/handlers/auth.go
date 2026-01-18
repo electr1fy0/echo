@@ -3,11 +3,11 @@ package handlers
 import (
 	"context"
 	"echo/internal/email"
-	"echo/internal/middleware"
 	"echo/internal/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -91,6 +91,7 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		Password   string
 		IsVerified bool
 	}
+
 	row := h.DB.QueryRow(ctx, "select username, email, password, is_verified from users where username = $1", user.Username)
 	err = row.Scan(&dbUser.Username, &dbUser.Email, &dbUser.Password, &dbUser.IsVerified)
 	if err != nil {
@@ -116,7 +117,9 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		"role":   "user",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(middleware.Key)
+	key := os.Getenv("SECRET_KEY")
+
+	tokenStr, err := token.SignedString(key)
 	if err != nil {
 		h.respondWithError(w, "failed to sign token", err, http.StatusInternalServerError)
 		return

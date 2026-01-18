@@ -10,8 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var Key = os.Getenv("SECRET_KEY")
-
 type statusRecorder struct {
 	http.ResponseWriter
 	statusCode int
@@ -62,7 +60,6 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Expect "Bearer <token>"
 		const bearerPrefix = "Bearer "
 		if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
 			http.Error(w, "invalid authorization header", http.StatusUnauthorized)
@@ -70,8 +67,10 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		jwtStr := authHeader[len(bearerPrefix):]
+		key := os.Getenv("SECRET_KEY")
+
 		token, err := jwt.Parse(jwtStr, func(t *jwt.Token) (any, error) {
-			return Key, nil
+			return key, nil
 		})
 
 		if err != nil || !token.Valid {

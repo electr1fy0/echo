@@ -50,7 +50,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	_ = errQuestions
 	_ = errReplies
 
-	// 1. Search Chambers
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -76,7 +75,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// 2. Search Questions
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -111,7 +109,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// 3. Search Replies
 	wg.Add(1)
 	go func() {
 		defer wg.Done()

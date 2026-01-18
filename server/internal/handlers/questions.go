@@ -35,14 +35,12 @@ func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) 
 	var vote Vote
 	row := h.DB.QueryRow(ctx, "select username, question_uid from question_upvotes where username = $1 and question_uid = $2", sub, quid)
 	if err := row.Scan(&vote.Username, &vote.ObjectUID); err == pgx.ErrNoRows {
-		// New Upvote
 		_, err := h.DB.Exec(ctx, "insert into question_upvotes (username, question_uid) values ($1, $2)", sub, quid)
 		if err != nil {
 			h.respondWithError(w, "failed to insert vote", err, http.StatusInternalServerError)
 			return
 		}
 
-		// Trigger Notification
 		var author string
 		err = h.DB.QueryRow(ctx, "select author from questions where uid = $1", quid).Scan(&author)
 		if err == nil && author != "" && author != sub {
@@ -55,12 +53,7 @@ func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) 
 		}
 
 	} else if err == nil {
-		// Remove Upvote
 		h.DB.Exec(ctx, "delete from question_upvotes where username = $1 and question_uid = $2", sub, quid)
-		// Optional: Remove notification if exists? Usually we leave it or delete.
-		// For simplicity, let's leave it, but standard might be to delete.
-		// User said "remove requests tab it should be all", didn't specify behavior here.
-		// Leaving it avoids complexity.
 	} else {
 		h.respondWithError(w, "failed to update question_upvotes", err, http.StatusInternalServerError)
 		return
@@ -178,7 +171,7 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	limit := q.Get("limit")
 	offset := q.Get("offset")
 	sort := q.Get("sort")
-	filter := q.Get("filter") // e.g. "joined"
+	filter := q.Get("filter")
 	targetChamberUID := q.Get("chamber_uid")
 
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
@@ -216,9 +209,8 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 			on u.username = q.author
 	`
 
-	// Dynamic Query Construction
 	whereConditions := []string{}
-	args := []interface{}{sub} // $1 is always sub
+	args := []any{sub}
 	argCount := 2
 
 	if filter == "joined" {

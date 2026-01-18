@@ -6,6 +6,6 @@ export function useGlobalSearch(query: string) {
         queryKey: ["search", query],
         queryFn: () => globalSearch(query),
         enabled: query.length > 0,
-        staleTime: 1000 * 60 * 1, // 1 minute
+        staleTime: 1000 * 60 * 1,
     });
 }

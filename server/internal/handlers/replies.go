@@ -121,13 +121,11 @@ func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create Notification
 	var questionAuthor string
 	err = h.DB.QueryRow(ctx, "select author from questions where uid = $1", ans.QuestionUID).Scan(&questionAuthor)
 	if err == nil && questionAuthor != "" && questionAuthor != sub {
 		_, err := h.DB.Exec(ctx, "insert into notifications (user_username, actor_username, type, reference_uid) values ($1, $2, 'reply_question', $3)", questionAuthor, sub, ans.UID)
 		if err != nil {
-			// Notification failure is non-critical
 			_ = err
 		}
 	}
@@ -165,7 +163,6 @@ func (h *APIHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Notification
 		var author string
 		h.DB.QueryRow(ctx, "select author from answers where uid = $1", ruid).Scan(&author)
 		if author != "" && author != sub {

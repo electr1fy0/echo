@@ -42,14 +42,12 @@ func (h *APIHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid := uuid.New()
-	// Insert chamber with color_index
 	_, err := h.DB.Exec(ctx, "insert into chambers (uid, name, description, creator_username, color_index) values ($1, $2, $3, $4, $5)", uid, chamber.Name, chamber.Description, sub, chamber.ColorIndex)
 	if err != nil {
 		h.respondWithError(w, "failed to create chamber", err, http.StatusInternalServerError)
 		return
 	}
 
-	// Auto-join creator
 	_, err = h.DB.Exec(ctx, "insert into chamber_members (chamber_uid, username) values ($1, $2)", uid, sub)
 	if err != nil {
 		h.respondWithError(w, "failed to auto-join creator", err, http.StatusInternalServerError)

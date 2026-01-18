@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 export function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header */}
       <header className="w-full max-w-xl mx-auto px-4 py-8 flex items-center justify-between">
         <Link to="/auth">
           <div className="size-4 rounded-full bg-foreground/80" />
@@ -16,7 +15,6 @@ export function Landing() {
         </Link>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 w-full max-w-xl mx-auto px-4 py-12">
         <section className="space-y-3 mb-12">
           <h1 className="text-lg  text-foreground">Echo</h1>
@@ -50,7 +48,6 @@ export function Landing() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="w-full max-w-xl mx-auto px-4 py-8 border-t border-border">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>v0.1</span>
