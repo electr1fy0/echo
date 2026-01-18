@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateVotes } from "@/api/questions";
 import { updateReplyVotes } from "@/api/replies";
-import type { Reply } from "@/types";
 
 export function useUpdateVote() {
   const queryClient = useQueryClient();

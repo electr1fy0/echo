@@ -13,18 +13,6 @@ import {
 } from "@/components/ui/card";
 import { useSignin, useSignup } from "@/hooks/use-auth";
 
-function SkeletonSidebar() {
-  return (
-    <aside className="hidden md:flex sticky top-0 h-screen flex-col items-center justify-center py-6 px-3 border-r border-border">
-      <nav className="flex flex-col items-center gap-5">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="size-14 rounded-xl" />
-        ))}
-      </nav>
-    </aside>
-  );
-}
-
 function SkeletonQuestionItem() {
   return (
     <div className="py-4 space-y-3">
@@ -42,7 +30,7 @@ function SkeletonQuestionItem() {
 
 function SkeletonHome() {
   return (
-    <div className="max-w-xl w-full mt-40 space-y-4 px-4">
+    <div className="max-w-xl w-full  md:mt-40 mt-24 space-y-4 px-4">
       <Skeleton className="h-6 w-16" />
       <Skeleton className="h-4 w-40" />
       <Skeleton className="h-20 w-full rounded-xl" />
@@ -84,8 +72,7 @@ export function Auth() {
     <div className="min-h-screen bg-background relative">
       {/* Skeleton Background */}
       <div className="flex min-h-screen opacity-70 pointer-events-none">
-        <SkeletonSidebar />
-        <main className="flex-1 flex flex-col items-center">
+        <main className="w-full flex flex-col items-center">
           <SkeletonHome />
         </main>
       </div>

@@ -1,27 +1,27 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ModeToggle } from "@/components/mode-toggle";
+
 import { Home } from "@/pages/home";
 import { Profile } from "@/pages/profile";
-import { Search } from "@/pages/search";
+import { Explore } from "@/pages/explore";
+
 import { Notifications } from "@/pages/notifications";
 import { Auth } from "@/pages/auth";
 import { Landing } from "@/pages/landing";
 import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
 
+
+
 function AuthenticatedLayout() {
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
-      <main className="flex-1 flex flex-col items-center">
-        <div className="absolute top-4 right-4 z-10">
-          <ModeToggle />
-        </div>
+      <main className="w-full flex flex-col items-center md:pl-20">
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/search" element={<Search />} />
+          <Route path="/explore" element={<Explore />} />
           <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </main>

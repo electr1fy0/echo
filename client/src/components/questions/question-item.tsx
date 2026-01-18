@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
-import type { Question } from "@/types";
+import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   MoreHorizontalIcon,
@@ -23,33 +23,46 @@ import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
 
+
+
 type QuestionItemProps = {
-  question: Question;
+  questionItem: QuestionItem;
   onDelete: (id: string) => void;
 };
 
-export function QuestionItem({ question, onDelete }: QuestionItemProps) {
-  const questionId = question.uid ?? "";
+export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
+  if (!questionItem?.question) return null;
+
+  const question = questionItem.question;
+  const author = questionItem.author ?? null;
+  const questionId = question.uid;
+
   const { data: replies = [] } = useRepliesQuery(questionId || undefined);
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote } = useUpdateVote();
-  if (!questionId) {
-    return null;
-  }
 
+  if (!questionId) return null;
+
+  const avatarSrc = `https://github.com/${question.authorUsername}.png/`;
   return (
     <AccordionItem value={questionId} className="w-full">
-      <AccordionTrigger className="font-normal pr-4 hover:no-underline items-start gap-2">
+      <AccordionTrigger
+        className="font-normal pr-4 hover:no-underline items-start gap-2 text-left"
+      >
         <div className="size-7 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden shrink-0 mr-2 mt-0.5">
           <img
-            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${question.author || questionId}`}
+            src={
+              author?.avatar ||
+              avatarSrc ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.username}`
+            }
             alt=""
             className="size-full object-cover"
           />
         </div>
         <div className="flex-1 text-left min-w-0 mr-3">
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            {question.author || "Anonymous"}
+            {question.authorUsername || "Anonymous"}
           </p>
           <p className="text-sm text-neutral-900 dark:text-neutral-100 mt-0.5">
             {question.content}
@@ -100,10 +113,10 @@ export function QuestionItem({ question, onDelete }: QuestionItemProps) {
         {replies ? (
           replies.map((reply, index) => (
             <ReplyItem
-              key={reply.uid ?? index}
-              reply={reply}
+              key={reply.answer.uid ?? index}
+              answerItem={reply}
               onDelete={() =>
-                deleteReply({ questionId, replyId: reply.uid ?? "" })
+                deleteReply({ questionId, replyId: reply.answer.uid ?? "" })
               }
             />
           ))

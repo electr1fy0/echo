@@ -8,25 +8,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type APIHandler struct {
 	DB *pgxpool.Pool
-}
-type Question struct {
-	UID         uuid.UUID `json:"uid"`
-	Content     string    `json:"content"`
-	TimeCreated time.Time `json:"timeCreated"`
-	Upvotes     int       `json:"upvotes"`
-	IsUpvoted   bool      `json:"isUpvoted"`
-}
-
-type Vote struct {
-	Username  string
-	ObjectUID string
 }
 
 func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
@@ -130,13 +117,35 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.DB.Query(ctx, `
-	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
-	exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $3) as is_upvoted
-	from questions q left join question_upvotes v
-	on q.uid = v.question_uid
-	group by q.uid, q.content, q.time_created
-	limit $1 offset $2`, limit, offset, sub)
+	sort := q.Get("sort")
+	orderBy := "q.time_created desc"
+	if sort == "votes" {
+		orderBy = "vote_count desc"
+	}
+
+	query := fmt.Sprintf(`
+		select
+q.uid,
+q.content,
+q.time_created,
+q.author,
+u.avatar,
+count(v.question_uid) as vote_count,
+exists (
+select 1 from question_upvotes v2
+where v2.question_uid = q.uid and v2.username = $1
+) as is_upvoted
+from questions q
+left join question_upvotes v
+			on q.uid = v.question_uid
+left join users u
+on u.username = q.author
+group by q.uid, q.content, q.time_created, q.author, u.avatar
+order by %s
+limit $2 offset $3
+`, orderBy)
+
+	rows, err := h.DB.Query(ctx, query, sub, limit, offset)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Println("failed to query row", err)
@@ -144,10 +153,12 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-	questions := make([]Question, 0)
+	questions := make([]QuestionItem, 0)
 	for rows.Next() {
-		var q Question
-		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated, &q.Upvotes, &q.IsUpvoted)
+		var q QuestionItem
+		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &q.Author.Avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
+		q.Author.Username = q.Question.AuthorUsername
+
 		if err != nil {
 			fmt.Println("failed to scan row", err)
 			return
@@ -181,13 +192,25 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.DB.Query(ctx, `
-	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
-	exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
-	from questions q left join question_upvotes v
-	on q.uid = v.question_uid
-	where q.author = $1
-	group by q.uid, q.content, q.time_created
-	limit $2 offset $3`, sub, limit, offset)
+		select
+q.uid,
+q.content,
+q.time_created,
+q.author,
+u.avatar,
+count(v.question_uid) as vote_count,
+exists (
+select 1 from question_upvotes v2
+where v2.question_uid = q.uid and v2.username = $1
+) as is_upvoted
+from questions q
+left join question_upvotes v
+			on q.uid = v.question_uid
+left join users u
+on u.username = q.author
+where q.author = $1
+group by q.uid, q.content, q.time_created, q.author, u.avatar
+limit $2 offset $3`, sub, limit, offset)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -195,10 +218,11 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-	questions := make([]Question, 0)
+	questions := make([]QuestionItem, 0)
 	for rows.Next() {
-		var q Question
-		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated, &q.Upvotes, &q.IsUpvoted)
+		var q QuestionItem
+		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &q.Author.Avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
+		q.Author.Username = q.Question.AuthorUsername
 		if err != nil {
 			fmt.Println("failed to scan row", err)
 			return
@@ -229,20 +253,22 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 	sub := claims["sub"].(string)
 
 	if query == "" {
-		json.NewEncoder(w).Encode([]Question{})
+		json.NewEncoder(w).Encode([]QuestionItem{})
 		return
 	}
 
 	rows, err := h.DB.Query(ctx, `
-	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
-    exists (select 1 from question_upvotes v2
-    where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
-from questions q
-left join question_upvotes v
-    on q.uid = v.question_uid
-where q.content ilike $2
-group by q.uid, q.content, q.time_created
-limit $3 offset $4;`,
+	select 
+		q.uid, q.content, q.time_created, q.author,
+		u.avatar,
+		count(v.question_uid) as vote_count,
+    	exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
+	from questions q
+	left join question_upvotes v on q.uid = v.question_uid
+	left join users u on u.username = q.author
+	where q.content ilike $2
+	group by q.uid, q.content, q.time_created, q.author, u.avatar
+	limit $3 offset $4;`,
 		sub, "%"+query+"%", limit, offset)
 
 	if err != nil {
@@ -251,10 +277,11 @@ limit $3 offset $4;`,
 	}
 	defer rows.Close()
 
-	questions := make([]Question, 0)
+	questions := make([]QuestionItem, 0)
 	for rows.Next() {
-		var q Question
-		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated, &q.Upvotes, &q.IsUpvoted)
+		var q QuestionItem
+		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &q.Author.Avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
+		q.Author.Username = q.Question.AuthorUsername
 		if err != nil {
 			fmt.Println("failed to scan row", err)
 			return
@@ -266,5 +293,4 @@ limit $3 offset $4;`,
 		return
 	}
 	json.NewEncoder(w).Encode(questions)
-	fmt.Println(questions)
 }

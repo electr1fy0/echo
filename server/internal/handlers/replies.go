@@ -20,29 +20,51 @@ func (h *APIHandler) respondWithError(w http.ResponseWriter, msg string, err err
 	http.Error(w, msg, code)
 }
 
-type Answer struct {
-	UID         uuid.UUID `json:"uid"`
-	Content     string    `json:"content"`
-	TimeCreated time.Time `json:"timeCreated"`
-	QuestionUID uuid.UUID `json:"questionUid"`
-	Upvotes     int       `json:"upvotes"`
-	IsUpvoted   bool      `json:"isUpvoted"`
-}
-
 func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	defer r.Body.Close()
-	var answer []Answer
+	var answer []AnswerItem
 	uid := r.PathValue("uid")
+	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
+	if !ok {
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+		return
+	}
 
+	sub := claims["sub"].(string)
+	fmt.Println(sub)
+	if sub == "" {
+		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
+		return
+	}
 	rows, err := h.DB.Query(ctx, `
-	select a.uid, a.content, a.time_created, a.question_uid, count(v.answer_uid) as vote_count
-	from answers a left join answer_upvotes v
-	on a.uid = v.answer_uid
-	where a.question_uid = $1
-	group by a.uid, a.content, a.time_created, a.question_uid;
-	`, uid)
+	select a.uid,
+	a.content,
+	a.time_created,
+	a.question_uid,
+	a.author,
+	u.avatar,
+	count(v.answer_uid) as vote_count,
+	exists (
+	select 1 from answer_upvotes v2
+	where v2.answer_uid = a.uid  and v2.username = $1
+	) as is_upvoted
+	from answers a
+	left join answer_upvotes v
+		on a.uid = v.answer_uid
+	left join users u
+	on u.username = a.author
+	where a.question_uid = $2
+	group by
+    a.uid,
+    a.content,
+    a.time_created,
+    a.question_uid,
+    a.author,
+    u.avatar
+	limit 200 offset 0;
+	`, sub, uid)
 	if err != nil {
 		h.respondWithError(w, "failed to query replies: "+err.Error(), err, http.StatusBadRequest)
 		return
@@ -50,8 +72,8 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var ans Answer
-		if err := rows.Scan(&ans.UID, &ans.Content, &ans.TimeCreated, &ans.QuestionUID, &ans.Upvotes); err != nil {
+		var ans AnswerItem
+		if err := rows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &ans.Author.Avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err != nil {
 			h.respondWithError(w, "failed to read rows of replies: "+err.Error(), err, http.StatusBadRequest)
 			return
 		}

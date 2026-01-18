@@ -1,4 +1,5 @@
 import { API_URL } from "@/config";
+import type { User } from "@/types";
 
 export type AuthPayload = {
   username: string;
@@ -58,5 +59,5 @@ export async function verifySession() {
   if (!res.ok) {
     throw new Error("verification failed");
   }
-  return res.text();
+  return res.json() as Promise<User>;
 }

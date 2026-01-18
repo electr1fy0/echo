@@ -55,7 +55,7 @@ func main() {
 	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}", middleware.Auth(h.DeleteReply))
 	mux.HandleFunc("POST /questions/{quid}/replies/{ruid}/vote", middleware.Auth(h.UpdateReplyVote))
 	mux.HandleFunc("UPDATE /questions/{quid}/replies/{ruid}", middleware.Auth(h.UpdateReply))
-	mux.HandleFunc("GET /questions/{uid}/replies", h.ListReplies)
+	mux.HandleFunc("GET /questions/{uid}/replies", middleware.Auth(h.ListReplies))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -64,7 +64,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: middleware.CORS(mux),
+		Handler: middleware.Logger(middleware.CORS(mux)),
 	}
 
 	fmt.Println("starting server on :" + port)

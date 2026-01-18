@@ -6,7 +6,10 @@ import {
   useDeleteQuestion,
 } from "@/hooks/use-questions";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Mail01Icon, PencilEdit02Icon } from "@hugeicons/core-free-icons";
+import {
+  Mail01Icon,
+  PencilEdit02Icon,
+} from "@hugeicons/core-free-icons";
 import {
   Dialog,
   DialogContent,
@@ -26,9 +29,7 @@ export function Profile() {
     isLoading: isProfileLoading,
     error: profileError,
   } = useFetchProfile();
-  const {
-    mutate: updateProfile,
-  } = useUpdateProfile();
+  const { mutate: updateProfile } = useUpdateProfile();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const {
@@ -38,6 +39,7 @@ export function Profile() {
   } = useUserQuestionsQuery(0, 10);
 
   const { mutate: deleteQuestion } = useDeleteQuestion();
+
 
   const [editForm, setEditForm] = useState<User>({
     username: "",
@@ -85,18 +87,21 @@ export function Profile() {
               className="size-full object-cover"
             />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={() => {
-              setEditForm(user);
-              setIsEditOpen(true);
-            }}
-          >
-            <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
-            Edit Profile
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() => {
+                setEditForm(user);
+                setIsEditOpen(true);
+              }}
+            >
+              <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
+              Edit Profile
+            </Button>
+
+          </div>
         </div>
 
         <div className="space-y-1">
@@ -190,7 +195,7 @@ export function Profile() {
                 className="select-text"
                 value={editForm.avatar}
                 onChange={(e) => {
-                  updateDraft({ bio: e.target.value });
+                  updateDraft({ avatar: e.target.value });
                 }}
               />
             </div>

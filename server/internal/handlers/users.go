@@ -10,15 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type Profile struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Bio      string `json:"bio"`
-	Avatar   string `json:"avatar"`
-	Answered int    `json:"answered"`
-	Posted   int    `json:"posted"`
-}
-
 func (h *APIHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 }

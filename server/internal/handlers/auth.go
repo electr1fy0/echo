@@ -10,12 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type User struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 var key = []byte("supersecretkey")
 
 func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +111,25 @@ func (h *APIHandler) Signout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) Verify(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("valid"))
+	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
+	if !ok {
+		h.respondWithError(w, "invalid claims", nil, http.StatusUnauthorized)
+		return
+	}
+
+	username, ok := claims["sub"].(string)
+	if !ok {
+		h.respondWithError(w, "invalid token sub", nil, http.StatusUnauthorized)
+		return
+	}
+
+	var user User
+	err := h.DB.QueryRow(context.Background(), "select username, email from users where username = $1", username).Scan(&user.Username, &user.Email)
+	if err != nil {
+		h.respondWithError(w, "user not found", err, http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }

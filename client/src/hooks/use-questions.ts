@@ -9,19 +9,31 @@ import {
   searchQuestions,
 } from "@/api/questions";
 
-export function useQuestionsQuery(offset = 0, limit = 10) {
+export function useQuestionsQuery(
+  offset = 0,
+  limit = 500,
+  sort?: "votes" | "time_created",
+) {
   return useQuery({
-    queryKey: ["questions", offset, limit],
-    queryFn: () => fetchQuestions(offset, limit),
+    queryKey: ["questions", offset, limit, sort],
+    queryFn: () => fetchQuestions(offset, limit, sort),
     staleTime: 30_000,
   });
 }
 
-export function useUserQuestionsQuery(offset = 0, limit = 10) {
+export function useUserQuestionsQuery(offset = 0, limit = 500) {
   return useQuery({
     queryKey: ["user-questions", "question", offset, limit],
     queryFn: () => fetchUserQuestions(offset, limit),
     staleTime: 30_000,
+  });
+}
+
+export function useTrendingQuestions() {
+  return useQuery({
+    queryKey: ["questions", "trending"],
+    queryFn: () => fetchQuestions(0, 5, "votes"),
+    staleTime: 60_000,
   });
 }
 
@@ -64,7 +76,7 @@ export function useQuestionDraft() {
   return { draft, updateDraft, resetDraft };
 }
 
-export function useSearchQuestions(query: string, offset = 0, limit = 20) {
+export function useSearchQuestions(query: string, offset = 0, limit = 500) {
   return useQuery({
     queryKey: ["search-questions", query, offset, limit],
     queryFn: () => searchQuestions(query, offset, limit),

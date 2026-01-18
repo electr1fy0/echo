@@ -5,7 +5,7 @@ export interface Question {
   uid?: QuestionId;
   content: string;
   timeCreated?: Date;
-  author: string;
+  authorUsername: string;
   upvotes: number;
   isUpvoted: boolean;
 }
@@ -19,6 +19,14 @@ export interface User {
   posted: number;
 }
 
+export interface QuestionItem {
+  question: Question;
+  author: User;
+}
+export interface AnswerItem {
+  answer: Reply;
+  author: User;
+}
 export interface QuestionDraft {
   content: string;
 }
@@ -28,7 +36,7 @@ export interface Reply {
   content: string;
   questionUid: string;
   timeCreated?: Date;
-  author: string;
+  authorUsername: string;
   upvotes: number;
   isUpvoted: boolean;
 }

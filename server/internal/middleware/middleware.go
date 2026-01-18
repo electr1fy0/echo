@@ -4,11 +4,35 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var key = []byte("supersecretkey")
+
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (r *statusRecorder) WriteHeader(statusCode int) {
+	r.statusCode = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
+}
+
+func Logger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		recorder := &statusRecorder{
+			ResponseWriter: w,
+			statusCode:     http.StatusOK,
+		}
+		next.ServeHTTP(recorder, r)
+		duration := time.Since(start)
+		fmt.Printf("%s %s %d %v\n", r.Method, r.URL.Path, recorder.statusCode, duration)
+	})
+}
 
 func CORS(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

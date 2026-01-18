@@ -1,9 +1,12 @@
-import type { Reply } from "@/types";
+import type { AnswerItem, Reply } from "@/types";
 import { API_URL } from "@/config";
 
-export async function fetchReplies(questionId: string): Promise<Reply[]> {
+export async function fetchReplies(questionId: string): Promise<AnswerItem[]> {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(questionId)}/replies`,
+    {
+      credentials: "include",
+    },
   );
   if (!res.ok) throw new Error("Failed to fetch replies");
   return res.json();

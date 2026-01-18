@@ -1,17 +1,22 @@
-import type { Question, QuestionDraft } from "@/types";
+import type { QuestionDraft, QuestionItem } from "@/types";
 import { API_URL } from "@/config";
 
-export async function fetchQuestions(offset: number, limit: number) {
+export async function fetchQuestions(
+  offset: number,
+  limit: number,
+  sort?: "votes" | "time_created",
+) {
   const params = new URLSearchParams({
     offset: offset.toString(),
     limit: limit.toString(),
+    ...(sort ? { sort } : {}),
   });
 
   const res = await fetch(`${API_URL}/questions?${params}`, {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to fetch questions");
-  return res.json() as Promise<Question[]>;
+  return res.json() as Promise<QuestionItem[]>;
 }
 
 export async function fetchUserQuestions(offset: number, limit: number) {
@@ -24,7 +29,7 @@ export async function fetchUserQuestions(offset: number, limit: number) {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to fetch user questions");
-  return res.json() as Promise<Question[]>;
+  return res.json() as Promise<QuestionItem[]>;
 }
 
 export async function createQuestion(draft: QuestionDraft) {
@@ -49,7 +54,7 @@ export async function deleteQuestion(questionId: string) {
   if (!res.ok) throw new Error("Failed to delete question");
 }
 
-export async function searchQuestions(query: string, offset = 0, limit = 20) {
+export async function searchQuestions(query: string, offset = 0, limit = 500) {
   const params = new URLSearchParams({
     q: query,
     offset: offset.toString(),
@@ -60,7 +65,7 @@ export async function searchQuestions(query: string, offset = 0, limit = 20) {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to search questions");
-  return res.json() as Promise<Question[]>;
+  return res.json() as Promise<QuestionItem[]>;
 }
 
 export async function updateVotes(qid: string) {
