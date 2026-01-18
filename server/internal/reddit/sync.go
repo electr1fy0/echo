@@ -126,8 +126,8 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 		author := "u/" + post.Data.Author
 		questionUID := uuid.New()
 		_, err := db.Exec(ctx, `
-			INSERT INTO questions (uid, content, author, chamber_uid, reddit_upvotes, time_created)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO questions (uid, content, author, chamber_uid, upvotes_count, reddit_upvotes, time_created)
+			VALUES ($1, $2, $3, $4, 0, $5, $6)
 		`, questionUID, content, author, state.ChamberUID, post.Data.Score, postTime)
 		if err != nil {
 			log.Printf("[reddit] insert error: %v", err)
@@ -143,8 +143,8 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 				commentAuthor := "u/" + comment.Data.Author
 				commentTime := time.Unix(int64(comment.Data.CreatedUTC), 0)
 				_, _ = db.Exec(ctx, `
-					INSERT INTO answers (uid, content, author, question_uid, reddit_upvotes, time_created)
-					VALUES ($1, $2, $3, $4, $5, $6)
+					INSERT INTO answers (uid, content, author, question_uid, upvotes_count, reddit_upvotes, time_created)
+					VALUES ($1, $2, $3, $4, 0, $5, $6)
 				`, uuid.New(), comment.Data.Body, commentAuthor, questionUID, comment.Data.Score, commentTime)
 			}
 		}
@@ -161,9 +161,9 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 }
 
 func fetchPosts(subreddit string) ([]RedditPost, error) {
-	url := fmt.Sprintf("https://www.reddit.com/r/%s/new.json?limit=25", subreddit)
+	url := fmt.Sprintf("https://old.reddit.com/r/%s/new.json?limit=25", subreddit)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Echo/1.0 (contact: echo-app)")
+	req.Header.Set("User-Agent", "web:echo-app:v1.0 (by /u/echo_app_bot)")
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -192,10 +192,11 @@ func fetchComments(subreddit, postID string) ([]struct {
 		CreatedUTC float64 `json:"created_utc"`
 	} `json:"data"`
 }, error) {
-	url := fmt.Sprintf("https://www.reddit.com/r/%s/comments/%s.json?limit=10", subreddit, postID)
+	url := fmt.Sprintf("https://old.reddit.com/r/%s/comments/%s.json?limit=10", subreddit, postID)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Echo/1.0")
-	resp, err := http.DefaultClient.Do(req)
+	req.Header.Set("User-Agent", "web:echo-app:v1.0 (by /u/echo_app_bot)")
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
