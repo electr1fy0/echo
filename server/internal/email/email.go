@@ -28,7 +28,7 @@ func SendVerificationEmail(to, username, token string) error {
 	`, username, verifyLink)
 
 	params := &resend.SendEmailRequest{
-		From:    "Echo <onboarding@resend.dev>",
+		From:    "Echo <hello@echo.ayushpandey.xyz>",
 		To:      []string{to},
 		Subject: "Welcome to Echo! Please verify your email",
 		Html:    htmlContent,
