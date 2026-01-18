@@ -25,7 +25,7 @@ import { useFetchProfile, useUpdateProfile } from "@/hooks/use-profile";
 import type { User } from "@/types";
 import { useListChambers } from "@/hooks/use-chamber";
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
-import { CHAMBER_COLORS } from "@/components/chambers/chamber-list";
+import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 

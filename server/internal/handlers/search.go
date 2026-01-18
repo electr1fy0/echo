@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -47,6 +46,9 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		Replies:   []AnswerItem{},
 	}
 	var errChambers, errQuestions, errReplies error
+	_ = errChambers
+	_ = errQuestions
+	_ = errReplies
 
 	// 1. Search Chambers
 	wg.Add(1)
@@ -145,16 +147,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	wg.Wait()
-
-	if errChambers != nil {
-		fmt.Println("Error searching chambers:", errChambers)
-	}
-	if errQuestions != nil {
-		fmt.Println("Error searching questions:", errQuestions)
-	}
-	if errReplies != nil {
-		fmt.Println("Error searching replies:", errReplies)
-	}
 
 	json.NewEncoder(w).Encode(resp)
 }

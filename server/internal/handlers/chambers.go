@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -26,7 +25,6 @@ func (h *APIHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	var chamber Chamber
-	fmt.Println("chamberrr")
 
 	if err := json.NewDecoder(r.Body).Decode(&chamber); err != nil {
 		h.respondWithError(w, "failed to decode chamber body", err, http.StatusBadRequest)
@@ -38,7 +36,6 @@ func (h *APIHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
@@ -55,8 +52,8 @@ func (h *APIHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
 	// Auto-join creator
 	_, err = h.DB.Exec(ctx, "insert into chamber_members (chamber_uid, username) values ($1, $2)", uid, sub)
 	if err != nil {
-		// Log error but don't fail request? ideally fail.
-		fmt.Println("failed to auto-join creator:", err)
+		h.respondWithError(w, "failed to auto-join creator", err, http.StatusInternalServerError)
+		return
 	}
 
 	chamber.UID = uid.String()
@@ -72,7 +69,6 @@ func (h *APIHandler) DeleteChamber(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	var chamber Chamber
-	fmt.Println("chamberrr")
 
 	if err := json.NewDecoder(r.Body).Decode(&chamber); err != nil {
 		h.respondWithError(w, "failed to decode chamber body", err, http.StatusBadRequest)
@@ -84,7 +80,6 @@ func (h *APIHandler) DeleteChamber(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
@@ -146,7 +141,6 @@ func (h *APIHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var c Chamber
 		if err := rows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.MemberCount, &c.IsJoined); err != nil {
-			fmt.Println("failed to scan chamber:", err)
 			continue
 		}
 		chambers = append(chambers, c)

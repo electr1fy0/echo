@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -85,7 +84,6 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 			&n.Content,
 		)
 		if err != nil {
-			fmt.Println("scan error", err)
 			continue
 		}
 		if avatar != nil {

@@ -24,7 +24,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { useListChambers } from "@/hooks/use-chamber";
-import { CHAMBER_COLORS } from "@/components/chambers/chamber-list";
+import { CHAMBER_COLORS } from "@/components/chambers/consts";
 
 export function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
@@ -37,15 +37,16 @@ export function Home() {
   const { data: chambers = [] } = useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
 
-  const { data: questions = [], isLoading: isQuestionsLoading } = useQuestionsQuery(
-    0,
-    50,
-    activeTab === "trending" ? "votes" : "time_created",
-    "joined"
-  );
+  const { data: questions = [], isLoading: isQuestionsLoading } =
+    useQuestionsQuery(
+      0,
+      50,
+      activeTab === "trending" ? "votes" : "time_created",
+      "joined",
+    );
 
   const selectedChamberData = JOINED_CHAMBERS.find(
-    (c) => c.uid === selectedChamber
+    (c) => c.uid === selectedChamber,
   );
 
   const handleSubmit = () => {
@@ -57,7 +58,7 @@ export function Home() {
           resetDraft();
           setSelectedChamber("");
         },
-      }
+      },
     );
   };
 
@@ -80,9 +81,9 @@ export function Home() {
                     className={cn(
                       "size-3 rounded-full",
                       CHAMBER_COLORS[
-                      (selectedChamberData.colorIndex || 0) %
-                      CHAMBER_COLORS.length
-                      ]
+                        (selectedChamberData.colorIndex || 0) %
+                          CHAMBER_COLORS.length
+                      ],
                     )}
                   />
                   {selectedChamberData.name}
@@ -109,8 +110,8 @@ export function Home() {
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                        (chamber.colorIndex || 0) % CHAMBER_COLORS.length
-                        ]
+                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                        ],
                       )}
                     />
                     {chamber.name}
@@ -171,7 +172,7 @@ export function Home() {
                 "h-7 rounded-full text-xs px-3 transition-all gap-1.5",
                 activeTab === "recent"
                   ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
               )}
             >
               <HugeiconsIcon
@@ -189,7 +190,7 @@ export function Home() {
                 "h-7 rounded-full text-xs px-3 transition-all gap-1.5",
                 activeTab === "trending"
                   ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+                  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
               )}
             >
               <HugeiconsIcon

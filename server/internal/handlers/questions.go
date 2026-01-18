@@ -130,7 +130,6 @@ func (h *APIHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
@@ -147,11 +146,14 @@ func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	defer r.Body.Close()
 	var question Question
-	json.NewDecoder(r.Body).Decode(&question)
+	if err := json.NewDecoder(r.Body).Decode(&question); err != nil {
+		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		return
+	}
 
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		fmt.Println("wrong assertion")
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
@@ -181,7 +183,7 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		fmt.Println("wrong assertion")
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
@@ -251,9 +253,7 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := h.DB.Query(ctx, finalQuery, args...)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Println("failed to query row", err)
-		w.Write([]byte("failed to query rows" + err.Error()))
+		h.respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -268,7 +268,7 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 		q.Author.Username = q.Question.AuthorUsername
 
 		if err != nil {
-			fmt.Println("failed to scan row", err)
+			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)
 			return
 		}
 		questions = append(questions, q)
@@ -289,7 +289,7 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	offset := q.Get("offset")
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		fmt.Println("wrong assertion")
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
@@ -335,7 +335,7 @@ limit $2 offset $3`, sub, limit, offset)
 		}
 		q.Author.Username = q.Question.AuthorUsername
 		if err != nil {
-			fmt.Println("failed to scan row", err)
+			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)
 			return
 		}
 		questions = append(questions, q)
@@ -394,7 +394,7 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &q.Author.Avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
 		q.Author.Username = q.Question.AuthorUsername
 		if err != nil {
-			fmt.Println("failed to scan row", err)
+			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)
 			return
 		}
 		questions = append(questions, q)

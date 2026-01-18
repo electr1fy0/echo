@@ -18,6 +18,7 @@ interface ChamberCardProps {
 }
 
 import { useJoinChamber, useLeaveChamber } from "@/hooks/use-chamber";
+import { CHAMBER_COLORS } from "./consts";
 
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const joinMutation = useJoinChamber();

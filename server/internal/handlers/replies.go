@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -13,10 +12,6 @@ import (
 )
 
 func (h *APIHandler) respondWithError(w http.ResponseWriter, msg string, err error, code int) {
-	fmt.Println(msg)
-	if err != nil {
-		fmt.Println(err)
-	}
 	http.Error(w, msg, code)
 }
 
@@ -33,7 +28,6 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
@@ -93,7 +87,6 @@ func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 		h.respondWithError(w, "failed to decode reply", err, http.StatusBadRequest)
 		return
 	}
-	fmt.Println(ans)
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
 		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
@@ -101,7 +94,6 @@ func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
@@ -117,8 +109,6 @@ func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 
 	ans.UID = uuid.New()
 	ans.TimeCreated = time.Now()
-
-	fmt.Println(ans)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -137,7 +127,8 @@ func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	if err == nil && questionAuthor != "" && questionAuthor != sub {
 		_, err := h.DB.Exec(ctx, "insert into notifications (user_username, actor_username, type, reference_uid) values ($1, $2, 'reply_question', $3)", questionAuthor, sub, ans.UID)
 		if err != nil {
-			fmt.Println("failed to create notification", err)
+			// Notification failure is non-critical
+			_ = err
 		}
 	}
 
@@ -160,7 +151,6 @@ func (h *APIHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
@@ -207,7 +197,6 @@ func (h *APIHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sub := claims["sub"].(string)
-	fmt.Println(sub)
 	if sub == "" {
 		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return

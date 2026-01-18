@@ -16,15 +16,16 @@ func SendVerificationEmail(to, username, token string) error {
 
 	client := resend.NewClient(apiKey)
 
-	verifyLink := fmt.Sprintf("http://localhost:5173/verify-email?token=%s", token)
+	domain := os.Getenv("ECHO_DOMAIN")
+
+	verifyLink := fmt.Sprintf("http://%s/verify-email?token=%s", domain, token)
 
 	htmlContent := fmt.Sprintf(`
 		<h1>Welcome to Echo, %s!</h1>
 		<p>Thanks for signing up. Please verify your email address by clicking the link below:</p>
-		<p><a href="%s">Verify Email</a></p>
-		<p>Or copy this link: %s</p>
+		<p>%s</p>
 		<p>Cheers,<br>The Echo Team</p>
-	`, username, verifyLink, verifyLink)
+	`, username, verifyLink)
 
 	params := &resend.SendEmailRequest{
 		From:    "Echo <onboarding@resend.dev>",

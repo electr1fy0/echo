@@ -26,7 +26,8 @@ func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		panic(err)
+		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
@@ -63,7 +64,6 @@ func (h *APIHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 		h.respondWithError(w, "invalid request", err, http.StatusBadRequest)
 		return
 	}
-	fmt.Println(req)
 	var username string
 	err := h.DB.QueryRow(context.Background(), "UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1 RETURNING username", req.Token).Scan(&username)
 	if err != nil {
@@ -82,7 +82,8 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 	var user User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		panic(err)
+		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		return
 	}
 
 	var dbUser struct {
@@ -118,7 +119,8 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString(key)
 	if err != nil {
-		panic(err)
+		h.respondWithError(w, "failed to sign token", err, http.StatusInternalServerError)
+		return
 	}
 
 	http.SetCookie(w, &http.Cookie{

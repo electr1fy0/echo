@@ -17,12 +17,8 @@ var (
 	err error
 )
 
-// func Chain(h http.Handler,  middlewares ...func(http.Handler) http.Handler) http.Handler{
-
-// }
-
 func main() {
-	db, err = pgxpool.New(context.Background(), os.Getenv("POSTGRES_CONN_STR"))
+	db, err = pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("failed to create pool:", err)
 	}
@@ -38,7 +34,6 @@ func main() {
 	mux.HandleFunc("GET /auth/verify", middleware.Auth(h.Verify))
 	mux.HandleFunc("POST /auth/verify-email", h.VerifyEmail)
 
-	mux.HandleFunc("GET /users/{uid}", h.GetUser)
 	mux.HandleFunc("GET /users/me", middleware.Auth(h.GetProfile))
 	mux.HandleFunc("PATCH /users/me", middleware.Auth(h.UpdateUser))
 	mux.HandleFunc("GET /users/me/questions", middleware.Auth(h.ListUserQuestions))
