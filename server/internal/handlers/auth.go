@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"echo/internal/email"
+	"echo/internal/middleware"
 	"echo/internal/utils"
 	"encoding/json"
 	"fmt"
@@ -12,8 +13,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var key = []byte("supersecretkey")
 
 type VerifyEmailRequest struct {
 	Token string `json:"token"`
@@ -117,7 +116,7 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		"role":   "user",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(key)
+	tokenStr, err := token.SignedString(middleware.Key)
 	if err != nil {
 		h.respondWithError(w, "failed to sign token", err, http.StatusInternalServerError)
 		return
@@ -128,8 +127,6 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *APIHandler) Signout(w http.ResponseWriter, r *http.Request) {
-	// With localStorage auth, signout is handled client-side by removing the token
-	// This endpoint just confirms the signout request
 	w.WriteHeader(http.StatusOK)
 }
 

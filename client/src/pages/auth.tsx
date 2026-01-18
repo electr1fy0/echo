@@ -146,13 +146,13 @@ export function Auth() {
           <CardContent className="space-y-4">
             <form className="space-y-3 " onSubmit={handleSubmit}>
               {signInError && !isSignUp && (
-                <div className="bg-destructive/15 text-destructive text-sm font-medium px-4 py-3 rounded-lg flex items-center gap-3">
+                <div className="bg-destructive/15 text-destructive text-sm  px-4 py-3 rounded-lg flex items-center gap-3">
                   <HugeiconsIcon icon={Alert02Icon} size={20} />
                   <span>{signInError.message}</span>
                 </div>
               )}
               {signUpError && isSignUp && (
-                <div className="bg-destructive/15 text-destructive text-sm font-medium px-4 py-3 rounded-lg flex items-center gap-3">
+                <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
                   <HugeiconsIcon icon={Alert02Icon} size={20} />
                   <span>{signUpError.message}</span>
                 </div>

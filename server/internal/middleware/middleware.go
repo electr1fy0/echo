@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var key = os.Getenv("SECRET_KEY")
+var Key = os.Getenv("SECRET_KEY")
 
 type statusRecorder struct {
 	http.ResponseWriter
@@ -71,7 +71,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 
 		jwtStr := authHeader[len(bearerPrefix):]
 		token, err := jwt.Parse(jwtStr, func(t *jwt.Token) (any, error) {
-			return key, nil
+			return Key, nil
 		})
 
 		if err != nil || !token.Valid {
