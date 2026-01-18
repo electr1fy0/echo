@@ -24,47 +24,38 @@ type Question struct {
 	IsUpvoted   bool      `json:"isUpvoted"`
 }
 
-type Answer struct {
-	UID         uuid.UUID `json:"uid"`
-	Content     string    `json:"content"`
-	TimeCreated time.Time `json:"timeCreated"`
-	QuestionUID uuid.UUID `json:"questionUid"`
-	Upvotes     int       `json:"upvotes"`
-	IsUpvoted   bool      `json:"isUpvoted"`
-}
-
 type Vote struct {
-	Username    string
-	QuestionUID string
+	Username  string
+	ObjectUID string
 }
 
-func (h *APIHandler) UpdateVote(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 
 	defer cancel()
 	quid := r.PathValue("uid")
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		http.Error(w, "no claims", http.StatusUnauthorized)
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
 	fmt.Println(sub)
 	if sub == "" {
-		http.Error(w, "no sub", http.StatusUnauthorized)
-		return
-	}
-	var vote Vote
-	row := h.DB.QueryRow(ctx, "select username, question_uid from votes where username = $1 and question_uid = $2", sub, quid)
-	if err := row.Scan(&vote.Username, &vote.QuestionUID); err == pgx.ErrNoRows {
-		h.DB.Exec(ctx, "insert into votes (username, question_uid) values ($1, $2)", sub, quid)
-	} else if err == nil {
-		h.DB.QueryRow(ctx, "delete from votes where username = $1 and question_uid = $2", sub, quid)
-	} else {
-		http.Error(w, "failed to update votes", http.StatusInternalServerError)
+		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
 	}
 
+	var vote Vote
+	row := h.DB.QueryRow(ctx, "select username, question_uid from question_upvotes where username = $1 and question_uid = $2", sub, quid)
+	if err := row.Scan(&vote.Username, &vote.ObjectUID); err == pgx.ErrNoRows {
+		h.DB.Exec(ctx, "insert into question_upvotes (username, question_uid) values ($1, $2)", sub, quid)
+	} else if err == nil {
+		h.DB.QueryRow(ctx, "delete from question_upvotes where username = $1 and question_uid = $2", sub, quid)
+	} else {
+		h.respondWithError(w, "failed to update question_upvotes", nil, http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
@@ -79,18 +70,18 @@ func (h *APIHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		http.Error(w, "no claims", http.StatusUnauthorized)
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
 	fmt.Println(sub)
 	if sub == "" {
-		http.Error(w, "no sub", http.StatusUnauthorized)
+		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
 	}
 	_, err := h.DB.Exec(ctx, "delete from questions where uid =  $1 and author = $2", uid, sub)
 	if err != nil {
-		http.Error(w, "failed to save reply to db", http.StatusInternalServerError)
+		h.respondWithError(w, "failed to save reply to db", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -109,13 +100,13 @@ func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := claims["sub"].(string)
 	if sub == "" {
-		http.Error(w, "invalid sub", http.StatusUnauthorized)
+		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
 		return
 	}
 
 	_, err := h.DB.Exec(ctx, "insert into questions (content, author) values ($1, $2)", question.Content, sub)
 	if err != nil {
-		http.Error(w, "failed to insert data: "+err.Error(), http.StatusInternalServerError)
+		h.respondWithError(w, "failed to insert data: "+err.Error(), err, http.StatusInternalServerError)
 		return
 	}
 	w.Write([]byte("all good"))
@@ -135,14 +126,14 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := claims["sub"].(string)
 	if sub == "" {
-		http.Error(w, "invalid sub", http.StatusUnauthorized)
+		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
 		return
 	}
 
 	rows, err := h.DB.Query(ctx, `
 	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
-	exists (select 1 from votes v2 where v2.question_uid = q.uid and v2.username = $3) as is_upvoted
-	from questions q left join votes v
+	exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $3) as is_upvoted
+	from questions q left join question_upvotes v
 	on q.uid = v.question_uid
 	group by q.uid, q.content, q.time_created
 	limit $1 offset $2`, limit, offset, sub)
@@ -185,7 +176,7 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	}
 	sub := claims["sub"].(string)
 	if sub == "" {
-		http.Error(w, "invalid sub", http.StatusUnauthorized)
+		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
 		return
 	}
 
@@ -208,7 +199,7 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 		questions = append(questions, q)
 	}
 	if rows.Err() != nil {
-		http.Error(w, "db error: "+rows.Err().Error(), http.StatusInternalServerError)
+		h.respondWithError(w, "db error: "+rows.Err().Error(), rows.Err(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(questions)
@@ -250,7 +241,7 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 		questions = append(questions, q)
 	}
 	if rows.Err() != nil {
-		http.Error(w, "db error: "+rows.Err().Error(), http.StatusInternalServerError)
+		h.respondWithError(w, "db error: "+rows.Err().Error(), rows.Err(), http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(questions)

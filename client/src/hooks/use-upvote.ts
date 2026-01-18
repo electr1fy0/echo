@@ -1,15 +1,7 @@
-// import type { UpvoteState } from "@/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateVotes } from "@/api/questions";
-
-// type UseUpvoteOptions = {
-//   initialCount?: number;
-//   initialUpvoted?: boolean;
-// };
-
-// type UseUpvoteReturn = UpvoteState & {
-//   toggle: () => void;
-// };
+import { updateReplyVotes } from "@/api/replies";
+import type { Reply } from "@/types";
 
 export function useUpdateVote() {
   const queryClient = useQueryClient();
@@ -23,3 +15,14 @@ export function useUpdateVote() {
   });
 }
 
+export function useReplyUpdateVote() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ qid, rid }: { qid: string; rid: string }) =>
+      updateReplyVotes(qid, rid),
+    onSuccess: (_, { qid }) => {
+      queryClient.invalidateQueries({ queryKey: ["replies", qid] });
+    },
+  });
+}

@@ -35,3 +35,11 @@ export async function deleteReply(
   );
   if (!res.ok) throw new Error("failed to delete reply");
 }
+
+export async function updateReplyVotes(qid: string, rid: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(qid)}/replies/${encodeURIComponent(rid)}/vote`,
+    { method: "post", credentials: "include" },
+  );
+  if (!res.ok) throw new Error("Failed to update votes");
+}

@@ -70,7 +70,7 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 	row.Scan(&dbUser.Username, &dbUser.Email, &dbUser.Password)
 
 	if bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password)) != nil {
-		http.Error(w, "incorrect credentials", http.StatusUnauthorized)
+		h.respondWithError(w, "incorrect credentials", nil, http.StatusUnauthorized)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *APIHandler) Signout(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie("jwt-auth")
 	if err != nil {
-		http.Error(w, "failed to log out"+err.Error(), http.StatusBadRequest)
+		h.respondWithError(w, "failed to log out"+err.Error(), err, http.StatusBadRequest)
 		return
 	}
 

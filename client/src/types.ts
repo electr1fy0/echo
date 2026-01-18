@@ -24,11 +24,13 @@ export interface QuestionDraft {
 }
 
 export interface Reply {
-  uid?: ReplyId;
+  uid: ReplyId;
   content: string;
+  questionUid: string;
   timeCreated?: Date;
   author: string;
-  upvotes?: number;
+  upvotes: number;
+  isUpvoted: boolean;
 }
 
 export interface ReplyDraft {

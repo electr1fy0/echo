@@ -26,6 +26,10 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
           setContent("");
           onSubmitSuccess?.();
         },
+        onError: (err) => {
+          console.error("Failed to submit reply:", err);
+          alert("Failed to submit reply. Please try again.");
+        },
       },
     );
   };

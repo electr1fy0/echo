@@ -28,8 +28,6 @@ export function Profile() {
   } = useFetchProfile();
   const {
     mutate: updateProfile,
-    isLoading: isUpdateLoading,
-    error: updateError,
   } = useUpdateProfile();
 
   const [isEditOpen, setIsEditOpen] = useState(false);

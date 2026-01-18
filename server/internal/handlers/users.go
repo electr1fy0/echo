@@ -29,7 +29,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		http.Error(w, "no claims", http.StatusUnauthorized)
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
@@ -39,8 +39,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.DB.Exec(ctx, "update users set email = $1, bio = $2, avatar = $3 where username = $4", profile.Email, profile.Bio, profile.Avatar, sub)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "failed to update profile"+err.Error(), http.StatusInternalServerError)
+		h.respondWithError(w, "failed to update profile"+err.Error(), err, http.StatusInternalServerError)
 		return
 	}
 }
@@ -52,13 +51,13 @@ func (h *APIHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
-		http.Error(w, "no claims", http.StatusUnauthorized)
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
 	fmt.Println(sub)
 	if sub == "" {
-		http.Error(w, "no sub", http.StatusUnauthorized)
+		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
 		return
 	}
 	var profile Profile

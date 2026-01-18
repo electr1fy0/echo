@@ -6,7 +6,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { UpvoteButton } from "../upvote-button";
-// import { useUpvote } from "@/hooks/use-upvote";
 import type { Reply } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -14,6 +13,7 @@ import {
   Delete02Icon,
   PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
+import { useReplyUpdateVote } from "@/hooks/use-upvote";
 
 type ReplyItemProps = {
   reply: Reply;
@@ -21,13 +21,17 @@ type ReplyItemProps = {
 };
 
 export function ReplyItem({ reply, onDelete }: ReplyItemProps) {
+  const { mutate: updateUpvote } = useReplyUpdateVote();
+
   return (
     <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
       <div className="pt-0.5">
         <UpvoteButton
-          count={0}
-          isUpvoted={false}
-          onToggle={() => {}}
+          count={reply.upvotes}
+          isUpvoted={reply.isUpvoted}
+          onToggle={() => {
+            updateUpvote({ qid: reply.questionUid, rid: reply.uid });
+          }}
           className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
         />
       </div>
