@@ -23,6 +23,7 @@ import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { formatRelativeTime } from "@/lib/format-time";
 type QuestionItemProps = {
   questionItem: QuestionItem;
   onDelete: (id: string) => void;
@@ -54,7 +55,7 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
               {question.authorUsername || "Anonymous"}
             </span>
             <span className="text-xs text-neutral-400 dark:text-neutral-500">
-              {question.timeCreated && new Date(question.timeCreated).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              {question.timeCreated && formatRelativeTime(new Date(question.timeCreated))}
             </span>
           </div>
           <p className="text-sm text-neutral-900 dark:text-neutral-100 mt-0.5">

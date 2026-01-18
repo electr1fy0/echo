@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Message01Icon, ArrowUp01Icon, InformationCircleIcon } from "@hugeicons/core-free-icons";
 import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { formatRelativeTime } from "@/lib/format-time";
 function NotificationItem({ notification }: { notification: Notification }) {
   const isUpvote = notification.type === "upvote_question";
   const isReply = notification.type === "reply_question";
@@ -35,7 +36,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
           ) : (
             <HugeiconsIcon icon={Message01Icon} className="size-3 text-blue-500" />
           )}
-          {new Date(notification.created_at).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+          {formatRelativeTime(new Date(notification.created_at))}
         </span>
       </div>
     </div>

@@ -19,6 +19,7 @@ import { useGlobalSearch } from "@/hooks/use-search";
 import type { AnswerItem } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
+import { formatRelativeTime } from "@/lib/format-time";
 function ReplyResult({ item }: { item: AnswerItem }) {
     const navigate = useNavigate();
     return (
@@ -34,7 +35,7 @@ function ReplyResult({ item }: { item: AnswerItem }) {
                             {item.author.username}
                         </span>
                         <span className="text-xs text-neutral-500">
-                            {item.answer.timeCreated ? new Date(item.answer.timeCreated).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
+                            {item.answer.timeCreated ? formatRelativeTime(new Date(item.answer.timeCreated)) : ''}
                         </span>
                     </div>
                     <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2">

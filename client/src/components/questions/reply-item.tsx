@@ -15,6 +15,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { formatRelativeTime } from "@/lib/format-time";
 type ReplyItemProps = {
   answerItem: AnswerItem;
   onDelete: () => void;
@@ -47,7 +48,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
           <span className="flex items-center gap-2">
             <span>{reply.authorUsername || "Anonymous"}</span>
             <span className="text-neutral-400 dark:text-neutral-500">
-              {reply.timeCreated && new Date(reply.timeCreated).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+              {reply.timeCreated && formatRelativeTime(new Date(reply.timeCreated))}
             </span>
           </span>
           <span className="block text-sm text-neutral-700 dark:text-neutral-300 ">
