@@ -1,13 +1,16 @@
 package handlers
+
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
 func (h *APIHandler) respondWithError(w http.ResponseWriter, msg string, err error, code int) {
 	http.Error(w, msg, code)
 }
@@ -34,7 +37,7 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	a.question_uid,
 	a.author,
 	u.avatar,
-	a.upvotes_count,
+	a.upvotes_count + COALESCE(a.reddit_upvotes, 0) as upvotes,
 	exists (
 	select 1 from answer_upvotes v2
 	where v2.answer_uid = a.uid  and v2.username = $1
