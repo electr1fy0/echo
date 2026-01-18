@@ -13,6 +13,7 @@ import (
 )
 
 func (h *APIHandler) respondWithError(w http.ResponseWriter, msg string, err error, code int) {
+	fmt.Println(msg)
 	if err != nil {
 		fmt.Println(err)
 	}

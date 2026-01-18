@@ -53,7 +53,7 @@ func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) 
 	} else if err == nil {
 		h.DB.QueryRow(ctx, "delete from question_upvotes where username = $1 and question_uid = $2", sub, quid)
 	} else {
-		h.respondWithError(w, "failed to update question_upvotes", nil, http.StatusInternalServerError)
+		h.respondWithError(w, "failed to update question_upvotes", err, http.StatusInternalServerError)
 		return
 	}
 }
@@ -180,7 +180,14 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.DB.Query(ctx, "select uid, content, time_created from questions where author = $1 limit $2 offset $3", sub, limit, offset)
+	rows, err := h.DB.Query(ctx, `
+	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
+	exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
+	from questions q left join question_upvotes v
+	on q.uid = v.question_uid
+	where q.author = $1
+	group by q.uid, q.content, q.time_created
+	limit $2 offset $3`, sub, limit, offset)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -191,7 +198,7 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	questions := make([]Question, 0)
 	for rows.Next() {
 		var q Question
-		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated)
+		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated, &q.Upvotes, &q.IsUpvoted)
 		if err != nil {
 			fmt.Println("failed to scan row", err)
 			return
@@ -214,18 +221,32 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 	limit := q.Get("limit")
 	offset := q.Get("offset")
 
+	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
+	if !ok {
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+		return
+	}
+	sub := claims["sub"].(string)
+
 	if query == "" {
 		json.NewEncoder(w).Encode([]Question{})
 		return
 	}
 
-	rows, err := h.DB.Query(ctx,
-		"select uid, content, time_created FROM questions WHERE content ILIKE $1 LIMIT $2 OFFSET $3",
-		"%"+query+"%", limit, offset)
+	rows, err := h.DB.Query(ctx, `
+	select q.uid, q.content, q.time_created, count(v.question_uid) as vote_count,
+    exists (select 1 from question_upvotes v2
+    where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
+from questions q
+left join question_upvotes v
+    on q.uid = v.question_uid
+where q.content ilike $2
+group by q.uid, q.content, q.time_created
+limit $3 offset $4;`,
+		sub, "%"+query+"%", limit, offset)
 
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("failed to query rows" + err.Error()))
+		h.respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -233,7 +254,7 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 	questions := make([]Question, 0)
 	for rows.Next() {
 		var q Question
-		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated)
+		err := rows.Scan(&q.UID, &q.Content, &q.TimeCreated, &q.Upvotes, &q.IsUpvoted)
 		if err != nil {
 			fmt.Println("failed to scan row", err)
 			return
@@ -245,4 +266,5 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(questions)
+	fmt.Println(questions)
 }

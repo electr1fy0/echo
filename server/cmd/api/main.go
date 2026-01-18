@@ -48,7 +48,7 @@ func main() {
 	mux.HandleFunc("GET /users/questions", middleware.Auth(h.ListUserQuestions))
 
 	mux.HandleFunc("GET /questions/{uid}", h.GetQuestion)
-	mux.HandleFunc("GET /questions/search", h.SearchQuestions)
+	mux.HandleFunc("GET /questions/search", middleware.Auth(h.SearchQuestions))
 	mux.HandleFunc("DELETE /questions/{uid}", middleware.Auth(h.DeleteQuestion))
 
 	mux.HandleFunc("POST /questions/{uid}/replies", middleware.Auth(h.CreateReply))

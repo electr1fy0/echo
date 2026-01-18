@@ -56,7 +56,9 @@ export async function searchQuestions(query: string, offset = 0, limit = 20) {
     limit: limit.toString(),
   });
 
-  const res = await fetch(`${API_URL}/questions/search?${params}`);
+  const res = await fetch(`${API_URL}/questions/search?${params}`, {
+    credentials: "include",
+  });
   if (!res.ok) throw new Error("Failed to search questions");
   return res.json() as Promise<Question[]>;
 }
