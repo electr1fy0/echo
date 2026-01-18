@@ -183,7 +183,11 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			shouldSync, state, _ := reddit.ShouldSync(ctx, h.DB, chamberUUID)
 			if shouldSync && state != nil {
-				_ = reddit.SyncSubreddit(ctx, h.DB, state)
+				go func(s *reddit.SyncState) {
+					bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+					defer cancel()
+					_ = reddit.SyncSubreddit(bgCtx, h.DB, s)
+				}(state)
 			}
 		}
 	}

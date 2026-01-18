@@ -81,7 +81,7 @@ func ShouldSync(ctx context.Context, db *pgxpool.Pool, chamberUID uuid.UUID) (bo
 		log.Printf("[reddit] first sync for r/%s", state.Subreddit)
 		return true, &state, nil
 	}
-	if time.Since(*state.LastSyncAt) > 5*time.Minute {
+	if time.Since(*state.LastSyncAt) > 15*time.Minute {
 		log.Printf("[reddit] sync needed, last was %v ago", time.Since(*state.LastSyncAt))
 		return true, &state, nil
 	}
@@ -124,7 +124,6 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 			continue
 		}
 		author := "u/" + post.Data.Author
-		// Create Reddit user if not exists
 		db.Exec(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, '') ON CONFLICT (username) DO NOTHING`, author, author+"@reddit.com")
 		questionUID := uuid.New()
 		_, err := db.Exec(ctx, `
