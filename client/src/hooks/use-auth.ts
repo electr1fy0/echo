@@ -12,12 +12,8 @@ export function useSignin() {
 }
 
 export function useSignup() {
-  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: signup,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
-    },
   });
 }
 
@@ -34,5 +30,13 @@ export function useSignout() {
   return useMutation({
     mutationFn: signout,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["auth"] }),
+  });
+}
+
+import { verifyEmail } from "@/api/auth";
+
+export function useVerifyEmail() {
+  return useMutation({
+    mutationFn: verifyEmail,
   });
 }

@@ -61,3 +61,16 @@ export async function verifySession() {
   }
   return res.json() as Promise<User>;
 }
+
+export async function verifyEmail(token: string) {
+  const res = await fetch(`${API_URL}/auth/verify-email`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+
+  if (!res.ok) {
+    throw new Error("verification failed");
+  }
+  return res.json();
+}

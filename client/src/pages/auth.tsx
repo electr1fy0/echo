@@ -48,6 +48,7 @@ function SkeletonHome() {
 
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
   const [user, setUser] = useState<AuthPayload>({
     email: "",
     username: "",
@@ -67,12 +68,47 @@ export function Auth() {
     if (isSignUp) {
       signUp(user, {
         onSuccess: () => {
-          alert("Sign up successful! Please check your email to verify your account.");
+          setSignupSuccess(true);
+        },
+        onError: (err) => {
+          console.error("Signup error:", err);
+          alert("Signup failed: " + err.message);
         },
       });
     } else {
       signIn(user);
     }
+  }
+
+  if (signupSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardHeader>
+            <div className="mx-auto size-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2">
+              <span className="text-2xl">✉️</span>
+            </div>
+            <CardTitle>Check your email</CardTitle>
+            <CardDescription>
+              We've sent a verification link to <strong>{user.email}</strong>.
+              Please click the link to verify your account before signing in.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setSignupSuccess(false);
+                setIsSignUp(false);
+              }}
+            >
+              Back to Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

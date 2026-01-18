@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { Chamber } from "@/types";
 import { useCreateChamber } from "@/hooks/use-chamber";
-import { CHAMBER_COLORS } from "@/components/chambers/chamber-list";
+import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router";
 

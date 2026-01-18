@@ -5,15 +5,6 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router";
 import type { Chamber } from "@/types";
 
-export const CHAMBER_COLORS = [
-  "bg-violet-500",
-  "bg-blue-500",
-  "bg-emerald-500",
-  "bg-orange-500",
-  "bg-pink-500",
-  "bg-cyan-500",
-];
-
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
@@ -27,8 +18,6 @@ interface ChamberCardProps {
 }
 
 import { useJoinChamber, useLeaveChamber } from "@/hooks/use-chamber";
-
-
 
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const joinMutation = useJoinChamber();
@@ -53,7 +42,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
     <div
       className={cn(
         "flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 transition-colors hover:border-neutral-300 dark:hover:border-neutral-700",
-        compact && "p-2"
+        compact && "p-2",
       )}
     >
       <Link
@@ -63,7 +52,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
         <div
           className={cn(
             "size-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 transition-opacity hover:opacity-90",
-            colorClass
+            colorClass,
           )}
         >
           {chamber.name.slice(0, 2).toUpperCase()}
@@ -88,9 +77,9 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
         className={cn(
           "rounded-full h-7 px-3 text-xs font-medium transition-all shadow-none",
           !chamber.isJoined &&
-          "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
+            "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
           chamber.isJoined &&
-          "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+            "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
         )}
         onClick={handleToggleJoin}
       >
@@ -135,13 +124,16 @@ interface CreateChamberButtonProps {
   className?: string;
 }
 
-export function CreateChamberButton({ onClick, className }: CreateChamberButtonProps) {
+export function CreateChamberButton({
+  onClick,
+  className,
+}: CreateChamberButtonProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
         "group w-full flex items-center gap-3 p-3 rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:border-neutral-400 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all",
-        className
+        className,
       )}
     >
       <div className="size-10 rounded-xl flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-neutral-500 group-hover:text-neutral-900 dark:text-neutral-400 dark:group-hover:text-neutral-100">

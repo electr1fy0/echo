@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"echo/internal/email"
+	"echo/internal/utils"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,6 +14,10 @@ import (
 )
 
 var key = []byte("supersecretkey")
+
+type VerifyEmailRequest struct {
+	Token string `json:"token"`
+}
 
 func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -30,35 +35,44 @@ func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := utils.GenerateRandomToken(32)
+	if err != nil {
+		http.Error(w, "failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
 	go func() {
-		if err := email.SendVerificationEmail(user.Email, user.Username); err != nil {
+		if err := email.SendVerificationEmail(user.Email, user.Username, token); err != nil {
 			fmt.Printf("Failed to send verification email: %v\n", err)
 		}
 	}()
 
-	h.DB.Exec(ctx, "insert into users (username, email, password) values ($1, $2, $3)", user.Username, user.Email, hash)
-
-	claims := &jwt.MapClaims{
-		"iat":    time.Now().Unix(),
-		"exp":    time.Now().Add(48 * time.Hour).Unix(),
-		"sub":    user.Username,
-		"access": []string{"view", "create"},
-		"role":   "user",
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString(key)
+	_, err = h.DB.Exec(ctx, "insert into users (username, email, password, verification_token, is_verified) values ($1, $2, $3, $4, $5)", user.Username, user.Email, hash, token, false)
 	if err != nil {
-		panic(err)
+		h.respondWithError(w, "failed to create user", err, http.StatusInternalServerError)
+		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt-auth",
-		Value:    tokenStr,
-		Expires:  time.Now().Add(48 * time.Hour),
-		SameSite: http.SameSiteLaxMode,
-		Secure:   false,
-		Path:     "/",
-	})
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Please check your email to verify your account"})
+}
+
+func (h *APIHandler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var req VerifyEmailRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, "invalid request", err, http.StatusBadRequest)
+		return
+	}
+	fmt.Println(req)
+	var username string
+	err := h.DB.QueryRow(context.Background(), "UPDATE users SET is_verified = TRUE, verification_token = NULL WHERE verification_token = $1 RETURNING username", req.Token).Scan(&username)
+	if err != nil {
+		h.respondWithError(w, "invalid or expired token", err, http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Email verified successfully"})
 }
 
 func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
@@ -71,12 +85,26 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	var dbUser User
-	row := h.DB.QueryRow(ctx, "select username, email, password from users where username = $1", user.Username)
-	row.Scan(&dbUser.Username, &dbUser.Email, &dbUser.Password)
+	var dbUser struct {
+		Username   string
+		Email      string
+		Password   string
+		IsVerified bool
+	}
+	row := h.DB.QueryRow(ctx, "select username, email, password, is_verified from users where username = $1", user.Username)
+	err = row.Scan(&dbUser.Username, &dbUser.Email, &dbUser.Password, &dbUser.IsVerified)
+	if err != nil {
+		h.respondWithError(w, "incorrect credentials", nil, http.StatusUnauthorized)
+		return
+	}
 
 	if bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password)) != nil {
 		h.respondWithError(w, "incorrect credentials", nil, http.StatusUnauthorized)
+		return
+	}
+
+	if !dbUser.IsVerified {
+		h.respondWithError(w, "please verify your email before signing in", nil, http.StatusForbidden)
 		return
 	}
 

@@ -68,9 +68,9 @@ function NavButton({
           ? "bg-primary text-primary-foreground hover:bg-primary/80"
           : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
         !isAction &&
-        (isActive
-          ? "text-neutral-900 dark:text-white"
-          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
+          (isActive
+            ? "text-neutral-900 dark:text-white"
+            : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
       )}
     >
       <HugeiconsIcon
@@ -168,7 +168,7 @@ function MenuButton({
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={onSignout}
-          className="text-red-500 focus:text-red-500 focus:bg-red-50"
+          className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-400/10"
         >
           <HugeiconsIcon icon={Logout01Icon} className="mr-2 size-4" /> Sign out
         </DropdownMenuItem>
@@ -177,7 +177,7 @@ function MenuButton({
   );
 }
 
-import { CHAMBER_COLORS } from "@/components/chambers/chamber-list";
+import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
 
 function CreateQueryDialog({
@@ -193,7 +193,7 @@ function CreateQueryDialog({
 
   const { data: allChambers = [] } = useListChambers();
   // Filter only joined chambers for posting
-  const chambers = allChambers.filter(c => c.isJoined);
+  const chambers = allChambers.filter((c) => c.isJoined);
 
   const handleSubmit = () => {
     if (!draft.content.trim() || !selectedChamber) return;
@@ -228,7 +228,10 @@ function CreateQueryDialog({
                     <div
                       className={cn(
                         "size-3 rounded-full",
-                        CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length]
+                        CHAMBER_COLORS[
+                          (selectedChamberData.colorIndex || 0) %
+                            CHAMBER_COLORS.length
+                        ],
                       )}
                     />
                     {selectedChamberData.name}
@@ -248,7 +251,9 @@ function CreateQueryDialog({
                       <div
                         className={cn(
                           "size-3 rounded-full",
-                          CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length]
+                          CHAMBER_COLORS[
+                            (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                          ],
                         )}
                       />
                       {chamber.name}
@@ -276,7 +281,10 @@ function CreateQueryDialog({
               <div
                 className={cn(
                   "size-3 rounded-full",
-                  CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length]
+                  CHAMBER_COLORS[
+                    (selectedChamberData.colorIndex || 0) %
+                      CHAMBER_COLORS.length
+                  ],
                 )}
               />
               Posting to {selectedChamberData.name}

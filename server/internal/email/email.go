@@ -7,7 +7,7 @@ import (
 	"github.com/resend/resend-go/v3"
 )
 
-func SendVerificationEmail(to, username string) error {
+func SendVerificationEmail(to, username, token string) error {
 	apiKey := os.Getenv("RESEND_API_KEY")
 	if apiKey == "" {
 		fmt.Println("RESEND_API_KEY is not set, skipping email sending")
@@ -16,12 +16,15 @@ func SendVerificationEmail(to, username string) error {
 
 	client := resend.NewClient(apiKey)
 
+	verifyLink := fmt.Sprintf("http://localhost:5173/verify-email?token=%s", token)
+
 	htmlContent := fmt.Sprintf(`
 		<h1>Welcome to Echo, %s!</h1>
-		<p>Thanks for signing up. Please verify your email address to get started.</p>
-		<p>Since this is a demo, your email is practically verified by just receiving this!</p>
+		<p>Thanks for signing up. Please verify your email address by clicking the link below:</p>
+		<p><a href="%s">Verify Email</a></p>
+		<p>Or copy this link: %s</p>
 		<p>Cheers,<br>The Echo Team</p>
-	`, username)
+	`, username, verifyLink, verifyLink)
 
 	params := &resend.SendEmailRequest{
 		From:    "Echo <onboarding@resend.dev>",

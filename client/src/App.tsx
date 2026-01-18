@@ -10,6 +10,7 @@ import { ChamberPage } from "@/pages/chamber";
 import { Notifications } from "@/pages/notifications";
 import { Auth } from "@/pages/auth";
 import { Landing } from "@/pages/landing";
+import { VerifyEmail } from "@/pages/verify-email";
 import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
 
 
@@ -37,6 +38,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/verify-email" element={<VerifyEmail />} />
+
         <Route element={<GuestRoute />}>
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
