@@ -1,4 +1,5 @@
 import { API_URL } from "@/config";
+import { getAuthHeaders } from "@/lib/utils";
 
 export interface Notification {
     uid: string;
@@ -15,7 +16,9 @@ export interface Notification {
 export async function listNotifications(): Promise<Notification[]> {
     const res = await fetch(`${API_URL}/users/me/notifications`, {
         method: "GET",
-        credentials: "include",
+        headers: {
+            ...getAuthHeaders(),
+        },
     });
     if (!res.ok) throw new Error("failed");
     return res.json();

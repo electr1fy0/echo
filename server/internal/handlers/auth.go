@@ -123,33 +123,14 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt-auth",
-		Value:    tokenStr,
-		Expires:  time.Now().Add(48 * time.Hour),
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-		Path:     "/",
-	})
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenStr})
 }
 
 func (h *APIHandler) Signout(w http.ResponseWriter, r *http.Request) {
-
-	cookie, err := r.Cookie("jwt-auth")
-	if err != nil {
-		h.respondWithError(w, "failed to log out"+err.Error(), err, http.StatusBadRequest)
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt-auth",
-		Value:    cookie.Value,
-		Expires:  time.Now(),
-		MaxAge:   -1,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-		Path:     "/",
-	})
+	// With localStorage auth, signout is handled client-side by removing the token
+	// This endpoint just confirms the signout request
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *APIHandler) Verify(w http.ResponseWriter, r *http.Request) {

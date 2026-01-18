@@ -1,10 +1,13 @@
 import { API_URL } from "@/config";
+import { getAuthHeaders } from "@/lib/utils";
 import type { Chamber } from "@/types";
 
 export async function createChamber(chamber: Chamber): Promise<Chamber> {
   const res = await fetch(`${API_URL}/chambers`, {
     method: "POST",
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify(chamber),
   });
 
@@ -19,7 +22,9 @@ export async function listChambers(query?: string): Promise<Chamber[]> {
 
   const res = await fetch(url, {
     method: "GET",
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
 
   if (!res.ok) throw new Error("failed to list chambers");
@@ -29,7 +34,9 @@ export async function listChambers(query?: string): Promise<Chamber[]> {
 export async function joinChamber(uid: string): Promise<void> {
   const res = await fetch(`${API_URL}/chambers/${uid}/join`, {
     method: "POST",
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
   if (!res.ok) throw new Error("failed to join chamber");
 }
@@ -37,7 +44,9 @@ export async function joinChamber(uid: string): Promise<void> {
 export async function leaveChamber(uid: string): Promise<void> {
   const res = await fetch(`${API_URL}/chambers/${uid}/leave`, {
     method: "POST",
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
   if (!res.ok) throw new Error("failed to leave chamber");
 }

@@ -1,5 +1,6 @@
 import type { QuestionDraft, QuestionItem } from "@/types";
 import { API_URL } from "@/config";
+import { getAuthHeaders } from "@/lib/utils";
 
 export async function fetchQuestions(
   offset: number,
@@ -17,7 +18,9 @@ export async function fetchQuestions(
   });
 
   const res = await fetch(`${API_URL}/questions?${params}`, {
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
   if (!res.ok) throw new Error("Failed to fetch questions");
   return res.json() as Promise<QuestionItem[]>;
@@ -30,7 +33,9 @@ export async function fetchUserQuestions(offset: number, limit: number) {
   });
 
   const res = await fetch(`${API_URL}/users/me/questions?${params}`, {
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
   if (!res.ok) throw new Error("Failed to fetch user questions");
   return res.json() as Promise<QuestionItem[]>;
@@ -39,9 +44,11 @@ export async function fetchUserQuestions(offset: number, limit: number) {
 export async function createQuestion(draft: QuestionDraft) {
   const res = await fetch(`${API_URL}/questions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify(draft),
-    credentials: "include",
   });
 
   if (!res.ok) throw new Error("Failed to create question");
@@ -52,7 +59,9 @@ export async function deleteQuestion(questionId: string) {
     `${API_URL}/questions/${encodeURIComponent(questionId)}`,
     {
       method: "DELETE",
-      credentials: "include",
+      headers: {
+        ...getAuthHeaders(),
+      },
     },
   );
   if (!res.ok) throw new Error("Failed to delete question");
@@ -66,7 +75,9 @@ export async function searchQuestions(query: string, offset = 0, limit = 500) {
   });
 
   const res = await fetch(`${API_URL}/questions/search?${params}`, {
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
   if (!res.ok) throw new Error("Failed to search questions");
   return res.json() as Promise<QuestionItem[]>;
@@ -75,7 +86,12 @@ export async function searchQuestions(query: string, offset = 0, limit = 500) {
 export async function updateVotes(qid: string) {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(qid)}/votes`,
-    { method: "post", credentials: "include" },
+    { 
+      method: "post", 
+      headers: {
+        ...getAuthHeaders(),
+      },
+    },
   );
   if (!res.ok) throw new Error("Failed to update votes");
 }

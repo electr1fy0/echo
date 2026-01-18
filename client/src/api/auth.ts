@@ -1,4 +1,5 @@
 import { API_URL } from "@/config";
+import { getAuthHeaders, removeToken, setToken } from "@/lib/utils";
 import type { User } from "@/types";
 
 export type AuthPayload = {
@@ -12,14 +13,18 @@ export async function signin(payload: AuthPayload) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-    credentials: "include",
   });
 
   if (!res.ok) {
-    throw new Error("signin failed");
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "signin failed");
   }
-  console.log(res);
-  return res.text();
+
+  const data = await res.json();
+  if (data.token) {
+    setToken(data.token);
+  }
+  return data;
 }
 
 export async function signup(payload: AuthPayload) {
@@ -27,36 +32,43 @@ export async function signup(payload: AuthPayload) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-    credentials: "include",
   });
 
   if (!res.ok) {
-    throw new Error("signup failed");
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "signup failed");
   }
-  console.log(res);
-  return res.text();
+  return res.json();
 }
 
 export async function signout() {
+  removeToken();
   const res = await fetch(`${API_URL}/auth/signout`, {
     method: "POST",
-    credentials: "include",
+    headers: {
+      ...getAuthHeaders(),
+    },
   });
 
   if (!res.ok) {
-    throw new Error("signout failed");
+    console.error("signout failed on server");
   }
-  console.log(res);
   return res.text();
 }
 
 export async function verifySession() {
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) {
+    throw new Error("No token found");
+  }
+
   const res = await fetch(`${API_URL}/auth/verify`, {
     method: "GET",
-    credentials: "include",
+    headers: headers,
   });
 
   if (!res.ok) {
+    removeToken();
     throw new Error("verification failed");
   }
   return res.json() as Promise<User>;
@@ -70,7 +82,8 @@ export async function verifyEmail(token: string) {
   });
 
   if (!res.ok) {
-    throw new Error("verification failed");
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "verification failed");
   }
   return res.json();
 }

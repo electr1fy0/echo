@@ -60,8 +60,8 @@ export function Auth() {
       return { ...prev, ...fields };
     });
   }
-  const { mutate: signIn, isPending: isInPending } = useSignin();
-  const { mutate: signUp, isPending: isUpPending } = useSignup();
+  const { mutate: signIn, isPending: isInPending, error: signInError } = useSignin();
+  const { mutate: signUp, isPending: isUpPending, error: signUpError } = useSignup();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,7 +72,6 @@ export function Auth() {
         },
         onError: (err) => {
           console.error("Signup error:", err);
-          alert("Signup failed: " + err.message);
         },
       });
     } else {
@@ -136,6 +135,16 @@ export function Auth() {
           </CardHeader>
           <CardContent className="space-y-4">
             <form className="space-y-3 " onSubmit={handleSubmit}>
+              {signInError && !isSignUp && (
+                <div className="text-sm text-red-500 font-medium text-center">
+                  {signInError.message}
+                </div>
+              )}
+              {signUpError && isSignUp && (
+                <div className="text-sm text-red-500 font-medium text-center">
+                  {signUpError.message}
+                </div>
+              )}
               <Input
                 id="username"
                 type="text"
@@ -147,17 +156,19 @@ export function Auth() {
                   updateUser({ username: e.target.value });
                 }}
               />
-              <Input
-                id="email"
-                type="email"
-                placeholder="Email"
-                aria-label="Email"
-                autoComplete="email"
-                className="text-sm pl-3"
-                onChange={(e) => {
-                  updateUser({ email: e.target.value });
-                }}
-              />
+              {isSignUp && (
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Email"
+                  aria-label="Email"
+                  autoComplete="email"
+                  className="text-sm pl-3"
+                  onChange={(e) => {
+                    updateUser({ email: e.target.value });
+                  }}
+                />
+              )}
               <Input
                 id="password"
                 type="password"
