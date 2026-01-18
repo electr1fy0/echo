@@ -35,10 +35,7 @@ func Logger(next http.Handler) http.Handler {
 
 func CORS(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		origin := os.Getenv("CORS_ORIGIN")
-		if origin == "" {
-			origin = "http://localhost:5173"
-		}
+		origin := os.Getenv("CORS_ORIGIN")                                                                                                                             │
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")

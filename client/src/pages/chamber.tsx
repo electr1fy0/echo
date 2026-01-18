@@ -15,7 +15,7 @@ import {
 } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
-import { useQuestionsQuery } from "@/hooks/use-questions";
+import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
 
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
@@ -30,6 +30,8 @@ export function ChamberPage() {
 
   const { data: chambers = [] } = useListChambers();
   const chamber = chambers.find((c) => c.uid === chamberId);
+
+  const { mutate: deleteQn } = useDeleteQuestion();
 
   const { data: questions = [] } = useQuestionsQuery(
     0,
@@ -97,7 +99,13 @@ export function ChamberPage() {
             </span>
             <span className="flex items-center gap-1">
               <HugeiconsIcon icon={Calendar03Icon} className="size-3.5" />
-              Created {chamber.timeCreated ? new Date(chamber.timeCreated).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Jan 2024"}
+              Created{" "}
+              {chamber.timeCreated
+                ? new Date(chamber.timeCreated).toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "Jan 2024"}
             </span>
           </div>
         </div>
@@ -116,10 +124,7 @@ export function ChamberPage() {
           Questions ({questions.length})
         </h2>
         {questions.length > 0 ? (
-          <QuestionList
-            questions={questions}
-            onDelete={(id) => console.log("Delete:", id)}
-          />
+          <QuestionList questions={questions} onDelete={(id) => deleteQn(id)} />
         ) : (
           <div className="text-center py-12 text-neutral-500">
             <p className="text-sm">No questions yet in this chamber.</p>

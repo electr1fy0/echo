@@ -18,7 +18,7 @@ func SendVerificationEmail(to, username, token string) error {
 
 	domain := os.Getenv("ECHO_DOMAIN")
 
-	verifyLink := fmt.Sprintf("http://%s/verify-email?token=%s", domain, token)
+	verifyLink := fmt.Sprintf("https://%s/verify-email?token=%s", domain, token)
 
 	htmlContent := fmt.Sprintf(`
 		<h1>Welcome to Echo, %s!</h1>
