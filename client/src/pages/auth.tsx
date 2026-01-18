@@ -12,6 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useSignin, useSignup } from "@/hooks/use-auth";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Alert02Icon } from "@hugeicons/core-free-icons";
 
 function SkeletonQuestionItem() {
   return (
@@ -136,13 +138,15 @@ export function Auth() {
           <CardContent className="space-y-4">
             <form className="space-y-3 " onSubmit={handleSubmit}>
               {signInError && !isSignUp && (
-                <div className="text-sm text-red-500 font-medium text-center">
-                  {signInError.message}
+                <div className="bg-destructive/15 text-destructive text-sm font-medium px-4 py-3 rounded-lg flex items-center gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} size={20} />
+                  <span>{signInError.message}</span>
                 </div>
               )}
               {signUpError && isSignUp && (
-                <div className="text-sm text-red-500 font-medium text-center">
-                  {signUpError.message}
+                <div className="bg-destructive/15 text-destructive text-sm font-medium px-4 py-3 rounded-lg flex items-center gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} size={20} />
+                  <span>{signUpError.message}</span>
                 </div>
               )}
               <Input
