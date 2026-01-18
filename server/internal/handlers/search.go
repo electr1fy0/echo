@@ -55,7 +55,7 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		defer wg.Done()
 		chamberRows, err := h.DB.Query(ctx, `
 			SELECT 
-				c.uid, c.name, COALESCE(c.description, ''), c.color_index,
+				c.uid, c.name, COALESCE(c.description, ''), c.color_index, c.time_created,
 				(SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
 				EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = $1) as is_joined
 			FROM chambers c
@@ -69,7 +69,7 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 
 		for chamberRows.Next() {
 			var c Chamber
-			if err := chamberRows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.MemberCount, &c.IsJoined); err == nil {
+			if err := chamberRows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err == nil {
 				resp.Chambers = append(resp.Chambers, c)
 			}
 		}

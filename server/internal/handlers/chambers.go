@@ -12,13 +12,14 @@ import (
 )
 
 type Chamber struct {
-	UID             string `json:"uid"`
-	Name            string `json:"name"`
-	Description     string `json:"description"`
-	CreatorUsername string `json:"creatorUsername"`
-	MemberCount     int    `json:"memberCount"`
-	IsJoined        bool   `json:"isJoined"`
-	ColorIndex      int    `json:"colorIndex"`
+	UID             string    `json:"uid"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	CreatorUsername string    `json:"creatorUsername"`
+	MemberCount     int       `json:"memberCount"`
+	IsJoined        bool      `json:"isJoined"`
+	ColorIndex      int       `json:"colorIndex"`
+	TimeCreated     time.Time `json:"timeCreated"`
 }
 
 func (h *APIHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +116,7 @@ func (h *APIHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 			c.name, 
 			COALESCE(c.description, ''), 
 			c.color_index,
+			c.time_created,
 			(SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
 			EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = $1) as is_joined
 		FROM chambers c
@@ -138,7 +140,7 @@ func (h *APIHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var c Chamber
-		if err := rows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.MemberCount, &c.IsJoined); err != nil {
+		if err := rows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err != nil {
 			continue
 		}
 		chambers = append(chambers, c)

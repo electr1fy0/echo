@@ -58,4 +58,5 @@ export interface Chamber {
   isJoined?: boolean;
   memberCount?: number;
   colorIndex?: number;
+  timeCreated?: string;
 }

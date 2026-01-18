@@ -97,7 +97,7 @@ export function ChamberPage() {
             </span>
             <span className="flex items-center gap-1">
               <HugeiconsIcon icon={Calendar03Icon} className="size-3.5" />
-              Created Jan 2024
+              Created {chamber.timeCreated ? new Date(chamber.timeCreated).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Jan 2024"}
             </span>
           </div>
         </div>

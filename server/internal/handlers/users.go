@@ -50,7 +50,7 @@ func (h *APIHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	var profile Profile
 
-	row := h.DB.QueryRow(ctx, "select username, email, bio, avatar, link, posted, answered from users WHERE username = $1", sub)
+	row := h.DB.QueryRow(ctx, "select username, email, COALESCE(bio, ''), COALESCE(avatar, ''), COALESCE(link, ''), posted, answered from users WHERE username = $1", sub)
 	if err := row.Scan(&profile.Username, &profile.Email, &profile.Bio, &profile.Avatar, &profile.Link, &profile.Posted, &profile.Answered); err != nil {
 		h.respondWithError(w, "failed to get profile", err, http.StatusInternalServerError)
 		return
