@@ -17,7 +17,7 @@ export async function signin(payload: AuthPayload) {
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || "signin failed");
+    throw new Error(errorData.error || "Incorrect user or password");
   }
 
   const data = await res.json();

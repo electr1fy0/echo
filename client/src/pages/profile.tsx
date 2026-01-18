@@ -10,6 +10,7 @@ import {
   Mail01Icon,
   PencilEdit02Icon,
   Add01Icon,
+  Link01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   Dialog,
@@ -52,6 +53,7 @@ export function Profile() {
     email: "",
     bio: "",
     avatar: "",
+    link: "",
     answered: 0,
     posted: 0,
   });
@@ -112,9 +114,24 @@ export function Profile() {
           <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
             {user.username}
           </h1>
-          <div className="flex items-center gap-2 text-neutral-500 text-sm">
-            <HugeiconsIcon icon={Mail01Icon} className="size-4" />
-            <span>{user.email}</span>
+          <div className="flex flex-col gap-1 text-neutral-500 text-sm">
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon icon={Mail01Icon} className="size-4" />
+              <span>{user.email}</span>
+            </div>
+            {user.link && (
+              <div className="flex items-center gap-2">
+                <HugeiconsIcon icon={Link01Icon} className="size-4" />
+                <a
+                  href={user.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline hover:text-foreground transition-colors"
+                >
+                  {user.link}
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
@@ -208,20 +225,6 @@ export function Profile() {
           </DialogHeader>
           <form className="grid gap-4 py-4" onSubmit={(e) => handleSubmit(e)}>
             <div className="grid gap-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input
-                id="email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) => {
-                  updateDraft({ email: e.target.value });
-                }}
-                className="select-text"
-              />
-            </div>
-            <div className="grid gap-2">
               <label htmlFor="bio" className="text-sm font-medium">
                 Bio
               </label>
@@ -231,7 +234,22 @@ export function Profile() {
                 onChange={(e) => {
                   updateDraft({ bio: e.target.value });
                 }}
+                placeholder="Info about you"
                 className="h-24 select-text"
+              />
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="link" className="text-sm font-medium">
+                Link
+              </label>
+              <Input
+                id="link"
+                placeholder="https://example.com"
+                className="select-text"
+                value={editForm.link || ""}
+                onChange={(e) => {
+                  updateDraft({ link: e.target.value });
+                }}
               />
             </div>
             <div className="grid gap-2">
@@ -242,6 +260,7 @@ export function Profile() {
                 id="avatar"
                 className="select-text"
                 value={editForm.avatar}
+                placeholder="URL to fetch your avatar"
                 onChange={(e) => {
                   updateDraft({ avatar: e.target.value });
                 }}

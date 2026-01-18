@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var key = []byte("supersecretkey")
+var key = os.Getenv("SECRET_KEY")
 
 type statusRecorder struct {
 	http.ResponseWriter

@@ -26,7 +26,7 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := h.DB.Exec(ctx, "update users set email = $1, bio = $2, avatar = $3 where username = $4", profile.Email, profile.Bio, profile.Avatar, sub)
+	_, err := h.DB.Exec(ctx, "update users set bio = $1, avatar = $2, link = $3 where username = $4", profile.Bio, profile.Avatar, profile.Link, sub)
 	if err != nil {
 		h.respondWithError(w, "failed to update profile"+err.Error(), err, http.StatusInternalServerError)
 		return
@@ -50,8 +50,8 @@ func (h *APIHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	var profile Profile
 
-	row := h.DB.QueryRow(ctx, "select username, email, bio, posted, answered from users WHERE username = $1", sub)
-	if err := row.Scan(&profile.Username, &profile.Email, &profile.Bio, &profile.Posted, &profile.Answered); err != nil {
+	row := h.DB.QueryRow(ctx, "select username, email, bio, avatar, link, posted, answered from users WHERE username = $1", sub)
+	if err := row.Scan(&profile.Username, &profile.Email, &profile.Bio, &profile.Avatar, &profile.Link, &profile.Posted, &profile.Answered); err != nil {
 		h.respondWithError(w, "failed to get profile", err, http.StatusInternalServerError)
 		return
 	}

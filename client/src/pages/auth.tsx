@@ -49,7 +49,7 @@ function SkeletonHome() {
 }
 
 export function Auth() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [user, setUser] = useState<AuthPayload>({
     email: "",
@@ -62,8 +62,16 @@ export function Auth() {
       return { ...prev, ...fields };
     });
   }
-  const { mutate: signIn, isPending: isInPending, error: signInError } = useSignin();
-  const { mutate: signUp, isPending: isUpPending, error: signUpError } = useSignup();
+  const {
+    mutate: signIn,
+    isPending: isInPending,
+    error: signInError,
+  } = useSignin();
+  const {
+    mutate: signUp,
+    isPending: isUpPending,
+    error: signUpError,
+  } = useSignup();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

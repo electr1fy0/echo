@@ -17,6 +17,7 @@ type Profile struct {
 	Email    string `json:"email"`
 	Bio      string `json:"bio"`
 	Avatar   string `json:"avatar"`
+	Link     string `json:"link"`
 	Answered int    `json:"answered"`
 	Posted   int    `json:"posted"`
 }

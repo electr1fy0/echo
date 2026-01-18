@@ -16,6 +16,7 @@ export interface User {
   email: string;
   bio: string;
   avatar: string;
+  link?: string;
   answered: number;
   posted: number;
 }

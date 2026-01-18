@@ -95,12 +95,12 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 	row := h.DB.QueryRow(ctx, "select username, email, password, is_verified from users where username = $1", user.Username)
 	err = row.Scan(&dbUser.Username, &dbUser.Email, &dbUser.Password, &dbUser.IsVerified)
 	if err != nil {
-		h.respondWithError(w, "incorrect credentials", nil, http.StatusUnauthorized)
+		h.respondWithError(w, "incorrect username or password", nil, http.StatusUnauthorized)
 		return
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password)) != nil {
-		h.respondWithError(w, "incorrect credentials", nil, http.StatusUnauthorized)
+		h.respondWithError(w, "incorrect username or password", nil, http.StatusUnauthorized)
 		return
 	}
 
