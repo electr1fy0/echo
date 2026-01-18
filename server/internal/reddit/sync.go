@@ -124,6 +124,8 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 			continue
 		}
 		author := "u/" + post.Data.Author
+		// Create Reddit user if not exists
+		db.Exec(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, '') ON CONFLICT (username) DO NOTHING`, author, author+"@reddit.com")
 		questionUID := uuid.New()
 		_, err := db.Exec(ctx, `
 			INSERT INTO questions (uid, content, author, chamber_uid, upvotes_count, reddit_upvotes, time_created)
@@ -141,6 +143,7 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 					continue
 				}
 				commentAuthor := "u/" + comment.Data.Author
+				db.Exec(ctx, `INSERT INTO users (username, email, password) VALUES ($1, $2, '') ON CONFLICT (username) DO NOTHING`, commentAuthor, commentAuthor+"@reddit.com")
 				commentTime := time.Unix(int64(comment.Data.CreatedUTC), 0)
 				_, _ = db.Exec(ctx, `
 					INSERT INTO answers (uid, content, author, question_uid, upvotes_count, reddit_upvotes, time_created)
