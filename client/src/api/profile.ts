@@ -2,7 +2,7 @@ import { API_URL } from "@/config";
 import type { User } from "@/types";
 
 export async function fetchProfile(): Promise<User> {
-  const res = await fetch(`${API_URL}/users`, {
+  const res = await fetch(`${API_URL}/users/me`, {
     credentials: "include",
   });
 
@@ -12,7 +12,7 @@ export async function fetchProfile(): Promise<User> {
 }
 
 export async function updateProfile(user: User): Promise<void> {
-  const res = await fetch(`${API_URL}/users`, {
+  const res = await fetch(`${API_URL}/users/me`, {
     credentials: "include",
     method: "PATCH",
     body: JSON.stringify(user),

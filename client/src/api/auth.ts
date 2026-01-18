@@ -39,7 +39,7 @@ export async function signup(payload: AuthPayload) {
 
 export async function signout() {
   const res = await fetch(`${API_URL}/auth/signout`, {
-    method: "GET",
+    method: "POST",
     credentials: "include",
   });
 

@@ -5,11 +5,15 @@ export async function fetchQuestions(
   offset: number,
   limit: number,
   sort?: "votes" | "time_created",
+  filter?: "joined",
+  chamberId?: string,
 ) {
   const params = new URLSearchParams({
     offset: offset.toString(),
     limit: limit.toString(),
     ...(sort ? { sort } : {}),
+    ...(filter ? { filter } : {}),
+    ...(chamberId ? { chamber_uid: chamberId } : {}),
   });
 
   const res = await fetch(`${API_URL}/questions?${params}`, {
@@ -25,7 +29,7 @@ export async function fetchUserQuestions(offset: number, limit: number) {
     limit: limit.toString(),
   });
 
-  const res = await fetch(`${API_URL}/users/questions?${params}`, {
+  const res = await fetch(`${API_URL}/users/me/questions?${params}`, {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Failed to fetch user questions");
@@ -70,7 +74,7 @@ export async function searchQuestions(query: string, offset = 0, limit = 500) {
 
 export async function updateVotes(qid: string) {
   const res = await fetch(
-    `${API_URL}/questions/${encodeURIComponent(qid)}/vote`,
+    `${API_URL}/questions/${encodeURIComponent(qid)}/votes`,
     { method: "post", credentials: "include" },
   );
   if (!res.ok) throw new Error("Failed to update votes");

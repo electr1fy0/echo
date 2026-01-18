@@ -8,6 +8,7 @@ export interface Question {
   authorUsername: string;
   upvotes: number;
   isUpvoted: boolean;
+  chamberUid?: string;
 }
 
 export interface User {
@@ -29,6 +30,7 @@ export interface AnswerItem {
 }
 export interface QuestionDraft {
   content: string;
+  chamberUid?: string;
 }
 
 export interface Reply {
@@ -47,4 +49,12 @@ export interface ReplyDraft {
 
 export interface UpvoteState {
   isUpvoted: boolean;
+}
+export interface Chamber {
+  uid?: string;
+  name: string;
+  description: string;
+  isJoined?: boolean;
+  memberCount?: number;
+  colorIndex?: number;
 }

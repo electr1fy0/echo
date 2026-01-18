@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"echo/internal/email"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -23,6 +25,16 @@ func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
+	if err != nil {
+		http.Error(w, "failed to hash password", http.StatusInternalServerError)
+		return
+	}
+
+	go func() {
+		if err := email.SendVerificationEmail(user.Email, user.Username); err != nil {
+			fmt.Printf("Failed to send verification email: %v\n", err)
+		}
+	}()
 
 	h.DB.Exec(ctx, "insert into users (username, email, password) values ($1, $2, $3)", user.Username, user.Email, hash)
 

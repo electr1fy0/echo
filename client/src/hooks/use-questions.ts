@@ -13,10 +13,12 @@ export function useQuestionsQuery(
   offset = 0,
   limit = 500,
   sort?: "votes" | "time_created",
+  filter?: "joined",
+  chamberId?: string
 ) {
   return useQuery({
-    queryKey: ["questions", offset, limit, sort],
-    queryFn: () => fetchQuestions(offset, limit, sort),
+    queryKey: ["questions", offset, limit, sort, filter, chamberId],
+    queryFn: () => fetchQuestions(offset, limit, sort, filter, chamberId),
     staleTime: 30_000,
   });
 }

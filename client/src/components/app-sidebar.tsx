@@ -70,7 +70,7 @@ function NavButton({
         !isAction &&
         (isActive
           ? "text-neutral-900 dark:text-white"
-          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300")
+          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
       )}
     >
       <HugeiconsIcon
@@ -82,7 +82,7 @@ function NavButton({
         <span
           className={cn(
             "absolute rounded-full bg-red-500 border-2 border-background",
-            isMobile ? "top-1 right-1 size-2" : "top-2 right-2 size-2.5"
+            isMobile ? "top-1 right-1 size-2" : "top-2 right-2 size-2.5",
           )}
         />
       )}
@@ -110,7 +110,7 @@ function ProfileButton({
         "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
         isActive
           ? "text-neutral-900 dark:text-white"
-          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
       )}
     >
       <Avatar className="size-6">
@@ -143,7 +143,7 @@ function MenuButton({
           "relative flex items-center justify-center rounded-xl transition-all duration-200",
           isMobile ? "p-2" : "size-12",
           "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
-          "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+          "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
         )}
       >
         <HugeiconsIcon
@@ -177,6 +177,9 @@ function MenuButton({
   );
 }
 
+import { CHAMBER_COLORS } from "@/components/chambers/chamber-list";
+import { useListChambers } from "@/hooks/use-chamber";
+
 function CreateQueryDialog({
   open,
   onOpenChange,
@@ -186,19 +189,29 @@ function CreateQueryDialog({
 }) {
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: createQuestion, isPending } = useCreateQuestion();
+  const [selectedChamber, setSelectedChamber] = useState<string>("");
+
+  const { data: allChambers = [] } = useListChambers();
+  // Filter only joined chambers for posting
+  const chambers = allChambers.filter(c => c.isJoined);
 
   const handleSubmit = () => {
-    if (!draft.content.trim()) return;
+    if (!draft.content.trim() || !selectedChamber) return;
     createQuestion(
-      { content: draft.content },
+      { content: draft.content, chamberUid: selectedChamber },
       {
         onSuccess: () => {
           onOpenChange(false);
-          setTimeout(() => resetDraft(), 200);
+          setTimeout(() => {
+            resetDraft();
+            setSelectedChamber("");
+          }, 200);
         },
-      }
+      },
     );
   };
+
+  const selectedChamberData = chambers.find((c) => c.uid === selectedChamber);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -206,7 +219,49 @@ function CreateQueryDialog({
         <DialogHeader>
           <DialogTitle>New Query</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger className="inline-flex items-center justify-start rounded-xl gap-2 h-10 px-3 text-sm border border-neutral-200 dark:border-neutral-700 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                {selectedChamberData ? (
+                  <>
+                    <div
+                      className={cn(
+                        "size-3 rounded-full",
+                        CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length]
+                      )}
+                    />
+                    {selectedChamberData.name}
+                  </>
+                ) : (
+                  <span className="text-neutral-500">Select a chamber...</span>
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {chambers.length > 0 ? (
+                  chambers.map((chamber) => (
+                    <DropdownMenuItem
+                      key={chamber.uid}
+                      onClick={() => setSelectedChamber(chamber.uid!)}
+                      className="gap-2"
+                    >
+                      <div
+                        className={cn(
+                          "size-3 rounded-full",
+                          CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length]
+                        )}
+                      />
+                      {chamber.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <div className="p-2 text-xs text-neutral-500 text-center">
+                    No joined chambers
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <Textarea
             placeholder="What's on your mind?"
             className="w-full resize-none bg-transparent focus-visible:ring-0 p-0 text-base border-none rounded-none shadow-none min-h-16 placeholder:text-neutral-400"
@@ -215,13 +270,29 @@ function CreateQueryDialog({
             autoFocus
           />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? "Posting..." : "Ask Query"}
-          </Button>
+        <DialogFooter className="flex-row items-center justify-between sm:justify-between">
+          {selectedChamberData && (
+            <div className="flex items-center gap-2 text-sm text-neutral-500">
+              <div
+                className={cn(
+                  "size-3 rounded-full",
+                  CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length]
+                )}
+              />
+              Posting to {selectedChamberData.name}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isPending || !selectedChamber}
+            >
+              {isPending ? "Posting..." : "Ask Query"}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

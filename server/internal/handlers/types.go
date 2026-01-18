@@ -28,6 +28,7 @@ type Question struct {
 	Upvotes        int       `json:"upvotes"`
 	IsUpvoted      bool      `json:"isUpvoted"`
 	AuthorUsername string    `json:"authorUsername"`
+	ChamberUID     uuid.UUID `json:"chamberUid"`
 }
 
 type QuestionItem struct {

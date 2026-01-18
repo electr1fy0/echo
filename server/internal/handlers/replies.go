@@ -73,9 +73,13 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var ans AnswerItem
-		if err := rows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &ans.Author.Avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err != nil {
+		var avatar *string
+		if err := rows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err != nil {
 			h.respondWithError(w, "failed to read rows of replies: "+err.Error(), err, http.StatusBadRequest)
 			return
+		}
+		if avatar != nil {
+			ans.Author.Avatar = *avatar
 		}
 		answer = append(answer, ans)
 	}
@@ -127,6 +131,16 @@ func (h *APIHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create Notification
+	var questionAuthor string
+	err = h.DB.QueryRow(ctx, "select author from questions where uid = $1", ans.QuestionUID).Scan(&questionAuthor)
+	if err == nil && questionAuthor != "" && questionAuthor != sub {
+		_, err := h.DB.Exec(ctx, "insert into notifications (user_username, actor_username, type, reference_uid) values ($1, $2, 'reply_question', $3)", questionAuthor, sub, ans.UID)
+		if err != nil {
+			fmt.Println("failed to create notification", err)
+		}
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(ans)
 }
@@ -159,6 +173,17 @@ func (h *APIHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			h.respondWithError(w, "failed to add vote", err, http.StatusInternalServerError)
 			return
+		}
+
+		// Notification
+		var author string
+		h.DB.QueryRow(ctx, "select author from answers where uid = $1", ruid).Scan(&author)
+		if author != "" && author != sub {
+			var notifExists bool
+			h.DB.QueryRow(ctx, "select exists(select 1 from notifications where type = 'upvote_reply' and actor_username = $1 and reference_uid = $2)", sub, ruid).Scan(&notifExists)
+			if !notifExists {
+				h.DB.Exec(ctx, "insert into notifications (user_username, actor_username, type, reference_uid) values ($1, $2, 'upvote_reply', $3)", author, sub, ruid)
+			}
 		}
 	} else if err == nil {
 		_, err := h.DB.Exec(ctx, "delete from answer_upvotes where username = $1 and answer_uid = $2", sub, ruid)

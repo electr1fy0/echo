@@ -4,6 +4,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Home } from "@/pages/home";
 import { Profile } from "@/pages/profile";
 import { Explore } from "@/pages/explore";
+import { AllChambers } from "@/pages/all-chambers";
+import { ChamberPage } from "@/pages/chamber";
 
 import { Notifications } from "@/pages/notifications";
 import { Auth } from "@/pages/auth";
@@ -22,6 +24,8 @@ function AuthenticatedLayout() {
           <Route path="/home" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/explore" element={<Explore />} />
+          <Route path="/chambers" element={<AllChambers />} />
+          <Route path="/chamber/:chamberId" element={<ChamberPage />} />
           <Route path="/notifications" element={<Notifications />} />
         </Routes>
       </main>

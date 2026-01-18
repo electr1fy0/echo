@@ -22,8 +22,7 @@ import {
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
-
-
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;
@@ -43,27 +42,27 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
 
   if (!questionId) return null;
 
-  const avatarSrc = `https://github.com/${question.authorUsername}.png/`;
   return (
     <AccordionItem value={questionId} className="w-full">
       <AccordionTrigger
         className="font-normal pr-4 hover:no-underline items-start gap-2 text-left"
       >
-        <div className="size-7 rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden shrink-0 mr-2 mt-0.5">
-          <img
-            src={
-              author?.avatar ||
-              avatarSrc ||
-              `https://api.dicebear.com/7.x/avataaars/svg?seed=${author.username}`
-            }
-            alt=""
-            className="size-full object-cover"
+        <div className="mr-3 shrink-0 mt-0.5">
+          <UserAvatar
+            src={author?.avatar}
+            name={question.authorUsername || "Anonymous"}
+            className="size-7"
           />
         </div>
         <div className="flex-1 text-left min-w-0 mr-3">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            {question.authorUsername || "Anonymous"}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
+              {question.authorUsername || "Anonymous"}
+            </span>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+              {question.timeCreated && new Date(question.timeCreated).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+            </span>
+          </div>
           <p className="text-sm text-neutral-900 dark:text-neutral-100 mt-0.5">
             {question.content}
           </p>

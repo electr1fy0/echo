@@ -64,20 +64,25 @@ export function Auth() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (isSignUp) signUp(user);
-    else signIn(user);
+    if (isSignUp) {
+      signUp(user, {
+        onSuccess: () => {
+          alert("Sign up successful! Please check your email to verify your account.");
+        },
+      });
+    } else {
+      signIn(user);
+    }
   }
 
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Skeleton Background */}
       <div className="flex min-h-screen opacity-70 pointer-events-none">
         <main className="w-full flex flex-col items-center">
           <SkeletonHome />
         </main>
       </div>
 
-      {/* Auth Dialog Overlay */}
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <Card className="w-full max-w-md mx-4 shadow-2xl">
           <CardHeader className="text-center pb-2">
