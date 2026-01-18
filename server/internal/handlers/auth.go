@@ -127,8 +127,8 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		Name:     "jwt-auth",
 		Value:    tokenStr,
 		Expires:  time.Now().Add(48 * time.Hour),
-		SameSite: http.SameSiteLaxMode,
-		Secure:   false,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 		Path:     "/",
 	})
 }
@@ -146,8 +146,8 @@ func (h *APIHandler) Signout(w http.ResponseWriter, r *http.Request) {
 		Value:    cookie.Value,
 		Expires:  time.Now(),
 		MaxAge:   -1,
-		SameSite: http.SameSiteLaxMode,
-		Secure:   false,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
 		Path:     "/",
 	})
 }
