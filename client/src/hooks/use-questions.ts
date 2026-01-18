@@ -8,33 +8,35 @@ import {
   fetchUserQuestions,
   searchQuestions,
 } from "@/api/questions";
+
 export function useQuestionsQuery(
-  offset = 0,
-  limit = 500,
   sort?: "votes" | "time_created",
   filter?: "joined",
   chamberId?: string
 ) {
   return useQuery({
-    queryKey: ["questions", offset, limit, sort, filter, chamberId],
-    queryFn: () => fetchQuestions(offset, limit, sort, filter, chamberId),
+    queryKey: ["questions", sort, filter, chamberId],
+    queryFn: () => fetchQuestions(sort, filter, chamberId),
     staleTime: 30_000,
   });
 }
-export function useUserQuestionsQuery(offset = 0, limit = 500) {
+
+export function useUserQuestionsQuery() {
   return useQuery({
-    queryKey: ["user-questions", "question", offset, limit],
-    queryFn: () => fetchUserQuestions(offset, limit),
+    queryKey: ["user-questions"],
+    queryFn: () => fetchUserQuestions(),
     staleTime: 30_000,
   });
 }
+
 export function useTrendingQuestions() {
   return useQuery({
-    queryKey: ["questions", "trending"],
-    queryFn: () => fetchQuestions(0, 5, "votes"),
+    queryKey: ["questions", "votes"],
+    queryFn: () => fetchQuestions("votes"),
     staleTime: 60_000,
   });
 }
+
 export function useCreateQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -45,6 +47,7 @@ export function useCreateQuestion() {
     },
   });
 }
+
 export function useDeleteQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -55,7 +58,9 @@ export function useDeleteQuestion() {
     },
   });
 }
+
 const EMPTY_DRAFT: QuestionDraft = { content: "" };
+
 export function useQuestionDraft() {
   const [draft, setDraft] = useState<QuestionDraft>(EMPTY_DRAFT);
   const updateDraft = (fields: Partial<QuestionDraft>) => {
@@ -64,10 +69,11 @@ export function useQuestionDraft() {
   const resetDraft = () => setDraft(EMPTY_DRAFT);
   return { draft, updateDraft, resetDraft };
 }
-export function useSearchQuestions(query: string, offset = 0, limit = 500) {
+
+export function useSearchQuestions(query: string) {
   return useQuery({
-    queryKey: ["search-questions", query, offset, limit],
-    queryFn: () => searchQuestions(query, offset, limit),
+    queryKey: ["search-questions", query],
+    queryFn: () => searchQuestions(query),
     enabled: query.length > 0,
     staleTime: 30_000,
   });

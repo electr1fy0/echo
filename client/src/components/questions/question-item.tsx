@@ -34,7 +34,7 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
   const questionId = question.uid;
   const { data: replies = [] } = useRepliesQuery(questionId || undefined);
   const { mutate: deleteReply } = useDeleteReply();
-  const { mutate: handleVote } = useUpdateVote();
+  const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   if (!questionId) return null;
   return (
     <AccordionItem value={questionId} className="w-full">
@@ -69,6 +69,7 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
             count={question.upvotes}
             isUpvoted={question.isUpvoted}
             onToggle={() => handleVote(questionId)}
+            disabled={isVotePending}
             className="border border-neutral-200 w-14 text-right dark:border-neutral-800 rounded-full h-7 px-2.5 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors mr-2"
           />
           <DropdownMenu>

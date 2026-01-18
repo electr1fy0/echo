@@ -57,7 +57,7 @@ export function Explore() {
         data: trendingQuestions = [],
         isLoading: isTrendingLoading,
         error: trendingError,
-    } = useQuestionsQuery(0, 20, "votes");
+    } = useQuestionsQuery("votes");
     const { mutate: deleteQuestion } = useDeleteQuestion();
     const { data: chambers = [] } = useListChambers();
     const isSearchMode = query.length > 0;

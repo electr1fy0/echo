@@ -42,7 +42,7 @@ export function Profile() {
     data: questions = [],
     isLoading: isQnLoading,
     error: qnError,
-  } = useUserQuestionsQuery(0, 10);
+  } = useUserQuestionsQuery();
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const [editForm, setEditForm] = useState<User>({
     username: "",
@@ -169,7 +169,7 @@ export function Profile() {
                   className={cn(
                     "size-4 rounded-md",
                     CHAMBER_COLORS[
-                      (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                    (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                     ],
                   )}
                 />

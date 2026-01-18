@@ -29,8 +29,6 @@ export function ChamberPage() {
   const chamber = chambers.find((c) => c.uid === chamberId);
   const { mutate: deleteQn } = useDeleteQuestion();
   const { data: questions = [] } = useQuestionsQuery(
-    0,
-    50,
     "time_created",
     undefined,
     chamberId,
@@ -92,9 +90,9 @@ export function ChamberPage() {
               Created{" "}
               {chamber.timeCreated
                 ? new Date(chamber.timeCreated).toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "numeric",
-                  })
+                  month: "short",
+                  year: "numeric",
+                })
                 : "Jan 2024"}
             </span>
           </div>

@@ -5,6 +5,7 @@ import type { QuestionItem, AnswerItem } from "@/types";
 export function useUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: ["upvote"],
     mutationFn: (qid: string) => updateVotes(qid),
     onMutate: async (qid) => {
       await Promise.all([

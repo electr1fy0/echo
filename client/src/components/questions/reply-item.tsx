@@ -20,7 +20,7 @@ type ReplyItemProps = {
   onDelete: () => void;
 };
 export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
-  const { mutate: updateUpvote } = useReplyUpdateVote();
+  const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
   const reply = answerItem.answer;
   return (
     <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
@@ -28,6 +28,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
         <UpvoteButton
           count={reply.upvotes}
           isUpvoted={reply.isUpvoted}
+          disabled={isPending}
           onToggle={() => {
             updateUpvote({ qid: reply.questionUid, rid: reply.uid });
           }}

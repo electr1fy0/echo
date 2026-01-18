@@ -1,17 +1,21 @@
 package handlers
+
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
 type APIHandler struct {
 	DB *pgxpool.Pool
 }
+
 func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -148,6 +152,12 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	limit := q.Get("limit")
 	offset := q.Get("offset")
+	if limit == "" {
+		limit = "500"
+	}
+	if offset == "" {
+		offset = "0"
+	}
 	sort := q.Get("sort")
 	filter := q.Get("filter")
 	targetChamberUID := q.Get("chamber_uid")
@@ -239,6 +249,12 @@ func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	limit := q.Get("limit")
 	offset := q.Get("offset")
+	if limit == "" {
+		limit = "500"
+	}
+	if offset == "" {
+		offset = "0"
+	}
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
 		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
@@ -300,6 +316,12 @@ func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 	query := q.Get("q")
 	limit := q.Get("limit")
 	offset := q.Get("offset")
+	if limit == "" {
+		limit = "500"
+	}
+	if offset == "" {
+		offset = "0"
+	}
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
 		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)

@@ -36,8 +36,6 @@ export function Home() {
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
   const { data: questions = [], isLoading: isQuestionsLoading } =
     useQuestionsQuery(
-      0,
-      50,
       activeTab === "trending" ? "votes" : "time_created",
       "joined",
     );
@@ -74,8 +72,8 @@ export function Home() {
                     className={cn(
                       "size-3 rounded-full",
                       CHAMBER_COLORS[
-                        (selectedChamberData.colorIndex || 0) %
-                          CHAMBER_COLORS.length
+                      (selectedChamberData.colorIndex || 0) %
+                      CHAMBER_COLORS.length
                       ],
                     )}
                   />
@@ -103,7 +101,7 @@ export function Home() {
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                        (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                         ],
                       )}
                     />

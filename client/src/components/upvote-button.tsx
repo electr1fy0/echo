@@ -8,17 +8,20 @@ type UpvoteButtonProps = UpvoteState & {
   className?: string;
   count: number;
   isUpvoted: boolean;
+  disabled?: boolean;
 };
 export function UpvoteButton({
   count,
   isUpvoted,
   onToggle,
   className,
+  disabled,
 }: UpvoteButtonProps) {
   return (
     <Button
       variant="ghost"
       size="sm"
+      disabled={disabled}
       onClick={(e) => {
         e.stopPropagation();
         onToggle();
@@ -26,7 +29,7 @@ export function UpvoteButton({
       className={cn(
         "gap-1 px-2 h-7 text-neutral-500 hover:bg-transparent hover:text-neutral-900 dark:hover:text-neutral-100",
         isUpvoted &&
-          "text-blue-500 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400",
+        "text-blue-500 hover:text-blue-600 dark:text-blue-500 dark:hover:text-blue-400",
         className,
       )}
     >
