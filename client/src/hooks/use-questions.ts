@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { QuestionDraft } from "@/types";
+import type { QuestionDraft, QuestionItem } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchQuestions,
@@ -52,7 +52,40 @@ export function useDeleteQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (questionId: string) => deleteQuestion(questionId),
-    onSuccess: () => {
+    onMutate: async (questionId) => {
+      await queryClient.cancelQueries({ queryKey: ["questions"] });
+      await queryClient.cancelQueries({ queryKey: ["user-questions"] });
+
+      const questionsCache = queryClient.getQueryCache();
+      const matchingQueries = questionsCache.findAll({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "questions" || key[0] === "user-questions";
+        },
+      });
+
+      const previousData = matchingQueries.map((query) => ({
+        queryKey: query.queryKey,
+        data: query.state.data as QuestionItem[] | undefined,
+      }));
+
+      matchingQueries.forEach((query) => {
+        const data = query.state.data as QuestionItem[] | undefined;
+        if (!data) return;
+        const filtered = data.filter((item) => item.question.uid !== questionId);
+        queryClient.setQueryData(query.queryKey, filtered);
+      });
+
+      return { previousData };
+    },
+    onError: (_err, _questionId, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
     },

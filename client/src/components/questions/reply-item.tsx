@@ -47,7 +47,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
           <span className="flex items-center gap-2">
             <span>{reply.authorUsername || "Anonymous"}</span>
             <span className="text-neutral-400 dark:text-neutral-500">
-              {reply.timeCreated && new Date(reply.timeCreated).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+              {reply.timeCreated && new Date(reply.timeCreated).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
             </span>
           </span>
           <span className="block text-sm text-neutral-700 dark:text-neutral-300 ">

@@ -35,7 +35,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
           ) : (
             <HugeiconsIcon icon={Message01Icon} className="size-3 text-blue-500" />
           )}
-          {new Date(notification.created_at).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+          {new Date(notification.created_at).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
         </span>
       </div>
     </div>

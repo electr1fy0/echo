@@ -34,7 +34,7 @@ function ReplyResult({ item }: { item: AnswerItem }) {
                             {item.author.username}
                         </span>
                         <span className="text-xs text-neutral-500">
-                            {item.answer.timeCreated ? new Date(item.answer.timeCreated).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' }) : ''}
+                            {item.answer.timeCreated ? new Date(item.answer.timeCreated).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}
                         </span>
                     </div>
                     <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2">

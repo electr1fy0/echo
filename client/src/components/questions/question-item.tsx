@@ -54,7 +54,7 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
               {question.authorUsername || "Anonymous"}
             </span>
             <span className="text-xs text-neutral-400 dark:text-neutral-500">
-              {question.timeCreated && new Date(question.timeCreated).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: 'numeric' })}
+              {question.timeCreated && new Date(question.timeCreated).toLocaleString("en-US", { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
             </span>
           </div>
           <p className="text-sm text-neutral-900 dark:text-neutral-100 mt-0.5">
