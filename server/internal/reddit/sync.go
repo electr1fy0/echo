@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -62,6 +63,7 @@ type SyncState struct {
 }
 
 func ShouldSync(ctx context.Context, db *pgxpool.Pool, chamberUID uuid.UUID) (bool, *SyncState, error) {
+	log.Printf("[reddit] checking sync for chamber %s", chamberUID)
 	var state SyncState
 	var importedIDs []string
 	err := db.QueryRow(ctx, `
@@ -70,23 +72,31 @@ func ShouldSync(ctx context.Context, db *pgxpool.Pool, chamberUID uuid.UUID) (bo
 		WHERE chamber_uid = $1
 	`, chamberUID).Scan(&state.UID, &state.Subreddit, &state.ChamberUID, &state.LastSyncAt, &importedIDs)
 	if err != nil {
+		log.Printf("[reddit] no sync state found for chamber: %v", err)
 		return false, nil, nil
 	}
 	state.ImportedPostIDs = importedIDs
+	log.Printf("[reddit] found sync state for r/%s, last_sync: %v", state.Subreddit, state.LastSyncAt)
 	if state.LastSyncAt == nil {
+		log.Printf("[reddit] first sync for r/%s", state.Subreddit)
 		return true, &state, nil
 	}
 	if time.Since(*state.LastSyncAt) > 5*time.Minute {
+		log.Printf("[reddit] sync needed, last was %v ago", time.Since(*state.LastSyncAt))
 		return true, &state, nil
 	}
+	log.Printf("[reddit] sync not needed, last was %v ago", time.Since(*state.LastSyncAt))
 	return false, &state, nil
 }
 
 func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) error {
+	log.Printf("[reddit] starting sync for r/%s", state.Subreddit)
 	posts, err := fetchPosts(state.Subreddit)
 	if err != nil {
+		log.Printf("[reddit] failed to fetch posts: %v", err)
 		return fmt.Errorf("fetch posts: %w", err)
 	}
+	log.Printf("[reddit] fetched %d posts from r/%s", len(posts), state.Subreddit)
 	importedSet := make(map[string]bool)
 	for _, id := range state.ImportedPostIDs {
 		importedSet[id] = true
