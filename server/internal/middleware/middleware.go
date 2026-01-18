@@ -67,7 +67,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		jwtStr := authHeader[len(bearerPrefix):]
-		key := os.Getenv("SECRET_KEY")
+		key := []byte(os.Getenv("SECRET_KEY"))
 
 		token, err := jwt.Parse(jwtStr, func(t *jwt.Token) (any, error) {
 			return key, nil

@@ -117,7 +117,7 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		"role":   "user",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	key := os.Getenv("SECRET_KEY")
+	key := []byte(os.Getenv("SECRET_KEY"))
 
 	tokenStr, err := token.SignedString(key)
 	if err != nil {
