@@ -103,12 +103,16 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 	}
 	sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 	newPostIDs := []string{}
+	skipped := 0
+	inserted := 0
 	for _, post := range posts {
 		if importedSet[post.Data.ID] {
+			skipped++
 			continue
 		}
 		postTime := time.Unix(int64(post.Data.CreatedUTC), 0)
 		if postTime.Before(sevenDaysAgo) {
+			skipped++
 			continue
 		}
 		content := post.Data.Title
@@ -116,6 +120,7 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 			content = post.Data.Title + "\n\n" + post.Data.Selftext
 		}
 		if !strings.Contains(content, "?") {
+			skipped++
 			continue
 		}
 		author := "u/" + post.Data.Author
@@ -125,8 +130,10 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 			VALUES ($1, $2, $3, $4, $5, $6)
 		`, questionUID, content, author, state.ChamberUID, post.Data.Score, postTime)
 		if err != nil {
+			log.Printf("[reddit] insert error: %v", err)
 			continue
 		}
+		inserted++
 		comments, err := fetchComments(state.Subreddit, post.Data.ID)
 		if err == nil {
 			for _, comment := range comments {
@@ -143,6 +150,7 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 		}
 		newPostIDs = append(newPostIDs, post.Data.ID)
 	}
+	log.Printf("[reddit] inserted %d posts, skipped %d", inserted, skipped)
 	allIDs := append(state.ImportedPostIDs, newPostIDs...)
 	_, err = db.Exec(ctx, `
 		UPDATE reddit_sync_state
