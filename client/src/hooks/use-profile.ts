@@ -9,7 +9,6 @@ export function useFetchProfile() {
 }
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (user: User) => updateProfile(user),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["profile"] }),

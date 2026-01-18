@@ -10,14 +10,11 @@ import {
 } from "@/components/chambers/chamber-list";
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
 import { useNavigate } from "react-router";
-
 export function AllChambers() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
-
   const { data: chambers = [], isLoading } = useListChambers(query);
-
   return (
     <div className="max-w-[40rem] w-full mt-24 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex items-center gap-4">
@@ -33,7 +30,6 @@ export function AllChambers() {
           All Chambers
         </h1>
       </div>
-
       <div className="relative">
         <HugeiconsIcon
           icon={Search01Icon}
@@ -46,9 +42,7 @@ export function AllChambers() {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-
       <CreateChamberButton onClick={() => setCreateChamberOpen(true)} />
-
       <div>
         {isLoading ? (
           <p className="text-sm text-neutral-500">Loading chambers...</p>
@@ -60,7 +54,6 @@ export function AllChambers() {
           </p>
         )}
       </div>
-
       <CreateChamberDialog
         open={createChamberOpen}
         onOpenChange={setCreateChamberOpen}

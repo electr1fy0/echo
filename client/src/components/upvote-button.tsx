@@ -3,14 +3,12 @@ import { Button } from "./ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import type { UpvoteState } from "@/types";
-
 type UpvoteButtonProps = UpvoteState & {
   onToggle: () => void;
   className?: string;
   count: number;
   isUpvoted: boolean;
 };
-
 export function UpvoteButton({
   count,
   isUpvoted,

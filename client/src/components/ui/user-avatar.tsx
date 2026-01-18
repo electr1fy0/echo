@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-
 const AVATAR_COLORS = [
   "bg-red-500",
   "bg-orange-500",
@@ -18,7 +17,6 @@ const AVATAR_COLORS = [
   "bg-pink-500",
   "bg-rose-500",
 ];
-
 export function UserAvatar({
   src,
   name,
@@ -29,13 +27,10 @@ export function UserAvatar({
   className?: string;
 }) {
   const [imgError, setImgError] = useState(false);
-
   const effectiveSrc = src || `https://github.com/${name}.png`;
-
   useEffect(() => {
     setImgError(false);
   }, [effectiveSrc]);
-
   if (!imgError) {
     return (
       <img
@@ -46,12 +41,10 @@ export function UserAvatar({
       />
     );
   }
-
   const charCode = name.charCodeAt(0) || 0;
   const colorIndex = charCode % AVATAR_COLORS.length;
   const colorClass = AVATAR_COLORS[colorIndex];
   const initials = name.slice(0, 2).toUpperCase();
-
   return (
     <div
       className={cn(

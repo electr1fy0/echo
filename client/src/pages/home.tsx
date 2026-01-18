@@ -25,7 +25,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { useListChambers } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
-
 export function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
@@ -33,10 +32,8 @@ export function Home() {
     useCreateQuestion();
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: deleteQuestion } = useDeleteQuestion();
-
   const { data: chambers = [] } = useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
-
   const { data: questions = [], isLoading: isQuestionsLoading } =
     useQuestionsQuery(
       0,
@@ -44,11 +41,9 @@ export function Home() {
       activeTab === "trending" ? "votes" : "time_created",
       "joined",
     );
-
   const selectedChamberData = JOINED_CHAMBERS.find(
     (c) => c.uid === selectedChamber,
   );
-
   const handleSubmit = () => {
     if (!draft.content.trim() || !selectedChamber) return;
     submitQuestion(
@@ -61,7 +56,6 @@ export function Home() {
       },
     );
   };
-
   return (
     <div className="max-w-[40rem] w-full md:mt-40 mt-24 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
@@ -70,7 +64,6 @@ export function Home() {
       <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
         An Open QnA platform
       </h2>
-
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <DropdownMenu>
@@ -141,7 +134,6 @@ export function Home() {
           value={draft.content}
           onChange={(e) => updateDraft({ content: e.target.value })}
         />
-
         <div className="flex justify-end items-center">
           <div className={cn(!selectedChamberData && "ml-auto")}>
             <Button
@@ -157,7 +149,6 @@ export function Home() {
           </div>
         </div>
       </div>
-
       <div className="my-10">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
@@ -202,7 +193,6 @@ export function Home() {
             </Button>
           </div>
         </div>
-
         {JOINED_CHAMBERS.length === 0 ? (
           <div className="text-center py-12 text-neutral-500">
             <p className="text-sm">You haven't joined any chambers yet.</p>

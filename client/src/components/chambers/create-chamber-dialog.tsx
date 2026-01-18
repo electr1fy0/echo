@@ -14,12 +14,10 @@ import { useCreateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router";
-
 interface CreateChamberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
 export function CreateChamberDialog({
   open,
   onOpenChange,
@@ -31,13 +29,11 @@ export function CreateChamberDialog({
     description: "",
     colorIndex: 0,
   });
-
   const updateChamber = (fields: Partial<Chamber>) => {
     return setChamber((prev) => {
       return { ...prev, ...fields };
     });
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createChamber(chamber, {
@@ -49,7 +45,6 @@ export function CreateChamberDialog({
       },
     });
   };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">

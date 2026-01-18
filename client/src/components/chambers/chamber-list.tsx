@@ -4,41 +4,33 @@ import { UserMultiple02Icon, Add01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router";
 import type { Chamber } from "@/types";
-
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
   }
   return count.toString();
 }
-
 interface ChamberCardProps {
   chamber: Chamber;
   compact?: boolean;
 }
-
 import { useJoinChamber, useLeaveChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "./consts";
-
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
-
   const colorClass =
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
-
   const handleToggleJoin = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!chamber.uid) return;
-
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid);
     } else {
       joinMutation.mutate(chamber.uid);
     }
   };
-
   return (
     <div
       className={cn(
@@ -70,7 +62,6 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
           </div>
         </div>
       </Link>
-
       <Button
         variant={chamber.isJoined ? "secondary" : "default"}
         size="sm"
@@ -89,15 +80,12 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
     </div>
   );
 }
-
 interface ChamberListProps {
   chambers: Chamber[];
   limit?: number;
 }
-
 export function ChamberList({ chambers, limit }: ChamberListProps) {
   const displayChambers = limit ? chambers.slice(0, limit) : chambers;
-
   if (displayChambers.length === 0) {
     return (
       <div className="text-center py-6 px-4 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
@@ -107,7 +95,6 @@ export function ChamberList({ chambers, limit }: ChamberListProps) {
       </div>
     );
   }
-
   return (
     <div className="space-y-2">
       {displayChambers.map((chamber, i) => (
@@ -119,12 +106,10 @@ export function ChamberList({ chambers, limit }: ChamberListProps) {
     </div>
   );
 }
-
 interface CreateChamberButtonProps {
   onClick?: () => void;
   className?: string;
 }
-
 export function CreateChamberButton({
   onClick,
   className,

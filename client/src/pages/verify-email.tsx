@@ -5,14 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle01Icon, AlertCircleIcon, Loading03Icon } from "@hugeicons/core-free-icons";
-
 export function VerifyEmail() {
     const [searchParams] = useSearchParams();
     const token = searchParams.get("token");
     const { mutateAsync: verify } = useVerifyEmail();
     const [status, setStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
     const hasCalledRef = useRef(false);
-
     useEffect(() => {
         if (token && !hasCalledRef.current) {
             hasCalledRef.current = true;
@@ -22,7 +20,6 @@ export function VerifyEmail() {
                 .catch(() => setStatus("error"));
         }
     }, [token, verify]);
-
     if (!token) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
@@ -45,7 +42,6 @@ export function VerifyEmail() {
             </div>
         )
     }
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
             <Card className="w-full max-w-md text-center">

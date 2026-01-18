@@ -2,18 +2,12 @@ import { useNotificationsQuery } from "@/hooks/use-notifications";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Message01Icon, ArrowUp01Icon, InformationCircleIcon } from "@hugeicons/core-free-icons";
 import type { Notification } from "@/api/notifications";
-
-
-
 import { UserAvatar } from "@/components/ui/user-avatar";
-
 function NotificationItem({ notification }: { notification: Notification }) {
   const isUpvote = notification.type === "upvote_question";
   const isReply = notification.type === "reply_question";
   const isUpvoteReply = notification.type === "upvote_reply";
-
   if (!isUpvote && !isReply && !isUpvoteReply) return null;
-
   return (
     <div className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0">
       <UserAvatar
@@ -21,7 +15,6 @@ function NotificationItem({ notification }: { notification: Notification }) {
         name={notification.actor_username}
         className="size-10 shrink-0"
       />
-
       <div className="flex-1 min-w-0">
         <p className="text-sm text-neutral-900 dark:text-neutral-100">
           <span className="font-semibold">{notification.actor_username}</span>
@@ -36,7 +29,6 @@ function NotificationItem({ notification }: { notification: Notification }) {
             {notification.content}
           </p>
         )}
-
         <span className="text-xs text-neutral-400 dark:text-neutral-500 mt-1.5 flex items-center gap-1.5">
           {(isUpvote || isUpvoteReply) ? (
             <HugeiconsIcon icon={ArrowUp01Icon} className="size-3 text-orange-500" />
@@ -49,10 +41,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
     </div>
   );
 }
-
 export function Notifications() {
   const { data: notifications = [], isLoading } = useNotificationsQuery();
-
   return (
     <div className="max-w-[40rem] w-full mt-32 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
       <div>
@@ -63,7 +53,6 @@ export function Notifications() {
           Stay updated on your questions and replies
         </p>
       </div>
-
       <div className="bg-white dark:bg-neutral-900/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4">
         {isLoading ? (
           <div className="py-12 text-center text-neutral-500 text-sm">Loading activity...</div>

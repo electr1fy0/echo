@@ -1,14 +1,11 @@
 package handlers
-
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 )
-
 type Notification struct {
 	UID           string    `json:"uid"`
 	UserUsername  string    `json:"user_username"`
@@ -20,25 +17,21 @@ type Notification struct {
 	IsRead        bool      `json:"is_read"`
 	CreatedAt     time.Time `json:"created_at"`
 }
-
 func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
 		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
-
 	page := r.URL.Query().Get("page")
 	if page == "" {
 		page = "0"
 	}
 	limit := 50
 	offset := 0
-
 	query := `
 		SELECT
 			n.uid,
@@ -58,14 +51,12 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 		ORDER BY n.created_at DESC
 		LIMIT $2 OFFSET $3
 	`
-
 	rows, err := h.DB.Query(ctx, query, sub, limit, offset)
 	if err != nil {
 		h.respondWithError(w, "failed to fetch notifications", err, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
-
 	notifications := []Notification{}
 	for rows.Next() {
 		var n Notification
@@ -89,6 +80,5 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 		}
 		notifications = append(notifications, n)
 	}
-
 	json.NewEncoder(w).Encode(notifications)
 }

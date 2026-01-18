@@ -1,6 +1,5 @@
 export type QuestionId = string;
 export type ReplyId = string;
-
 export interface Question {
   uid?: QuestionId;
   content: string;
@@ -10,7 +9,6 @@ export interface Question {
   isUpvoted: boolean;
   chamberUid?: string;
 }
-
 export interface User {
   username: string;
   email: string;
@@ -20,7 +18,6 @@ export interface User {
   answered: number;
   posted: number;
 }
-
 export interface QuestionItem {
   question: Question;
   author: User;
@@ -33,7 +30,6 @@ export interface QuestionDraft {
   content: string;
   chamberUid?: string;
 }
-
 export interface Reply {
   uid: ReplyId;
   content: string;
@@ -43,11 +39,9 @@ export interface Reply {
   upvotes: number;
   isUpvoted: boolean;
 }
-
 export interface ReplyDraft {
   content: string;
 }
-
 export interface UpvoteState {
   isUpvoted: boolean;
 }

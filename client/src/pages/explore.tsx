@@ -19,9 +19,6 @@ import { useGlobalSearch } from "@/hooks/use-search";
 import type { AnswerItem } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
-
-
-
 function ReplyResult({ item }: { item: AnswerItem }) {
     const navigate = useNavigate();
     return (
@@ -51,26 +48,20 @@ function ReplyResult({ item }: { item: AnswerItem }) {
         </div>
     )
 }
-
 export function Explore() {
     const [query, setQuery] = useState("");
     const [createChamberOpen, setCreateChamberOpen] = useState(false);
     const navigate = useNavigate();
-
     const { data: searchResults, isLoading: isSearching } = useGlobalSearch(query);
-
     const {
         data: trendingQuestions = [],
         isLoading: isTrendingLoading,
         error: trendingError,
     } = useQuestionsQuery(0, 20, "votes");
-
     const { mutate: deleteQuestion } = useDeleteQuestion();
     const { data: chambers = [] } = useListChambers();
-
     const isSearchMode = query.length > 0;
     const isLoading = isSearchMode ? isSearching : isTrendingLoading;
-
     return (
         <div className="max-w-[40rem] w-full mt-40 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
             <div className="relative">
@@ -85,11 +76,9 @@ export function Explore() {
                     onChange={(e) => setQuery(e.target.value)}
                 />
             </div>
-
             {isSearchMode ? (
                 <div className="space-y-8">
                     {isLoading && <p className="text-sm text-neutral-500 text-center">Searching...</p>}
-
                     {!isLoading && searchResults && (
                         <>
                             {searchResults.chambers.length > 0 && (
@@ -100,7 +89,6 @@ export function Explore() {
                                     <ChamberList chambers={searchResults.chambers} />
                                 </div>
                             )}
-
                             {searchResults.questions.length > 0 && (
                                 <div className="space-y-3">
                                     <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
@@ -112,7 +100,6 @@ export function Explore() {
                                     />
                                 </div>
                             )}
-
                             {searchResults.replies.length > 0 && (
                                 <div className="space-y-3">
                                     <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
@@ -125,7 +112,6 @@ export function Explore() {
                                     </div>
                                 </div>
                             )}
-
                             {!isLoading &&
                                 searchResults.chambers.length === 0 &&
                                 searchResults.questions.length === 0 &&
@@ -152,7 +138,6 @@ export function Explore() {
                         <ChamberList chambers={chambers} limit={3} />
                         <CreateChamberButton onClick={() => setCreateChamberOpen(true)} />
                     </div>
-
                     <div className="space-y-4">
                         <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
                             Trending Questions
@@ -170,7 +155,6 @@ export function Explore() {
                     </div>
                 </>
             )}
-
             <CreateChamberDialog
                 open={createChamberOpen}
                 onOpenChange={setCreateChamberOpen}

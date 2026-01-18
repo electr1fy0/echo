@@ -23,25 +23,19 @@ import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
-
 type QuestionItemProps = {
   questionItem: QuestionItem;
   onDelete: (id: string) => void;
 };
-
 export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
   if (!questionItem?.question) return null;
-
   const question = questionItem.question;
   const author = questionItem.author ?? null;
   const questionId = question.uid;
-
   const { data: replies = [] } = useRepliesQuery(questionId || undefined);
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote } = useUpdateVote();
-
   if (!questionId) return null;
-
   return (
     <AccordionItem value={questionId} className="w-full">
       <AccordionTrigger
@@ -107,7 +101,6 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
           </DropdownMenu>
         </div>
       </AccordionTrigger>
-
       <AccordionContent>
         {replies ? (
           replies.map((reply, index) => (

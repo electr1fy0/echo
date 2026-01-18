@@ -33,7 +33,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useQuestionDraft, useCreateQuestion } from "@/hooks/use-questions";
-
 interface NavItem {
   icon: typeof Home01Icon;
   path?: string;
@@ -42,7 +41,6 @@ interface NavItem {
   isAction?: boolean;
   hasBadge?: boolean;
 }
-
 function NavButton({
   icon,
   isActive,
@@ -89,7 +87,6 @@ function NavButton({
     </button>
   );
 }
-
 function ProfileButton({
   user,
   isMobile,
@@ -126,7 +123,6 @@ function ProfileButton({
     </button>
   );
 }
-
 function MenuButton({
   isMobile,
   onThemeChange,
@@ -176,10 +172,8 @@ function MenuButton({
     </DropdownMenu>
   );
 }
-
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
-
 function CreateQueryDialog({
   open,
   onOpenChange,
@@ -190,10 +184,8 @@ function CreateQueryDialog({
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: createQuestion, isPending } = useCreateQuestion();
   const [selectedChamber, setSelectedChamber] = useState<string>("");
-
   const { data: allChambers = [] } = useListChambers();
   const chambers = allChambers.filter((c) => c.isJoined);
-
   const handleSubmit = () => {
     if (!draft.content.trim() || !selectedChamber) return;
     createQuestion(
@@ -209,9 +201,7 @@ function CreateQueryDialog({
       },
     );
   };
-
   const selectedChamberData = chambers.find((c) => c.uid === selectedChamber);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -305,7 +295,6 @@ function CreateQueryDialog({
     </Dialog>
   );
 }
-
 export function AppSidebar() {
   const isMobile = useIsMobile();
   const [createOpen, setCreateOpen] = useState(false);
@@ -314,7 +303,6 @@ export function AppSidebar() {
   const { data: user } = useAuth();
   const { setTheme } = useTheme();
   const { mutate: signout } = useSignout();
-
   const navItems: NavItem[] = [
     { icon: Home01Icon, path: "/home", label: "Home" },
     { icon: Search01Icon, path: "/explore", label: "Explore" },
@@ -326,7 +314,6 @@ export function AppSidebar() {
       hasBadge: true,
     },
   ];
-
   const handleNavClick = (item: NavItem) => {
     if (item.isAction) {
       setCreateOpen(true);
@@ -334,9 +321,7 @@ export function AppSidebar() {
       navigate(item.path);
     }
   };
-
   const isActive = (path?: string) => path === location.pathname;
-
   if (isMobile) {
     return (
       <>
@@ -388,7 +373,6 @@ export function AppSidebar() {
       </>
     );
   }
-
   return (
     <>
       <aside className="fixed top-0 left-0 h-screen flex flex-col items-center py-8 border-r border-neutral-200 dark:border-neutral-800 bg-background z-40 w-20">

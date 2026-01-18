@@ -1,35 +1,28 @@
 package handlers
-
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
-
 	"github.com/golang-jwt/jwt/v5"
 )
-
 type SearchResponse struct {
 	Chambers  []Chamber      `json:"chambers"`
 	Questions []QuestionItem `json:"questions"`
 	Replies   []AnswerItem   `json:"replies"`
 }
-
 func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-
 	q := r.URL.Query()
 	query := q.Get("q")
-
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
 		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
 		return
 	}
 	sub := claims["sub"].(string)
-
 	if query == "" {
 		json.NewEncoder(w).Encode(SearchResponse{
 			Chambers:  []Chamber{},
@@ -38,7 +31,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
 	var wg sync.WaitGroup
 	resp := SearchResponse{
 		Chambers:  []Chamber{},
@@ -49,7 +41,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	_ = errChambers
 	_ = errQuestions
 	_ = errReplies
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -66,7 +57,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer chamberRows.Close()
-
 		for chamberRows.Next() {
 			var c Chamber
 			if err := chamberRows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err == nil {
@@ -74,7 +64,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -95,7 +84,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer questionRows.Close()
-
 		for questionRows.Next() {
 			var q QuestionItem
 			var avatar *string
@@ -108,7 +96,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -129,7 +116,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer replyRows.Close()
-
 		for replyRows.Next() {
 			var ans AnswerItem
 			var avatar *string
@@ -142,8 +128,6 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-
 	wg.Wait()
-
 	json.NewEncoder(w).Encode(resp)
 }

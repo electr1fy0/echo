@@ -15,16 +15,13 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
 import { UserAvatar } from "@/components/ui/user-avatar";
-
 type ReplyItemProps = {
   answerItem: AnswerItem;
   onDelete: () => void;
 };
-
 export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
   const { mutate: updateUpvote } = useReplyUpdateVote();
   const reply = answerItem.answer;
-
   return (
     <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
       <div className="pt-0.5">

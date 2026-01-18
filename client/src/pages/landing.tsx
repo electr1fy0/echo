@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-
 export function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -14,7 +13,6 @@ export function Landing() {
           </Button>
         </Link>
       </header>
-
       <main className="flex-1 w-full max-w-xl mx-auto px-4 py-12">
         <section className="space-y-3 mb-12">
           <h1 className="text-lg  text-foreground">Echo</h1>
@@ -23,7 +21,6 @@ export function Landing() {
             distractions. Only your questions waiting patiently.
           </p>
         </section>
-
         <section className="space-y-3 mb-12">
           <h2 className="text-base text-foreground">About</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
@@ -32,7 +29,6 @@ export function Landing() {
             move on.
           </p>
         </section>
-
         <section className="space-y-3">
           <h2 className="text-base  text-foreground">Join</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
@@ -47,7 +43,6 @@ export function Landing() {
           </p>
         </section>
       </main>
-
       <footer className="w-full max-w-xl mx-auto px-4 py-8 border-t border-border">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>v0.1</span>

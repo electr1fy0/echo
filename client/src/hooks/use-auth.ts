@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signin, signup, verifySession, signout } from "@/api/auth";
-
 export function useSignin() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -10,13 +9,11 @@ export function useSignin() {
     },
   });
 }
-
 export function useSignup() {
   return useMutation({
     mutationFn: signup,
   });
 }
-
 export function useAuth() {
   return useQuery({
     queryKey: ["auth"],
@@ -24,7 +21,6 @@ export function useAuth() {
     retry: false,
   });
 }
-
 export function useSignout() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -32,9 +28,7 @@ export function useSignout() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["auth"] }),
   });
 }
-
 import { verifyEmail } from "@/api/auth";
-
 export function useVerifyEmail() {
   return useMutation({
     mutationFn: verifyEmail,

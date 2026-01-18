@@ -1,6 +1,5 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
-
 export interface Notification {
     uid: string;
     user_username: string;
@@ -12,7 +11,6 @@ export interface Notification {
     is_read: boolean;
     created_at: string;
 }
-
 export async function listNotifications(): Promise<Notification[]> {
     const res = await fetch(`${API_URL}/users/me/notifications`, {
         method: "GET",

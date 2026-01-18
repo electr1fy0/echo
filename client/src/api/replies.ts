@@ -1,7 +1,6 @@
 import type { AnswerItem, Reply } from "@/types";
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
-
 export async function fetchReplies(questionId: string): Promise<AnswerItem[]> {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(questionId)}/replies`,
@@ -14,7 +13,6 @@ export async function fetchReplies(questionId: string): Promise<AnswerItem[]> {
   if (!res.ok) throw new Error("Failed to fetch replies");
   return res.json();
 }
-
 export async function createReply(questionId: string, reply: Partial<Reply>) {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(questionId)}/replies`,
@@ -29,7 +27,6 @@ export async function createReply(questionId: string, reply: Partial<Reply>) {
   );
   if (!res.ok) throw new Error("Failed to create reply");
 }
-
 export async function deleteReply(
   questionID: string,
   replyId: string,
@@ -45,7 +42,6 @@ export async function deleteReply(
   );
   if (!res.ok) throw new Error("failed to delete reply");
 }
-
 export async function updateReplyVotes(qid: string, rid: string) {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(qid)}/replies/${encodeURIComponent(rid)}/votes`,

@@ -16,23 +16,18 @@ import {
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
-
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
   }
   return count.toString();
 }
-
 export function ChamberPage() {
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
-
   const { data: chambers = [] } = useListChambers();
   const chamber = chambers.find((c) => c.uid === chamberId);
-
   const { mutate: deleteQn } = useDeleteQuestion();
-
   const { data: questions = [] } = useQuestionsQuery(
     0,
     50,
@@ -40,11 +35,9 @@ export function ChamberPage() {
     undefined,
     chamberId,
   );
-
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
-
   if (!chamber) {
     return (
       <div className="max-w-xl w-full mt-40 px-4">
@@ -56,10 +49,8 @@ export function ChamberPage() {
       </div>
     );
   }
-
   const colorClass =
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
-
   const handleToggleJoin = () => {
     if (!chamber?.uid) return;
     if (chamber.isJoined) {
@@ -68,7 +59,6 @@ export function ChamberPage() {
       joinMutation.mutate(chamber.uid);
     }
   };
-
   return (
     <div className="max-w-[40rem] w-full mt-32 mb-40 relative px-4 pb-20 md:pb-0">
       <button
@@ -118,7 +108,6 @@ export function ChamberPage() {
           {chamber.isJoined ? "Joined" : "Join"}
         </Button>
       </div>
-
       <div className="space-y-4">
         <h2 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
           Questions ({questions.length})

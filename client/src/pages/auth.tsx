@@ -14,7 +14,6 @@ import {
 import { useSignin, useSignup } from "@/hooks/use-auth";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon } from "@hugeicons/core-free-icons";
-
 function SkeletonQuestionItem() {
   return (
     <div className="py-4 space-y-3">
@@ -29,7 +28,6 @@ function SkeletonQuestionItem() {
     </div>
   );
 }
-
 function SkeletonHome() {
   return (
     <div className="max-w-xl w-full  md:mt-40 mt-24 space-y-4 px-4">
@@ -47,7 +45,6 @@ function SkeletonHome() {
     </div>
   );
 }
-
 export function Auth() {
   const [isSignUp, setIsSignUp] = useState(true);
   const [signupSuccess, setSignupSuccess] = useState(false);
@@ -56,7 +53,6 @@ export function Auth() {
     username: "",
     password: "",
   });
-
   function updateUser(fields: Partial<AuthPayload>) {
     setUser((prev) => {
       return { ...prev, ...fields };
@@ -72,7 +68,6 @@ export function Auth() {
     isPending: isUpPending,
     error: signUpError,
   } = useSignup();
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isSignUp) {
@@ -88,7 +83,6 @@ export function Auth() {
       signIn(user);
     }
   }
-
   if (signupSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -119,7 +113,6 @@ export function Auth() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-background relative">
       <div className="flex min-h-screen opacity-70 pointer-events-none">
@@ -127,7 +120,6 @@ export function Auth() {
           <SkeletonHome />
         </main>
       </div>
-
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <Card className="w-full max-w-md mx-4 shadow-2xl">
           <CardHeader className="text-center pb-2">
@@ -204,7 +196,6 @@ export function Auth() {
                     : "Sign in"}
               </Button>
             </form>
-
             <button
               onClick={() => setIsSignUp(!isSignUp)}
               className="block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"

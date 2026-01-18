@@ -29,7 +29,6 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-
 export function Profile() {
   const {
     data: user,
@@ -37,7 +36,6 @@ export function Profile() {
     error: profileError,
   } = useFetchProfile();
   const { mutate: updateProfile } = useUpdateProfile();
-
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const {
@@ -45,9 +43,7 @@ export function Profile() {
     isLoading: isQnLoading,
     error: qnError,
   } = useUserQuestionsQuery(0, 10);
-
   const { mutate: deleteQuestion } = useDeleteQuestion();
-
   const [editForm, setEditForm] = useState<User>({
     username: "",
     email: "",
@@ -57,34 +53,28 @@ export function Profile() {
     answered: 0,
     posted: 0,
   });
-
   const { data: chambers = [] } = useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile(editForm);
     setIsEditOpen(false);
   };
-
   const updateDraft = (fields: Partial<User>) => {
     setEditForm((prev) => {
       return { ...prev, ...fields };
     });
   };
-
   if (isProfileLoading) {
     return (
       <div className="mt-20 text-sm text-neutral-500">Loading profile…</div>
     );
   }
-
   if (profileError || !user) {
     return (
       <div className="mt-20 text-sm text-red-500">Failed to load profile</div>
     );
   }
-
   return (
     <div className="max-w-[40rem] w-full mt-24 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex flex-col items-start gap-4">
@@ -109,7 +99,6 @@ export function Profile() {
             </Button>
           </div>
         </div>
-
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
             {user.username}
@@ -134,11 +123,9 @@ export function Profile() {
             )}
           </div>
         </div>
-
         <p className="text-neutral-600 dark:text-neutral-400 text-sm max-w-md whitespace-pre-wrap">
           {user.bio}
         </p>
-
         <div className="flex gap-6 pt-2">
           <div className="flex flex-col">
             <span className="font-semibold text-neutral-900 dark:text-neutral-100">
@@ -154,9 +141,7 @@ export function Profile() {
           </div>
         </div>
       </div>
-
       <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800" />
-
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
@@ -198,14 +183,11 @@ export function Profile() {
           <p className="text-sm text-neutral-500">No chambers joined yet.</p>
         )}
       </div>
-
       <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800" />
-
       <div className="space-y-4">
         <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
           Recent Activity
         </h3>
-
         {isQnLoading ? (
           <p className="text-neutral-500 text-sm">Loading activity...</p>
         ) : qnError ? (
@@ -217,7 +199,6 @@ export function Profile() {
           />
         )}
       </div>
-
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
@@ -270,13 +251,11 @@ export function Profile() {
               <DialogClose render={<Button variant="outline" />}>
                 Cancel
               </DialogClose>
-
               <Button type="submit">Save Changes</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-
       <CreateChamberDialog
         open={createChamberOpen}
         onOpenChange={setCreateChamberOpen}

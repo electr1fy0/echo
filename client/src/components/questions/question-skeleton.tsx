@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton";
-
 export function QuestionSkeleton() {
     return (
         <div className="flex items-start gap-3 py-4 px-1">
@@ -12,7 +11,6 @@ export function QuestionSkeleton() {
         </div>
     );
 }
-
 export function QuestionListSkeleton({ count = 3 }: { count?: number }) {
     return (
         <div className="space-y-1">
