@@ -155,12 +155,19 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 func fetchPosts(subreddit string) ([]RedditPost, error) {
 	url := fmt.Sprintf("https://www.reddit.com/r/%s/new.json?limit=25", subreddit)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("User-Agent", "Echo/1.0")
-	resp, err := http.DefaultClient.Do(req)
+	req.Header.Set("User-Agent", "Echo/1.0 (contact: echo-app)")
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		body := make([]byte, 500)
+		n, _ := resp.Body.Read(body)
+		log.Printf("[reddit] bad status %d: %s", resp.StatusCode, string(body[:n]))
+		return nil, fmt.Errorf("reddit returned status %d", resp.StatusCode)
+	}
 	var listing RedditListing
 	if err := json.NewDecoder(resp.Body).Decode(&listing); err != nil {
 		return nil, err
