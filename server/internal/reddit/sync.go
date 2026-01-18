@@ -21,6 +21,10 @@ type RedditPost struct {
 		Author     string  `json:"author"`
 		Score      int     `json:"score"`
 		CreatedUTC float64 `json:"created_utc"`
+		PostHint   string  `json:"post_hint"`
+		IsVideo    bool    `json:"is_video"`
+		Url        string  `json:"url"`
+		Domain     string  `json:"domain"`
 	} `json:"data"`
 }
 
@@ -122,6 +126,38 @@ func SyncSubreddit(ctx context.Context, db *pgxpool.Pool, state *SyncState) erro
 			content = post.Data.Title + "\n\n" + post.Data.Selftext
 		}
 		if !strings.Contains(content, "?") {
+			skipped++
+			continue
+		}
+
+		// Filter out media posts
+		isMedia := false
+		if post.Data.IsVideo {
+			isMedia = true
+		}
+		if post.Data.PostHint == "image" || post.Data.PostHint == "hosted:video" || post.Data.PostHint == "rich:video" || post.Data.PostHint == "link" {
+			isMedia = true
+		}
+		// Check domains
+		domain := strings.ToLower(post.Data.Domain)
+		if strings.Contains(domain, "i.redd.it") || strings.Contains(domain, "v.redd.it") ||
+			strings.Contains(domain, "imgur.com") || strings.Contains(domain, "gfycat.com") ||
+			strings.Contains(domain, "youtube.com") || strings.Contains(domain, "youtu.be") ||
+			strings.Contains(domain, "instagram.com") || strings.Contains(domain, "twitter.com") || strings.Contains(domain, "x.com") {
+			isMedia = true
+		}
+		// Check URL extensions
+		url := strings.ToLower(post.Data.Url)
+		if strings.HasSuffix(url, ".jpg") || strings.HasSuffix(url, ".jpeg") || strings.HasSuffix(url, ".png") ||
+			strings.HasSuffix(url, ".gif") || strings.HasSuffix(url, ".mp4") || strings.HasSuffix(url, ".mov") {
+			isMedia = true
+		}
+		// Legacy string checks
+		if strings.Contains(content, "preview.redd.it") || strings.Contains(content, "i.redd.it") {
+			isMedia = true
+		}
+
+		if isMedia {
 			skipped++
 			continue
 		}
