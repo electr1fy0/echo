@@ -71,16 +71,15 @@ export function Auth() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isSignUp) {
-      signUp(user, {
-        onSuccess: () => {
-          setSignupSuccess(true);
-        },
-        onError: (err) => {
-          console.error("Signup error:", err);
-        },
-      });
+      signUp(
+        { ...user, username: user.username.trim(), email: user.email.trim() },
+        {
+          onSuccess: () => setSignupSuccess(true),
+          onError: (err) => console.error(err),
+        }
+      );
     } else {
-      signIn(user);
+      signIn({ ...user, username: user.username.trim(), email: user.email.trim() });
     }
   }
   if (signupSuccess) {

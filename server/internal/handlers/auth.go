@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -24,6 +25,9 @@ func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
 		return
 	}
+	user.Username = strings.TrimSpace(user.Username)
+	user.Email = strings.TrimSpace(user.Email)
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
 	if err != nil {
 		http.Error(w, "failed to hash password", http.StatusInternalServerError)
@@ -72,6 +76,7 @@ func (h *APIHandler) Signin(w http.ResponseWriter, r *http.Request) {
 		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
 		return
 	}
+	user.Username = strings.TrimSpace(user.Username)
 	var dbUser struct {
 		Username   string
 		Email      string

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateVotes } from "@/api/questions";
 import { updateReplyVotes } from "@/api/replies";
-import { QuestionItem, AnswerItem } from "@/types";
+import type { QuestionItem, AnswerItem } from "@/types";
 export function useUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -12,18 +12,26 @@ export function useUpdateVote() {
         queryClient.cancelQueries({ queryKey: ["user-questions"] }),
         queryClient.cancelQueries({ queryKey: ["search-questions"] }),
       ]);
-      const previousQuestions = queryClient.getQueriesData<QuestionItem[]>(
-        { queryKey: ["questions"] },
-      );
-      const previousUserQuestions = queryClient.getQueriesData<QuestionItem[]>(
-        { queryKey: ["user-questions"] },
-      );
-      const previousSearchQuestions = queryClient.getQueriesData<QuestionItem[]>(
-        { queryKey: ["search-questions"] },
-      );
-      const updateList = (old: QuestionItem[] | undefined) => {
-        if (!old) return [];
-        return old.map((item) => {
+      const questionsCache = queryClient.getQueryCache();
+      const matchingQueries = questionsCache.findAll({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return (
+            key[0] === "questions" ||
+            key[0] === "user-questions" ||
+            key[0] === "search-questions"
+          );
+        },
+      });
+      const previousData = matchingQueries.map((query) => ({
+        queryKey: query.queryKey,
+        data: query.state.data as QuestionItem[] | undefined,
+      }));
+      matchingQueries.forEach((query) => {
+        const data = query.state.data as QuestionItem[] | undefined;
+        if (!data) return;
+
+        const updatedData = data.map((item) => {
           if (item.question.uid === qid) {
             const isUpvoted = !item.question.isUpvoted;
             return {
@@ -39,30 +47,16 @@ export function useUpdateVote() {
           }
           return item;
         });
-      };
-      queryClient.setQueriesData({ queryKey: ["questions"] }, updateList);
-      queryClient.setQueriesData({ queryKey: ["user-questions"] }, updateList);
-      queryClient.setQueriesData({ queryKey: ["search-questions"] }, updateList);
-      return {
-        previousQuestions,
-        previousUserQuestions,
-        previousSearchQuestions,
-      };
+
+        queryClient.setQueryData(query.queryKey, updatedData);
+      });
+
+      return { previousData };
     },
-    onError: (_err, _newTodo, context) => {
-      if (context?.previousQuestions) {
-        context.previousQuestions.forEach(([key, data]) => {
-          queryClient.setQueryData(key, data);
-        });
-      }
-      if (context?.previousUserQuestions) {
-        context.previousUserQuestions.forEach(([key, data]) => {
-          queryClient.setQueryData(key, data);
-        });
-      }
-      if (context?.previousSearchQuestions) {
-        context.previousSearchQuestions.forEach(([key, data]) => {
-          queryClient.setQueryData(key, data);
+    onError: (_err, _qid, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data);
         });
       }
     },
@@ -85,7 +79,7 @@ export function useReplyUpdateVote() {
         qid,
       ]);
       queryClient.setQueryData<AnswerItem[]>(["replies", qid], (old) => {
-        if (!old) return [];
+        if (!old) return undefined;
         return old.map((item) => {
           if (item.answer.uid === rid) {
             const isUpvoted = !item.answer.isUpvoted;
@@ -115,3 +109,4 @@ export function useReplyUpdateVote() {
     },
   });
 }
+
