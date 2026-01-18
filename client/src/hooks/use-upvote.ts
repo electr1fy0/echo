@@ -12,15 +12,15 @@ export function useUpdateVote() {
         queryClient.cancelQueries({ queryKey: ["user-questions"] }),
         queryClient.cancelQueries({ queryKey: ["search-questions"] }),
       ]);
-      const previousQuestions = queryClient.getQueryData<QuestionItem[]>([
-        "questions",
-      ]);
-      const previousUserQuestions = queryClient.getQueryData<QuestionItem[]>([
-        "user-questions",
-      ]);
-      const previousSearchQuestions = queryClient.getQueryData<QuestionItem[]>([
-        "search-questions",
-      ]);
+      const previousQuestions = queryClient.getQueriesData<QuestionItem[]>(
+        { queryKey: ["questions"] },
+      );
+      const previousUserQuestions = queryClient.getQueriesData<QuestionItem[]>(
+        { queryKey: ["user-questions"] },
+      );
+      const previousSearchQuestions = queryClient.getQueriesData<QuestionItem[]>(
+        { queryKey: ["search-questions"] },
+      );
       const updateList = (old: QuestionItem[] | undefined) => {
         if (!old) return [];
         return old.map((item) => {
@@ -40,9 +40,9 @@ export function useUpdateVote() {
           return item;
         });
       };
-      queryClient.setQueryData(["questions"], updateList);
-      queryClient.setQueryData(["user-questions"], updateList);
-      queryClient.setQueryData(["search-questions"], updateList);
+      queryClient.setQueriesData({ queryKey: ["questions"] }, updateList);
+      queryClient.setQueriesData({ queryKey: ["user-questions"] }, updateList);
+      queryClient.setQueriesData({ queryKey: ["search-questions"] }, updateList);
       return {
         previousQuestions,
         previousUserQuestions,
@@ -51,19 +51,19 @@ export function useUpdateVote() {
     },
     onError: (_err, _newTodo, context) => {
       if (context?.previousQuestions) {
-        queryClient.setQueryData(["questions"], context.previousQuestions);
+        context.previousQuestions.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
       }
       if (context?.previousUserQuestions) {
-        queryClient.setQueryData(
-          ["user-questions"],
-          context.previousUserQuestions
-        );
+        context.previousUserQuestions.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
       }
       if (context?.previousSearchQuestions) {
-        queryClient.setQueryData(
-          ["search-questions"],
-          context.previousSearchQuestions
-        );
+        context.previousSearchQuestions.forEach(([key, data]) => {
+          queryClient.setQueryData(key, data);
+        });
       }
     },
     onSettled: () => {
