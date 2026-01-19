@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 func (h *APIHandler) respondWithError(w http.ResponseWriter, msg string, err error, code int) {
 	http.Error(w, msg, code)
+	log.Println(msg, err)
 }
 func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

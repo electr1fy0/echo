@@ -1,6 +1,10 @@
 import { useNotificationsQuery } from "@/hooks/use-notifications";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Message01Icon, CircleArrowUp01Icon, InformationCircleIcon } from "@hugeicons/core-free-icons";
+import {
+  Message01Icon,
+  CircleArrowUp01Icon,
+  InformationCircleIcon,
+} from "@hugeicons/core-free-icons";
 import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
@@ -25,7 +29,10 @@ function NotificationItem({ notification }: { notification: Notification }) {
       </Link>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-neutral-900 dark:text-neutral-100">
-          <Link to={`/u/${notification.actor_username}`} className="font-semibold hover:underline">
+          <Link
+            to={`/u/${notification.actor_username}`}
+            className="font-semibold hover:underline"
+          >
             {notification.actor_username}
           </Link>
           <span className="text-neutral-500 dark:text-neutral-400">
@@ -34,11 +41,11 @@ function NotificationItem({ notification }: { notification: Notification }) {
             {isUpvoteReply && " upvoted your reply"}
           </span>
         </p>
-        
+
         {isReply && notification.question_content && (
           <div className="mt-2 mb-1 pl-3 border-l-2 border-neutral-200 dark:border-neutral-800">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1 italic">
-              "{notification.question_content}"
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
+              {notification.question_content}
             </p>
           </div>
         )}
@@ -49,10 +56,16 @@ function NotificationItem({ notification }: { notification: Notification }) {
           </p>
         )}
         <span className="text-xs text-neutral-400 dark:text-neutral-500 mt-1.5 flex items-center gap-1.5">
-          {(isUpvote || isUpvoteReply) ? (
-            <HugeiconsIcon icon={CircleArrowUp01Icon} className="size-3 text-orange-500" />
+          {isUpvote || isUpvoteReply ? (
+            <HugeiconsIcon
+              icon={CircleArrowUp01Icon}
+              className="size-3 text-blue-500"
+            />
           ) : (
-            <HugeiconsIcon icon={Message01Icon} className="size-3 text-blue-500" />
+            <HugeiconsIcon
+              icon={Message01Icon}
+              className="size-3 text-blue-500"
+            />
           )}
           {formatRelativeTime(new Date(notification.created_at))}
         </span>
@@ -79,7 +92,9 @@ export function Notifications() {
         {isLoading ? (
           <NotificationListSkeleton count={4} />
         ) : notifications.length > 0 ? (
-          notifications.map((n) => <NotificationItem key={n.uid} notification={n} />)
+          notifications.map((n) => (
+            <NotificationItem key={n.uid} notification={n} />
+          ))
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
             <HugeiconsIcon

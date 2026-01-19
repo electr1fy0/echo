@@ -1,11 +1,14 @@
 package handlers
+
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 )
+
 type Notification struct {
 	UID             string    `json:"uid"`
 	UserUsername    string    `json:"user_username"`
@@ -94,7 +97,7 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := rows.Err(); err != nil {
-		h.respondWithError(w, "row iteration error: "+err.Error(), err, http.StatusInternalServerError)
+		h.respondWithError(w, "row iteration error: ", err, http.StatusInternalServerError)
 		return
 	}
 

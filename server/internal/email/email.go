@@ -1,9 +1,12 @@
 package email
+
 import (
 	"fmt"
 	"os"
+
 	"github.com/resend/resend-go/v3"
 )
+
 func SendVerificationEmail(to, username, token string) error {
 	apiKey := os.Getenv("RESEND_API_KEY")
 	if apiKey == "" {
@@ -19,8 +22,10 @@ func SendVerificationEmail(to, username, token string) error {
 		<p>%s</p>
 		<p>Cheers,<br>The Echo Team</p>
 	`, username, verifyLink)
+	from := fmt.Sprintf("Echo <hello@%s>", domain)
+
 	params := &resend.SendEmailRequest{
-		From:    "Echo <hello@echo.ayushpandey.xyz>",
+		From:    from,
 		To:      []string{to},
 		Subject: "Welcome to Echo! Please verify your email",
 		Html:    htmlContent,

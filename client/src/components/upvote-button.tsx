@@ -37,7 +37,7 @@ export function UpvoteButton({
     >
       <HugeiconsIcon
         icon={CircleArrowUp01Icon}
-        className={cn("size-4", isUpvoted && "fill-current")}
+        className="size-4"
       />
       <span className="text-xs font-medium">{count}</span>
     </Button>
