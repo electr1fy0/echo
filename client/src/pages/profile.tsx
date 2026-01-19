@@ -120,7 +120,7 @@ export function Profile() {
               Edit Profile
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger className="h-9 w-9 box-border border-neutral-100 dark:border-neutral-800 inline-flex items-center justify-center rounded-full hover:bg-neutral-100 bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+              <DropdownMenuTrigger className="h-7 w-7  inline-flex items-center justify-center rounded-full hover:bg-neutral-100  dark:hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

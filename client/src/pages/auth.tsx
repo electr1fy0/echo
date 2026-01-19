@@ -11,7 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSignin, useSignup, useRequestPasswordReset, useResendVerification } from "@/hooks/use-auth";
+import {
+  useSignin,
+  useSignup,
+  useRequestPasswordReset,
+  useResendVerification,
+} from "@/hooks/use-auth";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon } from "@hugeicons/core-free-icons";
 function SkeletonQuestionItem() {
@@ -100,10 +105,8 @@ export function Auth() {
     error: resetError,
   } = useRequestPasswordReset();
 
-  const {
-    mutate: resendVerification,
-    isPending: isResendPending,
-  } = useResendVerification();
+  const { mutate: resendVerification, isPending: isResendPending } =
+    useResendVerification();
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -142,7 +145,8 @@ export function Auth() {
             </div>
             <CardTitle>Check your email</CardTitle>
             <CardDescription>
-              If an account exists for <strong>{user.email}</strong>, we've sent instructions to reset your password.
+              If an account exists for <strong>{user.email}</strong>, we've sent
+              instructions to reset your password.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -195,7 +199,8 @@ export function Auth() {
                 if (user.email) {
                   resendVerification(user.email, {
                     onSuccess: () => alert("Verification email resent!"),
-                    onError: () => alert("Failed to resend email. Please try again.")
+                    onError: () =>
+                      alert("Failed to resend email. Please try again."),
                   });
                 }
               }}
@@ -311,7 +316,9 @@ export function Auth() {
                   (isForgotPassword
                     ? !user.email.trim()
                     : isSignUp
-                      ? !user.username.trim() || !user.email.trim() || !user.password.trim()
+                      ? !user.username.trim() ||
+                        !user.email.trim() ||
+                        !user.password.trim()
                       : !user.username.trim() || !user.password.trim())
                 }
               >
@@ -328,7 +335,7 @@ export function Auth() {
               {!isForgotPassword && !isSignUp && (
                 <button
                   onClick={() => setIsForgotPassword(true)}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="text-xs mt-1 mb-7 ml-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Forgot your password?
                 </button>

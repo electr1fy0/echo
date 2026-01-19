@@ -36,8 +36,10 @@ export function Landing() {
           <p className="text-muted-foreground text-sm leading-relaxed">
             Most platforms optimize for volume. More posts, more questions, more
             answers, more engagement metrics. The result is noise. Threads
-            become unreadable. Signal gets buried under accumulated layers. I
-            built Echo because I wanted something quieter.
+            become unreadable. Signal gets buried.
+          </p>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            I built Echo because I wanted something quieter.
           </p>
 
           <div className="border border-dashed border-muted-foreground/30 rounded-lg p-4 space-y-4">
@@ -81,7 +83,6 @@ export function Landing() {
               </div>
             </div>
           </div>
-
           <p className="text-muted-foreground text-sm leading-relaxed">
             A question should remain a question. An answer should remain an
             answer. The structure should not collapse under its own weight over
@@ -194,9 +195,15 @@ export function Landing() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground/70">
-                  react + tanstack query
+                  react + typescript
                 </span>
                 <div className="h-2 w-32 bg-muted rounded" />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground/70">
+                  tanstack query
+                </span>
+                <div className="h-2 w-20 bg-muted rounded" />
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground/70">
@@ -335,9 +342,9 @@ export function Landing() {
         <section className="pt-4">
           <Link to="/auth">
             <Button
-              variant="outline"
+              variant="default"
               size="lg"
-              className="w-full text-sm font-normal"
+              className="w-full text-sm font-normal "
             >
               Create an account
             </Button>
@@ -345,10 +352,10 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="w-full max-w-xl mx-auto px-4 py-8 border-t border-border">
+      <footer className="w-full max-w-xl mx-auto px-4 py-8 mt-4 border-t border-border">
         <div className="flex flex-col gap-4 text-xs text-muted-foreground">
           <div className="flex items-center justify-between">
-            <span>v0.5.1</span>
+            <span>v0.5.5</span>
             <div className="flex items-center gap-4">
               <a
                 href="mailto:me@ayushpandey.xyz?subject=Hi%20Ayush"
