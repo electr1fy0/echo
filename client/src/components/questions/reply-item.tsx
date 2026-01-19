@@ -14,6 +14,7 @@ import {
   PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
+import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 type ReplyItemProps = {
@@ -22,6 +23,7 @@ type ReplyItemProps = {
 };
 export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
   const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
+  const { data: user } = useAuth();
   const reply = answerItem.answer;
   return (
     <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
@@ -56,28 +58,30 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
           </span>
         </p>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger className="outline-none">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="More options"
-            className="size-6 opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 transition-opacity shrink-0"
-          >
-            <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>
-            <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={onDelete}>
-            <HugeiconsIcon icon={Delete02Icon} className="mr-2 size-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {user?.username === reply.authorUsername && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="outline-none">
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="More options"
+              className="size-6 opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 transition-opacity shrink-0"
+            >
+              <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onClick={onDelete}>
+              <HugeiconsIcon icon={Delete02Icon} className="mr-2 size-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

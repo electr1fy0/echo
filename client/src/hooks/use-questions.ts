@@ -5,6 +5,7 @@ import {
   fetchQuestions,
   createQuestion,
   deleteQuestion,
+  updateQuestion,
   fetchUserQuestions,
   searchQuestions,
 } from "@/api/questions";
@@ -101,6 +102,18 @@ export function useQuestionDraft() {
   };
   const resetDraft = () => setDraft(EMPTY_DRAFT);
   return { draft, updateDraft, resetDraft };
+}
+
+export function useUpdateQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ questionId, content }: { questionId: string; content: string }) =>
+      updateQuestion(questionId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
+    },
+  });
 }
 
 export function useSearchQuestions(query: string) {

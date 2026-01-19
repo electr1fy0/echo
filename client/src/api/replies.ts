@@ -18,7 +18,7 @@ export async function createReply(questionId: string, reply: Partial<Reply>) {
     `${API_URL}/questions/${encodeURIComponent(questionId)}/replies`,
     {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         ...getAuthHeaders(),
       },
@@ -45,12 +45,31 @@ export async function deleteReply(
 export async function updateReplyVotes(qid: string, rid: string) {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(qid)}/replies/${encodeURIComponent(rid)}/votes`,
-    { 
-      method: "post", 
+    {
+      method: "post",
       headers: {
         ...getAuthHeaders(),
       },
     },
   );
   if (!res.ok) throw new Error("Failed to update votes");
+}
+
+export async function updateReply(
+  qid: string,
+  rid: string,
+  content: string,
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(qid)}/replies/${encodeURIComponent(rid)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ content }),
+    },
+  );
+  if (!res.ok) throw new Error("failed to update reply");
 }

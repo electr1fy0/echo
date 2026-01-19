@@ -37,7 +37,16 @@ export function ChamberPage() {
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
-  if (!chamber && !isChamberLoading) {
+
+  if (isChamberLoading) {
+    return (
+      <div className="flex items-center justify-center mt-40">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-neutral-100" />
+      </div>
+    );
+  }
+
+  if (!chamber) {
     return (
       <div className="max-w-xl w-full mt-40 px-4">
         <p className="text-neutral-500">Chamber not found</p>
@@ -91,9 +100,9 @@ export function ChamberPage() {
               Created{" "}
               {chamber.timeCreated
                 ? new Date(chamber.timeCreated).toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "numeric",
-                  })
+                  month: "short",
+                  year: "numeric",
+                })
                 : "Jan 2024"}
             </span>
           </div>

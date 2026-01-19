@@ -1,4 +1,5 @@
 package main
+
 import (
 	"context"
 	"echo/internal/handlers"
@@ -7,12 +8,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
 var (
 	db  *pgxpool.Pool
 	err error
 )
+
 func main() {
 	db, err = pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
@@ -35,6 +39,7 @@ func main() {
 	mux.HandleFunc("GET /questions/{uid}", h.GetQuestion)
 	mux.HandleFunc("GET /questions/search", middleware.Auth(h.SearchQuestions))
 	mux.HandleFunc("DELETE /questions/{uid}", middleware.Auth(h.DeleteQuestion))
+	mux.HandleFunc("PATCH /questions/{uid}", middleware.Auth(h.UpdateQuestion))
 	mux.HandleFunc("POST /questions/{uid}/votes", middleware.Auth(h.UpdateQuestionVote))
 	mux.HandleFunc("POST /questions/{uid}/replies", middleware.Auth(h.CreateReply))
 	mux.HandleFunc("GET /questions/{uid}/replies", middleware.Auth(h.ListReplies))

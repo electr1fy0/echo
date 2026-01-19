@@ -145,6 +145,44 @@ func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte("all good"))
 }
+
+func (h *APIHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	defer r.Body.Close()
+
+	uid := r.PathValue("uid")
+	var body struct {
+		Content string `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		return
+	}
+
+	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
+	if !ok {
+		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+		return
+	}
+	sub := claims["sub"].(string)
+	if sub == "" {
+		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
+		return
+	}
+
+	result, err := h.DB.Exec(ctx, "update questions set content = $1 where uid = $2 and author = $3", body.Content, uid, sub)
+	if err != nil {
+		h.respondWithError(w, "failed to update question", err, http.StatusInternalServerError)
+		return
+	}
+	if result.RowsAffected() == 0 {
+		h.respondWithError(w, "question not found or unauthorized", nil, http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
 func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer r.Body.Close()

@@ -79,3 +79,18 @@ export async function updateVotes(qid: string) {
   );
   if (!res.ok) throw new Error("Failed to update votes");
 }
+
+export async function updateQuestion(questionId: string, content: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ content }),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to update question");
+}

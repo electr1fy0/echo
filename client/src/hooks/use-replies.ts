@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchReplies, createReply, deleteReply } from "@/api/replies";
+import { fetchReplies, createReply, deleteReply, updateReply } from "@/api/replies";
 import type { AnswerItem } from "@/types";
 
 export function useRepliesQuery(questionId: string | undefined) {
@@ -64,6 +64,17 @@ export function useDeleteReply() {
     },
     onSettled: (_, __, { questionId }) => {
       queryClient.invalidateQueries({ queryKey: ["replies", questionId] });
+    },
+  });
+}
+
+export function useUpdateReply() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ qid, rid, content }: { qid: string; rid: string; content: string }) =>
+      updateReply(qid, rid, content),
+    onSuccess: (_, { qid }) => {
+      queryClient.invalidateQueries({ queryKey: ["replies", qid] });
     },
   });
 }
