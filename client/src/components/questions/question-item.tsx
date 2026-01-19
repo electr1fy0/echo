@@ -79,133 +79,135 @@ export function QuestionItem({
           if (isEditing) e.preventDefault();
         }}
       >
-        <div className="flex flex-col w-full gap-2">
-          <div className="flex items-center gap-3">
-            <Link
-              to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
-              className="shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <UserAvatar
-                src={author?.avatar}
-                name={question.authorUsername || "Anonymous"}
-                className="size-7"
-              />
-            </Link>
-            <div className="flex items-center gap-2.5 flex-wrap flex-1 min-w-0">
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                {question.authorUsername || "Anonymous"}
-              </span>
-              {showChamberName && question.chamberName && (
-                <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                  in {question.chamberName}
+        <div className="flex items-start gap-3 w-full">
+          <Link
+            to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
+            className="shrink-0 mt-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <UserAvatar
+              src={author?.avatar}
+              name={question.authorUsername || "Anonymous"}
+              className="size-7"
+            />
+          </Link>
+          <div className="flex flex-col gap-2 flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {question.authorUsername || "Anonymous"}
                 </span>
+                {showChamberName && question.chamberName && (
+                  <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                    in {question.chamberName}
+                  </span>
+                )}
+                <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                  {question.timeCreated &&
+                    formatRelativeTime(new Date(question.timeCreated))}
+                </span>
+              </div>
+              {!isEditing && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 shrink-0"
+                >
+                  <UpvoteButton
+                    count={question.upvotes}
+                    isUpvoted={question.isUpvoted}
+                    onToggle={() => handleVote(questionId)}
+                    disabled={isVotePending}
+                    className="w-14 text-right h-7 px-2.5 transition-colors"
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="outline-none">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="More options"
+                        className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                      >
+                        <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          navigator.clipboard.writeText(question.content);
+                          toast.success("Copied to clipboard");
+                        }}
+                      >
+                        <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
+                        Copy Text
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => alert("Reported content")}>
+                        <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+                        Report
+                      </DropdownMenuItem>
+                      {user?.username === question.authorUsername && (
+                        <>
+                          <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                            <HugeiconsIcon
+                              icon={PencilEdit02Icon}
+                              className="mr-2 size-4"
+                            />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => onDelete(questionId)}
+                          >
+                            <HugeiconsIcon
+                              icon={Delete02Icon}
+                              className="mr-2 size-4"
+                            />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               )}
-              <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                {question.timeCreated &&
-                  formatRelativeTime(new Date(question.timeCreated))}
-              </span>
             </div>
-            {!isEditing && (
+            {isEditing ? (
               <div
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-2 shrink-0"
+                onKeyDown={(e) => e.stopPropagation()}
+                onKeyUp={(e) => e.stopPropagation()}
               >
-                <UpvoteButton
-                  count={question.upvotes}
-                  isUpvoted={question.isUpvoted}
-                  onToggle={() => handleVote(questionId)}
-                  disabled={isVotePending}
-                  className="w-14 text-right h-7 px-2.5 transition-colors"
+                <Textarea
+                  value={editedContent}
+                  onChange={(e) => setEditedContent(e.target.value)}
+                  className="min-h-[80px] bg-background mb-2"
                 />
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="outline-none">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="More options"
-                      className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-                    >
-                      <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        navigator.clipboard.writeText(question.content);
-                        toast.success("Copied to clipboard");
-                      }}
-                    >
-                      <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
-                      Copy Text
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => alert("Reported content")}>
-                      <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
-                      Report
-                    </DropdownMenuItem>
-                    {user?.username === question.authorUsername && (
-                      <>
-                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                          <HugeiconsIcon
-                            icon={PencilEdit02Icon}
-                            className="mr-2 size-4"
-                          />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => onDelete(questionId)}
-                        >
-                          <HugeiconsIcon
-                            icon={Delete02Icon}
-                            className="mr-2 size-4"
-                          />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditedContent(question.content);
+                    }}
+                    disabled={isUpdatePending}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={isUpdatePending}
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
+            ) : (
+              <p className="text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed">
+                {question.content}
+              </p>
             )}
           </div>
-          {isEditing ? (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-              onKeyUp={(e) => e.stopPropagation()}
-            >
-              <Textarea
-                value={editedContent}
-                onChange={(e) => setEditedContent(e.target.value)}
-                className="min-h-[80px] bg-background mb-2"
-              />
-              <div className="flex gap-2 justify-end">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditedContent(question.content);
-                  }}
-                  disabled={isUpdatePending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={isUpdatePending}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed">
-              {question.content}
-            </p>
-          )}
         </div>
 
       </AccordionTrigger>
