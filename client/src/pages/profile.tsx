@@ -67,7 +67,9 @@ export function Profile() {
         setIsEditOpen(false);
       },
       onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to update profile");
+        toast.error(
+          err instanceof Error ? err.message : "Failed to update profile",
+        );
       },
     });
   };
@@ -154,7 +156,7 @@ export function Profile() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
-            My Chambers
+            Chambers I'm in
           </h3>
           <Button
             variant="outline"
@@ -178,7 +180,7 @@ export function Profile() {
                   className={cn(
                     "size-4 rounded-md",
                     CHAMBER_COLORS[
-                    (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                      (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                     ],
                   )}
                 />

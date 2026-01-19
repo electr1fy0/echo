@@ -8,6 +8,7 @@ export interface Question {
   upvotes: number;
   isUpvoted: boolean;
   chamberUid?: string;
+  chamberName?: string;
 }
 export interface User {
   username: string;

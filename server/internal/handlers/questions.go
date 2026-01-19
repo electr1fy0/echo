@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -226,10 +227,14 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 			exists (
 				select 1 from question_upvotes v2
 				where v2.question_uid = q.uid and v2.username = $1
-			) as is_upvoted
+			) as is_upvoted,
+			q.chamber_uid,
+			coalesce(c.name, '') as chamber_name
 		from questions q
 		left join users u
 			on u.username = q.author
+		left join chambers c
+			on c.uid = q.chamber_uid
 	`
 	whereConditions := []string{}
 	args := []any{sub}
@@ -271,10 +276,16 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var q QuestionItem
 		var avatar *string
-		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
+		var chamberUID *uuid.UUID
+		var chamberName string
+		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted, &chamberUID, &chamberName)
 		if avatar != nil {
 			q.Author.Avatar = *avatar
 		}
+		if chamberUID != nil {
+			q.Question.ChamberUID = *chamberUID
+		}
+		q.Question.ChamberName = chamberName
 		q.Author.Username = q.Question.AuthorUsername
 		if err != nil {
 			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)

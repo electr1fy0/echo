@@ -4,8 +4,9 @@ import { Accordion } from "@/components/ui/accordion";
 type QuestionListProps = {
   questions: QuestionItem[];
   onDelete?: (id: string) => void;
+  showChamberName?: boolean;
 };
-export function QuestionList({ questions, onDelete }: QuestionListProps) {
+export function QuestionList({ questions, onDelete, showChamberName }: QuestionListProps) {
   return questions.length > 0 ? (
     <Accordion className="dark:bg-[#1D1D1D]">
       {questions.map((questionItem, index) => (
@@ -13,6 +14,7 @@ export function QuestionList({ questions, onDelete }: QuestionListProps) {
           key={questionItem.question.uid ?? index}
           questionItem={questionItem}
           onDelete={onDelete || (() => { })}
+          showChamberName={showChamberName}
         />
       ))}
     </Accordion>

@@ -376,7 +376,13 @@ export function AppSidebar() {
   return (
     <>
       <aside className="fixed top-0 left-0 h-screen flex flex-col items-center py-8 border-r border-neutral-200 dark:border-neutral-800 bg-background z-40 w-20">
-        <div className="bg-orange-500 rounded-full size-6 shrink-0 shadow-sm" />
+        <div className="size-8 rounded-lg bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+          <img
+            src="/echologo.svg"
+            alt="Echo"
+            className="size-6 invert dark:invert-0 opacity-60"
+          />
+        </div>
         <nav className="flex-1 flex flex-col items-center justify-center gap-4 w-full">
           {navItems.map((item) => (
             <NavButton

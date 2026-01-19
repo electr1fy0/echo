@@ -6,13 +6,12 @@ export function Landing() {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="w-full max-w-xl mx-auto px-4 py-8 flex items-center justify-between">
         <Link to="/auth">
-          <div
-            className="size-4 rounded-full"
-            style={{ backgroundColor: "#F54900" }}
-          />
+          <div className="size-9 rounded-lg bg-primary flex items-center justify-center">
+            <img src="/echologo.svg" alt="Echo" className="size-7" />
+          </div>
         </Link>
         <Link to="/auth">
-          <Button variant="outline" size="sm" className="text-sm font-normal">
+          <Button variant="outline" size="default" className="rounded-lg text-sm font-normal">
             Create Account
           </Button>
         </Link>

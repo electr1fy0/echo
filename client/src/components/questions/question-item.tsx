@@ -36,9 +36,10 @@ import { toast } from "sonner";
 type QuestionItemProps = {
   questionItem: QuestionItem;
   onDelete: (id: string) => void;
+  showChamberName?: boolean;
 };
 
-export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
+export function QuestionItem({ questionItem, onDelete, showChamberName }: QuestionItemProps) {
   const question = questionItem?.question;
   const author = questionItem?.author ?? null;
   const questionId = question?.uid;
@@ -86,10 +87,15 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
           />
         </Link>
         <div className="flex-1 text-left min-w-0 mr-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-neutral-500 dark:text-neutral-400">
               {question.authorUsername || "Anonymous"}
             </span>
+            {showChamberName && question.chamberName && (
+              <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                in {question.chamberName}
+              </span>
+            )}
             <span className="text-xs text-neutral-400 dark:text-neutral-500">
               {question.timeCreated &&
                 formatRelativeTime(new Date(question.timeCreated))}

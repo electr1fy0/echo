@@ -72,8 +72,8 @@ export function Home() {
                     className={cn(
                       "size-3 rounded-full",
                       CHAMBER_COLORS[
-                        (selectedChamberData.colorIndex || 0) %
-                          CHAMBER_COLORS.length
+                      (selectedChamberData.colorIndex || 0) %
+                      CHAMBER_COLORS.length
                       ],
                     )}
                   />
@@ -101,7 +101,7 @@ export function Home() {
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                        (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                         ],
                       )}
                     />
@@ -204,6 +204,7 @@ export function Home() {
           <QuestionList
             questions={questions}
             onDelete={(id) => deleteQuestion(id)}
+            showChamberName
           />
         ) : (
           <div className="text-center py-12 text-neutral-500">

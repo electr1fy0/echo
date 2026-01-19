@@ -1,8 +1,11 @@
 package handlers
+
 import (
 	"time"
+
 	"github.com/google/uuid"
 )
+
 type User struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
@@ -25,6 +28,7 @@ type Question struct {
 	IsUpvoted      bool      `json:"isUpvoted"`
 	AuthorUsername string    `json:"authorUsername"`
 	ChamberUID     uuid.UUID `json:"chamberUid"`
+	ChamberName    string    `json:"chamberName"`
 }
 type QuestionItem struct {
 	Question Question `json:"question"`
