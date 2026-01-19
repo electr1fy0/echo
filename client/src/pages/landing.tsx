@@ -336,18 +336,32 @@ export function Landing() {
       </main>
 
       <footer className="w-full max-w-xl mx-auto px-4 py-8 border-t border-border">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>v0.5</span>
-          <span>
-            Built by{" "}
-            <a
-              href="https://github.com/electr1fy0"
-              className="text-foreground font-medium hover:underline"
-              target="_blank"
-            >
-              Ayush
-            </a>
-          </span>
+        <div className="flex flex-col gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between">
+            <span>v0.5.1</span>
+            <div className="flex items-center gap-4">
+              <a
+                href="mailto:me@ayushpandey.xyz?subject=Hi%20Ayush"
+                className="hover:text-foreground transition-colors"
+              >
+                Support
+              </a>
+
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>© 2026 Echo</span>
+            <span>
+              Built by{" "}
+              <a
+                href="https://github.com/electr1fy0"
+                className="text-foreground font-medium hover:underline"
+                target="_blank"
+              >
+                Ayush
+              </a>
+            </span>
+          </div>
         </div>
       </footer>
     </div>
