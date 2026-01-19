@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import {
   AccordionContent,
   AccordionItem,
@@ -49,6 +50,7 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
   const { mutate: updateQuestion, isPending: isUpdatePending } =
     useUpdateQuestion();
 
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question.content);
 
@@ -73,13 +75,17 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
           if (isEditing) e.preventDefault();
         }}
       >
-        <div className="mr-3 shrink-0 mt-0.5">
+        <Link
+          to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
+          className="mr-3 shrink-0 mt-0.5"
+          onClick={(e) => e.stopPropagation()}
+        >
           <UserAvatar
             src={author?.avatar}
             name={question.authorUsername || "Anonymous"}
             className="size-7"
           />
-        </div>
+        </Link>
         <div className="flex-1 text-left min-w-0 mr-3">
           <div className="flex items-center gap-2">
             <span className="text-xs text-neutral-500 dark:text-neutral-400">

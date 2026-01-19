@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
   const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
   const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
   const { data: user } = useAuth();
+
   const reply = answerItem.answer;
 
   const [isEditing, setIsEditing] = useState(false);
@@ -61,13 +63,17 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
           className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
         />
       </div>
-      <div className="shrink-0">
+      <Link
+        to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
+        className="shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         <UserAvatar
           src={answerItem.author?.avatar}
           name={reply.authorUsername || "Anonymous"}
           className="size-5"
         />
-      </div>
+      </Link>
       <div className="flex-1 min-w-0">
         <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
           <span className="flex items-center gap-2">
