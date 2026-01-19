@@ -32,7 +32,7 @@ export function Home() {
     useCreateQuestion();
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: deleteQuestion } = useDeleteQuestion();
-  const { data: chambers = [] } = useListChambers();
+  const { data: chambers = [], isLoading } = useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
   const { data: questions = [], isLoading: isQuestionsLoading } =
     useQuestionsQuery(
@@ -72,8 +72,8 @@ export function Home() {
                     className={cn(
                       "size-3 rounded-full",
                       CHAMBER_COLORS[
-                      (selectedChamberData.colorIndex || 0) %
-                      CHAMBER_COLORS.length
+                        (selectedChamberData.colorIndex || 0) %
+                          CHAMBER_COLORS.length
                       ],
                     )}
                   />
@@ -101,7 +101,7 @@ export function Home() {
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                        (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                         ],
                       )}
                     />
@@ -191,7 +191,7 @@ export function Home() {
             </Button>
           </div>
         </div>
-        {JOINED_CHAMBERS.length === 0 ? (
+        {JOINED_CHAMBERS.length === 0 && !isLoading ? (
           <div className="text-center py-12 text-neutral-500">
             <p className="text-sm">You haven't joined any chambers yet.</p>
             <p className="text-xs mt-1">

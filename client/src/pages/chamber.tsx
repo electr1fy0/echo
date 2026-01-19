@@ -25,10 +25,11 @@ function formatMemberCount(count: number): string {
 export function ChamberPage() {
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
-  const { data: chambers = [] } = useListChambers();
+  const { data: chambers = [], isLoading: isChamberLoading } =
+    useListChambers();
   const chamber = chambers.find((c) => c.uid === chamberId);
   const { mutate: deleteQn } = useDeleteQuestion();
-  const { data: questions = [] } = useQuestionsQuery(
+  const { data: questions = [], isLoading } = useQuestionsQuery(
     "time_created",
     undefined,
     chamberId,
@@ -36,7 +37,7 @@ export function ChamberPage() {
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
-  if (!chamber) {
+  if (!chamber && !isChamberLoading) {
     return (
       <div className="max-w-xl w-full mt-40 px-4">
         <p className="text-neutral-500">Chamber not found</p>
@@ -90,9 +91,9 @@ export function ChamberPage() {
               Created{" "}
               {chamber.timeCreated
                 ? new Date(chamber.timeCreated).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric",
-                })
+                    month: "short",
+                    year: "numeric",
+                  })
                 : "Jan 2024"}
             </span>
           </div>
@@ -110,7 +111,7 @@ export function ChamberPage() {
         <h2 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
           Questions ({questions.length})
         </h2>
-        {questions.length > 0 ? (
+        {questions.length > 0 && !isLoading ? (
           <QuestionList questions={questions} onDelete={(id) => deleteQn(id)} />
         ) : (
           <div className="text-center py-12 text-neutral-500">
