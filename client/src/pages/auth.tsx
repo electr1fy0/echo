@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useSignin, useSignup, useRequestPasswordReset } from "@/hooks/use-auth";
+import { useSignin, useSignup, useRequestPasswordReset, useResendVerification } from "@/hooks/use-auth";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon } from "@hugeicons/core-free-icons";
 function SkeletonQuestionItem() {
@@ -99,6 +99,12 @@ export function Auth() {
     isPending: isResetPending,
     error: resetError,
   } = useRequestPasswordReset();
+
+  const {
+    mutate: resendVerification,
+    isPending: isResendPending,
+  } = useResendVerification();
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isForgotPassword) {
@@ -173,13 +179,28 @@ export function Auth() {
           <CardContent>
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full mb-2"
               onClick={() => {
                 setSignupSuccess(false);
                 setIsSignUp(false);
               }}
             >
               Back to Sign In
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full text-xs text-muted-foreground"
+              disabled={isResendPending}
+              onClick={() => {
+                if (user.email) {
+                  resendVerification(user.email, {
+                    onSuccess: () => alert("Verification email resent!"),
+                    onError: () => alert("Failed to resend email. Please try again.")
+                  });
+                }
+              }}
+            >
+              {isResendPending ? "Sending..." : "Resend Validation Email"}
             </Button>
           </CardContent>
         </Card>

@@ -282,7 +282,8 @@ export function Landing() {
           <h2 className="text-base font-medium text-foreground">Privacy</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
             Your data is yours. I have no plans to make money from Echo. Zero
-            trackers. Zero ads.
+            trackers. Zero ads. And if you ever want to leave, you can delete
+            your account and all your data instantly.
           </p>
         </section>
 

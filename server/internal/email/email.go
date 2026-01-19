@@ -44,7 +44,6 @@ func SendPasswordResetEmail(to, username, token string) error {
 		domain = "localhost:5173"
 	}
 	resetLink := fmt.Sprintf("https://%s/reset-password?token=%s", domain, token)
-	fmt.Printf("MOCK EMAIL: Reset Link: %s\n", resetLink)
 
 	apiKey := os.Getenv("RESEND_API_KEY")
 	if apiKey == "" {

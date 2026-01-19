@@ -100,3 +100,17 @@ export async function resetPassword(token: string, newPassword: string) {
   }
   return res.json();
 }
+
+export async function deleteAccount() {
+  const res = await fetch(`${API_URL}/users/me`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to delete account");
+  }
+  return res.json();
+}

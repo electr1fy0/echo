@@ -219,3 +219,50 @@ func (h *APIHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Password updated successfully"})
 }
+
+func (h *APIHandler) ResendVerification(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, "invalid request", err, http.StatusBadRequest)
+		return
+	}
+
+	var username string
+	var isVerified bool
+	err := h.DB.QueryRow(context.Background(), "SELECT username, is_verified FROM users WHERE email = $1", req.Email).Scan(&username, &isVerified)
+	if err != nil {
+		// Don't reveal if user exists
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "If an account exists and is not verified, a verification email has been sent"})
+		return
+	}
+
+	if isVerified {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Account is already verified"})
+		return
+	}
+
+	token, err := utils.GenerateRandomToken(32)
+	if err != nil {
+		h.respondWithError(w, "failed to generate token", err, http.StatusInternalServerError)
+		return
+	}
+
+	_, err = h.DB.Exec(context.Background(), "UPDATE users SET verification_token = $1 WHERE email = $2", token, req.Email)
+	if err != nil {
+		h.respondWithError(w, "database error", err, http.StatusInternalServerError)
+		return
+	}
+
+	go func() {
+		if err := email.SendVerificationEmail(req.Email, username, token); err != nil {
+			fmt.Printf("Failed to send verification email: %v\n", err)
+		}
+	}()
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "If an account exists and is not verified, a verification email has been sent"})
+}

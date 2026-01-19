@@ -31,7 +31,23 @@ export function useSignout() {
 }
 
 
-import { verifyEmail, requestPasswordReset, resetPassword } from "@/api/auth";
+import { verifyEmail, requestPasswordReset, resetPassword, resendVerification, deleteAccount } from "@/api/auth";
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+    },
+  });
+}
+
+export function useResendVerification() {
+  return useMutation({
+    mutationFn: resendVerification,
+  });
+}
 
 export function useVerifyEmail() {
   return useMutation({

@@ -12,7 +12,15 @@ import {
   PencilEdit02Icon,
   Add01Icon,
   Link01Icon,
+  MoreHorizontalIcon,
+  Alert02Icon,
 } from "@hugeicons/core-free-icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFetchProfile, useUpdateProfile } from "@/hooks/use-profile";
+import { useDeleteAccount } from "@/hooks/use-auth";
 import type { User } from "@/types";
 import { useListChambers } from "@/hooks/use-chamber";
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
@@ -41,6 +50,7 @@ export function Profile() {
   } = useFetchProfile();
   const { mutate: updateProfile } = useUpdateProfile();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const {
     data: questions = [],
@@ -48,6 +58,7 @@ export function Profile() {
     error: qnError,
   } = useUserQuestionsQuery();
   const { mutate: deleteQuestion } = useDeleteQuestion();
+  const { mutate: deleteAccount } = useDeleteAccount();
   const [editForm, setEditForm] = useState<User>({
     username: "",
     email: "",
@@ -108,6 +119,22 @@ export function Profile() {
               <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
               Edit Profile
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                  onClick={() => setIsDeleteOpen(true)}
+                >
+                  <HugeiconsIcon icon={Alert02Icon} className="mr-2 size-4" />
+                  Delete Account
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <div className="space-y-1">
@@ -180,7 +207,7 @@ export function Profile() {
                   className={cn(
                     "size-4 rounded-md",
                     CHAMBER_COLORS[
-                      (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                    (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                     ],
                   )}
                 />
@@ -278,6 +305,40 @@ export function Profile() {
         open={createChamberOpen}
         onOpenChange={setCreateChamberOpen}
       />
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Account</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-neutral-500">
+              Are you sure you want to delete your account? This action cannot be
+              undone. All your data will be permanently removed.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  deleteAccount(undefined, {
+                    onSuccess: () => {
+                      toast.success("Account deleted successfully");
+                      setIsDeleteOpen(false);
+                    },
+                    onError: () => {
+                      toast.error("Failed to delete account");
+                    },
+                  });
+                }}
+              >
+                Delete Account
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
