@@ -91,9 +91,9 @@ export function QuestionItem({
               className="size-7"
             />
           </Link>
-          <div className="flex flex-col gap-2 flex-1 min-w-0">
+          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+              <div className="flex pt-1 items-center gap-2.5 flex-wrap min-w-0">
                 <span className="text-xs text-neutral-500 dark:text-neutral-400">
                   {question.authorUsername || "Anonymous"}
                 </span>
@@ -127,7 +127,10 @@ export function QuestionItem({
                         aria-label="More options"
                         className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
                       >
-                        <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+                        <HugeiconsIcon
+                          icon={MoreHorizontalIcon}
+                          className="size-5"
+                        />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -137,11 +140,19 @@ export function QuestionItem({
                           toast.success("Copied to clipboard");
                         }}
                       >
-                        <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
+                        <HugeiconsIcon
+                          icon={Copy01Icon}
+                          className="mr-2 size-4"
+                        />
                         Copy Text
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => alert("Reported content")}>
-                        <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+                      <DropdownMenuItem
+                        onClick={() => alert("Reported content")}
+                      >
+                        <HugeiconsIcon
+                          icon={Alert01Icon}
+                          className="mr-2 size-4"
+                        />
                         Report
                       </DropdownMenuItem>
                       {user?.username === question.authorUsername && (
@@ -209,7 +220,6 @@ export function QuestionItem({
             )}
           </div>
         </div>
-
       </AccordionTrigger>
       <AccordionContent>
         {replies ? (
@@ -227,6 +237,6 @@ export function QuestionItem({
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
-    </AccordionItem >
+    </AccordionItem>
   );
 }
