@@ -16,13 +16,13 @@ import {
   PencilEdit02Icon,
   Copy01Icon,
   Alert01Icon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
 import { useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
+import { toast } from "sonner";
 
 type ReplyItemProps = {
   answerItem: AnswerItem;
@@ -37,7 +37,6 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(reply.content);
-  const [hasCopied, setHasCopied] = useState(false);
 
   function handleSave() {
     if (!editedContent.trim()) return;
@@ -136,15 +135,14 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(reply.content);
-                setHasCopied(true);
-                setTimeout(() => setHasCopied(false), 2000);
+                toast.success("Copied to clipboard");
               }}
             >
               <HugeiconsIcon
-                icon={hasCopied ? Tick02Icon : Copy01Icon}
+                icon={Copy01Icon}
                 className="mr-2 size-4"
               />
-              {hasCopied ? "Copied" : "Copy Text"}
+              Copy Text
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => alert("Reported content")}>
               <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />

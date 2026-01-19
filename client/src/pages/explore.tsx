@@ -82,6 +82,34 @@ export function Explore() {
                     {isLoading && <p className="text-sm text-neutral-500 text-center">Searching...</p>}
                     {!isLoading && searchResults && (
                         <>
+                            {searchResults.users.length > 0 && (
+                                <div className="space-y-3">
+                                    <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
+                                        Users
+                                    </h3>
+                                    <div className="flex flex-col gap-2">
+                                        {searchResults.users.map((user) => (
+                                            <div
+                                                key={user.username}
+                                                onClick={() => navigate(`/u/${user.username}`)}
+                                                className="flex items-center gap-3 p-3 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800/50 transition-colors cursor-pointer border border-transparent hover:border-neutral-200 dark:hover:border-neutral-800"
+                                            >
+                                                <UserAvatar src={user.avatar} name={user.username} className="size-10" />
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-medium text-sm text-neutral-900 dark:text-neutral-100">
+                                                        {user.username}
+                                                    </h4>
+                                                    {user.bio && (
+                                                        <p className="text-xs text-neutral-500 truncate">
+                                                            {user.bio}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             {searchResults.chambers.length > 0 && (
                                 <div className="space-y-3">
                                     <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
@@ -114,6 +142,7 @@ export function Explore() {
                                 </div>
                             )}
                             {!isLoading &&
+                                searchResults.users.length === 0 &&
                                 searchResults.chambers.length === 0 &&
                                 searchResults.questions.length === 0 &&
                                 searchResults.replies.length === 0 && (

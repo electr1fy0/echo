@@ -13,11 +13,12 @@ import {
 export function useQuestionsQuery(
   sort?: "votes" | "time_created",
   filter?: "joined",
-  chamberId?: string
+  chamberId?: string,
+  author?: string
 ) {
   return useQuery({
-    queryKey: ["questions", sort, filter, chamberId],
-    queryFn: () => fetchQuestions(sort, filter, chamberId),
+    queryKey: ["questions", sort, filter, chamberId, author],
+    queryFn: () => fetchQuestions(sort, filter, chamberId, author),
     staleTime: 30_000,
   });
 }

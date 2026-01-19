@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Home } from "@/pages/home";
 import { Profile } from "@/pages/profile";
+import { PublicProfile } from "@/pages/public-profile";
 import { Explore } from "@/pages/explore";
 import { AllChambers } from "@/pages/all-chambers";
 import { ChamberPage } from "@/pages/chamber";
@@ -18,7 +19,9 @@ function AuthenticatedLayout() {
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/u/:username" element={<PublicProfile />} />
           <Route path="/explore" element={<Explore />} />
           <Route path="/chambers" element={<AllChambers />} />
           <Route path="/chamber/:chamberId" element={<ChamberPage />} />
@@ -28,6 +31,8 @@ function AuthenticatedLayout() {
     </div>
   );
 }
+import { Toaster } from "@/components/ui/sonner";
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -41,6 +46,7 @@ export default function App() {
           <Route path="/*" element={<AuthenticatedLayout />} />
         </Route>
       </Routes>
+      <Toaster />
     </BrowserRouter>
   );
 }

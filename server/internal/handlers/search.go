@@ -1,17 +1,22 @@
 package handlers
+
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 )
+
 type SearchResponse struct {
 	Chambers  []Chamber      `json:"chambers"`
 	Questions []QuestionItem `json:"questions"`
 	Replies   []AnswerItem   `json:"replies"`
+	Users     []Profile      `json:"users"`
 }
+
 func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -28,23 +33,25 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			Chambers:  []Chamber{},
 			Questions: []QuestionItem{},
 			Replies:   []AnswerItem{},
+			Users:     []Profile{},
 		})
 		return
 	}
+
 	var wg sync.WaitGroup
 	resp := SearchResponse{
 		Chambers:  []Chamber{},
 		Questions: []QuestionItem{},
 		Replies:   []AnswerItem{},
+		Users:     []Profile{},
 	}
-	var errChambers, errQuestions, errReplies error
-	_ = errChambers
-	_ = errQuestions
-	_ = errReplies
-	wg.Add(1)
+	var respMutex sync.Mutex
+
+	wg.Add(4)
+
 	go func() {
 		defer wg.Done()
-		chamberRows, err := h.DB.Query(ctx, `
+		rows, err := h.DB.Query(ctx, `
 			SELECT 
 				c.uid, c.name, COALESCE(c.description, ''), c.color_index, c.created_at,
 				(SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
@@ -53,21 +60,24 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			WHERE c.name ILIKE $2 OR c.description ILIKE $2
 			LIMIT 5`, sub, "%"+query+"%")
 		if err != nil {
-			errChambers = err
 			return
 		}
-		defer chamberRows.Close()
-		for chamberRows.Next() {
+		defer rows.Close()
+		var chambers []Chamber
+		for rows.Next() {
 			var c Chamber
-			if err := chamberRows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err == nil {
-				resp.Chambers = append(resp.Chambers, c)
+			if err := rows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err == nil {
+				chambers = append(chambers, c)
 			}
 		}
+		respMutex.Lock()
+		resp.Chambers = chambers
+		respMutex.Unlock()
 	}()
-	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
-		questionRows, err := h.DB.Query(ctx, `
+		rows, err := h.DB.Query(ctx, `
 			select
 				q.uid, q.content, q.time_created, q.author,
 				u.avatar,
@@ -80,26 +90,29 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			group by q.uid, q.content, q.time_created, q.author, u.avatar
 			limit 5`, sub, "%"+query+"%")
 		if err != nil {
-			errQuestions = err
 			return
 		}
-		defer questionRows.Close()
-		for questionRows.Next() {
+		defer rows.Close()
+		var questions []QuestionItem
+		for rows.Next() {
 			var q QuestionItem
 			var avatar *string
-			if err := questionRows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted); err == nil {
+			if err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted); err == nil {
 				if avatar != nil {
 					q.Author.Avatar = *avatar
 				}
 				q.Author.Username = q.Question.AuthorUsername
-				resp.Questions = append(resp.Questions, q)
+				questions = append(questions, q)
 			}
 		}
+		respMutex.Lock()
+		resp.Questions = questions
+		respMutex.Unlock()
 	}()
-	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
-		replyRows, err := h.DB.Query(ctx, `
+		rows, err := h.DB.Query(ctx, `
 			select 
 				a.uid, a.content, a.time_created, a.question_uid, a.author,
 				u.avatar,
@@ -112,22 +125,63 @@ func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 			group by a.uid, a.content, a.time_created, a.question_uid, a.author, u.avatar
 			limit 5`, sub, "%"+query+"%")
 		if err != nil {
-			errReplies = err
 			return
 		}
-		defer replyRows.Close()
-		for replyRows.Next() {
+		defer rows.Close()
+		var replies []AnswerItem
+		for rows.Next() {
 			var ans AnswerItem
 			var avatar *string
-			if err := replyRows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err == nil {
+			if err := rows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err == nil {
 				if avatar != nil {
 					ans.Author.Avatar = *avatar
 				}
 				ans.Author.Username = ans.Answer.AuthorUsername
-				resp.Replies = append(resp.Replies, ans)
+				replies = append(replies, ans)
 			}
 		}
+		respMutex.Lock()
+		resp.Replies = replies
+		respMutex.Unlock()
 	}()
+
+	go func() {
+		defer wg.Done()
+		rows, err := h.DB.Query(ctx, `
+			SELECT username, COALESCE(avatar, ''), COALESCE(bio, '')
+			FROM users
+			WHERE username ILIKE $1
+			LIMIT 5`, "%"+query+"%")
+		if err != nil {
+			return
+		}
+		defer rows.Close()
+		var users []Profile
+		for rows.Next() {
+			var u Profile
+			if err := rows.Scan(&u.Username, &u.Avatar, &u.Bio); err == nil {
+				users = append(users, u)
+			}
+		}
+		respMutex.Lock()
+		resp.Users = users
+		respMutex.Unlock()
+	}()
+
 	wg.Wait()
+
+	if resp.Chambers == nil {
+		resp.Chambers = []Chamber{}
+	}
+	if resp.Questions == nil {
+		resp.Questions = []QuestionItem{}
+	}
+	if resp.Replies == nil {
+		resp.Replies = []AnswerItem{}
+	}
+	if resp.Users == nil {
+		resp.Users = []Profile{}
+	}
+
 	json.NewEncoder(w).Encode(resp)
 }

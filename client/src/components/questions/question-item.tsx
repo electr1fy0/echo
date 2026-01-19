@@ -24,13 +24,13 @@ import {
   PencilEdit02Icon,
   Copy01Icon,
   Alert01Icon,
-  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
+import { toast } from "sonner";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;
@@ -51,7 +51,6 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question.content);
-  const [hasCopied, setHasCopied] = useState(false);
 
   if (!questionId) return null;
 
@@ -158,15 +157,14 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
                 <DropdownMenuItem
                   onClick={() => {
                     navigator.clipboard.writeText(question.content);
-                    setHasCopied(true);
-                    setTimeout(() => setHasCopied(false), 2000);
+                    toast.success("Copied to clipboard");
                   }}
                 >
                   <HugeiconsIcon
-                    icon={hasCopied ? Tick02Icon : Copy01Icon}
+                    icon={Copy01Icon}
                     className="mr-2 size-4"
                   />
-                  {hasCopied ? "Copied" : "Copy Text"}
+                  Copy Text
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => alert("Reported content")}>
                   <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />

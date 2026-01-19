@@ -20,3 +20,13 @@ export async function updateProfile(user: User): Promise<void> {
   });
   if (!res.ok) throw new Error("Failed to update profile");
 }
+
+export async function fetchPublicProfile(username: string): Promise<User> {
+  const res = await fetch(`${API_URL}/users/${username}`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch profile");
+  return res.json() as Promise<User>;
+}

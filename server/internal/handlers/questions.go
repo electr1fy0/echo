@@ -199,6 +199,7 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	sort := q.Get("sort")
 	filter := q.Get("filter")
 	targetChamberUID := q.Get("chamber_uid")
+	author := q.Get("author")
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {
 		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
@@ -240,6 +241,11 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	if targetChamberUID != "" {
 		whereConditions = append(whereConditions, fmt.Sprintf("q.chamber_uid = $%d", argCount))
 		args = append(args, targetChamberUID)
+		argCount++
+	}
+	if author != "" {
+		whereConditions = append(whereConditions, fmt.Sprintf("q.author = $%d", argCount))
+		args = append(args, author)
 		argCount++
 	}
 	limitArg := argCount

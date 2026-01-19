@@ -31,6 +31,7 @@ func main() {
 	mux.HandleFunc("GET /auth/verify", middleware.Auth(h.Verify))
 	mux.HandleFunc("POST /auth/verify-email", h.VerifyEmail)
 	mux.HandleFunc("GET /users/me", middleware.Auth(h.GetProfile))
+	mux.HandleFunc("GET /users/{username}", h.GetPublicProfile)
 	mux.HandleFunc("PATCH /users/me", middleware.Auth(h.UpdateUser))
 	mux.HandleFunc("GET /users/me/questions", middleware.Auth(h.ListUserQuestions))
 	mux.HandleFunc("GET /users/me/notifications", middleware.Auth(h.ListNotifications))

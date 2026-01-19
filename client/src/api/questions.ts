@@ -6,11 +6,13 @@ export async function fetchQuestions(
   sort?: "votes" | "time_created",
   filter?: "joined",
   chamberId?: string,
+  author?: string,
 ) {
   const params = new URLSearchParams({
     ...(sort ? { sort } : {}),
     ...(filter ? { filter } : {}),
     ...(chamberId ? { chamber_uid: chamberId } : {}),
+    ...(author ? { author } : {}),
   });
   const res = await fetch(`${API_URL}/questions?${params}`, {
     headers: {

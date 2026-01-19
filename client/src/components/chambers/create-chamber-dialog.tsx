@@ -14,9 +14,7 @@ import { useCreateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert01Icon } from "@hugeicons/core-free-icons";
+import { toast } from "sonner";
 
 interface CreateChamberDialogProps {
   open: boolean;
@@ -28,12 +26,7 @@ export function CreateChamberDialog({
   onOpenChange,
 }: CreateChamberDialogProps) {
   const navigate = useNavigate();
-  const {
-    mutate: createChamber,
-    isError,
-    error,
-    reset,
-  } = useCreateChamber();
+  const { mutate: createChamber } = useCreateChamber();
   const [chamber, setChamber] = useState<Chamber>({
     name: "",
     description: "",
@@ -53,7 +46,11 @@ export function CreateChamberDialog({
         onOpenChange(false);
         if (newChamber?.uid) {
           navigate(`/chamber/${newChamber.uid}`);
+          toast.success("Chamber created successfully");
         }
+      },
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : "Failed to create chamber");
       },
     });
   };
@@ -63,7 +60,6 @@ export function CreateChamberDialog({
       open={open}
       onOpenChange={(val) => {
         onOpenChange(val);
-        if (!val) reset();
       }}
     >
       <DialogContent className="sm:max-w-[420px]">
@@ -71,17 +67,6 @@ export function CreateChamberDialog({
           <DialogTitle>Create a Chamber</DialogTitle>
         </DialogHeader>
         <div className="py-4 space-y-4">
-          {isError && (
-            <Alert variant="destructive">
-              <HugeiconsIcon icon={Alert01Icon} className="size-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                {error instanceof Error
-                  ? error.message
-                  : "Failed to create chamber"}
-              </AlertDescription>
-            </Alert>
-          )}
           <form className="space-y-4" onSubmit={(e) => handleSubmit(e)}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">

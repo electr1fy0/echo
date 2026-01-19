@@ -11,8 +11,6 @@ import {
   PencilEdit02Icon,
   Add01Icon,
   Link01Icon,
-  Tick02Icon,
-  Alert01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   Dialog,
@@ -31,7 +29,7 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
 
 export function Profile() {
   const {
@@ -39,13 +37,7 @@ export function Profile() {
     isLoading: isProfileLoading,
     error: profileError,
   } = useFetchProfile();
-  const {
-    mutate: updateProfile,
-    isSuccess: isUpdateSuccess,
-    isError: isUpdateError,
-    error: updateError,
-    reset: resetUpdate,
-  } = useUpdateProfile();
+  const { mutate: updateProfile } = useUpdateProfile();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const {
@@ -67,7 +59,15 @@ export function Profile() {
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(editForm);
+    updateProfile(editForm, {
+      onSuccess: () => {
+        toast.success("Profile updated successfully");
+        setIsEditOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err instanceof Error ? err.message : "Failed to update profile");
+      },
+    });
   };
   const updateDraft = (fields: Partial<User>) => {
     setEditForm((prev) => {
@@ -212,7 +212,6 @@ export function Profile() {
         open={isEditOpen}
         onOpenChange={(open) => {
           setIsEditOpen(open);
-          if (!open) resetUpdate();
         }}
       >
         <DialogContent>
@@ -220,26 +219,6 @@ export function Profile() {
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {isUpdateSuccess && (
-              <Alert className="border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-900 text-green-800 dark:text-green-200 [&>svg]:text-green-800 dark:[&>svg]:text-green-200">
-                <HugeiconsIcon icon={Tick02Icon} className="size-4" />
-                <AlertTitle>Success</AlertTitle>
-                <AlertDescription>
-                  Your profile has been updated successfully.
-                </AlertDescription>
-              </Alert>
-            )}
-            {isUpdateError && (
-              <Alert variant="destructive">
-                <HugeiconsIcon icon={Alert01Icon} className="size-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  {updateError instanceof Error
-                    ? updateError.message
-                    : "Failed to update profile"}
-                </AlertDescription>
-              </Alert>
-            )}
             <form onSubmit={(e) => handleSubmit(e)} className="grid gap-4">
               <div className="grid gap-2">
                 <label htmlFor="bio" className="text-sm font-medium">

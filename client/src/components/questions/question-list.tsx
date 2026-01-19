@@ -3,7 +3,7 @@ import { QuestionItem as QuestionItemComponent } from "./question-item";
 import { Accordion } from "@/components/ui/accordion";
 type QuestionListProps = {
   questions: QuestionItem[];
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 };
 export function QuestionList({ questions, onDelete }: QuestionListProps) {
   return questions.length > 0 ? (
@@ -12,7 +12,7 @@ export function QuestionList({ questions, onDelete }: QuestionListProps) {
         <QuestionItemComponent
           key={questionItem.question.uid ?? index}
           questionItem={questionItem}
-          onDelete={onDelete}
+          onDelete={onDelete || (() => { })}
         />
       ))}
     </Accordion>

@@ -1,10 +1,11 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
-import type { Chamber, QuestionItem, AnswerItem } from "@/types";
+import type { Chamber, QuestionItem, AnswerItem, User } from "@/types";
 export interface SearchResponse {
     chambers: Chamber[];
     questions: QuestionItem[];
     replies: AnswerItem[];
+    users: User[];
 }
 export async function globalSearch(query: string): Promise<SearchResponse> {
     const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
