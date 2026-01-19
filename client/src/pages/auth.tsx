@@ -304,7 +304,16 @@ export function Auth() {
               <Button
                 className="w-full"
                 type="submit"
-                disabled={isInPending || isUpPending || isResetPending}
+                disabled={
+                  isInPending ||
+                  isUpPending ||
+                  isResetPending ||
+                  (isForgotPassword
+                    ? !user.email.trim()
+                    : isSignUp
+                      ? !user.username.trim() || !user.email.trim() || !user.password.trim()
+                      : !user.username.trim() || !user.password.trim())
+                }
               >
                 {isInPending || isUpPending || isResetPending
                   ? "Loading…"

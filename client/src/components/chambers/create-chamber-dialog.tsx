@@ -117,7 +117,7 @@ export function CreateChamberDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Create Chamber</Button>
+              <Button type="submit" disabled={!chamber.name.trim() || !chamber.description.trim()}>Create Chamber</Button>
             </DialogFooter>
           </form>
         </div>

@@ -66,9 +66,9 @@ function NavButton({
           ? "bg-primary text-primary-foreground hover:bg-primary/80"
           : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
         !isAction &&
-          (isActive
-            ? "text-neutral-900 dark:text-white"
-            : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
+        (isActive
+          ? "text-neutral-900 dark:text-white"
+          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
       )}
     >
       <HugeiconsIcon
@@ -218,8 +218,8 @@ function CreateQueryDialog({
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                          (selectedChamberData.colorIndex || 0) %
-                            CHAMBER_COLORS.length
+                        (selectedChamberData.colorIndex || 0) %
+                        CHAMBER_COLORS.length
                         ],
                       )}
                     />
@@ -241,7 +241,7 @@ function CreateQueryDialog({
                         className={cn(
                           "size-3 rounded-full",
                           CHAMBER_COLORS[
-                            (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                           ],
                         )}
                       />
@@ -271,8 +271,8 @@ function CreateQueryDialog({
                 className={cn(
                   "size-3 rounded-full",
                   CHAMBER_COLORS[
-                    (selectedChamberData.colorIndex || 0) %
-                      CHAMBER_COLORS.length
+                  (selectedChamberData.colorIndex || 0) %
+                  CHAMBER_COLORS.length
                   ],
                 )}
               />
@@ -285,7 +285,7 @@ function CreateQueryDialog({
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={isPending || !selectedChamber}
+              disabled={isPending || !selectedChamber || !draft.content.trim()}
             >
               {isPending ? "Posting..." : "Ask Query"}
             </Button>

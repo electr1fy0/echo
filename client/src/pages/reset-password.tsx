@@ -122,7 +122,7 @@ export function ResetPassword() {
                         <Button
                             className="w-full"
                             type="submit"
-                            disabled={isPending}
+                            disabled={isPending || !newPassword.trim() || !confirmPassword.trim()}
                         >
                             {isPending ? "Resetting..." : "Reset Password"}
                         </Button>

@@ -40,7 +40,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
       />
       <Button
         variant="outline"
-        disabled={isPending}
+        disabled={isPending || !content.trim()}
         type="submit"
         className=""
       >
