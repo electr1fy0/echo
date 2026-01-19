@@ -159,8 +159,8 @@ export function Landing() {
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
             The backend is Go. The frontend is React + Tanstack Query. The
-            database is PostgreSQL. Authentication uses db-backed credentials
-            and JWT-based sessions. These are not clever choices. They are
+            database is PostgreSQL. Auth JWTs. Interactions are optimistic. The
+            UI is snappy. And so and so. These are not clever choices. They are
             boring choices that work.
           </p>
 
@@ -279,6 +279,16 @@ export function Landing() {
         <div className="h-px w-full bg-border" />
 
         <section className="space-y-4">
+          <h2 className="text-base font-medium text-foreground">Privacy</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Your data is yours. I have no plans to make money from Echo. Zero
+            trackers. Zero ads.
+          </p>
+        </section>
+
+        <div className="h-px w-full bg-border" />
+
+        <section className="space-y-4">
           <h2 className="text-base font-medium text-foreground">
             What comes next
           </h2>
@@ -346,7 +356,6 @@ export function Landing() {
               >
                 Support
               </a>
-
             </div>
           </div>
           <div className="flex items-center justify-between">
