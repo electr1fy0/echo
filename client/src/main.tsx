@@ -7,7 +7,7 @@ import { ThemeProvider } from "./components/theme-provider.tsx";
 const queryClient = new QueryClient();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="light" storageKey="echo-theme">
+    <ThemeProvider defaultTheme="system" storageKey="echo-theme">
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>

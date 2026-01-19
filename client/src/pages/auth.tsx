@@ -76,10 +76,14 @@ export function Auth() {
         {
           onSuccess: () => setSignupSuccess(true),
           onError: (err) => console.error(err),
-        }
+        },
       );
     } else {
-      signIn({ ...user, username: user.username.trim(), email: user.email.trim() });
+      signIn({
+        ...user,
+        username: user.username.trim(),
+        email: user.email.trim(),
+      });
     }
   }
   if (signupSuccess) {
@@ -191,7 +195,7 @@ export function Auth() {
                 {isInPending || isUpPending
                   ? "Loading…"
                   : isSignUp
-                    ? "Sign up"
+                    ? "Create Account"
                     : "Sign in"}
               </Button>
             </form>

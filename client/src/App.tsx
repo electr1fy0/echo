@@ -39,6 +39,7 @@ export default function App() {
       <Routes>
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route element={<GuestRoute />}>
+          <Route path="/" element={<Navigate to="/landing" replace />} />
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
         </Route>
