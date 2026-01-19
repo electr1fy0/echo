@@ -74,7 +74,7 @@ export function QuestionItem({
   return (
     <AccordionItem value={questionId} className="w-full">
       <AccordionTrigger
-        className="font-normal py-4 pr-4 hover:no-underline items-start gap-3 text-left"
+        className="font-normal py-2 pr-4 hover:no-underline items-start gap-3 text-left"
         onClick={(e) => {
           if (isEditing) e.preventDefault();
         }}
