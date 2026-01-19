@@ -39,10 +39,10 @@ type QuestionItemProps = {
 };
 
 export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
-  if (!questionItem?.question) return null;
-  const question = questionItem.question;
-  const author = questionItem.author ?? null;
-  const questionId = question.uid;
+  const question = questionItem?.question;
+  const author = questionItem?.author ?? null;
+  const questionId = question?.uid;
+
   const { data: replies = [] } = useRepliesQuery(questionId || undefined);
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
@@ -50,11 +50,10 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
   const { mutate: updateQuestion, isPending: isUpdatePending } =
     useUpdateQuestion();
 
-
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(question.content);
+  const [editedContent, setEditedContent] = useState(question?.content ?? "");
 
-  if (!questionId) return null;
+  if (!question || !questionId) return null;
 
   function handleSave() {
     if (!questionId) return;
