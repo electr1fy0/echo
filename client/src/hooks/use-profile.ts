@@ -5,6 +5,7 @@ export function useFetchProfile() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: () => fetchProfile(),
+    staleTime: 2 * 60 * 1000,
   });
 }
 export function useUpdateProfile() {
@@ -20,5 +21,6 @@ export function useFetchPublicProfile(username?: string) {
     queryKey: ["profile", username],
     queryFn: () => fetchPublicProfile(username!),
     enabled: !!username,
+    staleTime: 2 * 60 * 1000,
   });
 }

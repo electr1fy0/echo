@@ -19,6 +19,7 @@ export function useListChambers(query?: string) {
   return useQuery({
     queryFn: () => listChambers(query),
     queryKey: ["chambers", query],
+    staleTime: 2 * 60 * 1000,
   });
 }
 
