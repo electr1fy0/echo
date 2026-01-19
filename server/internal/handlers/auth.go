@@ -1,4 +1,5 @@
 package handlers
+
 import (
 	"context"
 	"echo/internal/email"
@@ -9,12 +10,15 @@ import (
 	"os"
 	"strings"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
+
 type VerifyEmailRequest struct {
 	Token string `json:"token"`
 }
+
 func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
@@ -136,4 +140,82 @@ func (h *APIHandler) Verify(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func (h *APIHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, "invalid request", err, http.StatusBadRequest)
+		return
+	}
+
+	var username string
+	err := h.DB.QueryRow(context.Background(), "SELECT username FROM users WHERE email = $1", req.Email).Scan(&username)
+	if err != nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "If an account exists, a reset email has been sent"})
+		return
+	}
+
+	token, err := utils.GenerateRandomToken(32)
+	if err != nil {
+		h.respondWithError(w, "failed to generate token", err, http.StatusInternalServerError)
+		return
+	}
+
+	_, err = h.DB.Exec(context.Background(), "UPDATE users SET reset_token = $1, reset_expiry = $2 WHERE email = $3", token, time.Now().UTC().Add(time.Hour), req.Email)
+	if err != nil {
+		h.respondWithError(w, "database error", err, http.StatusInternalServerError)
+		return
+	}
+
+	go func() {
+		if err := email.SendPasswordResetEmail(req.Email, username, token); err != nil {
+			fmt.Printf("Failed to send reset email: %v\n", err)
+		}
+	}()
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "If an account exists, a reset email has been sent"})
+}
+
+func (h *APIHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token       string `json:"token"`
+		NewPassword string `json:"new_password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, "invalid request", err, http.StatusBadRequest)
+		return
+	}
+
+	var email string
+	var expiry time.Time
+	err := h.DB.QueryRow(context.Background(), "SELECT email, reset_expiry FROM users WHERE reset_token = $1", req.Token).Scan(&email, &expiry)
+	if err != nil {
+		h.respondWithError(w, "invalid or expired token", err, http.StatusBadRequest)
+		return
+	}
+
+	if time.Now().UTC().After(expiry) {
+		h.respondWithError(w, "token expired", nil, http.StatusBadRequest)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 10)
+	if err != nil {
+		h.respondWithError(w, "failed to hash password", err, http.StatusInternalServerError)
+		return
+	}
+
+	_, err = h.DB.Exec(context.Background(), "UPDATE users SET password = $1, reset_token = NULL, reset_expiry = NULL WHERE email = $2", hash, email)
+	if err != nil {
+		h.respondWithError(w, "failed to update password", err, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Password updated successfully"})
 }

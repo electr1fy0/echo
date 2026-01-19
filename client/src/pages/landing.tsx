@@ -37,7 +37,7 @@ export function Landing() {
             Most platforms optimize for volume. More posts, more questions, more
             answers, more engagement metrics. The result is noise. Threads
             become unreadable. Signal gets buried under accumulated layers. I
-            started Echo because I wanted something quieter.
+            built Echo because I wanted something quieter.
           </p>
 
           <div className="border border-dashed border-muted-foreground/30 rounded-lg p-4 space-y-4">

@@ -30,6 +30,8 @@ func main() {
 	mux.HandleFunc("POST /auth/signout", middleware.Auth(h.Signout))
 	mux.HandleFunc("GET /auth/verify", middleware.Auth(h.Verify))
 	mux.HandleFunc("POST /auth/verify-email", h.VerifyEmail)
+	mux.HandleFunc("POST /auth/request-password-reset", h.RequestPasswordReset)
+	mux.HandleFunc("POST /auth/reset-password", h.ResetPassword)
 	mux.HandleFunc("GET /users/me", middleware.Auth(h.GetProfile))
 	mux.HandleFunc("GET /users/{username}", h.GetPublicProfile)
 	mux.HandleFunc("PATCH /users/me", middleware.Auth(h.UpdateUser))

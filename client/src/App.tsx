@@ -10,6 +10,7 @@ import { Notifications } from "@/pages/notifications";
 import { Auth } from "@/pages/auth";
 import { Landing } from "@/pages/landing";
 import { VerifyEmail } from "@/pages/verify-email";
+import { ResetPassword } from "@/pages/reset-password";
 import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
 function AuthenticatedLayout() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route element={<GuestRoute />}>
           <Route path="/" element={<Navigate to="/landing" replace />} />
           <Route path="/landing" element={<Landing />} />

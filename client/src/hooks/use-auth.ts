@@ -29,9 +29,30 @@ export function useSignout() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["auth"] }),
   });
 }
-import { verifyEmail } from "@/api/auth";
+
+
+import { verifyEmail, requestPasswordReset, resetPassword } from "@/api/auth";
+
 export function useVerifyEmail() {
   return useMutation({
     mutationFn: verifyEmail,
+  });
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: requestPasswordReset,
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: ({
+      token,
+      newPassword,
+    }: {
+      token: string;
+      newPassword: string;
+    }) => resetPassword(token, newPassword),
   });
 }

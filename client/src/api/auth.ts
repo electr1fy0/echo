@@ -74,3 +74,29 @@ export async function verifyEmail(token: string) {
   }
   return res.json();
 }
+
+export async function requestPasswordReset(email: string) {
+  const res = await fetch(`${API_URL}/auth/request-password-reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to request password reset");
+  }
+  return res.json();
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password: newPassword }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to reset password");
+  }
+  return res.json();
+}

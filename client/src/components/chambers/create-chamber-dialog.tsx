@@ -65,6 +65,9 @@ export function CreateChamberDialog({
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>Create a Chamber</DialogTitle>
+          <p className="text-xs text-amber-600 dark:text-amber-500 pt-2">
+            Chambers cannot be deleted or edited once created.
+          </p>
         </DialogHeader>
         <div className="py-4 space-y-4">
           <form className="space-y-4" onSubmit={(e) => handleSubmit(e)}>
