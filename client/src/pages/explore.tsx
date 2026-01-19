@@ -79,7 +79,7 @@ export function Explore() {
             </div>
             {isSearchMode ? (
                 <div className="space-y-8">
-                    {isLoading && <p className="text-sm text-neutral-500 text-center">Searching...</p>}
+                    {isLoading && <QuestionListSkeleton count={3} />}
                     {!isLoading && searchResults && (
                         <>
                             {searchResults.users.length > 0 && (

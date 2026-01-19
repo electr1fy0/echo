@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UserMultiple02Icon,
@@ -8,6 +9,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useNavigate } from "react-router";
 import { QuestionList } from "@/components/questions/question-list";
+import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import {
   useJoinChamber,
   useLeaveChamber,
@@ -40,8 +42,20 @@ export function ChamberPage() {
 
   if (isChamberLoading) {
     return (
-      <div className="flex items-center justify-center mt-40">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900 dark:border-neutral-100" />
+      <div className="max-w-[40rem] w-full mt-32 px-4 space-y-8">
+        <div className="flex items-start gap-4">
+          <Skeleton className="size-16 rounded-2xl shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-full max-w-[200px]" />
+            <div className="flex gap-4 mt-3">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-20 rounded-full" />
+        </div>
+        <QuestionListSkeleton count={3} />
       </div>
     );
   }
@@ -120,7 +134,9 @@ export function ChamberPage() {
         <h2 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
           Questions ({questions.length})
         </h2>
-        {questions.length > 0 && !isLoading ? (
+        {isLoading ? (
+          <QuestionListSkeleton count={3} />
+        ) : questions.length > 0 ? (
           <QuestionList questions={questions} onDelete={(id) => deleteQn(id)} />
         ) : (
           <div className="text-center py-12 text-neutral-500">

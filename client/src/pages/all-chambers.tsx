@@ -10,6 +10,7 @@ import {
 } from "@/components/chambers/chamber-list";
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
 import { useNavigate } from "react-router";
+import { ChamberListSkeleton } from "@/components/ui/skeletons";
 export function AllChambers() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
@@ -45,7 +46,7 @@ export function AllChambers() {
       <CreateChamberButton onClick={() => setCreateChamberOpen(true)} />
       <div>
         {isLoading ? (
-          <p className="text-sm text-neutral-500">Loading chambers...</p>
+          <ChamberListSkeleton count={4} />
         ) : chambers.length > 0 ? (
           <ChamberList chambers={chambers} />
         ) : (

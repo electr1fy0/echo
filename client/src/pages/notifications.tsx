@@ -4,6 +4,7 @@ import { Message01Icon, ArrowUp01Icon, InformationCircleIcon } from "@hugeicons/
 import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
+import { NotificationListSkeleton } from "@/components/ui/skeletons";
 function NotificationItem({ notification }: { notification: Notification }) {
   const isUpvote = notification.type === "upvote_question";
   const isReply = notification.type === "reply_question";
@@ -56,7 +57,7 @@ export function Notifications() {
       </div>
       <div className="bg-white dark:bg-neutral-900/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4">
         {isLoading ? (
-          <div className="py-12 text-center text-neutral-500 text-sm">Loading activity...</div>
+          <NotificationListSkeleton count={4} />
         ) : notifications.length > 0 ? (
           notifications.map((n) => <NotificationItem key={n.uid} notification={n} />)
         ) : (

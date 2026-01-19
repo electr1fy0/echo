@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
+import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import {
   useUserQuestionsQuery,
   useDeleteQuestion,
@@ -30,6 +31,7 @@ import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "sonner";
+import { ProfileSkeleton } from "@/components/ui/skeletons";
 
 export function Profile() {
   const {
@@ -75,9 +77,7 @@ export function Profile() {
     });
   };
   if (isProfileLoading) {
-    return (
-      <div className="mt-20 text-sm text-neutral-500">Loading profile…</div>
-    );
+    return <ProfileSkeleton />;
   }
   if (profileError || !user) {
     return (
@@ -198,7 +198,7 @@ export function Profile() {
           Recent Activity
         </h3>
         {isQnLoading ? (
-          <p className="text-neutral-500 text-sm">Loading activity...</p>
+          <QuestionListSkeleton count={3} />
         ) : qnError ? (
           <p className="text-red-500 text-sm">Failed to load activity</p>
         ) : (

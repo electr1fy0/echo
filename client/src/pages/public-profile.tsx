@@ -5,6 +5,8 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, Link01Icon } from "@hugeicons/core-free-icons";
 import { QuestionList } from "@/components/questions/question-list";
+import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
+import { ProfileSkeleton } from "@/components/ui/skeletons";
 
 export function PublicProfile() {
     const { username } = useParams<{ username: string }>();
@@ -21,7 +23,7 @@ export function PublicProfile() {
     } = useQuestionsQuery(undefined, undefined, undefined, username);
 
     if (isProfileLoading) {
-        return <div className="mt-20 text-sm text-neutral-500 px-4">Loading profile...</div>;
+        return <ProfileSkeleton />;
     }
 
     if (profileError || !user) {
@@ -92,7 +94,7 @@ export function PublicProfile() {
                     Questions
                 </h3>
                 {isQnLoading ? (
-                    <p className="text-neutral-500 text-sm">Loading questions...</p>
+                    <QuestionListSkeleton count={3} />
                 ) : questions.length > 0 ? (
                     <QuestionList questions={questions} />
                 ) : (
