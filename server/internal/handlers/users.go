@@ -46,7 +46,7 @@ func (h *APIHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	var profile Profile
 	query := `
-		SELECT 
+		SELECT
 			u.username, u.email, COALESCE(u.bio, ''), COALESCE(u.avatar, ''), COALESCE(u.links, ''),
 			(SELECT COUNT(*) FROM questions q WHERE q.author = u.username) as posted,
 			(SELECT COUNT(*) FROM answers a WHERE a.author = u.username) as answered
@@ -73,15 +73,15 @@ func (h *APIHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 
 	var profile Profile
 	query := `
-		SELECT 
-			u.username, u.email, COALESCE(u.bio, ''), COALESCE(u.avatar, ''), COALESCE(u.links, ''),
+		SELECT
+			u.username, COALESCE(u.bio, ''), COALESCE(u.avatar, ''), COALESCE(u.links, ''),
 			(SELECT COUNT(*) FROM questions q WHERE q.author = u.username) as posted,
 			(SELECT COUNT(*) FROM answers a WHERE a.author = u.username) as answered
 		FROM users u
 		WHERE u.username = $1`
 
 	row := h.DB.QueryRow(ctx, query, username)
-	if err := row.Scan(&profile.Username, &profile.Email, &profile.Bio, &profile.Avatar, &profile.Link, &profile.Posted, &profile.Answered); err != nil {
+	if err := row.Scan(&profile.Username, &profile.Bio, &profile.Avatar, &profile.Link, &profile.Posted, &profile.Answered); err != nil {
 		h.respondWithError(w, "profile not found", err, http.StatusNotFound)
 		return
 	}
