@@ -22,16 +22,21 @@ import {
   MoreHorizontalIcon,
   Delete02Icon,
   PencilEdit02Icon,
+  Copy01Icon,
+  Alert01Icon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
+
 type QuestionItemProps = {
   questionItem: QuestionItem;
   onDelete: (id: string) => void;
 };
+
 export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
   if (!questionItem?.question) return null;
   const question = questionItem.question;
@@ -41,10 +46,12 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { data: user } = useAuth();
-  const { mutate: updateQuestion, isPending: isUpdatePending } = useUpdateQuestion();
+  const { mutate: updateQuestion, isPending: isUpdatePending } =
+    useUpdateQuestion();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question.content);
+  const [hasCopied, setHasCopied] = useState(false);
 
   if (!questionId) return null;
 
@@ -80,11 +87,17 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
               {question.authorUsername || "Anonymous"}
             </span>
             <span className="text-xs text-neutral-400 dark:text-neutral-500">
-              {question.timeCreated && formatRelativeTime(new Date(question.timeCreated))}
+              {question.timeCreated &&
+                formatRelativeTime(new Date(question.timeCreated))}
             </span>
           </div>
           {isEditing ? (
-            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="mt-2"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              onKeyUp={(e) => e.stopPropagation()}
+            >
               <Textarea
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
@@ -130,36 +143,58 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
               disabled={isVotePending}
               className="border border-neutral-200 w-14 text-right dark:border-neutral-800 rounded-full h-7 px-2.5 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors mr-2"
             />
-            {user?.username === question.authorUsername && (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="More options"
-                    className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-                  >
-                    <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                    <HugeiconsIcon
-                      icon={PencilEdit02Icon}
-                      className="mr-2 size-4"
-                    />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => onDelete(questionId)}
-                  >
-                    <HugeiconsIcon icon={Delete02Icon} className="mr-2 size-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="outline-none">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="More options"
+                  className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                >
+                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(question.content);
+                    setHasCopied(true);
+                    setTimeout(() => setHasCopied(false), 2000);
+                  }}
+                >
+                  <HugeiconsIcon
+                    icon={hasCopied ? Tick02Icon : Copy01Icon}
+                    className="mr-2 size-4"
+                  />
+                  {hasCopied ? "Copied" : "Copy Text"}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => alert("Reported content")}>
+                  <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+                  Report
+                </DropdownMenuItem>
+                {user?.username === question.authorUsername && (
+                  <>
+                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                      <HugeiconsIcon
+                        icon={PencilEdit02Icon}
+                        className="mr-2 size-4"
+                      />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => onDelete(questionId)}
+                    >
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="mr-2 size-4"
+                      />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
       </AccordionTrigger>
@@ -179,6 +214,6 @@ export function QuestionItem({ questionItem, onDelete }: QuestionItemProps) {
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
-    </AccordionItem >
+    </AccordionItem>
   );
 }

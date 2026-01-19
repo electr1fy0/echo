@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -5,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { UpvoteButton } from "../upvote-button";
 import type { AnswerItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -12,19 +14,41 @@ import {
   MoreHorizontalIcon,
   Delete02Icon,
   PencilEdit02Icon,
+  Copy01Icon,
+  Alert01Icon,
+  Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
+import { useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
+
 type ReplyItemProps = {
   answerItem: AnswerItem;
   onDelete: () => void;
 };
+
 export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
   const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
+  const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
   const { data: user } = useAuth();
   const reply = answerItem.answer;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(reply.content);
+  const [hasCopied, setHasCopied] = useState(false);
+
+  function handleSave() {
+    if (!editedContent.trim()) return;
+    updateReply(
+      { qid: reply.questionUid, rid: reply.uid, content: editedContent },
+      {
+        onSuccess: () => setIsEditing(false),
+      }
+    );
+  }
+
   return (
     <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
       <div className="pt-0.5">
@@ -50,15 +74,53 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
           <span className="flex items-center gap-2">
             <span>{reply.authorUsername || "Anonymous"}</span>
             <span className="text-neutral-400 dark:text-neutral-500">
-              {reply.timeCreated && formatRelativeTime(new Date(reply.timeCreated))}
+              {reply.timeCreated &&
+                formatRelativeTime(new Date(reply.timeCreated))}
             </span>
           </span>
-          <span className="block text-sm text-neutral-700 dark:text-neutral-300 ">
-            {reply.content}
-          </span>
+          {isEditing ? (
+            <div
+              className="mt-2"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              onKeyUp={(e) => e.stopPropagation()}
+            >
+              <Textarea
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                className="min-h-[60px] bg-background mb-2 text-sm"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditedContent(reply.content);
+                  }}
+                  disabled={isUpdatePending}
+                  className="h-7 px-3 text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isUpdatePending}
+                  className="h-7 px-3 text-xs"
+                >
+                  Save
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <span className="block text-sm text-neutral-700 dark:text-neutral-300 ">
+              {reply.content}
+            </span>
+          )}
         </p>
       </div>
-      {user?.username === reply.authorUsername && (
+      {!isEditing && (
         <DropdownMenu>
           <DropdownMenuTrigger className="outline-none">
             <Button
@@ -71,14 +133,38 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
-              Edit
+            <DropdownMenuItem
+              onClick={() => {
+                navigator.clipboard.writeText(reply.content);
+                setHasCopied(true);
+                setTimeout(() => setHasCopied(false), 2000);
+              }}
+            >
+              <HugeiconsIcon
+                icon={hasCopied ? Tick02Icon : Copy01Icon}
+                className="mr-2 size-4"
+              />
+              {hasCopied ? "Copied" : "Copy Text"}
             </DropdownMenuItem>
-            <DropdownMenuItem variant="destructive" onClick={onDelete}>
-              <HugeiconsIcon icon={Delete02Icon} className="mr-2 size-4" />
-              Delete
+            <DropdownMenuItem onClick={() => alert("Reported content")}>
+              <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+              Report
             </DropdownMenuItem>
+            {user?.username === reply.authorUsername && (
+              <>
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <HugeiconsIcon
+                    icon={PencilEdit02Icon}
+                    className="mr-2 size-4"
+                  />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                  <HugeiconsIcon icon={Delete02Icon} className="mr-2 size-4" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )}
