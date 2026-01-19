@@ -56,14 +56,14 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 		LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
 		LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
 		LEFT JOIN questions q2 ON a.question_uid = q2.uid
-		WHERE n.user_username = 
+		WHERE n.user_username = $1
 		ORDER BY n.created_at DESC
 		LIMIT $2 OFFSET $3
 	`
 
 	rows, err := h.DB.Query(ctx, query, sub, limit, offset)
 	if err != nil {
-		h.respondWithError(w, "failed to fetch notifications", err, http.StatusInternalServerError)
+		h.respondWithError(w, "failed to fetch notifications: "+err.Error(), err, http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -91,6 +91,11 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 			n.ActorAvatar = *avatar
 		}
 		notifications = append(notifications, n)
+	}
+
+	if err := rows.Err(); err != nil {
+		h.respondWithError(w, "row iteration error: "+err.Error(), err, http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(notifications)
