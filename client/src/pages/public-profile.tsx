@@ -3,7 +3,7 @@ import { useFetchPublicProfile } from "@/hooks/use-profile";
 import { useQuestionsQuery } from "@/hooks/use-questions";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Mail01Icon, Link01Icon } from "@hugeicons/core-free-icons";
+import { Link01Icon } from "@hugeicons/core-free-icons";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
