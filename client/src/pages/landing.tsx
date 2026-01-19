@@ -11,7 +11,11 @@ export function Landing() {
           </div>
         </Link>
         <Link to="/auth">
-          <Button variant="outline" size="default" className="rounded-lg text-sm font-normal">
+          <Button
+            variant="outline"
+            size="default"
+            className="rounded-lg text-sm font-normal"
+          >
             Create Account
           </Button>
         </Link>
@@ -21,7 +25,7 @@ export function Landing() {
         <section className="space-y-4">
           <h1 className="text-xl font-medium text-foreground">Echo</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            A design document, made public.
+            An open QnA platform for the rest of us.
           </p>
         </section>
 
@@ -30,7 +34,7 @@ export function Landing() {
             Why this exists
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Most Q&A platforms optimize for volume. More questions, more
+            Most platforms optimize for volume. More posts, more questions, more
             answers, more engagement metrics. The result is noise. Threads
             become unreadable. Signal gets buried under accumulated layers. I
             started Echo because I wanted something quieter.
@@ -154,9 +158,10 @@ export function Landing() {
             Architecture
           </h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            The backend is Go. The frontend is React with Vite. The database is
-            PostgreSQL. Authentication uses JWT. These are not clever choices.
-            They are boring choices that work.
+            The backend is Go. The frontend is React + Tanstack Query. The
+            database is PostgreSQL. Authentication uses db-backed credentials
+            and JWT-based sessions. These are not clever choices. They are
+            boring choices that work.
           </p>
 
           <div className="border border-dashed border-muted-foreground/30 rounded-lg p-4 space-y-4">
@@ -332,12 +337,13 @@ export function Landing() {
 
       <footer className="w-full max-w-xl mx-auto px-4 py-8 border-t border-border">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>v0.1</span>
+          <span>v0.5</span>
           <span>
             Built by{" "}
             <a
               href="https://github.com/electr1fy0"
               className="text-foreground font-medium hover:underline"
+              target="_blank"
             >
               Ayush
             </a>

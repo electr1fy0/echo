@@ -18,24 +18,47 @@ function SkeletonQuestionItem() {
   return (
     <div className="py-4 space-y-3">
       <div className="flex items-start gap-3">
-        <Skeleton className="size-8 rounded-full shrink-0" />
+        <Skeleton className="size-8 rounded-full shrink-0 animate-none" />
         <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-24 animate-none" />
+          <Skeleton className="h-4 w-full animate-none" />
+          <Skeleton className="h-4 w-3/4 animate-none" />
         </div>
       </div>
     </div>
   );
 }
+
+function SkeletonSidebar() {
+  return (
+    <aside className="hidden md:flex fixed top-0 left-0 h-screen flex-col items-center py-8 border-r border-neutral-200 dark:border-neutral-800 bg-background w-20">
+      <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+        <img
+          src="/echologo.svg"
+          alt="Echo"
+          className="size-7 invert dark:invert-0 opacity-60"
+        />
+      </div>
+      <nav className="flex-1 flex flex-col items-center justify-center gap-4 w-full">
+        <Skeleton className="size-12 rounded-xl animate-none" />
+        <Skeleton className="size-12 rounded-xl animate-none" />
+        <Skeleton className="size-12 rounded-xl animate-none bg-primary/20" />
+        <Skeleton className="size-12 rounded-xl animate-none" />
+        <Skeleton className="size-12 rounded-xl animate-none" />
+        <Skeleton className="size-12 rounded-xl animate-none" />
+      </nav>
+    </aside>
+  );
+}
+
 function SkeletonHome() {
   return (
-    <div className="max-w-xl w-full  md:mt-40 mt-24 space-y-4 px-4">
-      <Skeleton className="h-6 w-16" />
-      <Skeleton className="h-4 w-40" />
-      <Skeleton className="h-20 w-full rounded-xl" />
+    <div className="max-w-xl w-full md:mt-20 mt-16 space-y-4 px-4">
+      <Skeleton className="h-6 w-16 animate-none" />
+      <Skeleton className="h-4 w-40 animate-none" />
+      <Skeleton className="h-20 w-full rounded-xl animate-none" />
       <div className="flex justify-end">
-        <Skeleton className="h-9 w-24 rounded-full" />
+        <Skeleton className="h-9 w-24 rounded-full animate-none" />
       </div>
       <div className="mt-20 divide-y divide-border">
         {[...Array(4)].map((_, i) => (
@@ -119,6 +142,7 @@ export function Auth() {
   return (
     <div className="min-h-screen bg-background relative">
       <div className="flex min-h-screen opacity-70 pointer-events-none">
+        <SkeletonSidebar />
         <main className="w-full flex flex-col items-center">
           <SkeletonHome />
         </main>
@@ -127,7 +151,13 @@ export function Auth() {
         <Card className="w-full max-w-md mx-4 shadow-2xl">
           <CardHeader className="text-center pb-2">
             <div className="my-2">
-              <div className="size-6 rounded-full bg-foreground/80" />
+              <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                <img
+                  src="/echologo.svg"
+                  alt="Echo"
+                  className="size-7 invert dark:invert-0 opacity-80"
+                />
+              </div>
             </div>
             <CardTitle className="text-lg text-left">
               {isSignUp ? "Create an account" : "Welcome back"}
@@ -206,11 +236,10 @@ export function Auth() {
               {isSignUp ? "Already have an account?" : "Don't have an account?"}
             </button>
             <div className="pt-4 border-t mt-4 border-border">
-              <Link
-                to="/landing"
-                className="block text-center text-xs text-muted-foreground/60 hover:underline"
-              >
-                Read more about Echo
+              <Link to="/landing">
+                <Button variant="outline" className="w-full">
+                  Back
+                </Button>
               </Link>
             </div>
           </CardContent>
