@@ -39,7 +39,11 @@ type QuestionItemProps = {
   showChamberName?: boolean;
 };
 
-export function QuestionItem({ questionItem, onDelete, showChamberName }: QuestionItemProps) {
+export function QuestionItem({
+  questionItem,
+  onDelete,
+  showChamberName,
+}: QuestionItemProps) {
   const question = questionItem?.question;
   const author = questionItem?.author ?? null;
   const questionId = question?.uid;
@@ -63,7 +67,7 @@ export function QuestionItem({ questionItem, onDelete, showChamberName }: Questi
       { questionId, content: editedContent },
       {
         onSuccess: () => setIsEditing(false),
-      }
+      },
     );
   }
 
@@ -151,7 +155,7 @@ export function QuestionItem({ questionItem, onDelete, showChamberName }: Questi
               isUpvoted={question.isUpvoted}
               onToggle={() => handleVote(questionId)}
               disabled={isVotePending}
-              className="border border-neutral-200 w-14 text-right dark:border-neutral-800 rounded-full h-7 px-2.5 bg-neutral-50 dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors mr-2"
+              className=" w-14 text-right h-7 px-2.5 transition-colors mr-2"
             />
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none">
@@ -171,10 +175,7 @@ export function QuestionItem({ questionItem, onDelete, showChamberName }: Questi
                     toast.success("Copied to clipboard");
                   }}
                 >
-                  <HugeiconsIcon
-                    icon={Copy01Icon}
-                    className="mr-2 size-4"
-                  />
+                  <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
                   Copy Text
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => alert("Reported content")}>
