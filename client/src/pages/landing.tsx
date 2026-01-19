@@ -281,7 +281,7 @@ export function Landing() {
         <section className="space-y-4">
           <h2 className="text-base font-medium text-foreground">Privacy</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Your data is yours.Zero trackers. Zero ads. And if you ever want to
+            Your data is yours. Zero trackers. Zero ads. And if you ever want to
             leave, you can delete your account and all your data instantly.
           </p>
         </section>

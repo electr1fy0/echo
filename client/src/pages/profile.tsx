@@ -120,7 +120,7 @@ export function Profile() {
               Edit Profile
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger className="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+              <DropdownMenuTrigger className="h-9 w-9 box-border border-neutral-100 dark:border-neutral-800 inline-flex items-center justify-center rounded-full hover:bg-neutral-100 bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -205,7 +205,7 @@ export function Profile() {
                   className={cn(
                     "size-4 rounded-md",
                     CHAMBER_COLORS[
-                    (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                      (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                     ],
                   )}
                 />
@@ -310,8 +310,8 @@ export function Profile() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <p className="text-sm text-neutral-500">
-              Are you sure you want to delete your account? This action cannot be
-              undone. All your data will be permanently removed.
+              Are you sure you want to delete your account? This action cannot
+              be undone. All your data will be permanently removed.
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
