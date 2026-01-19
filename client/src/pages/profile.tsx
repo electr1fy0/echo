@@ -11,6 +11,8 @@ import {
   PencilEdit02Icon,
   Add01Icon,
   Link01Icon,
+  Tick02Icon,
+  Alert01Icon,
 } from "@hugeicons/core-free-icons";
 import {
   Dialog,
@@ -29,13 +31,21 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
 export function Profile() {
   const {
     data: user,
     isLoading: isProfileLoading,
     error: profileError,
   } = useFetchProfile();
-  const { mutate: updateProfile } = useUpdateProfile();
+  const {
+    mutate: updateProfile,
+    isSuccess: isUpdateSuccess,
+    isError: isUpdateError,
+    error: updateError,
+    reset: resetUpdate,
+  } = useUpdateProfile();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const {
@@ -58,7 +68,6 @@ export function Profile() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile(editForm);
-    setIsEditOpen(false);
   };
   const updateDraft = (fields: Partial<User>) => {
     setEditForm((prev) => {
@@ -199,61 +208,89 @@ export function Profile() {
           />
         )}
       </div>
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog
+        open={isEditOpen}
+        onOpenChange={(open) => {
+          setIsEditOpen(open);
+          if (!open) resetUpdate();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
-          <form className="grid gap-4 py-4" onSubmit={(e) => handleSubmit(e)}>
-            <div className="grid gap-2">
-              <label htmlFor="bio" className="text-sm font-medium">
-                Bio
-              </label>
-              <Textarea
-                id="bio"
-                value={editForm.bio}
-                onChange={(e) => {
-                  updateDraft({ bio: e.target.value });
-                }}
-                placeholder="Info about you"
-                className="h-24 select-text"
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="link" className="text-sm font-medium">
-                Link
-              </label>
-              <Input
-                id="link"
-                placeholder="https://example.com"
-                className="select-text"
-                value={editForm.link || ""}
-                onChange={(e) => {
-                  updateDraft({ link: e.target.value });
-                }}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="avatar" className="text-sm font-medium">
-                Avatar URL
-              </label>
-              <Input
-                id="avatar"
-                className="select-text"
-                value={editForm.avatar}
-                placeholder="URL to fetch your avatar"
-                onChange={(e) => {
-                  updateDraft({ avatar: e.target.value });
-                }}
-              />
-            </div>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" />}>
-                Cancel
-              </DialogClose>
-              <Button type="submit">Save Changes</Button>
-            </DialogFooter>
-          </form>
+          <div className="grid gap-4 py-4">
+            {isUpdateSuccess && (
+              <Alert className="border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-900 text-green-800 dark:text-green-200 [&>svg]:text-green-800 dark:[&>svg]:text-green-200">
+                <HugeiconsIcon icon={Tick02Icon} className="size-4" />
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>
+                  Your profile has been updated successfully.
+                </AlertDescription>
+              </Alert>
+            )}
+            {isUpdateError && (
+              <Alert variant="destructive">
+                <HugeiconsIcon icon={Alert01Icon} className="size-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  {updateError instanceof Error
+                    ? updateError.message
+                    : "Failed to update profile"}
+                </AlertDescription>
+              </Alert>
+            )}
+            <form onSubmit={(e) => handleSubmit(e)} className="grid gap-4">
+              <div className="grid gap-2">
+                <label htmlFor="bio" className="text-sm font-medium">
+                  Bio
+                </label>
+                <Textarea
+                  id="bio"
+                  value={editForm.bio}
+                  onChange={(e) => {
+                    updateDraft({ bio: e.target.value });
+                  }}
+                  placeholder="Info about you"
+                  className="h-24 select-text"
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="link" className="text-sm font-medium">
+                  Link
+                </label>
+                <Input
+                  id="link"
+                  placeholder="https://example.com"
+                  className="select-text"
+                  value={editForm.link || ""}
+                  onChange={(e) => {
+                    updateDraft({ link: e.target.value });
+                  }}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="avatar" className="text-sm font-medium">
+                  Avatar URL
+                </label>
+                <Input
+                  id="avatar"
+                  className="select-text"
+                  value={editForm.avatar}
+                  placeholder="URL to fetch your avatar"
+                  onChange={(e) => {
+                    updateDraft({ avatar: e.target.value });
+                  }}
+                />
+              </div>
+              <DialogFooter>
+                <DialogClose render={<Button variant="outline" />}>
+                  Cancel
+                </DialogClose>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
       <CreateChamberDialog
