@@ -18,7 +18,7 @@ export function useAuth() {
   return useQuery({
     queryKey: ["auth"],
     queryFn: verifySession,
-    retry: false,
+    retry: 2,
   });
 }
 export function useSignout() {

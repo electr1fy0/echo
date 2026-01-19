@@ -7,10 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"echo/internal/reddit"
-
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -76,7 +73,7 @@ func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 			q.time_created,
 			q.author,
 			u.avatar,
-			q.upvotes_count + COALESCE(q.reddit_upvotes, 0) as upvotes,
+			q.upvotes_count as upvotes,
 			exists (
 				select 1 from question_upvotes v2
 				where v2.question_uid = q.uid and v2.username = $1
@@ -176,21 +173,9 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	}
 	orderBy := "q.time_created desc"
 	if sort == "votes" {
-		orderBy = "(q.upvotes_count + COALESCE(q.reddit_upvotes, 0)) desc"
+		orderBy = "q.upvotes_count desc"
 	}
-	if targetChamberUID != "" {
-		chamberUUID, err := uuid.Parse(targetChamberUID)
-		if err == nil {
-			shouldSync, state, _ := reddit.ShouldSync(ctx, h.DB, chamberUUID)
-			if shouldSync && state != nil {
-				go func(s *reddit.SyncState) {
-					bgCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-					defer cancel()
-					_ = reddit.SyncSubreddit(bgCtx, h.DB, s)
-				}(state)
-			}
-		}
-	}
+
 	baseQuery := `
 		select
 			q.uid,
@@ -198,7 +183,7 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 			q.time_created,
 			q.author,
 			u.avatar,
-			q.upvotes_count + COALESCE(q.reddit_upvotes, 0) as upvotes,
+			q.upvotes_count as upvotes,
 			exists (
 				select 1 from question_upvotes v2
 				where v2.question_uid = q.uid and v2.username = $1

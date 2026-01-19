@@ -37,7 +37,7 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	a.question_uid,
 	a.author,
 	u.avatar,
-	a.upvotes_count + COALESCE(a.reddit_upvotes, 0) as upvotes,
+	a.upvotes_count as upvotes,
 	exists (
 	select 1 from answer_upvotes v2
 	where v2.answer_uid = a.uid  and v2.username = $1
