@@ -74,7 +74,7 @@ export function QuestionItem({
   return (
     <AccordionItem value={questionId} className="w-full">
       <AccordionTrigger
-        className="font-normal py-2 pr-4 hover:no-underline items-start gap-3 text-left"
+        className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
         onClick={(e) => {
           if (isEditing) e.preventDefault();
         }}
@@ -233,7 +233,7 @@ export function QuestionItem({
             />
           ))
         ) : (
-          <div className="text-sm ml-1 text-neutral-500">No replies</div>
+          <div className="text-sm ml-10 text-neutral-500">No replies</div>
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
