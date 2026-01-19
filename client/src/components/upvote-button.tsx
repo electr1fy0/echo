@@ -30,8 +30,8 @@ export function UpvoteButton({
       }}
       className={cn(
         "gap-1 px-2 h-7 text-neutral-500 hover:bg-transparent hover:text-neutral-900 dark:hover:text-neutral-100",
-        isUpvoted && "text-primary hover:text-chart-3 ",
         className,
+        isUpvoted && "text-orange-500 hover:text-orange-600 dark:text-orange-500",
       )}
     >
       <HugeiconsIcon icon={CircleArrowUp01Icon} className="size-4" />

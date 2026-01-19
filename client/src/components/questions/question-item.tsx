@@ -74,40 +74,103 @@ export function QuestionItem({
   return (
     <AccordionItem value={questionId} className="w-full">
       <AccordionTrigger
-        className="font-normal pr-4 hover:no-underline items-start gap-2 text-left"
+        className="font-normal py-4 pr-4 hover:no-underline items-start gap-3 text-left"
         onClick={(e) => {
           if (isEditing) e.preventDefault();
         }}
       >
-        <Link
-          to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
-          className="mr-3 shrink-0 mt-0.5"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <UserAvatar
-            src={author?.avatar}
-            name={question.authorUsername || "Anonymous"}
-            className="size-7"
-          />
-        </Link>
-        <div className="flex-1 text-left min-w-0 mr-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              {question.authorUsername || "Anonymous"}
-            </span>
-            {showChamberName && question.chamberName && (
-              <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                in {question.chamberName}
+        <div className="flex flex-col w-full gap-2">
+          <div className="flex items-center gap-3">
+            <Link
+              to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
+              className="shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <UserAvatar
+                src={author?.avatar}
+                name={question.authorUsername || "Anonymous"}
+                className="size-7"
+              />
+            </Link>
+            <div className="flex items-center gap-2.5 flex-wrap flex-1 min-w-0">
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                {question.authorUsername || "Anonymous"}
               </span>
+              {showChamberName && question.chamberName && (
+                <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                  in {question.chamberName}
+                </span>
+              )}
+              <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                {question.timeCreated &&
+                  formatRelativeTime(new Date(question.timeCreated))}
+              </span>
+            </div>
+            {!isEditing && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-2 shrink-0"
+              >
+                <UpvoteButton
+                  count={question.upvotes}
+                  isUpvoted={question.isUpvoted}
+                  onToggle={() => handleVote(questionId)}
+                  disabled={isVotePending}
+                  className="w-14 text-right h-7 px-2.5 transition-colors"
+                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="outline-none">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="More options"
+                      className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                    >
+                      <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        navigator.clipboard.writeText(question.content);
+                        toast.success("Copied to clipboard");
+                      }}
+                    >
+                      <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
+                      Copy Text
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => alert("Reported content")}>
+                      <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+                      Report
+                    </DropdownMenuItem>
+                    {user?.username === question.authorUsername && (
+                      <>
+                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                          <HugeiconsIcon
+                            icon={PencilEdit02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => onDelete(questionId)}
+                        >
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">
-              {question.timeCreated &&
-                formatRelativeTime(new Date(question.timeCreated))}
-            </span>
           </div>
           {isEditing ? (
             <div
-              className="mt-2"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
               onKeyUp={(e) => e.stopPropagation()}
@@ -139,74 +202,12 @@ export function QuestionItem({
               </div>
             </div>
           ) : (
-            <p className="text-sm text-neutral-900 dark:text-neutral-100 mt-0.5">
+            <p className="text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed">
               {question.content}
             </p>
           )}
         </div>
 
-        {!isEditing && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2"
-          >
-            <UpvoteButton
-              count={question.upvotes}
-              isUpvoted={question.isUpvoted}
-              onToggle={() => handleVote(questionId)}
-              disabled={isVotePending}
-              className=" w-14 text-right h-7 px-2.5 transition-colors mr-2"
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger className="outline-none">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="More options"
-                  className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-                >
-                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    navigator.clipboard.writeText(question.content);
-                    toast.success("Copied to clipboard");
-                  }}
-                >
-                  <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
-                  Copy Text
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => alert("Reported content")}>
-                  <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
-                  Report
-                </DropdownMenuItem>
-                {user?.username === question.authorUsername && (
-                  <>
-                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <HugeiconsIcon
-                        icon={PencilEdit02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => onDelete(questionId)}
-                    >
-                      <HugeiconsIcon
-                        icon={Delete02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
       </AccordionTrigger>
       <AccordionContent>
         {replies ? (
@@ -224,6 +225,6 @@ export function QuestionItem({
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
-    </AccordionItem>
+    </AccordionItem >
   );
 }

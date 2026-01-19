@@ -59,12 +59,12 @@ function NotificationItem({ notification }: { notification: Notification }) {
           {isUpvote || isUpvoteReply ? (
             <HugeiconsIcon
               icon={CircleArrowUp01Icon}
-              className="size-3 text-blue-500"
+              className="size-3 text-orange-500"
             />
           ) : (
             <HugeiconsIcon
               icon={Message01Icon}
-              className="size-3 text-blue-500"
+              className="size-3"
             />
           )}
           {formatRelativeTime(new Date(notification.created_at))}
