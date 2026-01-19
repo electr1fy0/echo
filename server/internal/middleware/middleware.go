@@ -1,16 +1,20 @@
 package middleware
+
 import (
 	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 )
+
 type statusRecorder struct {
 	http.ResponseWriter
 	statusCode int
 }
+
 func (r *statusRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
@@ -34,6 +38,7 @@ func CORS(next http.Handler) http.HandlerFunc {
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE, PATCH")
+		w.Header().Set("Access-Control-Max-Age", "86400")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

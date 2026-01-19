@@ -5,6 +5,7 @@ import {
   useDeleteQuestion,
   useQuestionsQuery,
 } from "@/hooks/use-questions";
+import { Link } from "react-router";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import { useListChambers } from "@/hooks/use-chamber";
+import { ChamberCard } from "@/components/chambers/chamber-list";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 export function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
@@ -192,11 +194,39 @@ export function Home() {
           </div>
         </div>
         {JOINED_CHAMBERS.length === 0 && !isLoading ? (
-          <div className="text-center py-12 text-neutral-500">
-            <p className="text-sm">You haven't joined any chambers yet.</p>
-            <p className="text-xs mt-1">
-              Explore chambers to see questions here.
-            </p>
+          <div className="space-y-4">
+            <div className="text-center py-6">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">
+                You haven't joined any chambers yet.
+              </p>
+              <p className="text-xs text-neutral-500 mt-1">
+                Join some chambers to see questions in your feed.
+              </p>
+            </div>
+            {chambers.filter((c) => !c.isJoined).length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                  Suggested Chambers
+                </h4>
+                <div className="space-y-2">
+                  {chambers
+                    .filter((c) => !c.isJoined)
+                    .slice(0, 4)
+                    .map((chamber, i) => (
+                      <ChamberCard
+                        key={chamber.uid || i}
+                        chamber={{ ...chamber, colorIndex: chamber.colorIndex ?? i }}
+                      />
+                    ))}
+                </div>
+                <Link
+                  to="/chambers"
+                  className="block text-center text-sm text-primary hover:underline pt-2"
+                >
+                  Show All Chambers
+                </Link>
+              </div>
+            )}
           </div>
         ) : isQuestionsLoading ? (
           <QuestionListSkeleton count={3} />
