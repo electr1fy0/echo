@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import { CircleArrowUp01Icon } from "@hugeicons/core-free-icons";
 import type { UpvoteState } from "@/types";
+
 type UpvoteButtonProps = UpvoteState & {
   onToggle: () => void;
   className?: string;
@@ -10,6 +11,7 @@ type UpvoteButtonProps = UpvoteState & {
   isUpvoted: boolean;
   disabled?: boolean;
 };
+
 export function UpvoteButton({
   count,
   isUpvoted,
@@ -34,7 +36,7 @@ export function UpvoteButton({
       )}
     >
       <HugeiconsIcon
-        icon={ArrowUp01Icon}
+        icon={CircleArrowUp01Icon}
         className={cn("size-4", isUpvoted && "fill-current")}
       />
       <span className="text-xs font-medium">{count}</span>

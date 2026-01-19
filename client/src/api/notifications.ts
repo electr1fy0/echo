@@ -8,6 +8,7 @@ export interface Notification {
     type: string;
     reference_uid: string;
     content: string;
+    question_content?: string;
     is_read: boolean;
     created_at: string;
 }
