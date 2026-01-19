@@ -39,15 +39,19 @@ func SendVerificationEmail(to, username, token string) error {
 }
 
 func SendPasswordResetEmail(to, username, token string) error {
+	domain := os.Getenv("ECHO_DOMAIN")
+	if domain == "" {
+		domain = "localhost:5173"
+	}
+	resetLink := fmt.Sprintf("https://%s/reset-password?token=%s", domain, token)
+	fmt.Printf("MOCK EMAIL: Reset Link: %s\n", resetLink)
+
 	apiKey := os.Getenv("RESEND_API_KEY")
 	if apiKey == "" {
 		fmt.Println("RESEND_API_KEY is not set, skipping email sending")
 		return nil
 	}
 	client := resend.NewClient(apiKey)
-
-	domain := os.Getenv("ECHO_DOMAIN")
-	resetLink := fmt.Sprintf("https://%s/reset-password?token=%s", domain, token)
 
 	htmlContent := fmt.Sprintf(`
 		<h1>Reset Your Password</h1>
