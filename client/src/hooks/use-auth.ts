@@ -45,7 +45,7 @@ export function useDeleteAccount() {
 
 export function useResendVerification() {
   return useMutation({
-    mutationFn: resendVerification,
+    mutationFn: (email: string) => resendVerification(email),
   });
 }
 

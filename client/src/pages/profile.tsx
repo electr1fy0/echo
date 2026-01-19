@@ -120,10 +120,8 @@ export function Profile() {
               Edit Profile
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
-                </Button>
+              <DropdownMenuTrigger className="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+                <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem

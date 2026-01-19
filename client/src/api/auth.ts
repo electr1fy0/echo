@@ -114,3 +114,16 @@ export async function deleteAccount() {
   }
   return res.json();
 }
+
+export async function resendVerification(email: string) {
+  const res = await fetch(`${API_URL}/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to resend verification email");
+  }
+  return res.json();
+}
