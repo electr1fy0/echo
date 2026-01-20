@@ -1,11 +1,16 @@
 import type { QuestionItem } from "@/types";
 import { QuestionItem as QuestionItemComponent } from "./question-item";
 import { Accordion } from "@/components/ui/accordion";
+import { DashedEmptyState } from "@/components/ui/dashed-empty-state";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { BubbleChatIcon } from "@hugeicons/core-free-icons";
+
 type QuestionListProps = {
   questions: QuestionItem[];
   onDelete?: (id: string) => void;
   showChamberName?: boolean;
 };
+
 export function QuestionList({ questions, onDelete, showChamberName }: QuestionListProps) {
   return questions.length > 0 ? (
     <Accordion className="dark:bg-[#1D1D1D]">
@@ -19,6 +24,10 @@ export function QuestionList({ questions, onDelete, showChamberName }: QuestionL
       ))}
     </Accordion>
   ) : (
-    <div className="text-neutral-500 text-center">Ask the first question.</div>
+    <DashedEmptyState
+      title="No questions yet"
+      description="Be the first to ask a question in this chamber."
+      icon={<HugeiconsIcon icon={BubbleChatIcon} className="size-8 opacity-50" />}
+    />
   );
 }

@@ -84,15 +84,18 @@ interface ChamberListProps {
   chambers: Chamber[];
   limit?: number;
 }
+import { DashedEmptyState } from "@/components/ui/dashed-empty-state";
+import { Search01Icon } from "@hugeicons/core-free-icons";
+
 export function ChamberList({ chambers, limit }: ChamberListProps) {
   const displayChambers = limit ? chambers.slice(0, limit) : chambers;
   if (displayChambers.length === 0) {
     return (
-      <div className="text-center py-6 px-4 rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-        <p className="text-sm text-neutral-500 font-medium">
-          No chambers found
-        </p>
-      </div>
+      <DashedEmptyState
+        title="No chambers found"
+        description="Try searching for something else or create a new one."
+        icon={<HugeiconsIcon icon={Search01Icon} className="size-8 opacity-50" />}
+      />
     );
   }
   return (

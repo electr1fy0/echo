@@ -18,7 +18,7 @@ import {
   useResendVerification,
 } from "@/hooks/use-auth";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 function SkeletonQuestionItem() {
   return (
     <div className="py-4 space-y-3">
@@ -322,13 +322,18 @@ export function Auth() {
                       : !user.username.trim() || !user.password.trim())
                 }
               >
-                {isInPending || isUpPending || isResetPending
-                  ? "Loading…"
-                  : isForgotPassword
-                    ? "Send Reset Link"
-                    : isSignUp
-                      ? "Create Account"
-                      : "Sign in"}
+                {isInPending || isUpPending || isResetPending ? (
+                  <HugeiconsIcon
+                    icon={Loading03Icon}
+                    className="size-5 animate-spin"
+                  />
+                ) : isForgotPassword ? (
+                  "Send Reset Link"
+                ) : isSignUp ? (
+                  "Create Account"
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </form>
             <div className="space-y-2 text-left">
