@@ -62,7 +62,7 @@ function NavButton({
     <button
       onClick={onClick}
       className={cn(
-        "relative flex items-center justify-center rounded-xl transition-all duration-200",
+        "relative flex items-center justify-center rounded-xl transition-all duration-200 active:scale-95 group/nav",
         isMobile ? "p-2" : "size-12",
         isAction
           ? "bg-primary text-primary-foreground hover:bg-primary/80"
@@ -75,7 +75,7 @@ function NavButton({
     >
       <HugeiconsIcon
         icon={icon}
-        className="size-6 transition-all duration-200"
+        className="size-6 transition-all duration-200 group-hover/nav:rotate-12"
         strokeWidth={isActive ? 2.5 : 1.5}
       />
       {hasBadge && (

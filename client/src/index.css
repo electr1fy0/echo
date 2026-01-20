@@ -116,6 +116,11 @@
     --radius-2xl: calc(var(--radius) + 8px);
     --radius-3xl: calc(var(--radius) + 12px);
     --radius-4xl: calc(var(--radius) + 16px);
+
+    --animate-in: animate-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --animate-out: animate-out 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --default-transition-duration: 200ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @layer base {
