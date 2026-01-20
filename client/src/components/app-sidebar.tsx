@@ -116,7 +116,7 @@ function ProfileButton({
         <AvatarImage
           src={
             user?.username
-              ? `https://github.com/${user.username}.png`
+              ? `https://github.com/${user.username}.png?size=144`
               : undefined
           }
         />
@@ -326,7 +326,7 @@ export function AppSidebar() {
   if (isMobile) {
     return (
       <>
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-6 pb-12 px-4">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-5 pb-10 px-4">
           <div className="flex items-center">
             <div className="flex-1 flex justify-around">
               {navItems.slice(0, 2).map((item) => (

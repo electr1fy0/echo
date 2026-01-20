@@ -27,7 +27,7 @@ export function UserAvatar({
   className?: string;
 }) {
   const [imgError, setImgError] = useState(false);
-  const effectiveSrc = src || `https://github.com/${name}.png`;
+  const effectiveSrc = src || `https://github.com/${name}.png?size=256`;
   useEffect(() => {
     setImgError(false);
   }, [effectiveSrc]);
