@@ -13,8 +13,13 @@ export async function signin(payload: AuthPayload) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || "Incorrect user or password");
+    const text = await res.text();
+    try {
+      const errorData = JSON.parse(text);
+      throw new Error(errorData.error || errorData.message || "Sign in failed");
+    } catch {
+      throw new Error(text || "Sign in failed");
+    }
   }
   const data = await res.json();
   if (data.token) {
@@ -29,8 +34,13 @@ export async function signup(payload: AuthPayload) {
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || "signup failed");
+    const text = await res.text();
+    try {
+      const errorData = JSON.parse(text);
+      throw new Error(errorData.error || errorData.message || "Signup failed");
+    } catch {
+      throw new Error(text || "Signup failed");
+    }
   }
   return res.json();
 }

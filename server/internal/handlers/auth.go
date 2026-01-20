@@ -30,6 +30,10 @@ func (h *APIHandler) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user.Username = strings.TrimSpace(user.Username)
+	if strings.Contains(user.Username, " ") {
+		h.respondWithError(w, "username cannot contain spaces", nil, http.StatusBadRequest)
+		return
+	}
 	user.Email = strings.TrimSpace(user.Email)
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 10)
