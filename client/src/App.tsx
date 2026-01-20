@@ -32,7 +32,7 @@ function AuthenticatedLayout() {
     </div>
   );
 }
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toast";
 import { ReloadPrompt } from "@/components/reload-prompt";
 
 export default function App() {

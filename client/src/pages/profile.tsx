@@ -39,7 +39,7 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
 
 export function Profile() {
