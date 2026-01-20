@@ -7,7 +7,6 @@ import { Explore } from "@/pages/explore";
 import { AllChambers } from "@/pages/all-chambers";
 import { ChamberPage } from "@/pages/chamber";
 import { Notifications } from "@/pages/notifications";
-import { QuestionPage } from "@/pages/question";
 import { Auth } from "@/pages/auth";
 import { Landing } from "@/pages/landing";
 import { VerifyEmail } from "@/pages/verify-email";
@@ -32,7 +31,6 @@ function AuthenticatedLayout() {
           <Route path="/chambers" element={<AllChambers />} />
           <Route path="/chamber/:chamberId" element={<ChamberPage />} />
           <Route path="/notifications" element={<Notifications />} />
-          <Route path="/question/:questionId" element={<QuestionPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

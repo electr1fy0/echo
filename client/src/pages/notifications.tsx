@@ -10,24 +10,18 @@ import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { NotificationListSkeleton } from "@/components/ui/skeletons";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 
 function NotificationItem({ notification }: { notification: Notification }) {
-  const navigate = useNavigate();
   const isUpvote = notification.type === "upvote_question";
   const isReply = notification.type === "reply_question";
   const isUpvoteReply = notification.type === "upvote_reply";
 
   if (!isUpvote && !isReply && !isUpvoteReply) return null;
 
-  const handleClick = () => {
-    navigate(`/question/${notification.reference_uid}`);
-  };
-
   return (
     <div
-      onClick={handleClick}
-      className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-4 px-4 transition-colors group"
+      className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-4 px-4 transition-colors group"
     >
       <Link
         to={`/u/${notification.actor_username}`}

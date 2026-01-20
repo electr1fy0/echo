@@ -18,11 +18,9 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
 import { formatRelativeTime } from "@/lib/format-time";
 function ReplyResult({ item }: { item: AnswerItem }) {
-  const navigate = useNavigate();
   return (
     <div
-      onClick={() => navigate(`/chamber/question/${item.answer.questionUid}`)}
-      className="p-4 border-b border-neutral-100 dark:border-neutral-800 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+      className="p-4 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
     >
       <div className="flex items-start gap-3">
         <UserAvatar

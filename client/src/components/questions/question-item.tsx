@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import {
   AccordionContent,
   AccordionItem,
@@ -25,7 +25,6 @@ import {
   PencilEdit02Icon,
   Copy01Icon,
   Alert01Icon,
-  ArrowUpRight01Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
@@ -55,7 +54,6 @@ export function QuestionItem({
   const { data: user } = useAuth();
   const { mutate: updateQuestion, isPending: isUpdatePending } =
     useUpdateQuestion();
-  const navigate = useNavigate();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question?.content ?? "");
@@ -141,15 +139,6 @@ export function QuestionItem({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => navigate(`/question/${questionId}`)}
-                      >
-                        <HugeiconsIcon
-                          icon={ArrowUpRight01Icon}
-                          className="mr-2 size-4"
-                        />
-                        Open Question
-                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => {
                           navigator.clipboard.writeText(question.content);
