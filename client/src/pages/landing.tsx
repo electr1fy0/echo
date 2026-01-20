@@ -355,7 +355,13 @@ export function Landing() {
       <footer className="w-full max-w-xl mx-auto px-4 py-8 mt-4 border-t border-border">
         <div className="flex flex-col gap-4 text-xs text-muted-foreground">
           <div className="flex items-center justify-between">
-            <span>v0.5.5</span>
+            <a
+              href="https://x.com/tryechosocial"
+              className="hover:text-foreground transition-colors"
+              target="_blank"
+            >
+              Twitter
+            </a>
             <div className="flex items-center gap-4">
               <a
                 href="mailto:me@ayushpandey.xyz?subject=Hi%20Ayush"

@@ -42,7 +42,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
           </span>
         </p>
 
-        {isReply && notification.question_content && (
+        {(isReply || isUpvoteReply) && notification.question_content && (
           <div className="mt-2 mb-1 pl-3 border-l-2 border-neutral-200 dark:border-neutral-800">
             <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
               {notification.question_content}
