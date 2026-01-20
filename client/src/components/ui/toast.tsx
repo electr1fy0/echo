@@ -40,7 +40,7 @@ function ToastList() {
             toast.type === "success" &&
               "border-green-600 bg-green-600 text-white",
             toast.type === "warning" &&
-              "border-yellow-600 bg-yellow-600 text-white"
+              "border-yellow-600 bg-yellow-600 text-white",
           )}
         >
           <Toast.Content className="flex-1 flex items-start gap-3">
@@ -82,8 +82,8 @@ export function Toaster() {
         <Toast.Viewport
           className={cn(
             "fixed z-50 flex flex-col gap-2 w-full max-w-[calc(100%-2rem)] sm:max-w-sm",
-            "bottom-[calc(env(safe-area-inset-bottom,0px)+16px)] left-1/2 -translate-x-1/2",
-            "md:bottom-4 md:right-4 md:left-auto md:translate-x-0"
+            "bottom-[calc(env(safe-area-inset-bottom,0px)+32px)] left-1/2 -translate-x-1/2",
+            "md:bottom-4 md:right-4 md:left-auto md:translate-x-0",
           )}
         >
           <ToastList />
