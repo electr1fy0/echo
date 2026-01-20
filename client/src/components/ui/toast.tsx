@@ -31,16 +31,16 @@ function ToastList() {
           key={toast.id}
           toast={toast}
           className={cn(
-            "group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden rounded-4xl border bg-card p-4 shadow-lg transition-all",
+            "group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden rounded-4xl border bg-background p-4 shadow-lg transition-all",
             "data-[starting-style]:translate-y-full data-[starting-style]:opacity-0",
             "data-[ending-style]:translate-y-full data-[ending-style]:opacity-0",
             "ring-1 ring-foreground/10",
             toast.type === "error" &&
-              "border-destructive/20 bg-destructive/5 text-destructive",
+              "border-destructive bg-destructive text-destructive-foreground",
             toast.type === "success" &&
-              "border-green-500/20 bg-green-500/5 text-green-700 dark:text-green-400",
+              "border-green-600 bg-green-600 text-white",
             toast.type === "warning" &&
-              "border-yellow-500/20 bg-yellow-500/5 text-yellow-700 dark:text-yellow-400"
+              "border-yellow-600 bg-yellow-600 text-white"
           )}
         >
           <Toast.Content className="flex-1 flex items-start gap-3">
