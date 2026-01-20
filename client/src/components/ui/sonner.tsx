@@ -26,6 +26,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
+      containerStyle={{
+        bottom: "calc(env(safe-area-inset-bottom) + 16px)",
+      }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
