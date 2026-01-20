@@ -227,7 +227,7 @@ export function QuestionItem({
         </div>
       </AccordionTrigger>
       <AccordionContent>
-        {replies ? (
+        {replies && replies.length > 0 ? (
           replies.map((reply, index) => (
             <ReplyItem
               key={reply.answer.uid ?? index}
