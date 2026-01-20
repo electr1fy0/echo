@@ -20,7 +20,7 @@ func (h *APIHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	defer r.Body.Close()
-	var answer []AnswerItem
+	answer := []AnswerItem{}
 	uid := r.PathValue("uid")
 	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
 	if !ok {

@@ -106,7 +106,7 @@ export function QuestionItem({
                   {question.timeCreated &&
                     formatRelativeTime(new Date(question.timeCreated))}
                 </span>
-                {replies.length > 0 && (
+                {replies && replies.length > 0 && (
                   <span className="text-xs text-neutral-400 dark:text-neutral-500">
                     {replies.length} {replies.length === 1 ? "reply" : "replies"}
                   </span>
