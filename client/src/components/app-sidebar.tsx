@@ -12,6 +12,8 @@ import {
   Logout01Icon,
   ComputerIcon,
 } from "@hugeicons/core-free-icons";
+import { CHAMBER_COLORS } from "@/components/chambers/consts";
+import { useListChambers } from "@/hooks/use-chamber";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,9 +68,9 @@ function NavButton({
           ? "bg-primary text-primary-foreground hover:bg-primary/80"
           : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
         !isAction &&
-        (isActive
-          ? "text-neutral-900 dark:text-white"
-          : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
+          (isActive
+            ? "text-neutral-900 dark:text-white"
+            : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"),
       )}
     >
       <HugeiconsIcon
@@ -172,8 +174,7 @@ function MenuButton({
     </DropdownMenu>
   );
 }
-import { CHAMBER_COLORS } from "@/components/chambers/consts";
-import { useListChambers } from "@/hooks/use-chamber";
+
 function CreateQueryDialog({
   open,
   onOpenChange,
@@ -218,8 +219,8 @@ function CreateQueryDialog({
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                        (selectedChamberData.colorIndex || 0) %
-                        CHAMBER_COLORS.length
+                          (selectedChamberData.colorIndex || 0) %
+                            CHAMBER_COLORS.length
                         ],
                       )}
                     />
@@ -241,7 +242,7 @@ function CreateQueryDialog({
                         className={cn(
                           "size-3 rounded-full",
                           CHAMBER_COLORS[
-                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                            (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                           ],
                         )}
                       />
@@ -271,8 +272,8 @@ function CreateQueryDialog({
                 className={cn(
                   "size-3 rounded-full",
                   CHAMBER_COLORS[
-                  (selectedChamberData.colorIndex || 0) %
-                  CHAMBER_COLORS.length
+                    (selectedChamberData.colorIndex || 0) %
+                      CHAMBER_COLORS.length
                   ],
                 )}
               />
@@ -325,7 +326,7 @@ export function AppSidebar() {
   if (isMobile) {
     return (
       <>
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background py-6 px-4">
+        <nav className="fixed bottom-3 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background py-6 px-4">
           <div className="flex items-center">
             <div className="flex-1 flex justify-around">
               {navItems.slice(0, 2).map((item) => (
