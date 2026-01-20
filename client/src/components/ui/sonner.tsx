@@ -30,7 +30,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:rounded-4xl",
         },
       }}
-      containerStyle={{
+      style={{
         bottom: "calc(env(safe-area-inset-bottom) + 16px)",
       }}
       icons={{
