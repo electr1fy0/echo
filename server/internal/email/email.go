@@ -13,6 +13,7 @@ func SendVerificationEmail(to, username, token string) error {
 		fmt.Println("RESEND_API_KEY is not set, skipping email sending")
 		return nil
 	}
+
 	client := resend.NewClient(apiKey)
 	domain := os.Getenv("ECHO_DOMAIN")
 	verifyLink := fmt.Sprintf("https://%s/verify-email?token=%s", domain, token)
