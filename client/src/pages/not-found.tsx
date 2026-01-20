@@ -6,7 +6,9 @@ export function NotFound() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-mono font-medium text-foreground">404</h1>
+          <h1 className="text-4xl font-mono font-medium text-foreground">
+            404
+          </h1>
           <p className="text-sm text-muted-foreground">Page not found</p>
         </div>
 
@@ -44,14 +46,14 @@ export function NotFound() {
         </div>
 
         <div className="flex justify-center gap-4">
-          <Link to="/home">
-            <Button variant="default" className="min-w-[120px]">
-              Return Home
+          <Link to="/">
+            <Button variant="ghost" size="default">
+              Back
             </Button>
           </Link>
-          <Link to="/">
-            <Button variant="ghost" className="min-w-[120px]">
-              Back
+          <Link to="/home">
+            <Button variant="outline" size="default">
+              Home
             </Button>
           </Link>
         </div>

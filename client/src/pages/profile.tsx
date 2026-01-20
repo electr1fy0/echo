@@ -98,7 +98,7 @@ export function Profile() {
     );
   }
   return (
-    <div className="max-w-[40rem] w-full mt-24 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-32 mt-20 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           <UserAvatar

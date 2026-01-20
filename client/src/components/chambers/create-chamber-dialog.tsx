@@ -26,7 +26,7 @@ export function CreateChamberDialog({
   onOpenChange,
 }: CreateChamberDialogProps) {
   const navigate = useNavigate();
-  const { mutate: createChamber } = useCreateChamber();
+  const { mutate: createChamber, isPending } = useCreateChamber();
   const [chamber, setChamber] = useState<Chamber>({
     name: "",
     description: "",
@@ -41,6 +41,7 @@ export function CreateChamberDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPending || !chamber.name.trim() || !chamber.description.trim()) return;
     createChamber(chamber, {
       onSuccess: (newChamber) => {
         onOpenChange(false);

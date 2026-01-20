@@ -54,6 +54,7 @@ export function Explore() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
+
   const { data: searchResults, isLoading: isSearching } =
     useGlobalSearch(query);
   const {
@@ -63,10 +64,12 @@ export function Explore() {
   } = useQuestionsQuery("votes");
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { data: chambers = [] } = useListChambers();
+
   const isSearchMode = query.length > 0;
   const isLoading = isSearchMode ? isSearching : isTrendingLoading;
+
   return (
-    <div className="max-w-[40rem] w-full md:mt-40 mt-24 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-32 mt-20 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Explore
       </h1>
@@ -87,8 +90,9 @@ export function Explore() {
       </div>
       {isSearchMode ? (
         <div className="space-y-8">
-          {isLoading && <QuestionListSkeleton count={3} />}
-          {!isLoading && searchResults && (
+          {isLoading ? (
+            <QuestionListSkeleton count={3} />
+          ) : searchResults ? (
             <>
               {searchResults.users.length > 0 && (
                 <div className="space-y-3">
@@ -153,8 +157,7 @@ export function Explore() {
                   </div>
                 </div>
               )}
-              {!isLoading &&
-                searchResults.users.length === 0 &&
+              {searchResults.users.length === 0 &&
                 searchResults.chambers.length === 0 &&
                 searchResults.questions.length === 0 &&
                 searchResults.replies.length === 0 && (
@@ -163,7 +166,7 @@ export function Explore() {
                   </p>
                 )}
             </>
-          )}
+          ) : null}
         </div>
       ) : (
         <>

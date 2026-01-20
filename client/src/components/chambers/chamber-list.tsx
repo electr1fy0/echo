@@ -24,7 +24,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
   const handleToggleJoin = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!chamber.uid) return;
+    if (!chamber.uid || isPending) return;
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid);
     } else {
@@ -65,7 +65,6 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
       <Button
         variant={chamber.isJoined ? "secondary" : "default"}
         size="sm"
-        disabled={isPending}
         className={cn(
           "rounded-full h-7 px-3 text-xs font-medium transition-all shadow-none",
           !chamber.isJoined &&

@@ -17,15 +17,15 @@ export function UpvoteButton({
   isUpvoted,
   onToggle,
   className,
-  disabled,
-}: UpvoteButtonProps) {
+  isPending,
+}: UpvoteButtonProps & { isPending?: boolean }) {
   return (
     <Button
       variant="ghost"
       size="sm"
-      disabled={disabled}
       onClick={(e) => {
         e.stopPropagation();
+        if (isPending) return;
         onToggle();
       }}
       className={cn(

@@ -56,7 +56,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
         <UpvoteButton
           count={reply.upvotes}
           isUpvoted={reply.isUpvoted}
-          disabled={isPending}
+          isPending={isPending}
           onToggle={() => {
             updateUpvote({ qid: reply.questionUid, rid: reply.uid });
           }}

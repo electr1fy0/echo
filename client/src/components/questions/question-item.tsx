@@ -121,7 +121,7 @@ export function QuestionItem({
                     count={question.upvotes}
                     isUpvoted={question.isUpvoted}
                     onToggle={() => handleVote(questionId)}
-                    disabled={isVotePending}
+                    isPending={isVotePending}
                     className="w-14 text-right h-7 px-2.5 transition-colors"
                   />
                   <DropdownMenu>

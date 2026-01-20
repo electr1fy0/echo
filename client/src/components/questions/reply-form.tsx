@@ -18,7 +18,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || isPending) return;
     submitReply(
       { questionId, content },
       {
@@ -46,7 +46,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
       />
       <Button
         variant="outline"
-        disabled={isPending || !content.trim()}
+        disabled={!content.trim()}
         type="submit"
         className=""
       >

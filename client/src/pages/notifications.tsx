@@ -78,7 +78,7 @@ export function Notifications() {
   const { data: notifications = [], isLoading } = useNotificationsQuery();
 
   return (
-    <div className="max-w-[40rem] w-full mt-32 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-32 mt-20 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
       <div>
         <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
           Activity

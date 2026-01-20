@@ -45,7 +45,7 @@ export function Home() {
     (c) => c.uid === selectedChamber,
   );
   const handleSubmit = () => {
-    if (!draft.content.trim() || !selectedChamber) return;
+    if (!draft.content.trim() || !selectedChamber || isCreatePending) return;
     submitQuestion(
       { ...draft, chamberUid: selectedChamber },
       {
@@ -57,7 +57,7 @@ export function Home() {
     );
   };
   return (
-    <div className="max-w-[40rem] w-full md:mt-40 mt-24 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-32 mt-20 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Echo
       </h1>
@@ -67,7 +67,7 @@ export function Home() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-xl gap-2 h-9 px-3 text-sm border border-neutral-200 dark:border-neutral-700 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-xl gap-2 h-9 px-3 text-sm border border-neutral-200 dark:border-neutral-700 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors focus:outline-none focus:ring-1 focus:ring-ring">
               {selectedChamberData ? (
                 <>
                   <div
@@ -139,9 +139,7 @@ export function Home() {
             <Button
               className="font-normal rounded-xl"
               onClick={handleSubmit}
-              disabled={
-                isCreatePending || !selectedChamber || !draft.content.trim()
-              }
+              disabled={!selectedChamber || !draft.content.trim()}
             >
               <HugeiconsIcon icon={Add01Icon} className="mr-0 size-4" />
               Ask Query
