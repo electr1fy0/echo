@@ -9,7 +9,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    __APP_VERSION__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA || Date.now().toString()),
-  },
 });
