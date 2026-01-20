@@ -14,7 +14,7 @@ import { useCreateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/toast";
 
 interface CreateChamberDialogProps {
   open: boolean;
