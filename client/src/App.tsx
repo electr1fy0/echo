@@ -33,6 +33,7 @@ function AuthenticatedLayout() {
   );
 }
 import { Toaster } from "@/components/ui/sonner";
+import { ReloadPrompt } from "@/components/reload-prompt";
 
 export default function App() {
   return (
@@ -50,6 +51,7 @@ export default function App() {
         </Route>
       </Routes>
       <Toaster />
+      <ReloadPrompt />
     </BrowserRouter>
   );
 }
