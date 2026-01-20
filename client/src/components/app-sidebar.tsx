@@ -326,7 +326,7 @@ export function AppSidebar() {
   if (isMobile) {
     return (
       <>
-        <nav className="fixed bottom-6 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background py-6 px-4">
+        <nav className="fixed bottom-4 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-6 pb-8 px-4">
           <div className="flex items-center">
             <div className="flex-1 flex justify-around">
               {navItems.slice(0, 2).map((item) => (
