@@ -75,7 +75,7 @@ function NavButton({
     >
       <HugeiconsIcon
         icon={icon}
-        className="size-6 transition-all duration-200 group-hover/nav:rotate-12"
+        className="size-6"
         strokeWidth={isActive ? 2.5 : 1.5}
       />
       {hasBadge && (
