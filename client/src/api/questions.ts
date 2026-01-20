@@ -2,6 +2,19 @@ import type { QuestionDraft, QuestionItem } from "@/types";
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
 
+export async function fetchQuestion(questionId: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}`,
+    {
+      headers: {
+        ...getAuthHeaders(),
+      },
+    },
+  );
+  if (!res.ok) throw new Error("Failed to fetch question");
+  return res.json() as Promise<QuestionItem>;
+}
+
 export async function fetchQuestions(
   sort?: "votes" | "time_created",
   filter?: "joined",

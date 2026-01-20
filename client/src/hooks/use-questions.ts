@@ -1,7 +1,8 @@
 import { useState } from "react";
-import type { QuestionDraft, QuestionItem, User, Chamber } from "@/types";
+import type { QuestionDraft, QuestionItem } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  fetchQuestion,
   fetchQuestions,
   createQuestion,
   deleteQuestion,
@@ -9,6 +10,15 @@ import {
   fetchUserQuestions,
   searchQuestions,
 } from "@/api/questions";
+
+export function useQuestionQuery(questionId: string | undefined) {
+  return useQuery({
+    queryKey: ["question", questionId],
+    queryFn: () => fetchQuestion(questionId!),
+    enabled: !!questionId,
+    staleTime: 30_000,
+  });
+}
 
 export function useQuestionsQuery(
   sort?: "votes" | "time_created",

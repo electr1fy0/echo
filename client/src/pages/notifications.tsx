@@ -4,68 +4,121 @@ import {
   Message01Icon,
   CircleArrowUp01Icon,
   InformationCircleIcon,
+  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { NotificationListSkeleton } from "@/components/ui/skeletons";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 function NotificationItem({ notification }: { notification: Notification }) {
+  const navigate = useNavigate();
   const isUpvote = notification.type === "upvote_question";
   const isReply = notification.type === "reply_question";
   const isUpvoteReply = notification.type === "upvote_reply";
 
   if (!isUpvote && !isReply && !isUpvoteReply) return null;
 
+  const handleClick = () => {
+    navigate(`/question/${notification.reference_uid}`);
+  };
+
   return (
-    <div className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0">
-      <Link to={`/u/${notification.actor_username}`}>
+    <div
+      onClick={handleClick}
+      className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-4 px-4 transition-colors group"
+    >
+      <Link
+        to={`/u/${notification.actor_username}`}
+        onClick={(e) => e.stopPropagation()}
+        className="shrink-0"
+      >
         <UserAvatar
           src={notification.actor_avatar}
           name={notification.actor_username}
-          className="size-10 shrink-0"
+          className="size-10"
         />
       </Link>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-neutral-900 dark:text-neutral-100">
-          <Link
-            to={`/u/${notification.actor_username}`}
-            className="font-semibold hover:underline"
-          >
-            {notification.actor_username}
-          </Link>
-          <span className="text-neutral-500 dark:text-neutral-400">
-            {isUpvote && " upvoted your question"}
-            {isReply && " replied to your question"}
-            {isUpvoteReply && " upvoted your reply"}
-          </span>
-        </p>
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm text-neutral-900 dark:text-neutral-100">
+            <Link
+              to={`/u/${notification.actor_username}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-semibold hover:underline"
+            >
+              {notification.actor_username}
+            </Link>
+            <span className="text-neutral-500 dark:text-neutral-400">
+              {isUpvote && " upvoted your question"}
+              {isReply && " replied to your question"}
+              {isUpvoteReply && " upvoted your reply"}
+            </span>
+          </p>
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            className="size-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5"
+          />
+        </div>
 
-        {(isReply || isUpvoteReply) && notification.question_content && (
-          <div className="mt-2 mb-1 pl-3 border-l-2 border-neutral-200 dark:border-neutral-800">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
-              {notification.question_content}
+        {isUpvoteReply && notification.content && (
+          <div className="mt-2 bg-neutral-100 dark:bg-neutral-800/70 rounded-lg p-3">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              Your reply
             </p>
+            <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+              {notification.content}
+            </p>
+            {notification.question_content && (
+              <div className="mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-700">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                  On question
+                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                  {notification.question_content}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {notification.content && (
-          <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2">
+        {isReply && (
+          <>
+            {notification.question_content && (
+              <div className="mt-2 pl-3 border-l-2 border-primary/30">
+                <p className="text-xs text-neutral-400 dark:text-neutral-500 mb-0.5">
+                  On your question
+                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                  {notification.question_content}
+                </p>
+              </div>
+            )}
+            {notification.content && (
+              <div className="mt-2 bg-neutral-100 dark:bg-neutral-800/70 rounded-lg p-3">
+                <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+                  {notification.content}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {isUpvote && notification.content && (
+          <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-2 line-clamp-2">
             {notification.content}
           </p>
         )}
-        <span className="text-xs text-neutral-400 dark:text-neutral-500 mt-1.5 flex items-center gap-1.5">
+
+        <span className="text-xs text-neutral-400 dark:text-neutral-500 mt-2 flex items-center gap-1.5">
           {isUpvote || isUpvoteReply ? (
             <HugeiconsIcon
               icon={CircleArrowUp01Icon}
-              className="size-3 text-orange-500"
+              className="size-3 text-primary"
             />
           ) : (
-            <HugeiconsIcon
-              icon={Message01Icon}
-              className="size-3"
-            />
+            <HugeiconsIcon icon={Message01Icon} className="size-3" />
           )}
           {formatRelativeTime(new Date(notification.created_at))}
         </span>
@@ -88,7 +141,7 @@ export function Notifications() {
         </p>
       </div>
 
-      <div className="bg-white dark:bg-neutral-900/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4">
+      <div className="bg-white dark:bg-neutral-900/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4 overflow-hidden">
         {isLoading ? (
           <NotificationListSkeleton count={4} />
         ) : notifications.length > 0 ? (
