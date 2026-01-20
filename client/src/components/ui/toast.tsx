@@ -6,19 +6,35 @@ import {
   AlertCircleIcon,
   InfoIcon,
 } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 
 const toastManager = Toast.createToastManager();
 
+const transformOptions = (options?: any) => {
+  if (!options) return {};
+  const { action, ...rest } = options;
+  if (action) {
+    return {
+      ...rest,
+      actionProps: {
+        children: action.label,
+        onClick: action.onClick,
+      },
+    };
+  }
+  return options;
+};
+
 export const toast = {
   success: (description: string, options?: any) =>
-    toastManager.add({ description, type: "success", ...options }),
+    toastManager.add({ description, type: "success", ...transformOptions(options) }),
   error: (description: string, options?: any) =>
-    toastManager.add({ description, type: "error", ...options }),
+    toastManager.add({ description, type: "error", ...transformOptions(options) }),
   info: (description: string, options?: any) =>
-    toastManager.add({ description, type: "info", ...options }),
+    toastManager.add({ description, type: "info", ...transformOptions(options) }),
   warning: (description: string, options?: any) =>
-    toastManager.add({ description, type: "warning", ...options }),
-  custom: (options: any) => toastManager.add(options),
+    toastManager.add({ description, type: "warning", ...transformOptions(options) }),
+  custom: (options: any) => toastManager.add(transformOptions(options)),
 };
 
 function ToastList() {
@@ -40,7 +56,7 @@ function ToastList() {
             toast.type === "success" &&
               "border-green-600 bg-green-600 text-white",
             toast.type === "warning" &&
-              "border-yellow-600 bg-yellow-600 text-white",
+              "border-yellow-600 bg-yellow-600 text-white"
           )}
         >
           <Toast.Content className="flex-1 flex items-start gap-3">
@@ -64,6 +80,13 @@ function ToastList() {
               <Toast.Description className="text-sm opacity-90">
                 {toast.description}
               </Toast.Description>
+              <Toast.Action
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "xs" }),
+                  "mt-2 w-fit bg-transparent hover:bg-white/10 border-current text-current",
+                  !toast.actionProps && "hidden"
+                )}
+              />
             </div>
           </Toast.Content>
           <Toast.Close className="absolute top-2 right-2 rounded-full p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 group-has-[data-type]:text-current">
