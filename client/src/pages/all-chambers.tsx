@@ -17,7 +17,7 @@ export function AllChambers() {
   const navigate = useNavigate();
   const { data: chambers = [], isLoading } = useListChambers(query);
   return (
-    <div className="max-w-[40rem] w-full mt-24 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"

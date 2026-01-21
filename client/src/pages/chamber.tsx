@@ -42,7 +42,7 @@ export function ChamberPage() {
 
   if (isChamberLoading) {
     return (
-      <div className="max-w-[40rem] w-full mt-32 px-4 space-y-8">
+      <div className="max-w-[40rem] w-full md:mt-24 mt-16 px-4 space-y-8">
         <div className="flex items-start gap-4">
           <Skeleton className="size-16 rounded-2xl shrink-0" />
           <div className="flex-1 space-y-2">
@@ -82,7 +82,7 @@ export function ChamberPage() {
     }
   };
   return (
-    <div className="max-w-[40rem] w-full mt-32 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-24 mt-16 mb-40 relative px-4 pb-20 md:pb-0">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 mb-6 transition-colors"

@@ -4,7 +4,6 @@ import {
   Message01Icon,
   CircleArrowUp01Icon,
   InformationCircleIcon,
-  ArrowRight01Icon,
 } from "@hugeicons/core-free-icons";
 import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -50,10 +49,6 @@ function NotificationItem({ notification }: { notification: Notification }) {
               {isUpvoteReply && " upvoted your reply"}
             </span>
           </p>
-          <HugeiconsIcon
-            icon={ArrowRight01Icon}
-            className="size-4 text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5"
-          />
         </div>
 
         {isUpvoteReply && notification.content && (
@@ -125,12 +120,12 @@ export function Notifications() {
   const { data: notifications = [], isLoading } = useNotificationsQuery();
 
   return (
-    <div className="max-w-[40rem] w-full md:mt-32 mt-20 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
+    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
       <div>
-        <h1 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+        <h1 className="text-lg text-neutral-900 dark:text-neutral-100">
           Activity
         </h1>
-        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+        <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Stay updated on your questions and replies
         </p>
       </div>
