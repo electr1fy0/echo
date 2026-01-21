@@ -136,14 +136,25 @@ func (h *APIHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		h.respondWithError(w, "invalid token sub", nil, http.StatusUnauthorized)
 		return
 	}
-	var user User
-	err := h.DB.QueryRow(context.Background(), "select username, email from users where username = $1", username).Scan(&user.Username, &user.Email)
+	
+	var profile Profile
+	query := `
+		SELECT
+			u.username, u.email, COALESCE(u.bio, ''), COALESCE(u.avatar, ''), COALESCE(u.links, ''),
+			(SELECT COUNT(*) FROM questions q WHERE q.author = u.username) as posted,
+			(SELECT COUNT(*) FROM answers a WHERE a.author = u.username) as answered
+		FROM users u
+		WHERE u.username = $1`
+
+	err := h.DB.QueryRow(context.Background(), query, username).Scan(
+		&profile.Username, &profile.Email, &profile.Bio, &profile.Avatar, &profile.Link, &profile.Posted, &profile.Answered,
+	)
 	if err != nil {
 		h.respondWithError(w, "user not found", err, http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(profile)
 }
 
 func (h *APIHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
