@@ -16,7 +16,7 @@ import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth, useSignout } from "@/hooks/use-auth";
 import { useTheme } from "@/components/theme-provider";
 import {
@@ -112,18 +112,11 @@ function ProfileButton({
           : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
       )}
     >
-      <Avatar className="size-6">
-        <AvatarImage
-          src={
-            user?.avatar
-              ? user.avatar
-              : user?.username
-                ? `https://github.com/${user.username}.png?size=144`
-                : undefined
-          }
-        />
-        <AvatarFallback>{user?.username?.[0] ?? "U"}</AvatarFallback>
-      </Avatar>
+      <UserAvatar
+        src={user?.avatar}
+        name={user?.username || "U"}
+        className="size-6"
+      />
     </button>
   );
 }
