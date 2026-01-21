@@ -237,7 +237,6 @@ func (h *APIHandler) ResendVerification(w http.ResponseWriter, r *http.Request) 
 	var isVerified bool
 	err := h.DB.QueryRow(context.Background(), "SELECT username, is_verified FROM users WHERE email = $1", req.Email).Scan(&username, &isVerified)
 	if err != nil {
-		// Don't reveal if user exists
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]string{"message": "If an account exists and is not verified, a verification email has been sent"})
 		return

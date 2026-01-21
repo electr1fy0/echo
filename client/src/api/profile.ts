@@ -1,5 +1,5 @@
 import { API_URL } from "@/config";
-import { getAuthHeaders } from "@/lib/utils";
+import { getAuthHeaders, setToken } from "@/lib/utils";
 import type { User } from "@/types";
 export async function fetchProfile(): Promise<User> {
   const res = await fetch(`${API_URL}/users/me`, {
@@ -19,6 +19,17 @@ export async function updateProfile(user: User): Promise<void> {
     body: JSON.stringify(user),
   });
   if (!res.ok) throw new Error("Failed to update profile");
+  
+  const text = await res.text();
+  if (text) {
+    try {
+      const data = JSON.parse(text);
+      if (data.token) {
+        setToken(data.token);
+      }
+    } catch {
+    }
+  }
 }
 
 export async function fetchPublicProfile(username: string): Promise<User> {

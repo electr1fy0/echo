@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -25,11 +27,53 @@ func (h *APIHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := h.DB.Exec(ctx, "update users set bio = $1, avatar = $2, links = $3 where username = $4", profile.Bio, profile.Avatar, profile.Link, sub)
+	newUsername := sub
+	if profile.Username != "" && profile.Username != sub {
+		profile.Username = strings.TrimSpace(profile.Username)
+		if strings.Contains(profile.Username, " ") {
+			h.respondWithError(w, "username cannot contain spaces", nil, http.StatusBadRequest)
+			return
+		}
+
+		var count int
+		err := h.DB.QueryRow(ctx, "SELECT count(*) FROM users WHERE username = $1", profile.Username).Scan(&count)
+		if err != nil {
+			h.respondWithError(w, "database error", err, http.StatusInternalServerError)
+			return
+		}
+		if count > 0 {
+			h.respondWithError(w, "username already taken", nil, http.StatusConflict)
+			return
+		}
+		newUsername = profile.Username
+	}
+
+	_, err := h.DB.Exec(ctx, "update users set bio = $1, avatar = $2, links = $3, username = $4 where username = $5", profile.Bio, profile.Avatar, profile.Link, newUsername, sub)
 	if err != nil {
 		h.respondWithError(w, "failed to update profile", err, http.StatusInternalServerError)
 		return
 	}
+
+	if newUsername != sub {
+		newClaims := &jwt.MapClaims{
+			"iat":    time.Now().Unix(),
+			"exp":    time.Now().Add(48 * time.Hour).Unix(),
+			"sub":    newUsername,
+			"access": []string{"view", "create"},
+			"role":   "user",
+		}
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims)
+		key := []byte(os.Getenv("SECRET_KEY"))
+		tokenStr, err := token.SignedString(key)
+		if err != nil {
+			h.respondWithError(w, "failed to sign token", err, http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"token": tokenStr})
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *APIHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {

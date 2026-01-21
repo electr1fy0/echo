@@ -115,9 +115,11 @@ function ProfileButton({
       <Avatar className="size-6">
         <AvatarImage
           src={
-            user?.username
-              ? `https://github.com/${user.username}.png?size=144`
-              : undefined
+            user?.avatar
+              ? user.avatar
+              : user?.username
+                ? `https://github.com/${user.username}.png?size=144`
+                : undefined
           }
         />
         <AvatarFallback>{user?.username?.[0] ?? "U"}</AvatarFallback>

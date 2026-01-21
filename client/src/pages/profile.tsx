@@ -248,6 +248,20 @@ export function Profile() {
           <div className="grid gap-4 py-4">
             <form onSubmit={(e) => handleSubmit(e)} className="grid gap-4">
               <div className="grid gap-2">
+                <label htmlFor="username" className="text-sm font-medium">
+                  Username
+                </label>
+                <Input
+                  id="username"
+                  value={editForm.username}
+                  onChange={(e) => {
+                    updateDraft({ username: e.target.value });
+                  }}
+                  placeholder="username"
+                  className="select-text"
+                />
+              </div>
+              <div className="grid gap-2">
                 <label htmlFor="bio" className="text-sm font-medium">
                   Bio
                 </label>
