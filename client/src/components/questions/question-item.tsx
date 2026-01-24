@@ -84,6 +84,7 @@ export function QuestionItem({
             to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
             className="shrink-0 mt-1"
             onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
           >
             <UserAvatar
               src={author?.avatar}
@@ -108,13 +109,15 @@ export function QuestionItem({
                 </span>
                 {replies && replies.length > 0 && (
                   <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {replies.length} {replies.length === 1 ? "reply" : "replies"}
+                    {replies.length}{" "}
+                    {replies.length === 1 ? "reply" : "replies"}
                   </span>
                 )}
               </div>
               {!isEditing && (
                 <div
                   onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
                   className="flex items-center gap-2 shrink-0"
                 >
                   <UpvoteButton
@@ -125,19 +128,22 @@ export function QuestionItem({
                     className="w-14 text-right h-7 px-2.5 transition-colors"
                   />
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="outline-none">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="More options"
-                        className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-                      >
-                        <HugeiconsIcon
-                          icon={MoreHorizontalIcon}
-                          className="size-5"
-                        />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="More options"
+                          className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                        >
+                          <HugeiconsIcon
+                            icon={MoreHorizontalIcon}
+                            className="size-5"
+                          />
+                        </Button>
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                    />
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() => {
@@ -189,6 +195,7 @@ export function QuestionItem({
             {isEditing ? (
               <div
                 onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
                 onKeyUp={(e) => e.stopPropagation()}
               >
@@ -238,7 +245,9 @@ export function QuestionItem({
             />
           ))
         ) : (
-          <div className="text-sm ml-10 text-neutral-500">No replies</div>
+          <div className="text-sm ml-10 text-neutral-500">
+            No replies. Be the first to answer!
+          </div>
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
