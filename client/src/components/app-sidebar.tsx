@@ -70,7 +70,7 @@ function NavButton({
       <HugeiconsIcon
         icon={icon}
         className="size-6"
-        strokeWidth={isActive ? 2.5 : 1.5}
+        strokeWidth={isActive ? 2.7 : 1.7}
       />
       {hasBadge && (
         <span
