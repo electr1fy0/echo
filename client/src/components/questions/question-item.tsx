@@ -44,6 +44,36 @@ type QuestionItemProps = {
 
 import { QuestionListSkeleton } from "./question-skeleton";
 
+const TriggerWrapper = ({
+  children,
+  isEditing,
+}: {
+  children: React.ReactNode;
+  isEditing: boolean;
+}) => {
+  if (isEditing) {
+    return (
+      <div className="flex">
+        <div
+          className={cn(
+            accordionTriggerStyle,
+            "font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left w-full cursor-default hover:bg-transparent dark:hover:bg-transparent active:scale-100"
+          )}
+        >
+          {children}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <AccordionTrigger
+      className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
+    >
+      {children}
+    </AccordionTrigger>
+  );
+};
+
 export function QuestionItem({
   questionItem,
   onDelete,
@@ -76,33 +106,9 @@ export function QuestionItem({
     );
   }
 
-  const TriggerWrapper = ({ children }: { children: React.ReactNode }) => {
-    if (isEditing) {
-      return (
-        <div className="flex">
-          <div
-            className={cn(
-              accordionTriggerStyle,
-              "font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left w-full cursor-default hover:bg-transparent dark:hover:bg-transparent active:scale-100"
-            )}
-          >
-            {children}
-          </div>
-        </div>
-      );
-    }
-    return (
-      <AccordionTrigger
-        className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
-      >
-        {children}
-      </AccordionTrigger>
-    );
-  };
-
   return (
     <AccordionItem value={questionId} className="w-full">
-      <TriggerWrapper>
+      <TriggerWrapper isEditing={isEditing}>
         <div className="flex items-start gap-3 w-full">
           <Link
             to={question.authorUsername ? `/ u / ${question.authorUsername} ` : "#"}
