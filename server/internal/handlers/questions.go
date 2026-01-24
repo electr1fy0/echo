@@ -337,6 +337,7 @@ from questions q
 left join users u
 on u.username = q.author
 where q.author = $1
+order by q.time_created desc
 limit $2 offset $3`, sub, limit, offset)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
