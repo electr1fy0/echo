@@ -150,7 +150,7 @@ export function Home() {
               Ask
               <HugeiconsIcon
                 icon={Add01Icon}
-                stroke="2.5"
+                strokeWidth={1.7}
                 className="ml-1.5 size-3.5"
               />
             </Button>
