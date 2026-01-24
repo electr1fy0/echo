@@ -129,20 +129,24 @@ export function QuestionItem({
                   />
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      render={
+                      render={(props) => (
                         <Button
+                          {...props}
                           variant="ghost"
                           size="icon"
                           aria-label="More options"
                           className="h-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            props.onClick?.(e);
+                          }}
                         >
                           <HugeiconsIcon
                             icon={MoreHorizontalIcon}
                             className="size-5"
                           />
                         </Button>
-                      }
-                      onClick={(e) => e.stopPropagation()}
+                      )}
                     />
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem

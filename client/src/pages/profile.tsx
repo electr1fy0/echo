@@ -129,11 +129,11 @@ export function Profile() {
               Edit Profile
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger render={
-                <Button variant="outline" size="icon" className="size-8 rounded-full">
+              <DropdownMenuTrigger render={(props) => (
+                <Button {...props} variant="outline" size="icon" className="size-8 rounded-full">
                   <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
                 </Button>
-              } />
+              )} />
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Theme</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => setTheme("light")}>
