@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -135,31 +136,35 @@ export function Profile() {
                 </Button>
               )} />
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Theme</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                  <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" /> Light
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                  <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" /> Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
-                  <HugeiconsIcon icon={ComputerIcon} className="mr-2 size-4" /> System
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setTheme("light")}>
+                    <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" /> Light
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("dark")}>
+                    <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" /> Dark
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTheme("system")}>
+                    <HugeiconsIcon icon={ComputerIcon} className="mr-2 size-4" /> System
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signout()}
-                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
-                >
-                   <HugeiconsIcon icon={Logout01Icon} className="mr-2 size-4" />
-                   Sign out
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
-                  onClick={() => setIsDeleteOpen(true)}
-                >
-                  <HugeiconsIcon icon={Alert02Icon} className="mr-2 size-4" />
-                  Delete Account
-                </DropdownMenuItem>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => signout()}
+                    className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                  >
+                    <HugeiconsIcon icon={Logout01Icon} className="mr-2 size-4" />
+                    Sign out
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                    onClick={() => setIsDeleteOpen(true)}
+                  >
+                    <HugeiconsIcon icon={Alert02Icon} className="mr-2 size-4" />
+                    Delete Account
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -236,7 +241,7 @@ export function Profile() {
                   className={cn(
                     "size-4 rounded-md",
                     CHAMBER_COLORS[
-                      (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                    (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                     ],
                   )}
                 />
