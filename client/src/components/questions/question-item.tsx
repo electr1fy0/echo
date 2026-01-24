@@ -143,7 +143,7 @@ export function QuestionItem({
                 </span>
                 {replies && replies.length > 0 && (
                   <div className="flex items-center gap-1.5 ml-1">
-                    <AvatarGroup className="h-5">
+                    <AvatarGroup className="h-3">
                       {/* Extract unique authors from replies */}
                       {Array.from(
                         new Set(replies.map((r) => r.answer.authorUsername)),

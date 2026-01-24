@@ -66,7 +66,17 @@ export function Home() {
         An Open QnA platform
       </h2>
       <div className="space-y-3">
-        <div className="border border-neutral-200 dark:border-neutral-700 bg-background rounded-2xl border-dashed focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
+        <div
+          className="
+            border border-dashed
+            border-neutral-300 dark:border-neutral-700
+            bg-background rounded-2xl
+            transition-colors
+            focus-within:border-neutral-400
+            dark:focus-within:border-neutral-500
+            overflow-hidden
+          "
+        >
           <Textarea
             placeholder={
               selectedChamberData
@@ -140,7 +150,7 @@ export function Home() {
               Ask
               <HugeiconsIcon
                 icon={Add01Icon}
-                stroke="1.5"
+                stroke="2.5"
                 className="ml-1.5 size-3.5"
               />
             </Button>
