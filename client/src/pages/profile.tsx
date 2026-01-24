@@ -47,7 +47,7 @@ import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "@/components/ui/toast";
-import { ChamberListSkeleton } from "@/components/ui/skeletons";
+import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "@/components/theme-provider";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -143,7 +143,6 @@ export function Profile() {
                   setIsEditOpen(true);
                 }
               }}
-              disabled={isProfileLoading}
             >
               <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
               Edit Profile
@@ -239,22 +238,33 @@ export function Profile() {
         )}
 
         <div className="flex gap-6 pt-2">
-          <div className="flex flex-col">
-            {isProfileLoading ? <Skeleton className="h-6 w-8 mb-1" /> : (
-              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                {displayUser.answered}
-              </span>
-            )}
-            <span className="text-xs text-neutral-500">Answered</span>
-          </div>
-          <div className="flex flex-col">
-            {isProfileLoading ? <Skeleton className="h-6 w-8 mb-1" /> : (
-              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                {questions.length}
-              </span>
-            )}
-            <span className="text-xs text-neutral-500">Posted</span>
-          </div>
+          {isProfileLoading ? (
+            <>
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-5 w-8" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-5 w-8" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col">
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  {displayUser.answered}
+                </span>
+                <span className="text-xs text-neutral-500">Answered</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  {questions.length}
+                </span>
+                <span className="text-xs text-neutral-500">Posted</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
       <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800" />
@@ -274,7 +284,11 @@ export function Profile() {
           </Button>
         </div>
         {isChambersLoading ? (
-          <ChamberListSkeleton count={2} />
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <ChamberPillSkeleton key={i} />
+            ))}
+          </div>
         ) : JOINED_CHAMBERS.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {JOINED_CHAMBERS.map((chamber, i) => (

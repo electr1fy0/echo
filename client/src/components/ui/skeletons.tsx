@@ -41,6 +41,15 @@ export function ChamberCardSkeleton() {
     );
 }
 
+export function ChamberPillSkeleton() {
+    return (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/50">
+            <Skeleton className="size-4 rounded-md" />
+            <Skeleton className="h-4 w-24" />
+        </div>
+    );
+}
+
 export function ChamberListSkeleton({ count = 3 }: { count?: number }) {
     return (
         <div className="space-y-2">
