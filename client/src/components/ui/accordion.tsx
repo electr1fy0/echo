@@ -21,6 +21,8 @@ function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
     />
   );
 }
+export const accordionTriggerStyle = "**:data-[slot=accordion-trigger-icon]:text-muted-foreground gap-6 p-4 text-left text-sm font-medium  underline-offset-4 dark:hover:bg-[#222] hover:bg-[#FAFAFA] decoration-[#222] dark:decoration-neutral-600 **:data-[slot=accordion-trigger-icon]:ml-auto **:data-[slot=accordion-trigger-icon]:size-4 group/accordion-trigger relative flex flex-1 items-start justify-between border border-transparent transition-all duration-200 active:scale-[0.98] outline-none disabled:pointer-events-none disabled:opacity-50";
+
 function AccordionTrigger({
   className,
   children,
@@ -31,7 +33,7 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "**:data-[slot=accordion-trigger-icon]:text-muted-foreground gap-6 p-4 text-left text-sm font-medium  underline-offset-4 dark:hover:bg-[#222] hover:bg-[#FAFAFA] decoration-[#222] dark:decoration-neutral-600 **:data-[slot=accordion-trigger-icon]:ml-auto **:data-[slot=accordion-trigger-icon]:size-4 group/accordion-trigger relative flex flex-1 items-start justify-between border border-transparent transition-all duration-200 active:scale-[0.98] outline-none disabled:pointer-events-none disabled:opacity-50",
+          accordionTriggerStyle,
           className,
         )}
         {...props}

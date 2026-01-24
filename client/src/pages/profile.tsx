@@ -227,9 +227,8 @@ export function Profile() {
         </div>
 
         {isProfileLoading ? (
-          <div className="space-y-1 w-full max-w-md pt-1">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-[90%]" />
+          <div className="w-full max-w-md pt-1">
+            <Skeleton className="h-4 w-3/4" />
           </div>
         ) : (
           <p className="text-neutral-600 dark:text-neutral-400 text-sm max-w-md whitespace-pre-wrap">

@@ -1,9 +1,12 @@
+
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router";
 import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  accordionTriggerStyle,
 } from "@/components/ui/accordion";
 import {
   DropdownMenu,
@@ -73,17 +76,36 @@ export function QuestionItem({
     );
   }
 
-  return (
-    <AccordionItem value={questionId} className="w-full">
+  const TriggerWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (isEditing) {
+      return (
+        <div className="flex">
+          <div
+            className={cn(
+              accordionTriggerStyle,
+              "font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left w-full cursor-default hover:bg-transparent dark:hover:bg-transparent active:scale-100"
+            )}
+          >
+            {children}
+          </div>
+        </div>
+      );
+    }
+    return (
       <AccordionTrigger
         className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
-        onClick={(e) => {
-          if (isEditing) e.preventDefault();
-        }}
       >
+        {children}
+      </AccordionTrigger>
+    );
+  };
+
+  return (
+    <AccordionItem value={questionId} className="w-full">
+      <TriggerWrapper>
         <div className="flex items-start gap-3 w-full">
           <Link
-            to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
+            to={question.authorUsername ? `/ u / ${question.authorUsername} ` : "#"}
             className="shrink-0 mt-1"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
@@ -201,13 +223,13 @@ export function QuestionItem({
             {isEditing ? (
               <div
                 onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
-                onKeyUp={(e) => e.stopPropagation()}
               >
                 <Textarea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  onKeyUp={(e) => e.stopPropagation()}
                   className="min-h-[80px] bg-background mb-2"
                 />
                 <div className="flex gap-2 justify-end">
@@ -238,7 +260,7 @@ export function QuestionItem({
             )}
           </div>
         </div>
-      </AccordionTrigger>
+      </TriggerWrapper>
       <AccordionContent>
         {isRepliesLoading ? (
           <div className="pl-10">
@@ -264,3 +286,4 @@ export function QuestionItem({
     </AccordionItem>
   );
 }
+
