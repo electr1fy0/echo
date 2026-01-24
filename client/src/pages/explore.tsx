@@ -6,6 +6,7 @@ import { Search01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
+import { ChamberListSkeleton } from "@/components/ui/skeletons";
 import {
   ChamberList,
   CreateChamberButton,
@@ -61,7 +62,7 @@ export function Explore() {
     error: trendingError,
   } = useQuestionsQuery("votes");
   const { mutate: deleteQuestion } = useDeleteQuestion();
-  const { data: chambers = [] } = useListChambers();
+  const { data: chambers = [], isLoading: isChambersLoading } = useListChambers();
 
   const isSearchMode = query.length > 0;
   const isLoading = isSearchMode ? isSearching : isTrendingLoading;
@@ -183,7 +184,11 @@ export function Explore() {
                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
               </Button>
             </div>
-            <ChamberList chambers={chambers} limit={3} />
+            {isChambersLoading ? (
+              <ChamberListSkeleton count={3} />
+            ) : (
+              <ChamberList chambers={chambers} limit={3} />
+            )}
             <CreateChamberButton onClick={() => setCreateChamberOpen(true)} />
           </div>
           <div className="space-y-4">

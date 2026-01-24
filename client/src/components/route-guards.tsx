@@ -4,16 +4,13 @@ import { PageSkeleton } from "@/components/ui/skeletons";
 import { getToken } from "@/lib/utils";
 
 export function ProtectedRoute() {
-  const { isLoading, isError } = useAuth();
+  const { isError } = useAuth();
   const token = getToken();
 
   if (!token) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (isLoading) {
-    return <PageSkeleton />;
-  }
   if (isError) {
     return <Navigate to="/auth" replace />;
   }

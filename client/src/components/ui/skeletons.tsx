@@ -30,21 +30,22 @@ export function ProfileSkeleton() {
 
 export function ChamberCardSkeleton() {
     return (
-        <div className="border border-dashed border-neutral-200 dark:border-neutral-800 rounded-xl p-3 space-y-2">
-            <div className="flex items-center gap-2">
-                <Skeleton className="size-4 rounded-md" />
-                <Skeleton className="h-4 w-20" />
+        <div className="flex items-center gap-3 p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800">
+            <Skeleton className="size-10 rounded-xl shrink-0" />
+            <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
             </div>
-            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-7 w-16 rounded-full" />
         </div>
     );
 }
 
 export function ChamberListSkeleton({ count = 3 }: { count?: number }) {
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-2">
             {Array.from({ length: count }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-28 rounded-xl" />
+                <ChamberCardSkeleton key={i} />
             ))}
         </div>
     );

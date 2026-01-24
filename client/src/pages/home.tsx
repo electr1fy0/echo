@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { useListChambers } from "@/hooks/use-chamber";
 import { ChamberCard } from "@/components/chambers/chamber-list";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
+
 export function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
@@ -74,8 +75,8 @@ export function Home() {
                     className={cn(
                       "size-3 rounded-full",
                       CHAMBER_COLORS[
-                      (selectedChamberData.colorIndex || 0) %
-                      CHAMBER_COLORS.length
+                        (selectedChamberData.colorIndex || 0) %
+                          CHAMBER_COLORS.length
                       ],
                     )}
                   />
@@ -103,7 +104,7 @@ export function Home() {
                       className={cn(
                         "size-3 rounded-full",
                         CHAMBER_COLORS[
-                        (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                         ],
                       )}
                     />
@@ -213,7 +214,10 @@ export function Home() {
                     .map((chamber, i) => (
                       <ChamberCard
                         key={chamber.uid || i}
-                        chamber={{ ...chamber, colorIndex: chamber.colorIndex ?? i }}
+                        chamber={{
+                          ...chamber,
+                          colorIndex: chamber.colorIndex ?? i,
+                        }}
                       />
                     ))}
                 </div>
