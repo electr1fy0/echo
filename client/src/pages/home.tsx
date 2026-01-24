@@ -66,7 +66,7 @@ export function Home() {
         An Open QnA platform
       </h2>
       <div className="space-y-3">
-        <div className="border border-neutral-200 dark:border-neutral-700 bg-background rounded-xl focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
+        <div className="border border-neutral-200 dark:border-neutral-700 bg-background rounded-2xl border-dashed focus-within:ring-1 focus-within:ring-ring transition-all overflow-hidden">
           <Textarea
             placeholder={
               selectedChamberData
@@ -74,7 +74,7 @@ export function Home() {
                 : "Select a chamber to ask a question..."
             }
             aria-label="Question content"
-            className="resize-none h-24 border-none shadow-none focus-visible:ring-0 bg-transparent px-4 py-3 text-base"
+            className="resize-none h-20 border-none shadow-none focus-visible:ring-0 bg-transparent px-4 py-3 text-base"
             value={draft.content}
             onChange={(e) => updateDraft({ content: e.target.value })}
           />
@@ -87,8 +87,8 @@ export function Home() {
                       className={cn(
                         "size-2 rounded-full",
                         CHAMBER_COLORS[
-                        (selectedChamberData.colorIndex || 0) %
-                        CHAMBER_COLORS.length
+                          (selectedChamberData.colorIndex || 0) %
+                            CHAMBER_COLORS.length
                         ],
                       )}
                     />
@@ -116,7 +116,7 @@ export function Home() {
                         className={cn(
                           "size-3 rounded-full",
                           CHAMBER_COLORS[
-                          (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                            (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                           ],
                         )}
                       />
@@ -138,7 +138,11 @@ export function Home() {
               disabled={!selectedChamber || !draft.content.trim()}
             >
               Ask
-              <HugeiconsIcon icon={Add01Icon} className="ml-1.5 size-3.5" />
+              <HugeiconsIcon
+                icon={Add01Icon}
+                stroke="1.5"
+                className="ml-1.5 size-3.5"
+              />
             </Button>
           </div>
         </div>

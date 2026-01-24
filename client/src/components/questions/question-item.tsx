@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router";
@@ -58,7 +57,7 @@ const TriggerWrapper = ({
         <div
           className={cn(
             accordionTriggerStyle,
-            "font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left w-full cursor-default hover:bg-transparent dark:hover:bg-transparent active:scale-100"
+            "font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left w-full cursor-default hover:bg-transparent dark:hover:bg-transparent active:scale-100",
           )}
         >
           {children}
@@ -67,9 +66,7 @@ const TriggerWrapper = ({
     );
   }
   return (
-    <AccordionTrigger
-      className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
-    >
+    <AccordionTrigger className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left">
       {children}
     </AccordionTrigger>
   );
@@ -84,7 +81,9 @@ export function QuestionItem({
   const author = questionItem?.author ?? null;
   const questionId = question?.uid;
 
-  const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(questionId || undefined);
+  const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(
+    questionId || undefined,
+  );
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { data: user } = useAuth();
@@ -112,7 +111,11 @@ export function QuestionItem({
       <TriggerWrapper isEditing={isEditing}>
         <div className="flex items-start gap-3 w-full">
           <Link
-            to={question.authorUsername ? `/ u / ${question.authorUsername} ` : "#"}
+            to={
+              question.authorUsername
+                ? `/ u / ${question.authorUsername} `
+                : "#"
+            }
             className="shrink-0 mt-1"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
@@ -142,27 +145,35 @@ export function QuestionItem({
                   <div className="flex items-center gap-1.5 ml-1">
                     <AvatarGroup className="h-5">
                       {/* Extract unique authors from replies */}
-                      {Array.from(new Set(replies.map(r => r.answer.authorUsername)))
+                      {Array.from(
+                        new Set(replies.map((r) => r.answer.authorUsername)),
+                      )
                         .slice(0, 3)
                         .map((username, i) => {
-                          const reply = replies.find(r => r.answer.authorUsername === username);
+                          const reply = replies.find(
+                            (r) => r.answer.authorUsername === username,
+                          );
                           return (
                             <UserAvatar
                               key={username || i}
                               name={username || "Anonymous"}
                               src={reply?.author?.avatar}
-                              className="size-4 ring-1 ring-background"
+                              className="size-3 ring-1 ring-background"
                             />
-                          )
+                          );
                         })}
-                      {new Set(replies.map(r => r.answer.authorUsername)).size > 3 && (
+                      {new Set(replies.map((r) => r.answer.authorUsername))
+                        .size > 3 && (
                         <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
-                          +{new Set(replies.map(r => r.answer.authorUsername)).size - 3}
+                          +
+                          {new Set(replies.map((r) => r.answer.authorUsername))
+                            .size - 3}
                         </AvatarGroupCount>
                       )}
                     </AvatarGroup>
                     <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                      {replies.length} {replies.length === 1 ? "reply" : "replies"}
+                      {replies.length}{" "}
+                      {replies.length === 1 ? "reply" : "replies"}
                     </span>
                   </div>
                 )}
@@ -315,4 +326,3 @@ export function QuestionItem({
     </AccordionItem>
   );
 }
-
