@@ -14,12 +14,18 @@ import {
   Link01Icon,
   MoreHorizontalIcon,
   Alert02Icon,
+  Sun03Icon,
+  Moon02Icon,
+  Logout01Icon,
+  ComputerIcon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -32,7 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useFetchProfile, useUpdateProfile } from "@/hooks/use-profile";
-import { useDeleteAccount } from "@/hooks/use-auth";
+import { useDeleteAccount, useSignout } from "@/hooks/use-auth";
 import type { User } from "@/types";
 import { useListChambers } from "@/hooks/use-chamber";
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
@@ -40,7 +46,8 @@ import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "@/components/ui/toast";
-import { ProfileSkeleton } from "@/components/ui/skeletons";
+import { ChamberListSkeleton, ProfileSkeleton } from "@/components/ui/skeletons";
+import { useTheme } from "@/components/theme-provider";
 
 export function Profile() {
   const {
@@ -59,6 +66,8 @@ export function Profile() {
   } = useUserQuestionsQuery();
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { mutate: deleteAccount } = useDeleteAccount();
+  const { mutate: signout } = useSignout();
+  const { setTheme } = useTheme();
   const [editForm, setEditForm] = useState<User>({
     username: "",
     email: "",
@@ -68,7 +77,7 @@ export function Profile() {
     answered: 0,
     posted: 0,
   });
-  const { data: chambers = [] } = useListChambers();
+  const { data: chambers = [], isLoading: isChambersLoading } = useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,10 +129,30 @@ export function Profile() {
               Edit Profile
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger className="h-7 w-7  inline-flex items-center justify-center rounded-full hover:bg-neutral-100  dark:hover:bg-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
-                <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuTrigger render={
+                <Button variant="outline" size="icon" className="size-8 rounded-full">
+                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+                </Button>
+              } />
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" /> Light
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" /> Dark
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
+                  <HugeiconsIcon icon={ComputerIcon} className="mr-2 size-4" /> System
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signout()}
+                  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
+                >
+                   <HugeiconsIcon icon={Logout01Icon} className="mr-2 size-4" />
+                   Sign out
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
                   onClick={() => setIsDeleteOpen(true)}
@@ -186,14 +215,16 @@ export function Profile() {
           <Button
             variant="outline"
             size="default"
-            className="h-7 text-xs gap-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100"
+            className="h-7 text-xs gap-1 hover:text-neutral-900 dark:hover:text-neutral-100"
             onClick={() => setCreateChamberOpen(true)}
           >
             <HugeiconsIcon icon={Add01Icon} className="size-3" />
             Create Chamber
           </Button>
         </div>
-        {JOINED_CHAMBERS.length > 0 ? (
+        {isChambersLoading ? (
+          <ChamberListSkeleton count={2} />
+        ) : JOINED_CHAMBERS.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {JOINED_CHAMBERS.map((chamber, i) => (
               <a

@@ -132,7 +132,7 @@ export function Notifications() {
 
       <div className="bg-white dark:bg-neutral-900/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4 overflow-hidden">
         {isLoading ? (
-          <NotificationListSkeleton count={4} />
+          <NotificationListSkeleton count={8} />
         ) : notifications.length > 0 ? (
           notifications.map((n) => (
             <NotificationItem key={n.uid} notification={n} />

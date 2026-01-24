@@ -6,19 +6,13 @@ import {
   Search01Icon,
   Add01Icon,
   FavouriteIcon,
-  Menu01Icon,
-  Sun03Icon,
-  Moon02Icon,
-  Logout01Icon,
-  ComputerIcon,
 } from "@hugeicons/core-free-icons";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { useAuth, useSignout } from "@/hooks/use-auth";
-import { useTheme } from "@/components/theme-provider";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,7 +98,7 @@ function ProfileButton({
     <button
       onClick={onClick}
       className={cn(
-        "relative flex items-center justify-center rounded-xl transition-all duration-200",
+        "relative flex items-center justify-center rounded-xl transition-all duration-200 active:scale-95",
         isMobile ? "p-2" : "size-12",
         "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
         isActive
@@ -118,55 +112,6 @@ function ProfileButton({
         className="size-6"
       />
     </button>
-  );
-}
-function MenuButton({
-  isMobile,
-  onThemeChange,
-  onSignout,
-}: {
-  isMobile: boolean;
-  onThemeChange: (theme: "light" | "dark" | "system") => void;
-  onSignout: () => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className={cn(
-          "relative flex items-center justify-center rounded-xl transition-all duration-200",
-          isMobile ? "p-2" : "size-12",
-          "hover:bg-neutral-100 dark:hover:bg-neutral-800/50",
-          "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
-        )}
-      >
-        <HugeiconsIcon
-          icon={Menu01Icon}
-          className="size-6 transition-all duration-200"
-          strokeWidth={1.5}
-        />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align={isMobile ? "end" : "start"}
-        side={isMobile ? "top" : "right"}
-        className="w-56 mb-4 ml-2"
-      >
-        <DropdownMenuItem onClick={() => onThemeChange("light")}>
-          <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" /> Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onThemeChange("dark")}>
-          <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" /> Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onThemeChange("system")}>
-          <HugeiconsIcon icon={ComputerIcon} className="mr-2 size-4" /> System
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={onSignout}
-          className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-400/10"
-        >
-          <HugeiconsIcon icon={Logout01Icon} className="mr-2 size-4" /> Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }
 
@@ -275,7 +220,7 @@ function CreateQueryDialog({
               Posting to {selectedChamberData.name}
             </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex gap-2 ml-auto">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
@@ -297,8 +242,6 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: user } = useAuth();
-  const { setTheme } = useTheme();
-  const { mutate: signout } = useSignout();
   const navItems: NavItem[] = [
     { icon: Home01Icon, path: "/home", label: "Home" },
     { icon: Search01Icon, path: "/explore", label: "Explore" },
@@ -357,11 +300,6 @@ export function AppSidebar() {
                 isActive={isActive("/profile")}
                 onClick={() => navigate("/profile")}
               />
-              <MenuButton
-                isMobile={true}
-                onThemeChange={setTheme}
-                onSignout={() => signout()}
-              />
             </div>
           </div>
         </nav>
@@ -396,11 +334,6 @@ export function AppSidebar() {
             isMobile={false}
             isActive={isActive("/profile")}
             onClick={() => navigate("/profile")}
-          />
-          <MenuButton
-            isMobile={false}
-            onThemeChange={setTheme}
-            onSignout={() => signout()}
           />
         </nav>
       </aside>

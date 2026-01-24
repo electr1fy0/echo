@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProfileSkeleton() {
     return (
-        <div className="max-w-[40rem] w-full mt-24 space-y-8 px-4">
+        <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 px-4">
             <div className="flex flex-col items-start gap-4">
                 <div className="flex w-full justify-between items-start">
                     <Skeleton className="size-24 rounded-full" />
