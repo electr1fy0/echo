@@ -143,14 +143,14 @@ export function Home() {
 
             <Button
               size="sm"
-              className="font-normal rounded-lg h-8 px-4"
+              className="font-normal rounded-xl h-8 px-4"
               onClick={handleSubmit}
               disabled={!selectedChamber || !draft.content.trim()}
             >
               Ask
               <HugeiconsIcon
                 icon={Add01Icon}
-                strokeWidth={1.7}
+                strokeWidth={2}
                 className="ml-1.5 size-3.5"
               />
             </Button>
