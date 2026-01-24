@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
   accordionTriggerStyle,
 } from "@/components/ui/accordion";
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -138,10 +139,32 @@ export function QuestionItem({
                     formatRelativeTime(new Date(question.timeCreated))}
                 </span>
                 {replies && replies.length > 0 && (
-                  <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                    {replies.length}{" "}
-                    {replies.length === 1 ? "reply" : "replies"}
-                  </span>
+                  <div className="flex items-center gap-1.5 ml-1">
+                    <AvatarGroup className="h-5">
+                      {/* Extract unique authors from replies */}
+                      {Array.from(new Set(replies.map(r => r.answer.authorUsername)))
+                        .slice(0, 3)
+                        .map((username, i) => {
+                          const reply = replies.find(r => r.answer.authorUsername === username);
+                          return (
+                            <UserAvatar
+                              key={username || i}
+                              name={username || "Anonymous"}
+                              src={reply?.author?.avatar}
+                              className="size-4 ring-1 ring-background"
+                            />
+                          )
+                        })}
+                      {new Set(replies.map(r => r.answer.authorUsername)).size > 3 && (
+                        <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
+                          +{new Set(replies.map(r => r.answer.authorUsername)).size - 3}
+                        </AvatarGroupCount>
+                      )}
+                    </AvatarGroup>
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                      {replies.length} {replies.length === 1 ? "reply" : "replies"}
+                    </span>
+                  </div>
                 )}
               </div>
               {!isEditing && (
