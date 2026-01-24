@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserMultiple02Icon, Add01Icon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Link } from "react-router";
 import type { Chamber } from "@/types";
 function formatMemberCount(count: number): string {
@@ -48,7 +48,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
             colorClass,
           )}
         >
-          {chamber.name.slice(0, 2).toUpperCase()}
+          {getInitials(chamber.name)}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
@@ -68,9 +68,9 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
         className={cn(
           "rounded-full h-7 px-3 text-xs font-medium transition-all shadow-none",
           !chamber.isJoined &&
-            "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
+          "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
           chamber.isJoined &&
-            "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+          "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
         )}
         onClick={handleToggleJoin}
       >

@@ -16,3 +16,10 @@ export function getAuthHeaders(): Record<string, string> {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+export function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}

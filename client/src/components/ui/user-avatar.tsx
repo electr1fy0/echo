@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 const AVATAR_COLORS = [
   "bg-red-500",
   "bg-orange-500",
@@ -44,7 +44,7 @@ export function UserAvatar({
   const charCode = name.charCodeAt(0) || 0;
   const colorIndex = charCode % AVATAR_COLORS.length;
   const colorClass = AVATAR_COLORS[colorIndex];
-  const initials = name.slice(0, 2).toUpperCase();
+  const initials = getInitials(name);
   return (
     <div
       className={cn(

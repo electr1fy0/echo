@@ -47,8 +47,10 @@ import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "@/components/ui/toast";
-import { ChamberListSkeleton, ProfileSkeleton } from "@/components/ui/skeletons";
+import { ChamberListSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "@/components/theme-provider";
+
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function Profile() {
   const {
@@ -99,32 +101,49 @@ export function Profile() {
       return { ...prev, ...fields };
     });
   };
-  if (isProfileLoading) {
-    return <ProfileSkeleton />;
-  }
-  if (profileError || !user) {
+
+  if (profileError) {
     return (
       <div className="mt-20 text-sm text-red-500">Failed to load profile</div>
     );
   }
+
+  const displayUser = user || {
+    username: "",
+    email: "",
+    bio: "",
+    avatar: "",
+    link: "",
+    answered: 0,
+    posted: 0,
+  };
+
   return (
     <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
-          <UserAvatar
-            src={user.avatar}
-            name={user.username}
-            className="size-24"
-          />
+          {isProfileLoading ? (
+            <Skeleton className="size-24 rounded-full" />
+          ) : (
+            <UserAvatar
+              src={displayUser.avatar}
+              name={displayUser.username}
+              className="size-24"
+            />
+          )}
+
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               className="rounded-full"
               onClick={() => {
-                setEditForm(user);
-                setIsEditOpen(true);
+                if (user) {
+                  setEditForm(user);
+                  setIsEditOpen(true);
+                }
               }}
+              disabled={isProfileLoading}
             >
               <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
               Edit Profile
@@ -162,51 +181,78 @@ export function Profile() {
                     onClick={() => setIsDeleteOpen(true)}
                   >
                     <HugeiconsIcon icon={Alert02Icon} className="mr-2 size-4" />
-                    Delete Account
+                    Delete Account...
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-            {user.username}
-          </h1>
+        <div className="space-y-1 w-full">
+          {isProfileLoading ? (
+            <Skeleton className="h-8 w-48 mb-2" />
+          ) : (
+            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+              {displayUser.username}
+            </h1>
+          )}
+
           <div className="flex flex-col gap-1 text-neutral-500 text-sm">
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={Mail01Icon} className="size-4" />
-              <span>{user.email}</span>
-            </div>
-            {user.link && (
-              <div className="flex items-center gap-2">
-                <HugeiconsIcon icon={Link01Icon} className="size-4" />
-                <a
-                  href={user.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline hover:text-foreground transition-colors"
-                >
-                  {user.link}
-                </a>
-              </div>
+            {isProfileLoading ? (
+              <>
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-32" />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <HugeiconsIcon icon={Mail01Icon} className="size-4" />
+                  <span>{displayUser.email}</span>
+                </div>
+                {displayUser.link && (
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={Link01Icon} className="size-4" />
+                    <a
+                      href={displayUser.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline hover:text-foreground transition-colors"
+                    >
+                      {displayUser.link}
+                    </a>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
-        <p className="text-neutral-600 dark:text-neutral-400 text-sm max-w-md whitespace-pre-wrap">
-          {user.bio}
-        </p>
+
+        {isProfileLoading ? (
+          <div className="space-y-1 w-full max-w-md pt-1">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-[90%]" />
+          </div>
+        ) : (
+          <p className="text-neutral-600 dark:text-neutral-400 text-sm max-w-md whitespace-pre-wrap">
+            {displayUser.bio}
+          </p>
+        )}
+
         <div className="flex gap-6 pt-2">
           <div className="flex flex-col">
-            <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-              {user.answered}
-            </span>
+            {isProfileLoading ? <Skeleton className="h-6 w-8 mb-1" /> : (
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                {displayUser.answered}
+              </span>
+            )}
             <span className="text-xs text-neutral-500">Answered</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-              {questions.length}
-            </span>
+            {isProfileLoading ? <Skeleton className="h-6 w-8 mb-1" /> : (
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                {questions.length}
+              </span>
+            )}
             <span className="text-xs text-neutral-500">Posted</span>
           </div>
         </div>

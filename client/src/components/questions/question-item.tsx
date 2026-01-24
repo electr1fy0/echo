@@ -39,6 +39,8 @@ type QuestionItemProps = {
   showChamberName?: boolean;
 };
 
+import { QuestionListSkeleton } from "./question-skeleton";
+
 export function QuestionItem({
   questionItem,
   onDelete,
@@ -48,7 +50,7 @@ export function QuestionItem({
   const author = questionItem?.author ?? null;
   const questionId = question?.uid;
 
-  const { data: replies = [] } = useRepliesQuery(questionId || undefined);
+  const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(questionId || undefined);
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { data: user } = useAuth();
@@ -238,7 +240,11 @@ export function QuestionItem({
         </div>
       </AccordionTrigger>
       <AccordionContent>
-        {replies && replies.length > 0 ? (
+        {isRepliesLoading ? (
+          <div className="pl-10">
+            <QuestionListSkeleton count={2} />
+          </div>
+        ) : replies && replies.length > 0 ? (
           replies.map((reply, index) => (
             <ReplyItem
               key={reply.answer.uid ?? index}
@@ -250,7 +256,7 @@ export function QuestionItem({
           ))
         ) : (
           <div className="text-sm ml-10 text-neutral-500">
-            No replies. Be the first to answer!
+            No replies. Be the first to answer
           </div>
         )}
         <ReplyForm questionId={questionId} />

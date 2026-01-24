@@ -16,7 +16,7 @@ import {
   useListChambers,
 } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
@@ -97,7 +97,7 @@ export function ChamberPage() {
             colorClass,
           )}
         >
-          {chamber.name.slice(0, 2).toUpperCase()}
+          {getInitials(chamber.name)}
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
