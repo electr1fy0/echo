@@ -2,10 +2,17 @@
 
 ![Echo Thumbnail](https://echo.aysh.site/thumb.jpeg)
 
+
 An open QnA platform built for communities. Ask questions, share knowledge, and curate your feed through isolated chambers.
 
 Echo is a modern social platform that separates content into dedicated spaces, keeping your feed focused and minimal.
 
+
+
+## Screenshots
+<img width="1920" height="1440" alt="296_1x_shots_so" src="https://github.com/user-attachments/assets/34e52ca5-4bf7-473e-a652-08649227b62b" />
+<img width="1920" height="1440" alt="416_1x_shots_so" src="https://github.com/user-attachments/assets/584200bc-ad65-464b-9b93-f4391133521c" />
+<img width="1920" height="1440" alt="106_1x_shots_so" src="https://github.com/user-attachments/assets/0500035e-a02a-4e19-b515-1b5110114cda" />
 
 
 ## Background
