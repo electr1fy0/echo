@@ -143,7 +143,7 @@ export function Home() {
 
             <Button
               size="sm"
-              className="font-normal rounded-xl h-8 px-4"
+              className="font-normal rounded-lg h-8 px-4"
               onClick={handleSubmit}
               disabled={!selectedChamber || !draft.content.trim()}
             >

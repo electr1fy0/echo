@@ -2,190 +2,162 @@ package handlers
 
 import (
 	"context"
+	"echo/internal/middleware"
+	"echo/internal/repository"
+	"echo/internal/types"
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type APIHandler struct {
-	DB *pgxpool.Pool
-}
+func (h *QuestionHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	quidStr := r.PathValue("uid")
+	var quid pgtype.UUID
+	if err := quid.Scan(quidStr); err != nil {
+		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+		return
+	}
 
-func (h *APIHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-	quid := r.PathValue("uid")
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	sub := claims["sub"].(string)
-	if sub == "" {
-		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
-		return
-	}
-	var vote Vote
-	row := h.DB.QueryRow(ctx, "select username, question_uid from question_upvotes where username = $1 and question_uid = $2", sub, quid)
-	if err := row.Scan(&vote.Username, &vote.ObjectUID); err == pgx.ErrNoRows {
-		_, err := h.DB.Exec(ctx, "insert into question_upvotes (username, question_uid) values ($1, $2)", sub, quid)
-		if err != nil {
-			h.respondWithError(w, "failed to insert vote", err, http.StatusInternalServerError)
-			return
-		}
-		_, _ = h.DB.Exec(ctx, "update questions set upvotes_count = upvotes_count + 1 where uid = $1", quid)
-		var author string
-		err = h.DB.QueryRow(ctx, "select author from questions where uid = $1", quid).Scan(&author)
-		if err == nil && author != "" && author != sub {
-			var notifExists bool
-			h.DB.QueryRow(ctx, "select exists(select 1 from notifications where type = 'upvote_question' and actor_username = $1 and reference_uid = $2)", sub, quid).Scan(&notifExists)
-			if !notifExists {
-				h.DB.Exec(ctx, "insert into notifications (user_username, actor_username, type, reference_uid) values ($1, $2, 'upvote_question', $3)", author, sub, quid)
-			}
-		}
-	} else if err == nil {
-		h.DB.Exec(ctx, "delete from question_upvotes where username = $1 and question_uid = $2", sub, quid)
-		_, _ = h.DB.Exec(ctx, "update questions set upvotes_count = upvotes_count - 1 where uid = $1", quid)
-	} else {
-		h.respondWithError(w, "failed to update question_upvotes", err, http.StatusInternalServerError)
+
+	if err := h.Service.UpdateQuestionVote(ctx, sub, quid); err != nil {
+		respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
 		return
 	}
 }
-func (h *APIHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
+func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	quid := r.PathValue("uid")
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+	quidStr := r.PathValue("uid")
+	var quid pgtype.UUID
+	if err := quid.Scan(quidStr); err != nil {
+		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
 		return
 	}
-	sub := claims["sub"].(string)
-	query := `
-		select
-			q.uid,
-			q.content,
-			q.time_created,
-			q.author,
-			u.avatar,
-			q.upvotes_count as upvotes,
-			exists (
-				select 1 from question_upvotes v2
-				where v2.question_uid = q.uid and v2.username = $1
-			) as is_upvoted
-		from questions q
-		left join users u on u.username = q.author
-		where q.uid = $2
-	`
-	var q QuestionItem
-	var avatar *string
-	row := h.DB.QueryRow(ctx, query, sub, quid)
-	err := row.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
-	if avatar != nil {
-		q.Author.Avatar = *avatar
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
 	}
-	q.Author.Username = q.Question.AuthorUsername
+
+	q, err := h.Service.GetQuestion(ctx, quid, sub)
 	if err == pgx.ErrNoRows {
-		h.respondWithError(w, "question not found", err, http.StatusNotFound)
+		respondWithError(w, "question not found", err, http.StatusNotFound)
 		return
 	} else if err != nil {
-		h.respondWithError(w, "failed to query question", err, http.StatusInternalServerError)
+		respondWithError(w, "failed to query question", err, http.StatusInternalServerError)
 		return
 	}
+
 	json.NewEncoder(w).Encode(q)
 }
-func (h *APIHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
-	uid := r.PathValue("uid")
+func (h *QuestionHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
+	uidStr := r.PathValue("uid")
+	var uid pgtype.UUID
+	if err := uid.Scan(uidStr); err != nil {
+		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
-		return
-	}
-	sub := claims["sub"].(string)
-	if sub == "" {
-		h.respondWithError(w, "no sub", nil, http.StatusUnauthorized)
-		return
-	}
-	_, err := h.DB.Exec(ctx, "delete from questions where uid =  $1 and author = $2", uid, sub)
+	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
-		h.respondWithError(w, "failed to save reply to db", err, http.StatusInternalServerError)
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	err = h.Service.DeleteQuestion(ctx, uid, sub)
+	if err != nil {
+		if err.Error() == "unauthorized" {
+			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
+		} else if err.Error() == "question not found" {
+			respondWithError(w, "question not found", nil, http.StatusNotFound)
+		} else {
+			respondWithError(w, "failed to delete question", err, http.StatusInternalServerError)
+		}
 		return
 	}
 }
-func (h *APIHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (h *QuestionHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	defer r.Body.Close()
-	var question Question
+
+	var question types.Question
 	if err := json.NewDecoder(r.Body).Decode(&question); err != nil {
-		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		respondWithError(w, "invalid request body", err, http.StatusBadRequest)
 		return
 	}
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
-		return
-	}
-	sub := claims["sub"].(string)
-	if sub == "" {
-		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
-		return
-	}
-	_, err := h.DB.Exec(ctx, "insert into questions (content, author, chamber_uid) values ($1, $2, $3)", question.Content, sub, question.ChamberUID)
+
+	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
-		h.respondWithError(w, "failed to insert data: "+err.Error(), err, http.StatusInternalServerError)
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	w.Write([]byte("all good"))
+
+	if uuid.UUID(question.ChamberUID) == uuid.Nil {
+		respondWithError(w, "chamber uid is required", nil, http.StatusBadRequest)
+		return
+	}
+
+	err = h.Service.CreateQuestion(ctx, question, sub)
+	if err != nil {
+		respondWithError(w, "failed to create question", err, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "question created"})
 }
 
-func (h *APIHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request) {
+func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	defer r.Body.Close()
 
-	uid := r.PathValue("uid")
+	uidStr := r.PathValue("uid")
+	var uid pgtype.UUID
+	if err := uid.Scan(uidStr); err != nil {
+		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+		return
+	}
+
 	var body struct {
 		Content string `json:"content"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		h.respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		respondWithError(w, "invalid request body", err, http.StatusBadRequest)
 		return
 	}
 
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
-		return
-	}
-	sub := claims["sub"].(string)
-	if sub == "" {
-		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
-		return
-	}
-
-	result, err := h.DB.Exec(ctx, "update questions set content = $1 where uid = $2 and author = $3", body.Content, uid, sub)
+	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
-		h.respondWithError(w, "failed to update question", err, http.StatusInternalServerError)
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	if result.RowsAffected() == 0 {
-		h.respondWithError(w, "question not found or unauthorized", nil, http.StatusNotFound)
+
+	err = h.Service.UpdateQuestion(ctx, uid, sub, body.Content)
+	if err == pgx.ErrNoRows {
+		respondWithError(w, "question not found or unauthorized", nil, http.StatusNotFound)
+		return
+	} else if err != nil {
+		respondWithError(w, "failed to update question", err, http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
-func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer r.Body.Close()
 	defer cancel()
 	q := r.URL.Query()
@@ -201,224 +173,104 @@ func (h *APIHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	filter := q.Get("filter")
 	targetChamberUID := q.Get("chamber_uid")
 	author := q.Get("author")
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	sub := claims["sub"].(string)
-	if sub == "" {
-		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
-		return
-	}
-	orderBy := "q.time_created desc"
-	if sort == "votes" {
-		orderBy = "q.upvotes_count desc"
+	limitInt, _ := strconv.Atoi(limit)
+	offsetInt, _ := strconv.Atoi(offset)
+	if limitInt == 0 {
+		limitInt = 500
 	}
 
-	baseQuery := `
-		select
-			q.uid,
-			q.content,
-			q.time_created,
-			q.author,
-			u.avatar,
-			q.upvotes_count as upvotes,
-			exists (
-				select 1 from question_upvotes v2
-				where v2.question_uid = q.uid and v2.username = $1
-			) as is_upvoted,
-			q.chamber_uid,
-			coalesce(c.name, '') as chamber_name
-		from questions q
-		left join users u
-			on u.username = q.author
-		left join chambers c
-			on c.uid = q.chamber_uid
-	`
-	whereConditions := []string{}
-	args := []any{sub}
-	argCount := 2
-	if filter == "joined" {
-		baseQuery += ` join chamber_members cm on cm.chamber_uid = q.chamber_uid `
-		whereConditions = append(whereConditions, "cm.username = $1")
-	}
-	if targetChamberUID != "" {
-		whereConditions = append(whereConditions, fmt.Sprintf("q.chamber_uid = $%d", argCount))
-		args = append(args, targetChamberUID)
-		argCount++
-	}
-	if author != "" {
-		whereConditions = append(whereConditions, fmt.Sprintf("q.author = $%d", argCount))
-		args = append(args, author)
-		argCount++
-	}
-	limitArg := argCount
-	args = append(args, limit)
-	argCount++
-	offsetArg := argCount
-	args = append(args, offset)
-	argCount++
-	if len(whereConditions) > 0 {
-		baseQuery += " WHERE " + whereConditions[0]
-		for i := 1; i < len(whereConditions); i++ {
-			baseQuery += " AND " + whereConditions[i]
-		}
-	}
-	finalQuery := fmt.Sprintf("%s order by %s limit $%d offset $%d", baseQuery, orderBy, limitArg, offsetArg)
-	rows, err := h.DB.Query(ctx, finalQuery, args...)
+	questions, err := h.Service.ListQuestions(ctx, repository.ListQuestionsParams{
+
+		Limit:            limitInt,
+		Offset:           offsetInt,
+		Sort:             sort,
+		Filter:           filter,
+		TargetChamberUID: targetChamberUID,
+		Author:           author,
+		CurrentUser:      sub,
+	})
 	if err != nil {
-		h.respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	questions := make([]QuestionItem, 0)
-	for rows.Next() {
-		var q QuestionItem
-		var avatar *string
-		var chamberUID *uuid.UUID
-		var chamberName string
-		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted, &chamberUID, &chamberName)
-		if avatar != nil {
-			q.Author.Avatar = *avatar
-		}
-		if chamberUID != nil {
-			q.Question.ChamberUID = *chamberUID
-		}
-		q.Question.ChamberName = chamberName
-		q.Author.Username = q.Question.AuthorUsername
-		if err != nil {
-			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)
-			return
-		}
-		questions = append(questions, q)
-	}
-	if rows.Err() != nil {
-		http.Error(w, "db error: "+rows.Err().Error(), http.StatusInternalServerError)
+		respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(questions)
 }
-func (h *APIHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (h *QuestionHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	q := r.URL.Query()
-	limit := q.Get("limit")
-	offset := q.Get("offset")
-	if limit == "" {
-		limit = "500"
-	}
-	if offset == "" {
-		offset = "0"
-	}
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
-		return
-	}
-	sub := claims["sub"].(string)
-	if sub == "" {
-		h.respondWithError(w, "invalid sub", nil, http.StatusUnauthorized)
-		return
-	}
-	rows, err := h.DB.Query(ctx, `
-		select
-q.uid,
-q.content,
-q.time_created,
-q.author,
-u.avatar,
-q.upvotes_count,
-exists (
-select 1 from question_upvotes v2
-where v2.question_uid = q.uid and v2.username = $1
-) as is_upvoted
-from questions q
-left join users u
-on u.username = q.author
-where q.author = $1
-order by q.time_created desc
-limit $2 offset $3`, sub, limit, offset)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("failed to query rows" + err.Error()))
-		return
-	}
-	defer rows.Close()
-	questions := make([]QuestionItem, 0)
-	for rows.Next() {
-		var q QuestionItem
-		var avatar *string
-		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
-		if avatar != nil {
-			q.Author.Avatar = *avatar
-		}
-		q.Author.Username = q.Question.AuthorUsername
+	limitStr := q.Get("limit")
+	offsetStr := q.Get("offset")
+	limit := 500
+	offset := 0
+	var err error
+	if limitStr != "" {
+		limit, err = strconv.Atoi(limitStr)
 		if err != nil {
-			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)
-			return
+			limit = 500
 		}
-		questions = append(questions, q)
 	}
-	if rows.Err() != nil {
-		h.respondWithError(w, "db error: "+rows.Err().Error(), rows.Err(), http.StatusInternalServerError)
+	if offsetStr != "" {
+		offset, err = strconv.Atoi(offsetStr)
+		if err != nil {
+			offset = 0
+		}
+	}
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+
+	questions, err := h.Service.ListUserQuestions(ctx, int32(limit), int32(offset), sub, sub)
+	if err != nil {
+		respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(questions)
 }
-func (h *APIHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+func (h *QuestionHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	q := r.URL.Query()
 	query := q.Get("q")
-	limit := q.Get("limit")
-	offset := q.Get("offset")
-	if limit == "" {
-		limit = "500"
-	}
-	if offset == "" {
-		offset = "0"
-	}
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
-		return
-	}
-	sub := claims["sub"].(string)
-	if query == "" {
-		json.NewEncoder(w).Encode([]QuestionItem{})
-		return
-	}
-	rows, err := h.DB.Query(ctx, `
-	select
-		q.uid, q.content, q.time_created, q.author,
-		u.avatar,
-		q.upvotes_count,
-    	exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
-	from questions q
-	left join users u on u.username = q.author
-	where q.content ilike $2
-	limit $3 offset $4;`,
-		sub, "%"+query+"%", limit, offset)
-	if err != nil {
-		h.respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-	questions := make([]QuestionItem, 0)
-	for rows.Next() {
-		var q QuestionItem
-		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &q.Author.Avatar, &q.Question.Upvotes, &q.Question.IsUpvoted)
-		q.Author.Username = q.Question.AuthorUsername
+	limitStr := q.Get("limit")
+	offsetStr := q.Get("offset")
+	limit := 500
+	offset := 0
+	var err error
+	if limitStr != "" {
+		limit, err = strconv.Atoi(limitStr)
 		if err != nil {
-			h.respondWithError(w, "failed to scan row", err, http.StatusInternalServerError)
-			return
+			limit = 500
 		}
-		questions = append(questions, q)
 	}
-	if rows.Err() != nil {
-		h.respondWithError(w, "db error: "+rows.Err().Error(), rows.Err(), http.StatusInternalServerError)
+	if offsetStr != "" {
+		offset, err = strconv.Atoi(offsetStr)
+		if err != nil {
+			offset = 0
+		}
+	}
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
+	if query == "" {
+		json.NewEncoder(w).Encode([]types.QuestionItem{})
+		return
+	}
+
+	questions, err := h.Service.SearchQuestions(ctx, query, int32(limit), int32(offset), sub)
+	if err != nil {
+		respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
+		return
+	}
+
 	json.NewEncoder(w).Encode(questions)
 }

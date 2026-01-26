@@ -1,0 +1,41 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.swn
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.local
+
+# Node.js
+node_modules/
+dist/
+dist-ssr/
+build/
+out/
+.next/
+.cache/
+.npm
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Go
+server/api
+server/server
+server/tmp/
+bin/
+vendor/
+*.exe
+*.test
+*.prof
+*.out
+
+# Logs
+*.log

@@ -2,185 +2,37 @@ package handlers
 
 import (
 	"context"
+	"echo/internal/middleware"
+	"echo/internal/types"
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
-type SearchResponse struct {
-	Chambers  []Chamber      `json:"chambers"`
-	Questions []QuestionItem `json:"questions"`
-	Replies   []AnswerItem   `json:"replies"`
-	Users     []Profile      `json:"users"`
-}
-
-func (h *APIHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
+func (h *SearchHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	q := r.URL.Query()
 	query := q.Get("q")
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	sub := claims["sub"].(string)
 	if query == "" {
-		json.NewEncoder(w).Encode(SearchResponse{
-			Chambers:  []Chamber{},
-			Questions: []QuestionItem{},
-			Replies:   []AnswerItem{},
-			Users:     []Profile{},
+		json.NewEncoder(w).Encode(types.SearchResponse{
+			Chambers:  []types.Chamber{},
+			Questions: []types.QuestionItem{},
+			Replies:   []types.AnswerItem{},
+			Users:     []types.Profile{},
 		})
 		return
 	}
 
-	var wg sync.WaitGroup
-	resp := SearchResponse{
-		Chambers:  []Chamber{},
-		Questions: []QuestionItem{},
-		Replies:   []AnswerItem{},
-		Users:     []Profile{},
-	}
-	var respMutex sync.Mutex
-
-	wg.Add(4)
-
-	go func() {
-		defer wg.Done()
-		rows, err := h.DB.Query(ctx, `
-			SELECT 
-				c.uid, c.name, COALESCE(c.description, ''), c.color_index, c.created_at,
-				(SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
-				EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = $1) as is_joined
-			FROM chambers c
-			WHERE c.name ILIKE $2 OR c.description ILIKE $2
-			LIMIT 5`, sub, "%"+query+"%")
-		if err != nil {
-			return
-		}
-		defer rows.Close()
-		var chambers []Chamber
-		for rows.Next() {
-			var c Chamber
-			if err := rows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err == nil {
-				chambers = append(chambers, c)
-			}
-		}
-		respMutex.Lock()
-		resp.Chambers = chambers
-		respMutex.Unlock()
-	}()
-
-	go func() {
-		defer wg.Done()
-		rows, err := h.DB.Query(ctx, `
-			select
-				q.uid, q.content, q.time_created, q.author,
-				u.avatar,
-				count(v.question_uid) as vote_count,
-				exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
-			from questions q
-			left join question_upvotes v on q.uid = v.question_uid
-			left join users u on u.username = q.author
-			where q.content ilike $2
-			group by q.uid, q.content, q.time_created, q.author, u.avatar
-			limit 5`, sub, "%"+query+"%")
-		if err != nil {
-			return
-		}
-		defer rows.Close()
-		var questions []QuestionItem
-		for rows.Next() {
-			var q QuestionItem
-			var avatar *string
-			if err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted); err == nil {
-				if avatar != nil {
-					q.Author.Avatar = *avatar
-				}
-				q.Author.Username = q.Question.AuthorUsername
-				questions = append(questions, q)
-			}
-		}
-		respMutex.Lock()
-		resp.Questions = questions
-		respMutex.Unlock()
-	}()
-
-	go func() {
-		defer wg.Done()
-		rows, err := h.DB.Query(ctx, `
-			select 
-				a.uid, a.content, a.time_created, a.question_uid, a.author,
-				u.avatar,
-				count(v.answer_uid) as vote_count,
-				exists (select 1 from answer_upvotes v2 where v2.answer_uid = a.uid and v2.username = $1) as is_upvoted
-			from answers a
-			left join answer_upvotes v on a.uid = v.answer_uid
-			left join users u on u.username = a.author
-			where a.content ilike $2
-			group by a.uid, a.content, a.time_created, a.question_uid, a.author, u.avatar
-			limit 5`, sub, "%"+query+"%")
-		if err != nil {
-			return
-		}
-		defer rows.Close()
-		var replies []AnswerItem
-		for rows.Next() {
-			var ans AnswerItem
-			var avatar *string
-			if err := rows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err == nil {
-				if avatar != nil {
-					ans.Author.Avatar = *avatar
-				}
-				ans.Author.Username = ans.Answer.AuthorUsername
-				replies = append(replies, ans)
-			}
-		}
-		respMutex.Lock()
-		resp.Replies = replies
-		respMutex.Unlock()
-	}()
-
-	go func() {
-		defer wg.Done()
-		rows, err := h.DB.Query(ctx, `
-			SELECT username, COALESCE(avatar, ''), COALESCE(bio, '')
-			FROM users
-			WHERE username ILIKE $1
-			LIMIT 5`, "%"+query+"%")
-		if err != nil {
-			return
-		}
-		defer rows.Close()
-		var users []Profile
-		for rows.Next() {
-			var u Profile
-			if err := rows.Scan(&u.Username, &u.Avatar, &u.Bio); err == nil {
-				users = append(users, u)
-			}
-		}
-		respMutex.Lock()
-		resp.Users = users
-		respMutex.Unlock()
-	}()
-
-	wg.Wait()
-
-	if resp.Chambers == nil {
-		resp.Chambers = []Chamber{}
-	}
-	if resp.Questions == nil {
-		resp.Questions = []QuestionItem{}
-	}
-	if resp.Replies == nil {
-		resp.Replies = []AnswerItem{}
-	}
-	if resp.Users == nil {
-		resp.Users = []Profile{}
+	resp, err := h.Service.GlobalSearch(ctx, query, sub)
+	if err != nil {
+		respondWithError(w, "search failed", err, http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(resp)

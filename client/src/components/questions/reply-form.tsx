@@ -41,7 +41,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
         value={content}
         placeholder="Write a reply..."
         aria-label="Reply content"
-        className="text-sm"
+        className="text-base"
         onChange={(e) => setContent(e.target.value)}
       />
       <Button

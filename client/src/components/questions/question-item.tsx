@@ -113,7 +113,7 @@ export function QuestionItem({
           <Link
             to={
               question.authorUsername
-                ? `/ u / ${question.authorUsername} `
+                ? `/u/${question.authorUsername}`
                 : "#"
             }
             className="shrink-0 mt-1"
@@ -144,7 +144,6 @@ export function QuestionItem({
                 {replies && replies.length > 0 && (
                   <div className="flex items-center gap-1.5 ml-1">
                     <AvatarGroup className="h-3">
-                      {/* Extract unique authors from replies */}
                       {Array.from(
                         new Set(replies.map((r) => r.answer.authorUsername)),
                       )

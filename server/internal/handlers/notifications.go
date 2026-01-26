@@ -2,37 +2,21 @@ package handlers
 
 import (
 	"context"
+	"echo/internal/middleware"
 	"encoding/json"
 	"net/http"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
-type Notification struct {
-	UID             string    `json:"uid"`
-	UserUsername    string    `json:"user_username"`
-	ActorUsername   string    `json:"actor_username"`
-	ActorAvatar     string    `json:"actor_avatar"`
-	Type            string    `json:"type"`
-	ReferenceUID    string    `json:"reference_uid"`
-	Content         string    `json:"content"`
-	QuestionContent string    `json:"question_content"`
-	IsRead          bool      `json:"is_read"`
-	CreatedAt       time.Time `json:"created_at"`
-}
-
-func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
+func (h *NotificationHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	claims, ok := r.Context().Value("claims").(jwt.MapClaims)
-	if !ok {
-		h.respondWithError(w, "no claims", nil, http.StatusUnauthorized)
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-
-	sub := claims["sub"].(string)
 
 	page := r.URL.Query().Get("page")
 	if page == "" {
@@ -42,62 +26,9 @@ func (h *APIHandler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	offset := 0
 
-	query := `
-		SELECT
-			n.uid,
-			n.user_username,
-			n.actor_username,
-			n.type,
-			n.reference_uid,
-			n.is_read,
-			n.created_at,
-			u.avatar,
-			COALESCE(q.content, a.content, '') as content,
-			COALESCE(q2.content, '') as question_content
-		FROM notifications n
-		LEFT JOIN users u ON n.actor_username = u.username
-		LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
-		LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
-		LEFT JOIN questions q2 ON a.question_uid = q2.uid
-		WHERE n.user_username = $1
-		ORDER BY n.created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-
-	rows, err := h.DB.Query(ctx, query, sub, limit, offset)
+	notifications, err := h.Service.ListNotifications(ctx, sub, int32(limit), int32(offset))
 	if err != nil {
-		h.respondWithError(w, "failed to fetch notifications: "+err.Error(), err, http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	notifications := []Notification{}
-	for rows.Next() {
-		var n Notification
-		var avatar *string
-		err := rows.Scan(
-			&n.UID,
-			&n.UserUsername,
-			&n.ActorUsername,
-			&n.Type,
-			&n.ReferenceUID,
-			&n.IsRead,
-			&n.CreatedAt,
-			&avatar,
-			&n.Content,
-			&n.QuestionContent,
-		)
-		if err != nil {
-			continue
-		}
-		if avatar != nil {
-			n.ActorAvatar = *avatar
-		}
-		notifications = append(notifications, n)
-	}
-
-	if err := rows.Err(); err != nil {
-		h.respondWithError(w, "row iteration error: ", err, http.StatusInternalServerError)
+		respondWithError(w, "failed to fetch notifications", err, http.StatusInternalServerError)
 		return
 	}
 

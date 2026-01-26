@@ -3,12 +3,17 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type contextKey string
+
+const ClaimsContextKey contextKey = "claims"
 
 type statusRecorder struct {
 	http.ResponseWriter
@@ -19,6 +24,7 @@ func (r *statusRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
 }
+
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -28,9 +34,15 @@ func Logger(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(recorder, r)
 		duration := time.Since(start)
-		fmt.Printf("%s %s %d %v\n", r.Method, r.URL.Path, recorder.statusCode, duration)
+		slog.Info("request completed",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", recorder.statusCode,
+			"duration", duration,
+		)
 	})
 }
+
 func CORS(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		origin := os.Getenv("CORS_ORIGIN")
@@ -46,33 +58,57 @@ func CORS(next http.Handler) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	}
 }
+
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			http.Error(w, "missing token", http.StatusUnauthorized)
+			http.Error(w, `{"error":"missing token"}`, http.StatusUnauthorized)
 			return
 		}
 		const bearerPrefix = "Bearer "
 		if len(authHeader) < len(bearerPrefix) || authHeader[:len(bearerPrefix)] != bearerPrefix {
-			http.Error(w, "invalid authorization header", http.StatusUnauthorized)
+			http.Error(w, `{"error":"invalid authorization header"}`, http.StatusUnauthorized)
 			return
 		}
 		jwtStr := authHeader[len(bearerPrefix):]
 		key := []byte(os.Getenv("SECRET_KEY"))
 		token, err := jwt.Parse(jwtStr, func(t *jwt.Token) (any, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
 			return key, nil
 		})
 		if err != nil || !token.Valid {
-			http.Error(w, "invalid token", http.StatusUnauthorized)
+			http.Error(w, `{"error":"invalid token"}`, http.StatusUnauthorized)
 			return
 		}
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			http.Error(w, "invalid claims", http.StatusUnauthorized)
+			http.Error(w, `{"error":"invalid claims"}`, http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "claims", claims)
+		ctx := context.WithValue(r.Context(), ClaimsContextKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
+}
+
+func GetClaims(ctx context.Context) (jwt.MapClaims, error) {
+	claims, ok := ctx.Value(ClaimsContextKey).(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("no claims in context")
+	}
+	return claims, nil
+}
+
+func GetUserID(ctx context.Context) (string, error) {
+	claims, err := GetClaims(ctx)
+	if err != nil {
+		return "", err
+	}
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return "", fmt.Errorf("invalid sub claim")
+	}
+	return sub, nil
 }
