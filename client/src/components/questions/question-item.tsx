@@ -34,7 +34,7 @@ import { ReplyItem } from "./reply-item";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/lib/toast";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;

@@ -1,20 +1,13 @@
-import { createContext, useContext, useEffect, useState } from "react";
-type Theme = "dark" | "light" | "system";
+import { useEffect, useState } from "react";
+import { ThemeProviderContext, type Theme } from "@/hooks/use-theme";
+
 type ThemeProviderProps = {
   children: React.ReactNode;
-  defaultTheme: Theme;
-  storageKey: string;
+  defaultTheme?: Theme;
+  storageKey?: string;
 };
-type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
-const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
-};
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-function ThemeProvider({
+
+export function ThemeProvider({
   children,
   defaultTheme = "system",
   storageKey = "echo-theme",
@@ -23,22 +16,31 @@ function ThemeProvider({
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
+
   useEffect(() => {
     const root = window.document.documentElement;
+
     root.classList.remove("light", "dark");
+
     if (theme === "system") {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
       const systemTheme = mediaQuery.matches ? "dark" : "light";
+
       root.classList.add(systemTheme);
+
       const handleChange = (e: MediaQueryListEvent) => {
         root.classList.remove("light", "dark");
         root.classList.add(e.matches ? "dark" : "light");
       };
+
       mediaQuery.addEventListener("change", handleChange);
+
       return () => mediaQuery.removeEventListener("change", handleChange);
     }
+
     root.classList.add(theme);
   }, [theme]);
+
   const value = {
     theme,
     setTheme: (theme: Theme) => {
@@ -46,16 +48,10 @@ function ThemeProvider({
       setTheme(theme);
     },
   };
+
   return (
     <ThemeProviderContext.Provider {...props} value={value}>
       {children}
     </ThemeProviderContext.Provider>
   );
 }
-const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider");
-  return context;
-};
-export { useTheme, ThemeProvider };

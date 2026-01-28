@@ -28,6 +28,7 @@ export async function updateProfile(user: User): Promise<void> {
         setToken(data.token);
       }
     } catch {
+      // Ignore parsing errors
     }
   }
 }

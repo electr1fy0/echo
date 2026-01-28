@@ -23,7 +23,7 @@ import { useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/lib/toast";
 
 type ReplyItemProps = {
   answerItem: AnswerItem;

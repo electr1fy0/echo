@@ -7,36 +7,8 @@ import {
   Alert01Icon,
   InformationCircleIcon,
 } from "@hugeicons/core-free-icons";
-import { buttonVariants } from "@/components/ui/button";
-
-const toastManager = Toast.createToastManager();
-
-const transformOptions = (options?: any) => {
-  if (!options) return {};
-  const { action, ...rest } = options;
-  if (action) {
-    return {
-      ...rest,
-      actionProps: {
-        children: action.label,
-        onClick: action.onClick,
-      },
-    };
-  }
-  return options;
-};
-
-export const toast = {
-  success: (description: string, options?: any) =>
-    toastManager.add({ description, type: "success", ...transformOptions(options) }),
-  error: (description: string, options?: any) =>
-    toastManager.add({ description, type: "error", ...transformOptions(options) }),
-  info: (description: string, options?: any) =>
-    toastManager.add({ description, type: "info", ...transformOptions(options) }),
-  warning: (description: string, options?: any) =>
-    toastManager.add({ description, type: "warning", ...transformOptions(options) }),
-  custom: (options: any) => toastManager.add(transformOptions(options)),
-};
+import { buttonVariants } from "@/components/ui/button-variants";
+import { toastManager } from "@/lib/toast";
 
 function ToastList() {
   const { toasts } = Toast.useToastManager();

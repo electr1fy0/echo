@@ -44,7 +44,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
       >
         <div
           className={cn(
-            "size-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 transition-opacity hover:opacity-90",
+            "size-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 transition-opacity group-hover:opacity-90",
             colorClass,
           )}
         >

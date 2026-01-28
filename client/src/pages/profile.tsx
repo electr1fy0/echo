@@ -46,9 +46,9 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/lib/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/hooks/use-theme";
 
 import { Skeleton } from "@/components/ui/skeleton";
 

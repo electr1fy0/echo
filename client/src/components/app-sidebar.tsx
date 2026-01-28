@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { User } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useLocation } from "react-router";
 import {
@@ -89,7 +90,7 @@ function ProfileButton({
   isActive,
   onClick,
 }: {
-  user: any;
+  user: User | null | undefined;
   isMobile: boolean;
   isActive: boolean;
   onClick: () => void;
