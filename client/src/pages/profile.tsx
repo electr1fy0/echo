@@ -51,6 +51,7 @@ import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "@/hooks/use-theme";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageTransition } from "@/components/page-transition";
 
 export function Profile() {
   const {
@@ -119,7 +120,7 @@ export function Profile() {
   };
 
   return (
-    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           {isProfileLoading ? (
@@ -446,6 +447,6 @@ export function Profile() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageTransition>
   );
 }

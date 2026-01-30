@@ -1,9 +1,10 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import { PageTransition } from "@/components/page-transition";
 
 export function Landing() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <PageTransition className="min-h-screen flex flex-col bg-background">
       <header className="w-full max-w-xl mx-auto px-4 py-8 flex items-center justify-between">
         <Link to="/auth">
           <div className="size-9 rounded-lg bg-primary flex items-center justify-center">
@@ -386,6 +387,6 @@ export function Landing() {
           </div>
         </div>
       </footer>
-    </div>
+    </PageTransition>
   );
 }

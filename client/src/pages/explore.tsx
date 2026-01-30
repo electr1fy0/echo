@@ -17,6 +17,7 @@ import { useGlobalSearch } from "@/hooks/use-search";
 import type { AnswerItem } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
+import { PageTransition } from "@/components/page-transition";
 import { formatRelativeTime } from "@/lib/format-time";
 function ReplyResult({ item }: { item: AnswerItem }) {
   return (
@@ -68,7 +69,7 @@ export function Explore() {
   const isLoading = isSearchMode ? isSearching : isTrendingLoading;
 
   return (
-    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Explore
       </h1>
@@ -214,6 +215,6 @@ export function Explore() {
         open={createChamberOpen}
         onOpenChange={setCreateChamberOpen}
       />
-    </div>
+    </PageTransition>
   );
 }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AuthPayload } from "@/api/auth";
+import { motion } from "motion/react";
 import {
   Card,
   CardContent,
@@ -48,7 +49,6 @@ function SkeletonSidebar() {
         <Skeleton className="size-12 rounded-xl animate-none" />
         <Skeleton className="size-12 rounded-xl animate-none" />
         <Skeleton className="size-12 rounded-xl animate-none bg-primary/20" />
-        <Skeleton className="size-12 rounded-xl animate-none" />
         <Skeleton className="size-12 rounded-xl animate-none" />
         <Skeleton className="size-12 rounded-xl animate-none" />
       </nav>
@@ -221,7 +221,13 @@ export function Auth() {
         </main>
       </div>
       <div className="fixed inset-0 flex items-center justify-center z-50">
-        <Card className="w-full max-w-md mx-4 shadow-2xl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="w-full max-w-md mx-4"
+        >
+          <Card className="w-full shadow-2xl">
           <CardHeader className="text-center pb-2">
             <div className="my-2">
               <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
@@ -297,7 +303,7 @@ export function Auth() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Password"
+                  placeholder={isSignUp ? "Create Password" : "Password"}
                   aria-label="Password"
                   autoComplete={isSignUp ? "new-password" : "current-password"}
                   className="text-sm pl-3"
@@ -372,6 +378,7 @@ export function Auth() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
       </div>
     </div>
   );

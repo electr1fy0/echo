@@ -18,6 +18,8 @@ import {
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
 import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
+import { PageTransition } from "@/components/page-transition";
+
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
@@ -82,7 +84,7 @@ export function ChamberPage() {
     }
   };
   return (
-    <div className="max-w-[40rem] w-full md:mt-24 mt-16 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 mb-40 relative px-4 pb-20 md:pb-0">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 mb-6 transition-colors"
@@ -145,6 +147,6 @@ export function ChamberPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

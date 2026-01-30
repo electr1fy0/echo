@@ -28,6 +28,8 @@ import { useListChambers } from "@/hooks/use-chamber";
 import { ChamberCard } from "@/components/chambers/chamber-list";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 
+import { PageTransition } from "@/components/page-transition";
+
 export function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
@@ -58,7 +60,7 @@ export function Home() {
     );
   };
   return (
-    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Echo
       </h1>
@@ -253,6 +255,6 @@ export function Home() {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

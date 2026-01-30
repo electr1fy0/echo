@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { NotificationListSkeleton } from "@/components/ui/skeletons";
 import { Link } from "react-router";
+import { PageTransition } from "@/components/page-transition";
 
 function NotificationItem({ notification }: { notification: Notification }) {
   const isUpvote = notification.type === "upvote_question";
@@ -120,7 +121,7 @@ export function Notifications() {
   const { data: notifications = [], isLoading } = useNotificationsQuery();
 
   return (
-    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
       <div>
         <h1 className="text-lg text-neutral-900 dark:text-neutral-100">
           Activity
@@ -148,6 +149,6 @@ export function Notifications() {
           </div>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }

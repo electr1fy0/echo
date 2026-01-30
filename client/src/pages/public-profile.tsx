@@ -7,6 +7,7 @@ import { Link01Icon } from "@hugeicons/core-free-icons";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
+import { PageTransition } from "@/components/page-transition";
 
 export function PublicProfile() {
   const { username } = useParams<{ username: string }>();
@@ -35,7 +36,7 @@ export function PublicProfile() {
   }
 
   return (
-    <div className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           <UserAvatar
@@ -101,6 +102,6 @@ export function PublicProfile() {
           <p className="text-neutral-500 text-sm">No questions posted yet.</p>
         )}
       </div>
-    </div>
+    </PageTransition>
   );
 }
