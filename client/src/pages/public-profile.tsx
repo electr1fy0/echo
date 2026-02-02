@@ -18,12 +18,13 @@ export function PublicProfile() {
     error: profileError,
   } = useFetchPublicProfile(username);
 
-  const { data: questions = [], isLoading: isQnLoading } = useQuestionsQuery(
+  const { data: qnData, isLoading: isQnLoading } = useQuestionsQuery(
     undefined,
     undefined,
     undefined,
     username,
   );
+  const questions = qnData || [];
 
   if (isProfileLoading) {
     return <ProfileSkeleton />;

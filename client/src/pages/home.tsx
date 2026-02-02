@@ -37,13 +37,15 @@ export function Home() {
     useCreateQuestion();
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: deleteQuestion } = useDeleteQuestion();
-  const { data: chambers = [], isLoading } = useListChambers();
+  const { data: chambersData, isLoading } = useListChambers();
+  const chambers = chambersData || [];
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
-  const { data: questions = [], isLoading: isQuestionsLoading } =
+  const { data: questionsData, isLoading: isQuestionsLoading } =
     useQuestionsQuery(
       activeTab === "trending" ? "votes" : "time_created",
       "joined",
     );
+  const questions = questionsData || [];
   const selectedChamberData = JOINED_CHAMBERS.find(
     (c) => c.uid === selectedChamber,
   );

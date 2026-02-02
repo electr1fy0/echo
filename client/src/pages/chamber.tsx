@@ -29,15 +29,17 @@ function formatMemberCount(count: number): string {
 export function ChamberPage() {
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
-  const { data: chambers = [], isLoading: isChamberLoading } =
+  const { data: chambersData, isLoading: isChamberLoading } =
     useListChambers();
+  const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
   const { mutate: deleteQn } = useDeleteQuestion();
-  const { data: questions = [], isLoading } = useQuestionsQuery(
+  const { data: questionsData, isLoading } = useQuestionsQuery(
     "time_created",
     undefined,
     chamberId,
   );
+  const questions = questionsData || [];
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;

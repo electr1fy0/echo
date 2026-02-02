@@ -64,10 +64,11 @@ export function Profile() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const {
-    data: questions = [],
+    data: qnData,
     isLoading: isQnLoading,
     error: qnError,
   } = useUserQuestionsQuery();
+  const questions = qnData || [];
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { mutate: deleteAccount } = useDeleteAccount();
   const { mutate: signout } = useSignout();

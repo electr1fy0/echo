@@ -15,13 +15,13 @@ func (r *Repository) ListNotifications(ctx context.Context, currentUser string, 
 		Limit:        limit,
 		Offset:       offset,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch notifications: %w", err)
-	}
-
-		var notifications []types.Notification
-
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch notifications: %w", err)
+		}
+	
+		notifications := []types.Notification{}
 		for _, row := range rows {
+	
 
 			n := types.Notification{
 

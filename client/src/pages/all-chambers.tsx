@@ -15,7 +15,8 @@ export function AllChambers() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
-  const { data: chambers = [], isLoading } = useListChambers(query);
+  const { data: chambersData, isLoading } = useListChambers(query);
+  const chambers = chambersData || [];
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
       <button

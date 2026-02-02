@@ -118,7 +118,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
 }
 
 export function Notifications() {
-  const { data: notifications = [], isLoading } = useNotificationsQuery();
+  const { data, isLoading } = useNotificationsQuery();
+  const notifications = data || [];
 
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
