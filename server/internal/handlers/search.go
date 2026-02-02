@@ -4,7 +4,6 @@ import (
 	"context"
 	"echo/internal/middleware"
 	"echo/internal/types"
-	"encoding/json"
 	"net/http"
 	"time"
 )
@@ -20,7 +19,7 @@ func (h *SearchHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if query == "" {
-		json.NewEncoder(w).Encode(types.SearchResponse{
+		respondWithJSON(w, http.StatusOK, types.SearchResponse{
 			Chambers:  []types.Chamber{},
 			Questions: []types.QuestionItem{},
 			Replies:   []types.AnswerItem{},
@@ -35,5 +34,5 @@ func (h *SearchHandler) GlobalSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(resp)
+	respondWithJSON(w, http.StatusOK, resp)
 }

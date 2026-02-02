@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (h *ChamberHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
@@ -25,21 +24,18 @@ func (h *ChamberHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	uid := uuid.New()
-	var uidPg pgtype.UUID
-	uidPg.Scan(uid.String())
 
-	err = h.Service.CreateChamber(ctx, uidPg, chamber.Name, chamber.Description, sub, chamber.ColorIndex)
+	newUID, err := h.Service.CreateChamber(ctx, chamber.Name, chamber.Description, sub, chamber.ColorIndex)
 	if err != nil {
 		respondWithError(w, "failed to create chamber", err, http.StatusInternalServerError)
 		return
 	}
-	chamber.UID = types.UUID(uid)
+	chamber.UID = newUID
 	chamber.CreatorUsername = sub
 	chamber.MemberCount = 1
 	chamber.IsJoined = true
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(chamber)
+	
+	respondWithJSON(w, http.StatusCreated, chamber)
 }
 
 func (h *ChamberHandler) DeleteChamber(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +56,7 @@ func (h *ChamberHandler) DeleteChamber(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "failed to delete chamber", err, http.StatusInternalServerError)
 		return
 	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "chamber deleted"})
 }
 
 func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +79,7 @@ func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 
 	for _, row := range rows {
 		c := types.Chamber{
-			UID:         types.UUID(row.Uid.Bytes),
+			UID:         uuid.UUID(row.Uid.Bytes).String(),
 			Name:        row.Name,
 			Description: row.Description,
 			ColorIndex:  row.ColorIndex.Int32,
@@ -92,15 +89,17 @@ func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 		}
 		chambers = append(chambers, c)
 	}
-	json.NewEncoder(w).Encode(chambers)
+	respondWithJSON(w, http.StatusOK, chambers)
 }
 
 func (h *ChamberHandler) JoinChamber(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	chamberUIDStr := r.PathValue("uid")
-	var chamberUID pgtype.UUID
-	chamberUID.Scan(chamberUIDStr)
+	chamberUID := r.PathValue("uid")
+	if chamberUID == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
 
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
@@ -113,15 +112,17 @@ func (h *ChamberHandler) JoinChamber(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "failed to join chamber", err, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "joined chamber"})
 }
 
 func (h *ChamberHandler) LeaveChamber(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	chamberUIDStr := r.PathValue("uid")
-	var chamberUID pgtype.UUID
-	chamberUID.Scan(chamberUIDStr)
+	chamberUID := r.PathValue("uid")
+	if chamberUID == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
 
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
@@ -134,5 +135,5 @@ func (h *ChamberHandler) LeaveChamber(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "failed to leave chamber", err, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "left chamber"})
 }

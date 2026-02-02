@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
@@ -18,10 +17,9 @@ func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	defer r.Body.Close()
 
-	uidStr := r.PathValue("uid")
-	var uid pgtype.UUID
-	if err := uid.Scan(uidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	uid := r.PathValue("uid")
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -41,10 +39,10 @@ func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	for _, row := range rows {
 		ans := types.AnswerItem{
 			Answer: types.Answer{
-				UID:            types.UUID(row.Uid.Bytes),
+				UID:            uuid.UUID(row.Uid.Bytes).String(),
 				Content:        row.Content,
 				TimeCreated:    row.TimeCreated.Time,
-				QuestionUID:    types.UUID(row.QuestionUid.Bytes),
+				QuestionUID:    uuid.UUID(row.QuestionUid.Bytes).String(),
 				AuthorUsername: row.Author,
 				Upvotes:        int(row.Upvotes.Int32),
 				IsUpvoted:      row.IsUpvoted,
@@ -56,7 +54,7 @@ func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 		}
 		answer = append(answer, ans)
 	}
-	json.NewEncoder(w).Encode(answer)
+	respondWithJSON(w, http.StatusOK, answer)
 }
 func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	var ans types.Answer
@@ -70,40 +68,34 @@ func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid := r.PathValue("uid")
-	pUID, err := uuid.Parse(uid)
-	if err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
-	ans.QuestionUID = types.UUID(pUID)
-	ans.UID = types.UUID(uuid.New())
-	ans.TimeCreated = time.Now()
-
-	var uidPg pgtype.UUID
-	uidPg.Scan(uuid.UUID(ans.UID).String())
-	var qidPg pgtype.UUID
-	qidPg.Scan(uuid.UUID(ans.QuestionUID).String())
 
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	err = h.Service.CreateReply(ctx, uidPg, qidPg, sub, ans.Content)
+	newUID, err := h.Service.CreateReply(ctx, uid, sub, ans.Content)
 	if err != nil {
 		respondWithError(w, "failed to save reply to db", err, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(ans)
+	ans.UID = newUID
+	ans.QuestionUID = uid
+	ans.AuthorUsername = sub
+	ans.TimeCreated = time.Now().UTC()
+	
+	respondWithJSON(w, http.StatusCreated, ans)
 }
 func (h *ReplyHandler) UpdateReply(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 	defer r.Body.Close()
 
-	ruidStr := r.PathValue("ruid")
-	var ruid pgtype.UUID
-	if err := ruid.Scan(ruidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	ruid := r.PathValue("ruid")
+	if ruid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -130,16 +122,15 @@ func (h *ReplyHandler) UpdateReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "reply updated"})
 }
 func (h *ReplyHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-	ruidStr := r.PathValue("ruid")
-	var ruid pgtype.UUID
-	if err := ruid.Scan(ruidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	ruid := r.PathValue("ruid")
+	if ruid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -153,14 +144,12 @@ func (h *ReplyHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
 		return
 	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "vote updated"})
 }
 func (h *ReplyHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	quidStr := r.PathValue("quid")
-	ruidStr := r.PathValue("ruid")
-	var quid, ruid pgtype.UUID
-	quid.Scan(quidStr)
-	ruid.Scan(ruidStr)
+	quid := r.PathValue("quid")
+	ruid := r.PathValue("ruid")
 
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
@@ -174,4 +163,5 @@ func (h *ReplyHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "failed to delete reply", err, http.StatusInternalServerError)
 		return
 	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "reply deleted"})
 }

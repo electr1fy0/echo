@@ -108,9 +108,12 @@ SELECT
     exists (
         select 1 from question_upvotes v2
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
-    ) as is_upvoted
+    ) as is_upvoted,
+    q.chamber_uid,
+    coalesce(c.name, '') as chamber_name
 FROM questions q
 LEFT JOIN users u on u.username = q.author
+LEFT JOIN chambers c ON c.uid = q.chamber_uid
 WHERE q.uid = sqlc.arg('uid');
 
 -- name: DeleteQuestion :exec
@@ -306,3 +309,77 @@ ON CONFLICT DO NOTHING;
 -- name: LeaveChamber :exec
 DELETE FROM chamber_members 
 WHERE chamber_uid = $1 AND username = $2;
+
+-- name: ListNotifications :many
+SELECT
+    n.uid,
+    n.user_username,
+    n.actor_username,
+    n.type,
+    n.reference_uid,
+    n.is_read,
+    n.created_at,
+    u.avatar as actor_avatar,
+    COALESCE(q.content, a.content, '') as content,
+    COALESCE(q2.content, '') as question_content
+FROM notifications n
+LEFT JOIN users u ON n.actor_username = u.username
+LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
+LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
+LEFT JOIN questions q2 ON a.question_uid = q2.uid
+WHERE n.user_username = $1
+ORDER BY n.created_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: SearchChambers :many
+SELECT 
+    c.uid, c.name, COALESCE(c.description, '') as description, c.color_index, c.created_at,
+    (SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
+    EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = sqlc.arg('current_user')) as is_joined
+FROM chambers c
+WHERE c.name ILIKE '%' || sqlc.arg('query') || '%' OR c.description ILIKE '%' || sqlc.arg('query') || '%'
+LIMIT 5;
+
+-- name: SearchReplies :many
+SELECT 
+    a.uid, a.content, a.time_created, a.question_uid, a.author,
+    u.avatar,
+    a.upvotes_count,
+    exists (select 1 from answer_upvotes v2 where v2.answer_uid = a.uid and v2.username = sqlc.arg('current_user')) as is_upvoted
+FROM answers a
+LEFT JOIN users u on u.username = a.author
+WHERE a.content ilike '%' || sqlc.arg('query') || '%'
+LIMIT 5;
+
+-- name: SearchUsers :many
+SELECT username, COALESCE(avatar, '') as avatar, COALESCE(bio, '') as bio
+FROM users
+WHERE username ILIKE '%' || sqlc.arg('query') || '%'
+LIMIT 5;
+
+-- name: ListQuestionsFiltered :many
+SELECT
+    q.uid,
+    q.content,
+    q.time_created,
+    q.author,
+    u.avatar,
+    q.upvotes_count as upvotes,
+    exists (
+        select 1 from question_upvotes v2
+        where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
+    ) as is_upvoted,
+    q.chamber_uid,
+    coalesce(c.name, '') as chamber_name
+FROM questions q
+LEFT JOIN users u ON u.username = q.author
+LEFT JOIN chambers c ON c.uid = q.chamber_uid
+LEFT JOIN chamber_members cm ON cm.chamber_uid = q.chamber_uid AND cm.username = sqlc.arg('current_user')
+WHERE
+    (sqlc.narg('target_chamber_uid')::uuid IS NULL OR q.chamber_uid = sqlc.narg('target_chamber_uid'))
+    AND (sqlc.narg('author')::text IS NULL OR q.author = sqlc.narg('author'))
+    AND (sqlc.narg('filter_joined')::boolean IS NULL OR (sqlc.narg('filter_joined') = TRUE AND cm.username IS NOT NULL))
+ORDER BY
+    CASE WHEN sqlc.arg('sort')::text = 'votes' THEN q.upvotes_count END DESC,
+    q.time_created DESC
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');

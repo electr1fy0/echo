@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"echo/internal/middleware"
-	"encoding/json"
 	"net/http"
 	"time"
 )
@@ -18,19 +17,13 @@ func (h *NotificationHandler) ListNotifications(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	page := r.URL.Query().Get("page")
-	if page == "" {
-		page = "0"
-	}
+	limit, offset := parsePagination(r)
 
-	limit := 50
-	offset := 0
-
-	notifications, err := h.Service.ListNotifications(ctx, sub, int32(limit), int32(offset))
+	notifications, err := h.Service.ListNotifications(ctx, sub, limit, offset)
 	if err != nil {
 		respondWithError(w, "failed to fetch notifications", err, http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(notifications)
+	respondWithJSON(w, http.StatusOK, notifications)
 }

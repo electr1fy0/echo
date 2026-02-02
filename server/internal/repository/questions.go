@@ -21,93 +21,59 @@ type ListQuestionsParams struct {
 }
 
 func (r *Repository) ListQuestions(ctx context.Context, params ListQuestionsParams) ([]types.QuestionItem, error) {
-	orderBy := "q.time_created desc"
-	if params.Sort == "votes" {
-		orderBy = "q.upvotes_count desc"
-	}
-
-	baseQuery := `
-		select
-			q.uid,
-			q.content,
-			q.time_created,
-			q.author,
-			u.avatar,
-			q.upvotes_count as upvotes,
-			exists (
-				select 1 from question_upvotes v2
-				where v2.question_uid = q.uid and v2.username = $1
-			) as is_upvoted,
-			q.chamber_uid,
-			coalesce(c.name, '') as chamber_name
-		from questions q
-		left join users u
-			on u.username = q.author
-		left join chambers c
-			on c.uid = q.chamber_uid
-	`
-	whereConditions := []string{}
-	args := []any{params.CurrentUser}
-	argCount := 2
-
-	if params.Filter == "joined" {
-		baseQuery += ` join chamber_members cm on cm.chamber_uid = q.chamber_uid `
-		whereConditions = append(whereConditions, "cm.username = $1")
-	}
+	var targetChamber pgtype.UUID
 	if params.TargetChamberUID != "" {
-		whereConditions = append(whereConditions, fmt.Sprintf("q.chamber_uid = $%d", argCount))
-		args = append(args, params.TargetChamberUID)
-		argCount++
-	}
-	if params.Author != "" {
-		whereConditions = append(whereConditions, fmt.Sprintf("q.author = $%d", argCount))
-		args = append(args, params.Author)
-		argCount++
-	}
-
-	args = append(args, params.Limit)
-	limitArg := argCount
-	argCount++
-
-	args = append(args, params.Offset)
-	offsetArg := argCount
-
-	if len(whereConditions) > 0 {
-		baseQuery += " WHERE " + whereConditions[0]
-		for i := 1; i < len(whereConditions); i++ {
-			baseQuery += " AND " + whereConditions[i]
+		u, err := uuid.Parse(params.TargetChamberUID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid chamber uid: %w", err)
 		}
+		targetChamber = pgtype.UUID{Bytes: u, Valid: true}
 	}
-	finalQuery := fmt.Sprintf("%s order by %s limit $%d offset $%d", baseQuery, orderBy, limitArg, offsetArg)
 
-	rows, err := r.DB.Query(ctx, finalQuery, args...)
+	var author pgtype.Text
+	if params.Author != "" {
+		author = pgtype.Text{String: params.Author, Valid: true}
+	}
+
+	var filterJoined pgtype.Bool
+	if params.Filter == "joined" {
+		filterJoined = pgtype.Bool{Bool: true, Valid: true}
+	}
+
+	rows, err := r.Q.ListQuestionsFiltered(ctx, database.ListQuestionsFilteredParams{
+		CurrentUser:      params.CurrentUser,
+		TargetChamberUid: targetChamber,
+		Author:           author,
+		FilterJoined:     filterJoined,
+		Sort:             params.Sort,
+		Limit:            int32(params.Limit),
+		Offset:           int32(params.Offset),
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	questions := make([]types.QuestionItem, 0)
-	for rows.Next() {
-		var q types.QuestionItem
-		var avatar *string
-		var chamberUID *uuid.UUID
-		var chamberName string
-		err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted, &chamberUID, &chamberName)
-		if err != nil {
-			return nil, err
+	for _, row := range rows {
+		q := types.QuestionItem{
+			Question: types.Question{
+				UID:            uuid.UUID(row.Uid.Bytes).String(),
+				Content:        row.Content.String,
+				TimeCreated:    row.TimeCreated.Time,
+				AuthorUsername: row.Author,
+				Upvotes:        int(row.Upvotes.Int32),
+				IsUpvoted:      row.IsUpvoted,
+				ChamberName:    row.ChamberName,
+			},
+			Author: types.Profile{
+				Username: row.Author,
+				Avatar:   row.Avatar.String,
+			},
 		}
-		if avatar != nil {
-			q.Author.Avatar = *avatar
+		if row.ChamberUid.Valid {
+			q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
 		}
-		if chamberUID != nil {
-			q.Question.ChamberUID = types.UUID(*chamberUID)
-		}
-		q.Question.ChamberName = chamberName
-		q.Author.Username = q.Question.AuthorUsername
 		questions = append(questions, q)
-	}
-	if rows.Err() != nil {
-		return nil, rows.Err()
 	}
 	return questions, nil
 }

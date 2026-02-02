@@ -2,65 +2,65 @@ package repository
 
 import (
 	"context"
+	"echo/internal/database"
 	"echo/internal/types"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 func (r *Repository) ListNotifications(ctx context.Context, currentUser string, limit, offset int32) ([]types.Notification, error) {
-	query := `
-		SELECT
-			n.uid,
-			n.user_username,
-			n.actor_username,
-			n.type,
-			n.reference_uid,
-			n.is_read,
-			n.created_at,
-			u.avatar,
-			COALESCE(q.content, a.content, '') as content,
-			COALESCE(q2.content, '') as question_content
-		FROM notifications n
-		LEFT JOIN users u ON n.actor_username = u.username
-		LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
-		LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
-		LEFT JOIN questions q2 ON a.question_uid = q2.uid
-		WHERE n.user_username = $1
-		ORDER BY n.created_at DESC
-		LIMIT $2 OFFSET $3
-	`
-	rows, err := r.DB.Query(ctx, query, currentUser, limit, offset)
+	rows, err := r.Q.ListNotifications(ctx, database.ListNotificationsParams{
+		UserUsername: currentUser,
+		Limit:        limit,
+		Offset:       offset,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch notifications: %w", err)
 	}
-	defer rows.Close()
 
-	var notifications []types.Notification
-	for rows.Next() {
-		var n types.Notification
-		var avatar *string
-		var actorUsername *string
-		err := rows.Scan(
-			&n.UID,
-			&n.UserUsername,
-			&actorUsername,
-			&n.Type,
-			&n.ReferenceUID,
-			&n.IsRead,
-			&n.CreatedAt,
-			&avatar,
-			&n.Content,
-			&n.QuestionContent,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan notification: %w", err)
+		var notifications []types.Notification
+
+		for _, row := range rows {
+
+			n := types.Notification{
+
+				UID:             uuid.UUID(row.Uid.Bytes).String(),
+
+				UserUsername:    row.UserUsername,
+
+				Type:            row.Type,
+
+				ReferenceUID:    uuid.UUID(row.ReferenceUid.Bytes).String(),
+
+				IsRead:          row.IsRead.Bool,
+
+				CreatedAt:       row.CreatedAt.Time,
+
+				Content:         row.Content,
+
+				QuestionContent: row.QuestionContent,
+
+			}
+
+			if row.ActorAvatar.Valid {
+
+				n.ActorAvatar = row.ActorAvatar.String
+
+			}
+
+			if row.ActorUsername.Valid {
+
+				n.ActorUsername = row.ActorUsername.String
+
+			}
+
+			notifications = append(notifications, n)
+
 		}
-		if avatar != nil {
-			n.ActorAvatar = *avatar
-		}
-		if actorUsername != nil {
-			n.ActorUsername = *actorUsername
-		}
-		notifications = append(notifications, n)
+
+		return notifications, nil
+
 	}
-	return notifications, nil
-}
+
+	

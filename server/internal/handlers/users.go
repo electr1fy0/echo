@@ -32,11 +32,10 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if newToken != "" {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"token": newToken})
+		respondWithJSON(w, http.StatusOK, map[string]string{"token": newToken})
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "profile updated"})
 }
 
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +50,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Account deleted successfully"})
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Account deleted successfully"})
 }
 
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +66,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "failed to get profile", err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(profile)
+	respondWithJSON(w, http.StatusOK, profile)
 }
 
 func (h *UserHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
@@ -83,5 +81,5 @@ func (h *UserHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "profile not found", err, http.StatusNotFound)
 		return
 	}
-	json.NewEncoder(w).Encode(profile)
+	respondWithJSON(w, http.StatusOK, profile)
 }

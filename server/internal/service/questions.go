@@ -17,17 +17,25 @@ func (s *Service) ListQuestions(ctx context.Context, params repository.ListQuest
 }
 
 func (s *Service) CreateQuestion(ctx context.Context, question types.Question, author string) error {
+	chamberUUID, err := uuid.Parse(question.ChamberUID)
+	if err != nil {
+		return err
+	}
 	return s.Repo.CreateQuestion(ctx, database.CreateQuestionParams{
 		Content:    pgtype.Text{String: question.Content, Valid: true},
 		Author:     author,
-		ChamberUid: pgtype.UUID{Bytes: uuid.UUID(question.ChamberUID), Valid: true},
+		ChamberUid: pgtype.UUID{Bytes: chamberUUID, Valid: true},
 	})
 }
 
-func (s *Service) GetQuestion(ctx context.Context, uid pgtype.UUID, currentUser string) (*types.QuestionItem, error) {
+func (s *Service) GetQuestion(ctx context.Context, uid string, currentUser string) (*types.QuestionItem, error) {
+	parsedUID, err := uuid.Parse(uid)
+	if err != nil {
+		return nil, errors.New("invalid uid")
+	}
 	row, err := s.Repo.GetQuestion(ctx, database.GetQuestionParams{
 		CurrentUser: currentUser,
-		Uid:         uid,
+		Uid:         pgtype.UUID{Bytes: parsedUID, Valid: true},
 	})
 	if err != nil {
 		return nil, err
@@ -35,23 +43,33 @@ func (s *Service) GetQuestion(ctx context.Context, uid pgtype.UUID, currentUser 
 
 	q := &types.QuestionItem{
 		Question: types.Question{
-			UID:            types.UUID(row.Uid.Bytes),
+			UID:            uuid.UUID(row.Uid.Bytes).String(),
 			Content:        row.Content.String,
 			TimeCreated:    row.TimeCreated.Time,
 			Upvotes:        int(row.Upvotes.Int32),
 			IsUpvoted:      row.IsUpvoted,
 			AuthorUsername: row.Author,
+			ChamberName:    row.ChamberName,
 		},
 		Author: types.Profile{
 			Username: row.Author,
 			Avatar:   row.Avatar.String,
 		},
 	}
+	if row.ChamberUid.Valid {
+		q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
+	}
 	return q, nil
 }
 
-func (s *Service) DeleteQuestion(ctx context.Context, uid pgtype.UUID, author string) error {
-	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, uid)
+func (s *Service) DeleteQuestion(ctx context.Context, uid string, author string) error {
+	parsedUID, err := uuid.Parse(uid)
+	if err != nil {
+		return errors.New("invalid uid")
+	}
+	uidPg := pgtype.UUID{Bytes: parsedUID, Valid: true}
+
+	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, uidPg)
 	if err == pgx.ErrNoRows {
 		return errors.New("question not found")
 	} else if err != nil {
@@ -63,15 +81,19 @@ func (s *Service) DeleteQuestion(ctx context.Context, uid pgtype.UUID, author st
 	}
 
 	return s.Repo.DeleteQuestion(ctx, database.DeleteQuestionParams{
-		Uid:    uid,
+		Uid:    uidPg,
 		Author: author,
 	})
 }
 
-func (s *Service) UpdateQuestion(ctx context.Context, uid pgtype.UUID, author string, content string) error {
-	_, err := s.Repo.UpdateQuestion(ctx, database.UpdateQuestionParams{
+func (s *Service) UpdateQuestion(ctx context.Context, uid string, author string, content string) error {
+	parsedUID, err := uuid.Parse(uid)
+	if err != nil {
+		return errors.New("invalid uid")
+	}
+	_, err = s.Repo.UpdateQuestion(ctx, database.UpdateQuestionParams{
 		Content: pgtype.Text{String: content, Valid: true},
-		Uid:     uid,
+		Uid:     pgtype.UUID{Bytes: parsedUID, Valid: true},
 		Author:  author,
 	})
 	return err
@@ -92,7 +114,7 @@ func (s *Service) ListUserQuestions(ctx context.Context, limit, offset int32, cu
 	for _, row := range rows {
 		q := types.QuestionItem{
 			Question: types.Question{
-				UID:            types.UUID(row.Uid.Bytes),
+				UID:            uuid.UUID(row.Uid.Bytes).String(),
 				Content:        row.Content.String,
 				TimeCreated:    row.TimeCreated.Time,
 				Upvotes:        int(row.Upvotes.Int32),
@@ -105,7 +127,7 @@ func (s *Service) ListUserQuestions(ctx context.Context, limit, offset int32, cu
 			},
 		}
 		if row.ChamberUid.Valid {
-			q.Question.ChamberUID = types.UUID(row.ChamberUid.Bytes)
+			q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
 		}
 		q.Question.ChamberName = row.ChamberName
 		questions = append(questions, q)
@@ -128,7 +150,7 @@ func (s *Service) SearchQuestions(ctx context.Context, query string, limit, offs
 	for _, row := range rows {
 		q := types.QuestionItem{
 			Question: types.Question{
-				UID:            types.UUID(row.Uid.Bytes),
+				UID:            uuid.UUID(row.Uid.Bytes).String(),
 				Content:        row.Content.String,
 				TimeCreated:    row.TimeCreated.Time,
 				Upvotes:        int(row.UpvotesCount.Int32),
@@ -145,35 +167,41 @@ func (s *Service) SearchQuestions(ctx context.Context, query string, limit, offs
 	return questions, nil
 }
 
-func (s *Service) UpdateQuestionVote(ctx context.Context, username string, quid pgtype.UUID) error {
-	_, err := s.Repo.GetQuestionVote(ctx, database.GetQuestionVoteParams{
+func (s *Service) UpdateQuestionVote(ctx context.Context, username string, quid string) error {
+	parsedUID, err := uuid.Parse(quid)
+	if err != nil {
+		return errors.New("invalid uid")
+	}
+	quidPg := pgtype.UUID{Bytes: parsedUID, Valid: true}
+
+	_, err = s.Repo.GetQuestionVote(ctx, database.GetQuestionVoteParams{
 		Username:    username,
-		QuestionUid: quid,
+		QuestionUid: quidPg,
 	})
 
 	if err == pgx.ErrNoRows {
 		err := s.Repo.CreateQuestionVote(ctx, database.CreateQuestionVoteParams{
 			Username:    username,
-			QuestionUid: quid,
+			QuestionUid: quidPg,
 		})
 		if err != nil {
 			return err
 		}
-		_ = s.Repo.IncrementQuestionUpvotes(ctx, quid)
+		_ = s.Repo.IncrementQuestionUpvotes(ctx, quidPg)
 
-		author, err := s.Repo.GetQuestionAuthor(ctx, quid)
+		author, err := s.Repo.GetQuestionAuthor(ctx, quidPg)
 		if err == nil && author != "" && author != username {
 			exists, _ := s.Repo.CheckNotificationExists(ctx, database.CheckNotificationExistsParams{
 				Type:          "upvote_question",
 				ActorUsername: pgtype.Text{String: username, Valid: true},
-				ReferenceUid:  quid,
+				ReferenceUid:  quidPg,
 			})
 			if !exists {
 				s.Repo.CreateNotification(ctx, database.CreateNotificationParams{
 					UserUsername:  author,
 					ActorUsername: pgtype.Text{String: username, Valid: true},
 					Type:          "upvote_question",
-					ReferenceUid:  quid,
+					ReferenceUid:  quidPg,
 				})
 			}
 		}
@@ -181,12 +209,12 @@ func (s *Service) UpdateQuestionVote(ctx context.Context, username string, quid 
 	} else if err == nil {
 		err := s.Repo.DeleteQuestionVote(ctx, database.DeleteQuestionVoteParams{
 			Username:    username,
-			QuestionUid: quid,
+			QuestionUid: quidPg,
 		})
 		if err != nil {
 			return err
 		}
-		_ = s.Repo.DecrementQuestionUpvotes(ctx, quid)
+		_ = s.Repo.DecrementQuestionUpvotes(ctx, quidPg)
 		return nil
 	} else {
 		return err

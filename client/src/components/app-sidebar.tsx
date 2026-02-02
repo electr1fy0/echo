@@ -7,6 +7,7 @@ import {
   Search01Icon,
   Add01Icon,
   FavouriteIcon,
+  ArrowDown01Icon,
 } from "@hugeicons/core-free-icons";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -25,7 +26,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -146,93 +146,104 @@ function CreateQueryDialog({
   const selectedChamberData = chambers.find((c) => c.uid === selectedChamber);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]   pb-1 p-0     ">
         <DialogHeader>
-          <DialogTitle>New Query</DialogTitle>
+          <DialogTitle className="pt-6 px-4">New Query</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center justify-start rounded-xl gap-2 h-10 px-3 text-sm border border-neutral-200 dark:border-neutral-700 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                {selectedChamberData ? (
-                  <>
-                    <div
-                      className={cn(
-                        "size-3 rounded-full",
-                        CHAMBER_COLORS[
-                          (selectedChamberData.colorIndex || 0) %
-                            CHAMBER_COLORS.length
-                        ],
-                      )}
-                    />
-                    {selectedChamberData.name}
-                  </>
-                ) : (
-                  <span className="text-neutral-500">Select a chamber...</span>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {chambers.length > 0 ? (
-                  chambers.map((chamber) => (
-                    <DropdownMenuItem
-                      key={chamber.uid}
-                      onClick={() => setSelectedChamber(chamber.uid!)}
-                      className="gap-2"
-                    >
+        <div className="pt-4">
+          <div
+            className="
+            bg-background rounded-2xl
+            transition-colors
+            focus-within:border-neutral-400
+            dark:focus-within:border-neutral-500
+            overflow-hidden
+
+          "
+          >
+            <Textarea
+              placeholder={
+                selectedChamberData
+                  ? `Ask in ${selectedChamberData.name}...`
+                  : "Select a chamber to ask a question..."
+              }
+              aria-label="Question content"
+              className="resize-none h-32 px-4 border-none shadow-none focus-visible:ring-0 bg-transparent  text-base"
+              value={draft.content}
+              onChange={(e) => updateDraft({ content: e.target.value })}
+              autoFocus
+            />
+            <div className="flex items-center justify-between p-2 bg-neutral-50/50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-2 h-8 px-2.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none">
+                  {selectedChamberData ? (
+                    <>
                       <div
                         className={cn(
-                          "size-3 rounded-full",
+                          "size-2 rounded-full",
                           CHAMBER_COLORS[
-                            (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                            (selectedChamberData.colorIndex || 0) %
+                              CHAMBER_COLORS.length
                           ],
                         )}
                       />
-                      {chamber.name}
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <div className="p-2 text-xs text-neutral-500 text-center">
-                    No joined chambers
-                  </div>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <Textarea
-            placeholder="What's on your mind?"
-            className="w-full resize-none bg-transparent focus-visible:ring-0 p-0 text-base border-none rounded-none shadow-none min-h-16 placeholder:text-neutral-400"
-            value={draft.content}
-            onChange={(e) => updateDraft({ content: e.target.value })}
-            autoFocus
-          />
-        </div>
-        <DialogFooter className="flex-row items-center justify-between sm:justify-between">
-          {selectedChamberData && (
-            <div className="flex items-center gap-2 text-sm text-neutral-500">
-              <div
-                className={cn(
-                  "size-3 rounded-full",
-                  CHAMBER_COLORS[
-                    (selectedChamberData.colorIndex || 0) %
-                      CHAMBER_COLORS.length
-                  ],
-                )}
-              />
-              Posting to {selectedChamberData.name}
+                      {selectedChamberData.name}
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon
+                        icon={ArrowDown01Icon}
+                        className="size-3.5 text-neutral-500"
+                      />
+                      Select Chamber
+                    </>
+                  )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {chambers.length > 0 ? (
+                    chambers.map((chamber) => (
+                      <DropdownMenuItem
+                        key={chamber.uid}
+                        onClick={() => setSelectedChamber(chamber.uid!)}
+                        className="gap-2"
+                      >
+                        <div
+                          className={cn(
+                            "size-3 rounded-full",
+                            CHAMBER_COLORS[
+                              (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                            ],
+                          )}
+                        />
+                        {chamber.name}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-neutral-500">
+                      No chambers joined
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                size="default"
+                className="font-normal rounded-lg h-9 px-4"
+                onClick={handleSubmit}
+                disabled={
+                  !selectedChamber || !draft.content.trim() || isPending
+                }
+              >
+                {isPending ? "Asking..." : "Ask"}
+                <HugeiconsIcon
+                  icon={Add01Icon}
+                  strokeWidth={2}
+                  className="ml-1.5 size-3.5"
+                />
+              </Button>
             </div>
-          )}
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isPending || !selectedChamber || !draft.content.trim()}
-            >
-              {isPending ? "Posting..." : "Ask Query"}
-            </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

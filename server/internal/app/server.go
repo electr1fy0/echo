@@ -16,7 +16,6 @@ import (
 
 type Server struct {
 	router *http.ServeMux
-	repo   *repository.Repository
 	svc    *service.Service
 }
 
@@ -35,8 +34,7 @@ func New() (*Server, error) {
 	svc := service.New(repo)
 
 	s := &Server{
-		repo: repo,
-		svc:  svc,
+		svc: svc,
 	}
 	s.setupRouter()
 	return s, nil
@@ -112,7 +110,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Close() {
-	if s.repo != nil {
-		s.repo.Close()
+	if s.svc != nil {
+		s.svc.Close()
 	}
 }

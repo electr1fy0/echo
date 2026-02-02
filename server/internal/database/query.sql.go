@@ -411,9 +411,12 @@ SELECT
     exists (
         select 1 from question_upvotes v2
         where v2.question_uid = q.uid and v2.username = $1
-    ) as is_upvoted
+    ) as is_upvoted,
+    q.chamber_uid,
+    coalesce(c.name, '') as chamber_name
 FROM questions q
 LEFT JOIN users u on u.username = q.author
+LEFT JOIN chambers c ON c.uid = q.chamber_uid
 WHERE q.uid = $2
 `
 
@@ -430,6 +433,8 @@ type GetQuestionRow struct {
 	Avatar      pgtype.Text      `json:"avatar"`
 	Upvotes     pgtype.Int4      `json:"upvotes"`
 	IsUpvoted   bool             `json:"is_upvoted"`
+	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
+	ChamberName string           `json:"chamber_name"`
 }
 
 func (q *Queries) GetQuestion(ctx context.Context, arg GetQuestionParams) (GetQuestionRow, error) {
@@ -443,6 +448,8 @@ func (q *Queries) GetQuestion(ctx context.Context, arg GetQuestionParams) (GetQu
 		&i.Avatar,
 		&i.Upvotes,
 		&i.IsUpvoted,
+		&i.ChamberUid,
+		&i.ChamberName,
 	)
 	return i, err
 }
@@ -633,6 +640,78 @@ func (q *Queries) ListChambers(ctx context.Context, arg ListChambersParams) ([]L
 			&i.CreatedAt,
 			&i.MemberCount,
 			&i.IsJoined,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listNotifications = `-- name: ListNotifications :many
+SELECT
+    n.uid,
+    n.user_username,
+    n.actor_username,
+    n.type,
+    n.reference_uid,
+    n.is_read,
+    n.created_at,
+    u.avatar as actor_avatar,
+    COALESCE(q.content, a.content, '') as content,
+    COALESCE(q2.content, '') as question_content
+FROM notifications n
+LEFT JOIN users u ON n.actor_username = u.username
+LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
+LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
+LEFT JOIN questions q2 ON a.question_uid = q2.uid
+WHERE n.user_username = $1
+ORDER BY n.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListNotificationsParams struct {
+	UserUsername string `json:"user_username"`
+	Limit        int32  `json:"limit"`
+	Offset       int32  `json:"offset"`
+}
+
+type ListNotificationsRow struct {
+	Uid             pgtype.UUID      `json:"uid"`
+	UserUsername    string           `json:"user_username"`
+	ActorUsername   pgtype.Text      `json:"actor_username"`
+	Type            string           `json:"type"`
+	ReferenceUid    pgtype.UUID      `json:"reference_uid"`
+	IsRead          pgtype.Bool      `json:"is_read"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	ActorAvatar     pgtype.Text      `json:"actor_avatar"`
+	Content         string           `json:"content"`
+	QuestionContent string           `json:"question_content"`
+}
+
+func (q *Queries) ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]ListNotificationsRow, error) {
+	rows, err := q.db.Query(ctx, listNotifications, arg.UserUsername, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListNotificationsRow
+	for rows.Next() {
+		var i ListNotificationsRow
+		if err := rows.Scan(
+			&i.Uid,
+			&i.UserUsername,
+			&i.ActorUsername,
+			&i.Type,
+			&i.ReferenceUid,
+			&i.IsRead,
+			&i.CreatedAt,
+			&i.ActorAvatar,
+			&i.Content,
+			&i.QuestionContent,
 		); err != nil {
 			return nil, err
 		}
@@ -865,6 +944,94 @@ func (q *Queries) ListQuestionsByChamber(ctx context.Context, arg ListQuestionsB
 	return items, nil
 }
 
+const listQuestionsFiltered = `-- name: ListQuestionsFiltered :many
+SELECT
+    q.uid,
+    q.content,
+    q.time_created,
+    q.author,
+    u.avatar,
+    q.upvotes_count as upvotes,
+    exists (
+        select 1 from question_upvotes v2
+        where v2.question_uid = q.uid and v2.username = $1
+    ) as is_upvoted,
+    q.chamber_uid,
+    coalesce(c.name, '') as chamber_name
+FROM questions q
+LEFT JOIN users u ON u.username = q.author
+LEFT JOIN chambers c ON c.uid = q.chamber_uid
+LEFT JOIN chamber_members cm ON cm.chamber_uid = q.chamber_uid AND cm.username = $1
+WHERE
+    ($2::uuid IS NULL OR q.chamber_uid = $2)
+    AND ($3::text IS NULL OR q.author = $3)
+    AND ($4::boolean IS NULL OR ($4 = TRUE AND cm.username IS NOT NULL))
+ORDER BY
+    CASE WHEN $5::text = 'votes' THEN q.upvotes_count END DESC,
+    q.time_created DESC
+LIMIT $7 OFFSET $6
+`
+
+type ListQuestionsFilteredParams struct {
+	CurrentUser      string      `json:"current_user"`
+	TargetChamberUid pgtype.UUID `json:"target_chamber_uid"`
+	Author           pgtype.Text `json:"author"`
+	FilterJoined     pgtype.Bool `json:"filter_joined"`
+	Sort             string      `json:"sort"`
+	Offset           int32       `json:"offset"`
+	Limit            int32       `json:"limit"`
+}
+
+type ListQuestionsFilteredRow struct {
+	Uid         pgtype.UUID      `json:"uid"`
+	Content     pgtype.Text      `json:"content"`
+	TimeCreated pgtype.Timestamp `json:"time_created"`
+	Author      string           `json:"author"`
+	Avatar      pgtype.Text      `json:"avatar"`
+	Upvotes     pgtype.Int4      `json:"upvotes"`
+	IsUpvoted   bool             `json:"is_upvoted"`
+	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
+	ChamberName string           `json:"chamber_name"`
+}
+
+func (q *Queries) ListQuestionsFiltered(ctx context.Context, arg ListQuestionsFilteredParams) ([]ListQuestionsFilteredRow, error) {
+	rows, err := q.db.Query(ctx, listQuestionsFiltered,
+		arg.CurrentUser,
+		arg.TargetChamberUid,
+		arg.Author,
+		arg.FilterJoined,
+		arg.Sort,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListQuestionsFilteredRow
+	for rows.Next() {
+		var i ListQuestionsFilteredRow
+		if err := rows.Scan(
+			&i.Uid,
+			&i.Content,
+			&i.TimeCreated,
+			&i.Author,
+			&i.Avatar,
+			&i.Upvotes,
+			&i.IsUpvoted,
+			&i.ChamberUid,
+			&i.ChamberName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listQuestionsTop = `-- name: ListQuestionsTop :many
 SELECT
     q.uid,
@@ -998,6 +1165,59 @@ func (q *Queries) ListReplies(ctx context.Context, arg ListRepliesParams) ([]Lis
 	return items, nil
 }
 
+const searchChambers = `-- name: SearchChambers :many
+SELECT 
+    c.uid, c.name, COALESCE(c.description, '') as description, c.color_index, c.created_at,
+    (SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
+    EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = $1) as is_joined
+FROM chambers c
+WHERE c.name ILIKE '%' || $2 || '%' OR c.description ILIKE '%' || $2 || '%'
+LIMIT 5
+`
+
+type SearchChambersParams struct {
+	CurrentUser string      `json:"current_user"`
+	Query       pgtype.Text `json:"query"`
+}
+
+type SearchChambersRow struct {
+	Uid         pgtype.UUID      `json:"uid"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	ColorIndex  pgtype.Int4      `json:"color_index"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	MemberCount int64            `json:"member_count"`
+	IsJoined    bool             `json:"is_joined"`
+}
+
+func (q *Queries) SearchChambers(ctx context.Context, arg SearchChambersParams) ([]SearchChambersRow, error) {
+	rows, err := q.db.Query(ctx, searchChambers, arg.CurrentUser, arg.Query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchChambersRow
+	for rows.Next() {
+		var i SearchChambersRow
+		if err := rows.Scan(
+			&i.Uid,
+			&i.Name,
+			&i.Description,
+			&i.ColorIndex,
+			&i.CreatedAt,
+			&i.MemberCount,
+			&i.IsJoined,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const searchQuestions = `-- name: SearchQuestions :many
 SELECT
     q.uid, q.content, q.time_created, q.author,
@@ -1050,6 +1270,96 @@ func (q *Queries) SearchQuestions(ctx context.Context, arg SearchQuestionsParams
 			&i.UpvotesCount,
 			&i.IsUpvoted,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchReplies = `-- name: SearchReplies :many
+SELECT 
+    a.uid, a.content, a.time_created, a.question_uid, a.author,
+    u.avatar,
+    a.upvotes_count,
+    exists (select 1 from answer_upvotes v2 where v2.answer_uid = a.uid and v2.username = $1) as is_upvoted
+FROM answers a
+LEFT JOIN users u on u.username = a.author
+WHERE a.content ilike '%' || $2 || '%'
+LIMIT 5
+`
+
+type SearchRepliesParams struct {
+	CurrentUser string      `json:"current_user"`
+	Query       pgtype.Text `json:"query"`
+}
+
+type SearchRepliesRow struct {
+	Uid          pgtype.UUID      `json:"uid"`
+	Content      string           `json:"content"`
+	TimeCreated  pgtype.Timestamp `json:"time_created"`
+	QuestionUid  pgtype.UUID      `json:"question_uid"`
+	Author       string           `json:"author"`
+	Avatar       pgtype.Text      `json:"avatar"`
+	UpvotesCount pgtype.Int4      `json:"upvotes_count"`
+	IsUpvoted    bool             `json:"is_upvoted"`
+}
+
+func (q *Queries) SearchReplies(ctx context.Context, arg SearchRepliesParams) ([]SearchRepliesRow, error) {
+	rows, err := q.db.Query(ctx, searchReplies, arg.CurrentUser, arg.Query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchRepliesRow
+	for rows.Next() {
+		var i SearchRepliesRow
+		if err := rows.Scan(
+			&i.Uid,
+			&i.Content,
+			&i.TimeCreated,
+			&i.QuestionUid,
+			&i.Author,
+			&i.Avatar,
+			&i.UpvotesCount,
+			&i.IsUpvoted,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const searchUsers = `-- name: SearchUsers :many
+SELECT username, COALESCE(avatar, '') as avatar, COALESCE(bio, '') as bio
+FROM users
+WHERE username ILIKE '%' || $1 || '%'
+LIMIT 5
+`
+
+type SearchUsersRow struct {
+	Username string `json:"username"`
+	Avatar   string `json:"avatar"`
+	Bio      string `json:"bio"`
+}
+
+func (q *Queries) SearchUsers(ctx context.Context, query pgtype.Text) ([]SearchUsersRow, error) {
+	rows, err := q.db.Query(ctx, searchUsers, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchUsersRow
+	for rows.Next() {
+		var i SearchUsersRow
+		if err := rows.Scan(&i.Username, &i.Avatar, &i.Bio); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

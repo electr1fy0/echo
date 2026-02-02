@@ -44,12 +44,17 @@ type Querier interface {
 	JoinChamber(ctx context.Context, arg JoinChamberParams) error
 	LeaveChamber(ctx context.Context, arg LeaveChamberParams) error
 	ListChambers(ctx context.Context, arg ListChambersParams) ([]ListChambersRow, error)
+	ListNotifications(ctx context.Context, arg ListNotificationsParams) ([]ListNotificationsRow, error)
 	ListQuestions(ctx context.Context, arg ListQuestionsParams) ([]ListQuestionsRow, error)
 	ListQuestionsByAuthor(ctx context.Context, arg ListQuestionsByAuthorParams) ([]ListQuestionsByAuthorRow, error)
 	ListQuestionsByChamber(ctx context.Context, arg ListQuestionsByChamberParams) ([]ListQuestionsByChamberRow, error)
+	ListQuestionsFiltered(ctx context.Context, arg ListQuestionsFilteredParams) ([]ListQuestionsFilteredRow, error)
 	ListQuestionsTop(ctx context.Context, arg ListQuestionsTopParams) ([]ListQuestionsTopRow, error)
 	ListReplies(ctx context.Context, arg ListRepliesParams) ([]ListRepliesRow, error)
+	SearchChambers(ctx context.Context, arg SearchChambersParams) ([]SearchChambersRow, error)
 	SearchQuestions(ctx context.Context, arg SearchQuestionsParams) ([]SearchQuestionsRow, error)
+	SearchReplies(ctx context.Context, arg SearchRepliesParams) ([]SearchRepliesRow, error)
+	SearchUsers(ctx context.Context, query pgtype.Text) ([]SearchUsersRow, error)
 	SetPasswordResetToken(ctx context.Context, arg SetPasswordResetTokenParams) error
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error

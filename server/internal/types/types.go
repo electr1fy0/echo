@@ -1,71 +1,8 @@
 package types
 
 import (
-	"database/sql/driver"
-	"encoding/json"
-	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
-
-// UUID is a wrapper around google/uuid.UUID that supports flexible JSON unmarshalling
-type UUID uuid.UUID
-
-// MarshalJSON implements the json.Marshaler interface
-func (u UUID) MarshalJSON() ([]byte, error) {
-	return json.Marshal(uuid.UUID(u).String())
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface
-func (u *UUID) UnmarshalJSON(data []byte) error {
-	var v interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-
-	switch val := v.(type) {
-	case string:
-		id, err := uuid.Parse(val)
-		if err != nil {
-			return err
-		}
-		*u = UUID(id)
-	case []interface{}:
-		// Handle [16]byte sent as JSON array of numbers
-		if len(val) == 16 {
-			var bytes [16]byte
-			for i, item := range val {
-				if f, ok := item.(float64); ok {
-					bytes[i] = byte(f)
-				} else {
-					return fmt.Errorf("invalid uuid byte at index %d", i)
-				}
-			}
-			*u = UUID(bytes)
-			return nil
-		}
-		return fmt.Errorf("invalid uuid array length: %d", len(val))
-	default:
-		return fmt.Errorf("invalid uuid format: %T", val)
-	}
-	return nil
-}
-
-// Scan implements the sql.Scanner interface
-func (u *UUID) Scan(src interface{}) error {
-	var id uuid.UUID
-	if err := id.Scan(src); err != nil {
-		return err
-	}
-	*u = UUID(id)
-	return nil
-}
-
-// Value implements the driver.Valuer interface
-func (u UUID) Value() (driver.Value, error) {
-	return uuid.UUID(u).Value()
-}
 
 type User struct {
 	Username string `json:"username"`
@@ -84,13 +21,13 @@ type Profile struct {
 }
 
 type Question struct {
-	UID            UUID      `json:"uid"`
+	UID            string    `json:"uid"`
 	Content        string    `json:"content"`
 	TimeCreated    time.Time `json:"timeCreated"`
 	Upvotes        int       `json:"upvotes"`
 	IsUpvoted      bool      `json:"isUpvoted"`
 	AuthorUsername string    `json:"authorUsername"`
-	ChamberUID     UUID      `json:"chamberUid"`
+	ChamberUID     string    `json:"chamberUid"`
 	ChamberName    string    `json:"chamberName"`
 }
 
@@ -110,17 +47,17 @@ type Vote struct {
 }
 
 type Answer struct {
-	UID            UUID      `json:"uid"`
+	UID            string    `json:"uid"`
 	Content        string    `json:"content"`
 	TimeCreated    time.Time `json:"timeCreated"`
-	QuestionUID    UUID      `json:"questionUid"`
+	QuestionUID    string    `json:"questionUid"`
 	Upvotes        int       `json:"upvotes"`
 	IsUpvoted      bool      `json:"isUpvoted"`
 	AuthorUsername string    `json:"authorUsername"`
 }
 
 type Chamber struct {
-	UID             UUID      `json:"uid"`
+	UID             string    `json:"uid"`
 	Name            string    `json:"name"`
 	Description     string    `json:"description"`
 	CreatorUsername string    `json:"creatorUsername"`

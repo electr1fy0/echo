@@ -2,108 +2,111 @@ package repository
 
 import (
 	"context"
+	"echo/internal/database"
 	"echo/internal/types"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (r *Repository) SearchChambersRaw(ctx context.Context, query string, currentUser string) ([]types.Chamber, error) {
-	rows, err := r.DB.Query(ctx, `
-			SELECT 
-				c.uid, c.name, COALESCE(c.description, ''), c.color_index, c.created_at,
-				(SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
-				EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = $1) as is_joined
-			FROM chambers c
-			WHERE c.name ILIKE $2 OR c.description ILIKE $2
-			LIMIT 5`, currentUser, "%"+query+"%")
+	rows, err := r.Q.SearchChambers(ctx, database.SearchChambersParams{
+		Query:       pgtype.Text{String: query, Valid: true},
+		CurrentUser: currentUser,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
 	var chambers []types.Chamber
-	for rows.Next() {
-		var c types.Chamber
-		if err := rows.Scan(&c.UID, &c.Name, &c.Description, &c.ColorIndex, &c.TimeCreated, &c.MemberCount, &c.IsJoined); err == nil {
-			chambers = append(chambers, c)
-		}
+	for _, row := range rows {
+		chambers = append(chambers, types.Chamber{
+			UID:         uuid.UUID(row.Uid.Bytes).String(),
+			Name:        row.Name,
+			Description: row.Description,
+			ColorIndex:  row.ColorIndex.Int32,
+			TimeCreated: row.CreatedAt.Time,
+			MemberCount: int(row.MemberCount),
+			IsJoined:    row.IsJoined,
+		})
 	}
 	return chambers, nil
 }
 
 func (r *Repository) SearchQuestionsRaw(ctx context.Context, query string, currentUser string) ([]types.QuestionItem, error) {
-	rows, err := r.DB.Query(ctx, `
-			select
-				q.uid, q.content, q.time_created, q.author,
-				u.avatar,
-				q.upvotes_count,
-				exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $1) as is_upvoted
-			from questions q
-			left join users u on u.username = q.author
-			where q.content ilike $2
-			limit 5`, currentUser, "%"+query+"%")
+	rows, err := r.Q.SearchQuestions(ctx, database.SearchQuestionsParams{
+		Query:       pgtype.Text{String: "%" + query + "%", Valid: true},
+		CurrentUser: currentUser,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
 	var questions []types.QuestionItem
-	for rows.Next() {
-		var q types.QuestionItem
-		var avatar *string
-		if err := rows.Scan(&q.Question.UID, &q.Question.Content, &q.Question.TimeCreated, &q.Question.AuthorUsername, &avatar, &q.Question.Upvotes, &q.Question.IsUpvoted); err == nil {
-			if avatar != nil {
-				q.Author.Avatar = *avatar
-			}
-			q.Author.Username = q.Question.AuthorUsername
-			questions = append(questions, q)
+	for _, row := range rows {
+		q := types.QuestionItem{
+			Question: types.Question{
+				UID:            uuid.UUID(row.Uid.Bytes).String(),
+				Content:        row.Content.String,
+				TimeCreated:    row.TimeCreated.Time,
+				AuthorUsername: row.Author,
+				Upvotes:        int(row.UpvotesCount.Int32),
+				IsUpvoted:      row.IsUpvoted,
+			},
+			Author: types.Profile{
+				Username: row.Author,
+				Avatar:   row.Avatar.String,
+			},
 		}
+		questions = append(questions, q)
 	}
 	return questions, nil
 }
 
 func (r *Repository) SearchRepliesRaw(ctx context.Context, query string, currentUser string) ([]types.AnswerItem, error) {
-	rows, err := r.DB.Query(ctx, `
-			select 
-				a.uid, a.content, a.time_created, a.question_uid, a.author,
-				u.avatar,
-				a.upvotes_count,
-				exists (select 1 from answer_upvotes v2 where v2.answer_uid = a.uid and v2.username = $1) as is_upvoted
-			from answers a
-			left join users u on u.username = a.author
-			where a.content ilike $2
-			limit 5`, currentUser, "%"+query+"%")
+	rows, err := r.Q.SearchReplies(ctx, database.SearchRepliesParams{
+		Query:       pgtype.Text{String: query, Valid: true},
+		CurrentUser: currentUser,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
 	var replies []types.AnswerItem
-	for rows.Next() {
-		var ans types.AnswerItem
-		var avatar *string
-		if err := rows.Scan(&ans.Answer.UID, &ans.Answer.Content, &ans.Answer.TimeCreated, &ans.Answer.QuestionUID, &ans.Answer.AuthorUsername, &avatar, &ans.Answer.Upvotes, &ans.Answer.IsUpvoted); err == nil {
-			if avatar != nil {
-				ans.Author.Avatar = *avatar
-			}
-			ans.Author.Username = ans.Answer.AuthorUsername
-			replies = append(replies, ans)
+	for _, row := range rows {
+		ans := types.AnswerItem{
+			Answer: types.Answer{
+				UID:            uuid.UUID(row.Uid.Bytes).String(),
+				Content:        row.Content,
+				TimeCreated:    row.TimeCreated.Time,
+				QuestionUID:    uuid.UUID(row.QuestionUid.Bytes).String(),
+				AuthorUsername: row.Author,
+				Upvotes:        int(row.UpvotesCount.Int32),
+				IsUpvoted:      row.IsUpvoted,
+			},
+			Author: types.Profile{
+				Username: row.Author,
+				Avatar:   row.Avatar.String,
+			},
 		}
+		replies = append(replies, ans)
 	}
 	return replies, nil
 }
 
 func (r *Repository) SearchUsersRaw(ctx context.Context, query string) ([]types.Profile, error) {
-	rows, err := r.DB.Query(ctx, `
-			SELECT username, COALESCE(avatar, ''), COALESCE(bio, '')
-			FROM users
-			WHERE username ILIKE $1
-			LIMIT 5`, "%"+query+"%")
+	rows, err := r.Q.SearchUsers(ctx, pgtype.Text{String: query, Valid: true})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+
 	var users []types.Profile
-	for rows.Next() {
-		var u types.Profile
-		if err := rows.Scan(&u.Username, &u.Avatar, &u.Bio); err == nil {
-			users = append(users, u)
-		}
+	for _, row := range rows {
+		users = append(users, types.Profile{
+			Username: row.Username,
+			Avatar:   row.Avatar,
+			Bio:      row.Bio,
+		})
 	}
 	return users, nil
 }

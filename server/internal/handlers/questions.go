@@ -7,21 +7,17 @@ import (
 	"echo/internal/types"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (h *QuestionHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	quidStr := r.PathValue("uid")
-	var quid pgtype.UUID
-	if err := quid.Scan(quidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	quid := r.PathValue("uid")
+	if quid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -35,14 +31,14 @@ func (h *QuestionHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
 		return
 	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "vote updated"})
 }
 func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	quidStr := r.PathValue("uid")
-	var quid pgtype.UUID
-	if err := quid.Scan(quidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	quid := r.PathValue("uid")
+	if quid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 	sub, err := middleware.GetUserID(r.Context())
@@ -60,13 +56,12 @@ func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(q)
+	respondWithJSON(w, http.StatusOK, q)
 }
 func (h *QuestionHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
-	uidStr := r.PathValue("uid")
-	var uid pgtype.UUID
-	if err := uid.Scan(uidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	uid := r.PathValue("uid")
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
@@ -87,6 +82,7 @@ func (h *QuestionHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request)
 		}
 		return
 	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "question deleted"})
 }
 func (h *QuestionHandler) CreateQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
@@ -105,7 +101,7 @@ func (h *QuestionHandler) CreateQuestion(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if uuid.UUID(question.ChamberUID) == uuid.Nil {
+	if question.ChamberUID == "" {
 		respondWithError(w, "chamber uid is required", nil, http.StatusBadRequest)
 		return
 	}
@@ -115,8 +111,7 @@ func (h *QuestionHandler) CreateQuestion(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, "failed to create question", err, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "question created"})
+	respondWithJSON(w, http.StatusCreated, map[string]string{"message": "question created"})
 }
 
 func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request) {
@@ -124,10 +119,9 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 	defer cancel()
 	defer r.Body.Close()
 
-	uidStr := r.PathValue("uid")
-	var uid pgtype.UUID
-	if err := uid.Scan(uidStr); err != nil {
-		respondWithError(w, "invalid uid", err, http.StatusBadRequest)
+	uid := r.PathValue("uid")
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
 	}
 
@@ -154,40 +148,30 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "question updated"})
 }
 func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer r.Body.Close()
 	defer cancel()
+	
+	limit, offset := parsePagination(r)
+
 	q := r.URL.Query()
-	limit := q.Get("limit")
-	offset := q.Get("offset")
-	if limit == "" {
-		limit = "500"
-	}
-	if offset == "" {
-		offset = "0"
-	}
 	sort := q.Get("sort")
 	filter := q.Get("filter")
 	targetChamberUID := q.Get("chamber_uid")
 	author := q.Get("author")
+	
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	limitInt, _ := strconv.Atoi(limit)
-	offsetInt, _ := strconv.Atoi(offset)
-	if limitInt == 0 {
-		limitInt = 500
-	}
 
 	questions, err := h.Service.ListQuestions(ctx, repository.ListQuestionsParams{
-
-		Limit:            limitInt,
-		Offset:           offsetInt,
+		Limit:            int(limit),
+		Offset:           int(offset),
 		Sort:             sort,
 		Filter:           filter,
 		TargetChamberUID: targetChamberUID,
@@ -198,79 +182,49 @@ func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(questions)
+	respondWithJSON(w, http.StatusOK, questions)
 }
 func (h *QuestionHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-	q := r.URL.Query()
-	limitStr := q.Get("limit")
-	offsetStr := q.Get("offset")
-	limit := 500
-	offset := 0
-	var err error
-	if limitStr != "" {
-		limit, err = strconv.Atoi(limitStr)
-		if err != nil {
-			limit = 500
-		}
-	}
-	if offsetStr != "" {
-		offset, err = strconv.Atoi(offsetStr)
-		if err != nil {
-			offset = 0
-		}
-	}
+	
+	limit, offset := parsePagination(r)
+	
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
 
-	questions, err := h.Service.ListUserQuestions(ctx, int32(limit), int32(offset), sub, sub)
+	questions, err := h.Service.ListUserQuestions(ctx, limit, offset, sub, sub)
 	if err != nil {
 		respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(questions)
+	respondWithJSON(w, http.StatusOK, questions)
 }
 func (h *QuestionHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-	q := r.URL.Query()
-	query := q.Get("q")
-	limitStr := q.Get("limit")
-	offsetStr := q.Get("offset")
-	limit := 500
-	offset := 0
-	var err error
-	if limitStr != "" {
-		limit, err = strconv.Atoi(limitStr)
-		if err != nil {
-			limit = 500
-		}
-	}
-	if offsetStr != "" {
-		offset, err = strconv.Atoi(offsetStr)
-		if err != nil {
-			offset = 0
-		}
-	}
+	
+	limit, offset := parsePagination(r)
+	query := r.URL.Query().Get("q")
+	
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
 	if query == "" {
-		json.NewEncoder(w).Encode([]types.QuestionItem{})
+		respondWithJSON(w, http.StatusOK, []types.QuestionItem{})
 		return
 	}
 
-	questions, err := h.Service.SearchQuestions(ctx, query, int32(limit), int32(offset), sub)
+	questions, err := h.Service.SearchQuestions(ctx, query, limit, offset, sub)
 	if err != nil {
 		respondWithError(w, "failed to query rows", err, http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(questions)
+	respondWithJSON(w, http.StatusOK, questions)
 }
