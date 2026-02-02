@@ -16,7 +16,6 @@ import (
 
 type Server struct {
 	router *http.ServeMux
-	db     *pgxpool.Pool
 	repo   *repository.Repository
 	svc    *service.Service
 }
@@ -36,7 +35,6 @@ func New() (*Server, error) {
 	svc := service.New(repo)
 
 	s := &Server{
-		db:   db,
 		repo: repo,
 		svc:  svc,
 	}
@@ -114,7 +112,7 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Close() {
-	if s.db != nil {
-		s.db.Close()
+	if s.repo != nil {
+		s.repo.Close()
 	}
 }

@@ -17,3 +17,9 @@ func New(db *pgxpool.Pool) *Repository {
 		Q:  database.New(db),
 	}
 }
+
+func (r *Repository) Close() {
+	if r.DB != nil {
+		r.DB.Close()
+	}
+}
