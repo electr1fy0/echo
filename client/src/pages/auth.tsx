@@ -280,7 +280,7 @@ export function Auth() {
                   placeholder="Username"
                   aria-label="Username"
                   autoComplete="username"
-                  className="text-sm pl-3"
+                  className="text-base pl-3"
                   onChange={(e) => {
                     updateUser({ username: e.target.value });
                   }}
@@ -293,7 +293,7 @@ export function Auth() {
                   placeholder="Email"
                   aria-label="Email"
                   autoComplete="email"
-                  className="text-sm pl-3"
+                  className="text-base pl-3"
                   onChange={(e) => {
                     updateUser({ email: e.target.value });
                   }}
@@ -306,7 +306,7 @@ export function Auth() {
                   placeholder={isSignUp ? "Create Password" : "Password"}
                   aria-label="Password"
                   autoComplete={isSignUp ? "new-password" : "current-password"}
-                  className="text-sm pl-3"
+                  className="text-base pl-3"
                   onChange={(e) => {
                     updateUser({ password: e.target.value });
                   }}

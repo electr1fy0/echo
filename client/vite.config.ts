@@ -49,22 +49,16 @@ export default defineConfig({
           {
             urlPattern: ({ url }) => {
               return (
+                url.origin.includes("echo-server.up.railway.app") &&
                 url.pathname.match(
                   /^\/(auth|users|questions|chambers|search)/
-                ) && true
+                ) &&
+                true
               );
             },
-            handler: "NetworkFirst",
+            handler: "NetworkOnly",
             options: {
               cacheName: "api-cache",
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 86400,
-              },
-              networkTimeoutSeconds: 10,
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
             },
           },
           {

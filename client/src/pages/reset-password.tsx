@@ -107,7 +107,7 @@ export function ResetPassword() {
                             type="password"
                             placeholder="New Password"
                             aria-label="New Password"
-                            className="text-sm pl-3"
+                            className="text-base pl-3"
                             onChange={(e) => setNewPassword(e.target.value)}
                             required
                         />
@@ -115,7 +115,7 @@ export function ResetPassword() {
                             type="password"
                             placeholder="Confirm Password"
                             aria-label="Confirm Password"
-                            className="text-sm pl-3"
+                            className="text-base pl-3"
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
                         />

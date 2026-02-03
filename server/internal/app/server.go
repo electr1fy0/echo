@@ -41,7 +41,6 @@ func New() (*Server, error) {
 }
 
 func (s *Server) setupRouter() {
-
 	authH := &handlers.AuthHandler{Service: s.svc}
 	userH := &handlers.UserHandler{Service: s.svc}
 	questionH := &handlers.QuestionHandler{Service: s.svc}
