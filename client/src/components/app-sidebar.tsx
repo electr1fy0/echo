@@ -27,9 +27,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionField } from "@/components/ui/mention-field";
 import { Button } from "@/components/ui/button";
 import { useQuestionDraft, useCreateQuestion } from "@/hooks/use-questions";
+import { validateMentions } from "@/lib/mention-validation";
+import { toast } from "@/lib/toast";
 interface NavItem {
   icon: typeof Home01Icon;
   path?: string;
@@ -125,23 +127,39 @@ function CreateQueryDialog({
 }) {
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: createQuestion, isPending } = useCreateQuestion();
+  const [isValidating, setIsValidating] = useState(false);
   const [selectedChamber, setSelectedChamber] = useState<string>("");
   const { data: allChambers = [] } = useListChambers();
   const chambers = allChambers.filter((c) => c.isJoined);
-  const handleSubmit = () => {
-    if (!draft.content.trim() || !selectedChamber) return;
-    createQuestion(
-      { content: draft.content, chamberUid: selectedChamber },
-      {
-        onSuccess: () => {
-          onOpenChange(false);
-          setTimeout(() => {
-            resetDraft();
-            setSelectedChamber("");
-          }, 200);
+  const handleSubmit = async () => {
+    if (!draft.content.trim() || !selectedChamber || isPending || isValidating) return;
+    setIsValidating(true);
+    try {
+      const result = await validateMentions(draft.content);
+      if (result.missing.length > 0) {
+        toast.error(`User not found: ${result.missing.join(", ")}`);
+        setIsValidating(false);
+        return;
+      }
+      createQuestion(
+        { content: draft.content, chamberUid: selectedChamber },
+        {
+          onSuccess: () => {
+            onOpenChange(false);
+            setTimeout(() => {
+              resetDraft();
+              setSelectedChamber("");
+            }, 200);
+          },
+          onSettled: () => {
+            setIsValidating(false);
+          },
         },
-      },
-    );
+      );
+    } catch {
+      toast.error("Failed to validate mentions");
+      setIsValidating(false);
+    }
   };
   const selectedChamberData = chambers.find((c) => c.uid === selectedChamber);
   return (
@@ -157,20 +175,21 @@ function CreateQueryDialog({
             transition-colors
             focus-within:border-neutral-400
             dark:focus-within:border-neutral-500
-            overflow-hidden
+            overflow-visible
 
           "
           >
-            <Textarea
+            <MentionField
               placeholder={
                 selectedChamberData
                   ? `Ask in ${selectedChamberData.name}...`
                   : "Select a chamber to ask a question..."
               }
-              aria-label="Question content"
-              className="resize-none h-32 px-4 border-none shadow-none focus-visible:ring-0 bg-transparent  text-base"
+              ariaLabel="Question content"
+              className="resize-none h-32 px-4 border-none shadow-none focus-visible:ring-0 bg-transparent text-base"
               value={draft.content}
-              onChange={(e) => updateDraft({ content: e.target.value })}
+              onValueChange={(value) => updateDraft({ content: value })}
+              multiline
               autoFocus
             />
             <div className="flex items-center justify-between p-2 bg-neutral-50/50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
@@ -231,7 +250,7 @@ function CreateQueryDialog({
                 className="font-normal rounded-lg h-9 px-4"
                 onClick={handleSubmit}
                 disabled={
-                  !selectedChamber || !draft.content.trim() || isPending
+                  !selectedChamber || !draft.content.trim() || isPending || isValidating
                 }
               >
                 {isPending ? "Asking..." : "Ask"}

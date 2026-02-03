@@ -17,7 +17,7 @@ type Querier interface {
 	CreateAnswerVote(ctx context.Context, arg CreateAnswerVoteParams) error
 	CreateChamber(ctx context.Context, arg CreateChamberParams) error
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) error
-	CreateQuestion(ctx context.Context, arg CreateQuestionParams) error
+	CreateQuestion(ctx context.Context, arg CreateQuestionParams) (pgtype.UUID, error)
 	CreateQuestionVote(ctx context.Context, arg CreateQuestionVoteParams) error
 	CreateReply(ctx context.Context, arg CreateReplyParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
@@ -31,6 +31,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, username string) error
 	GetAnswerAuthor(ctx context.Context, uid pgtype.UUID) (string, error)
 	GetAnswerVote(ctx context.Context, arg GetAnswerVoteParams) (AnswerUpvote, error)
+	GetChamberCreator(ctx context.Context, uid pgtype.UUID) (pgtype.Text, error)
 	GetProfile(ctx context.Context, username string) (GetProfileRow, error)
 	GetPublicProfile(ctx context.Context, username string) (GetPublicProfileRow, error)
 	GetQuestion(ctx context.Context, arg GetQuestionParams) (GetQuestionRow, error)
@@ -57,6 +58,7 @@ type Querier interface {
 	SearchUsers(ctx context.Context, query pgtype.Text) ([]SearchUsersRow, error)
 	SetPasswordResetToken(ctx context.Context, arg SetPasswordResetTokenParams) error
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
+	UpdateChamber(ctx context.Context, arg UpdateChamberParams) (pgtype.UUID, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error
 	UpdateQuestion(ctx context.Context, arg UpdateQuestionParams) (pgtype.UUID, error)
 	UpdateReply(ctx context.Context, arg UpdateReplyParams) (pgtype.UUID, error)

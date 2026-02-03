@@ -9,9 +9,10 @@ type QuestionListProps = {
   questions: QuestionItem[];
   onDelete?: (id: string) => void;
   showChamberName?: boolean;
+  canPin?: boolean;
 };
 
-export function QuestionList({ questions, onDelete, showChamberName }: QuestionListProps) {
+export function QuestionList({ questions, onDelete, showChamberName, canPin }: QuestionListProps) {
   return questions.length > 0 ? (
     <Accordion className="dark:bg-[#1D1D1D]">
       {questions.map((questionItem, index) => (
@@ -20,6 +21,7 @@ export function QuestionList({ questions, onDelete, showChamberName }: QuestionL
           questionItem={questionItem}
           onDelete={onDelete || (() => { })}
           showChamberName={showChamberName}
+          canPin={canPin}
         />
       ))}
     </Accordion>

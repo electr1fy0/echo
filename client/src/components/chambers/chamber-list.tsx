@@ -1,9 +1,16 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserMultiple02Icon, Add01Icon } from "@hugeicons/core-free-icons";
+import {
+  UserMultiple02Icon,
+  Add01Icon,
+  PencilEdit02Icon,
+} from "@hugeicons/core-free-icons";
 import { cn, getInitials } from "@/lib/utils";
 import { Link } from "react-router";
 import type { Chamber } from "@/types";
+import { useAuth } from "@/hooks/use-auth";
+import { EditChamberDialog } from "@/components/chambers/edit-chamber-dialog";
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
@@ -17,11 +24,14 @@ interface ChamberCardProps {
 import { useJoinChamber, useLeaveChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "./consts";
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
+  const { data: user } = useAuth();
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const colorClass =
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
+  const canEdit = !!user?.username && user.username === chamber.creatorUsername;
   const handleToggleJoin = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!chamber.uid || isPending) return;
@@ -62,20 +72,43 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
           </div>
         </div>
       </Link>
-      <Button
-        variant={chamber.isJoined ? "secondary" : "default"}
-        size="sm"
-        className={cn(
-          "rounded-full h-7 px-3 text-xs font-medium transition-all shadow-none",
-          !chamber.isJoined &&
-          "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
-          chamber.isJoined &&
-          "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+      <div className="flex items-center gap-2">
+        {canEdit && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsEditOpen(true);
+            }}
+            aria-label="Edit chamber"
+          >
+            <HugeiconsIcon icon={PencilEdit02Icon} className="size-4" />
+          </Button>
         )}
-        onClick={handleToggleJoin}
-      >
-        {chamber.isJoined ? "Joined" : "Join"}
-      </Button>
+        <Button
+          variant={chamber.isJoined ? "secondary" : "default"}
+          size="sm"
+          className={cn(
+            "rounded-full h-7 px-3 text-xs font-medium transition-all shadow-none",
+            !chamber.isJoined &&
+            "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
+            chamber.isJoined &&
+            "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
+          )}
+          onClick={handleToggleJoin}
+        >
+          {chamber.isJoined ? "Joined" : "Join"}
+        </Button>
+      </div>
+      {canEdit && chamber.uid && (
+        <EditChamberDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          chamber={chamber}
+        />
+      )}
     </div>
   );
 }

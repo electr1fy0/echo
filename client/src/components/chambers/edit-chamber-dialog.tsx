@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,72 +10,73 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { Chamber } from "@/types";
-import { useCreateChamber } from "@/hooks/use-chamber";
+import { useUpdateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router";
 import { toast } from "@/lib/toast";
 
-interface CreateChamberDialogProps {
+type EditChamberDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+  chamber: Chamber;
+};
 
-export function CreateChamberDialog({
+export function EditChamberDialog({
   open,
   onOpenChange,
-}: CreateChamberDialogProps) {
-  const navigate = useNavigate();
-  const { mutate: createChamber, isPending } = useCreateChamber();
-  const [chamber, setChamber] = useState<Chamber>({
-    name: "",
-    description: "",
-    colorIndex: 0,
-  });
+  chamber,
+}: EditChamberDialogProps) {
+  const { mutate: updateChamber, isPending } = useUpdateChamber();
+  const [draft, setDraft] = useState<Chamber>(chamber);
 
-  const updateChamber = (fields: Partial<Chamber>) => {
-    return setChamber((prev) => {
-      return { ...prev, ...fields };
-    });
+  useEffect(() => {
+    setDraft(chamber);
+  }, [chamber]);
+
+  const updateDraft = (fields: Partial<Chamber>) => {
+    setDraft((prev) => ({ ...prev, ...fields }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isPending || !chamber.name.trim() || !chamber.description.trim()) return;
-    createChamber(chamber, {
-      onSuccess: (newChamber) => {
-        onOpenChange(false);
-        if (newChamber?.uid) {
-          navigate(`/chamber/${newChamber.uid}`);
-          toast.success("Chamber created successfully");
-        }
+    if (!draft.name?.trim() || !draft.description?.trim() || !draft.uid) return;
+    updateChamber(
+      {
+        uid: draft.uid,
+        chamber: {
+          name: draft.name.trim(),
+          description: draft.description.trim(),
+          colorIndex: draft.colorIndex ?? 0,
+        },
       },
-      onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to create chamber");
+      {
+        onSuccess: () => {
+          toast.success("Chamber updated");
+          onOpenChange(false);
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to update chamber");
+        },
       },
-    });
+    );
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(val) => {
-        onOpenChange(val);
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>Create a Chamber</DialogTitle>
+          <DialogTitle>Edit Chamber</DialogTitle>
         </DialogHeader>
         <div className="py-4 space-y-4">
-          <form className="space-y-4" onSubmit={(e) => handleSubmit(e)}>
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Name
               </label>
               <Input
+                value={draft.name}
                 placeholder="e.g. Photography Enthusiasts"
-                onChange={(e) => updateChamber({ name: e.target.value })}
+                onChange={(e) => updateDraft({ name: e.target.value })}
                 className="rounded-xl mt-2"
               />
             </div>
@@ -84,8 +85,9 @@ export function CreateChamberDialog({
                 Description
               </label>
               <Textarea
+                value={draft.description}
                 placeholder="What is this chamber about?"
-                onChange={(e) => updateChamber({ description: e.target.value })}
+                onChange={(e) => updateDraft({ description: e.target.value })}
                 className="resize-none min-h-20 rounded-xl mt-2"
               />
             </div>
@@ -98,13 +100,13 @@ export function CreateChamberDialog({
                   <button
                     key={index}
                     type="button"
-                    onClick={() => updateChamber({ colorIndex: index })}
+                    onClick={() => updateDraft({ colorIndex: index })}
                     className={cn(
                       "size-6 rounded-full transition-all ring-2 ring-offset-2 ring-transparent ring-offset-transparent",
                       color,
                       {
                         "ring-neutral-900 dark:ring-neutral-100 ring-offset-white dark:ring-offset-neutral-900":
-                          chamber.colorIndex === index,
+                          draft.colorIndex === index,
                       },
                     )}
                   />
@@ -115,7 +117,12 @@ export function CreateChamberDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={!chamber.name.trim() || !chamber.description.trim()}>Create Chamber</Button>
+              <Button
+                type="submit"
+                disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
+              >
+                Save
+              </Button>
             </DialogFooter>
           </form>
         </div>

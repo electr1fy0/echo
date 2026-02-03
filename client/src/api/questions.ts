@@ -109,3 +109,29 @@ export async function updateQuestion(questionId: string, content: string) {
   );
   if (!res.ok) throw new Error("Failed to update question");
 }
+
+export async function pinQuestion(questionId: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/pin`,
+    {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+      },
+    }
+  );
+  if (!res.ok) throw new Error("Failed to pin question");
+}
+
+export async function unpinQuestion(questionId: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/pin`,
+    {
+      method: "DELETE",
+      headers: {
+        ...getAuthHeaders(),
+      },
+    }
+  );
+  if (!res.ok) throw new Error("Failed to unpin question");
+}

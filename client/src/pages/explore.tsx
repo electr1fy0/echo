@@ -19,6 +19,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
 import { PageTransition } from "@/components/page-transition";
 import { formatRelativeTime } from "@/lib/format-time";
+import { MentionText } from "@/components/mentions/mention-text";
 function ReplyResult({ item }: { item: AnswerItem }) {
   return (
     <div
@@ -41,9 +42,10 @@ function ReplyResult({ item }: { item: AnswerItem }) {
                 : ""}
             </span>
           </div>
-          <p className="text-sm text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2">
-            {item.answer.content}
-          </p>
+          <MentionText
+            content={item.answer.content}
+            className="block text-sm text-neutral-600 dark:text-neutral-300 mt-1 line-clamp-2"
+          />
           <p className="text-xs text-neutral-400 mt-2">Replied to a question</p>
         </div>
       </div>

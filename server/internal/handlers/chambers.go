@@ -5,10 +5,12 @@ import (
 	"echo/internal/middleware"
 	"echo/internal/types"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (h *ChamberHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +84,7 @@ func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 			UID:         uuid.UUID(row.Uid.Bytes).String(),
 			Name:        row.Name,
 			Description: row.Description,
+			CreatorUsername: row.CreatorUsername.String,
 			ColorIndex:  row.ColorIndex.Int32,
 			TimeCreated: row.CreatedAt.Time,
 			MemberCount: int(row.MemberCount),
@@ -136,4 +139,54 @@ func (h *ChamberHandler) LeaveChamber(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "left chamber"})
+}
+
+func (h *ChamberHandler) UpdateChamber(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	defer r.Body.Close()
+
+	uid := r.PathValue("uid")
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
+
+	var chamber types.Chamber
+	if err := json.NewDecoder(r.Body).Decode(&chamber); err != nil {
+		respondWithError(w, "failed to decode chamber body", err, http.StatusBadRequest)
+		return
+	}
+
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+
+	if chamber.Name == "" || chamber.Description == "" {
+		respondWithError(w, "name and description are required", nil, http.StatusBadRequest)
+		return
+	}
+
+	err = h.Service.UpdateChamber(ctx, uid, sub, chamber)
+	if err != nil {
+		if err.Error() == "unauthorized" {
+			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
+		} else if err.Error() == "chamber not found" {
+			respondWithError(w, "chamber not found", nil, http.StatusNotFound)
+		} else if err.Error() == "invalid uid" {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				respondWithError(w, "chamber name already exists", nil, http.StatusConflict)
+			} else {
+				respondWithError(w, "failed to update chamber", err, http.StatusInternalServerError)
+			}
+		}
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "chamber updated"})
 }

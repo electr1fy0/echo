@@ -3,6 +3,7 @@ import {
   listChambers,
   joinChamber,
   leaveChamber,
+  updateChamber,
 } from "@/api/chambers";
 import type { Chamber } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -110,6 +111,17 @@ export function useLeaveChamber() {
       }
     },
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
+    },
+  });
+}
+
+export function useUpdateChamber() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ uid, chamber }: { uid: string; chamber: Chamber }) =>
+      updateChamber(uid, chamber),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
     },
   });

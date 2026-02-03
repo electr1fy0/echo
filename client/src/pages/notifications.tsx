@@ -16,8 +16,12 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const isUpvote = notification.type === "upvote_question";
   const isReply = notification.type === "reply_question";
   const isUpvoteReply = notification.type === "upvote_reply";
+  const isMentionQuestion = notification.type === "mention_question";
+  const isMentionReply = notification.type === "mention_reply";
 
-  if (!isUpvote && !isReply && !isUpvoteReply) return null;
+  if (!isUpvote && !isReply && !isUpvoteReply && !isMentionQuestion && !isMentionReply) {
+    return null;
+  }
 
   return (
     <div
@@ -48,14 +52,48 @@ function NotificationItem({ notification }: { notification: Notification }) {
               {isUpvote && " upvoted your question"}
               {isReply && " replied to your question"}
               {isUpvoteReply && " upvoted your reply"}
+              {isMentionQuestion && " mentioned you in a question"}
+              {isMentionReply && " mentioned you in a reply"}
             </span>
           </p>
         </div>
+
+        {isMentionQuestion && notification.content && (
+          <div className="mt-2 bg-neutral-100 dark:bg-neutral-800/70 rounded-lg p-3">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              Question
+            </p>
+            <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+              {notification.content}
+            </p>
+          </div>
+        )}
 
         {isUpvoteReply && notification.content && (
           <div className="mt-2 bg-neutral-100 dark:bg-neutral-800/70 rounded-lg p-3">
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
               Your reply
+            </p>
+            <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+              {notification.content}
+            </p>
+            {notification.question_content && (
+              <div className="mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-700">
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+                  On question
+                </p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                  {notification.question_content}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {isMentionReply && notification.content && (
+          <div className="mt-2 bg-neutral-100 dark:bg-neutral-800/70 rounded-lg p-3">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              Reply
             </p>
             <p className="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
               {notification.content}

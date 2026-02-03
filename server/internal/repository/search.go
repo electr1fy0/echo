@@ -24,6 +24,7 @@ func (r *Repository) SearchChambersRaw(ctx context.Context, query string, curren
 			UID:         uuid.UUID(row.Uid.Bytes).String(),
 			Name:        row.Name,
 			Description: row.Description,
+			CreatorUsername: row.CreatorUsername.String,
 			ColorIndex:  row.ColorIndex.Int32,
 			TimeCreated: row.CreatedAt.Time,
 			MemberCount: int(row.MemberCount),
@@ -52,11 +53,15 @@ func (r *Repository) SearchQuestionsRaw(ctx context.Context, query string, curre
 				AuthorUsername: row.Author,
 				Upvotes:        int(row.UpvotesCount.Int32),
 				IsUpvoted:      row.IsUpvoted,
+				IsPinned:       row.PinnedAt.Valid,
 			},
 			Author: types.Profile{
 				Username: row.Author,
 				Avatar:   row.Avatar.String,
 			},
+		}
+		if row.AcceptedAnswerUid.Valid {
+			q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
 		}
 		questions = append(questions, q)
 	}
@@ -83,6 +88,7 @@ func (r *Repository) SearchRepliesRaw(ctx context.Context, query string, current
 				AuthorUsername: row.Author,
 				Upvotes:        int(row.UpvotesCount.Int32),
 				IsUpvoted:      row.IsUpvoted,
+				IsAccepted:     false,
 			},
 			Author: types.Profile{
 				Username: row.Author,

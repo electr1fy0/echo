@@ -29,6 +29,8 @@ type Question struct {
 	AuthorUsername string    `json:"authorUsername"`
 	ChamberUID     string    `json:"chamberUid"`
 	ChamberName    string    `json:"chamberName"`
+	AcceptedAnswerUID string `json:"acceptedAnswerUid"`
+	IsPinned      bool      `json:"isPinned"`
 }
 
 type QuestionItem struct {
@@ -54,6 +56,7 @@ type Answer struct {
 	Upvotes        int       `json:"upvotes"`
 	IsUpvoted      bool      `json:"isUpvoted"`
 	AuthorUsername string    `json:"authorUsername"`
+	IsAccepted     bool      `json:"isAccepted"`
 }
 
 type Chamber struct {

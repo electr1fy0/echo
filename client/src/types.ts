@@ -9,6 +9,8 @@ export interface Question {
   isUpvoted: boolean;
   chamberUid?: string;
   chamberName?: string;
+  acceptedAnswerUid?: string;
+  isPinned?: boolean;
 }
 export interface User {
   username: string;
@@ -18,6 +20,11 @@ export interface User {
   link?: string;
   answered: number;
   posted: number;
+}
+export interface UserSummary {
+  username: string;
+  avatar?: string;
+  bio?: string;
 }
 export interface QuestionItem {
   question: Question;
@@ -39,6 +46,7 @@ export interface Reply {
   authorUsername: string;
   upvotes: number;
   isUpvoted: boolean;
+  isAccepted?: boolean;
 }
 export interface ReplyDraft {
   content: string;
@@ -54,4 +62,5 @@ export interface Chamber {
   memberCount?: number;
   colorIndex?: number;
   timeCreated?: string;
+  creatorUsername?: string;
 }

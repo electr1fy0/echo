@@ -46,6 +46,7 @@ func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 				AuthorUsername: row.Author,
 				Upvotes:        int(row.Upvotes.Int32),
 				IsUpvoted:      row.IsUpvoted,
+				IsAccepted:     row.AcceptedAnswerUid.Valid && row.AcceptedAnswerUid.Bytes == row.Uid.Bytes,
 			},
 			Author: types.Profile{
 				Username: row.Author,
@@ -85,6 +86,7 @@ func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	ans.QuestionUID = uid
 	ans.AuthorUsername = sub
 	ans.TimeCreated = time.Now().UTC()
+	ans.IsAccepted = false
 	
 	respondWithJSON(w, http.StatusCreated, ans)
 }
@@ -164,4 +166,68 @@ func (h *ReplyHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "reply deleted"})
+}
+
+func (h *ReplyHandler) AcceptReply(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	quid := r.PathValue("quid")
+	ruid := r.PathValue("ruid")
+	if quid == "" || ruid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
+	defer cancel()
+
+	err = h.Service.AcceptReply(ctx, quid, ruid, sub)
+	if err != nil {
+		if err.Error() == "unauthorized" {
+			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
+		} else if err.Error() == "question not found" || err.Error() == "reply not found" {
+			respondWithError(w, err.Error(), nil, http.StatusNotFound)
+		} else if err.Error() == "invalid question uid" || err.Error() == "invalid reply uid" {
+			respondWithError(w, err.Error(), nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to accept reply", err, http.StatusInternalServerError)
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "reply accepted"})
+}
+
+func (h *ReplyHandler) UnacceptReply(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	quid := r.PathValue("quid")
+	ruid := r.PathValue("ruid")
+	if quid == "" || ruid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
+	defer cancel()
+
+	err = h.Service.UnacceptReply(ctx, quid, ruid, sub)
+	if err != nil {
+		if err.Error() == "unauthorized" {
+			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
+		} else if err.Error() == "question not found" || err.Error() == "reply not found" {
+			respondWithError(w, err.Error(), nil, http.StatusNotFound)
+		} else if err.Error() == "invalid question uid" || err.Error() == "invalid reply uid" {
+			respondWithError(w, err.Error(), nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to unaccept reply", err, http.StatusInternalServerError)
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "reply unaccepted"})
 }

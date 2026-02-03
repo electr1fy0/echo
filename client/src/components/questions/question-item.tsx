@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuth } from "@/hooks/use-auth";
-import { useUpdateQuestion } from "@/hooks/use-questions";
+import { usePinQuestion, useUnpinQuestion, useUpdateQuestion } from "@/hooks/use-questions";
 import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -28,6 +28,8 @@ import {
   PencilEdit02Icon,
   Copy01Icon,
   Alert01Icon,
+  Pin02Icon,
+  PinOffIcon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
@@ -35,11 +37,13 @@ import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
+import { MentionText } from "@/components/mentions/mention-text";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;
   onDelete: (id: string) => void;
   showChamberName?: boolean;
+  canPin?: boolean;
 };
 
 import { QuestionListSkeleton } from "./question-skeleton";
@@ -76,6 +80,7 @@ export function QuestionItem({
   questionItem,
   onDelete,
   showChamberName,
+  canPin,
 }: QuestionItemProps) {
   const question = questionItem?.question;
   const author = questionItem?.author ?? null;
@@ -89,11 +94,16 @@ export function QuestionItem({
   const { data: user } = useAuth();
   const { mutate: updateQuestion, isPending: isUpdatePending } =
     useUpdateQuestion();
+  const { mutate: pinQuestion, isPending: isPinPending } = usePinQuestion();
+  const { mutate: unpinQuestion, isPending: isUnpinPending } = useUnpinQuestion();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question?.content ?? "");
 
   if (!question || !questionId) return null;
+  const isPinned = !!question.isPinned;
+  const isSolved = !!question.acceptedAnswerUid;
+  const canAccept = user?.username === question.authorUsername;
 
   function handleSave() {
     if (!questionId) return;
@@ -141,6 +151,16 @@ export function QuestionItem({
                   {question.timeCreated &&
                     formatRelativeTime(new Date(question.timeCreated))}
                 </span>
+                {isPinned && (
+                  <span className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">
+                    Pinned
+                  </span>
+                )}
+                {isSolved && (
+                  <span className="text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-1.5 py-0.5 rounded">
+                    Solved
+                  </span>
+                )}
                 {replies && replies.length > 0 && (
                   <div className="flex items-center gap-1.5 ml-1">
                     <AvatarGroup className="h-3">
@@ -254,6 +274,22 @@ export function QuestionItem({
                           </DropdownMenuItem>
                         </>
                       )}
+                      {canPin && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            isPinned
+                              ? unpinQuestion(questionId)
+                              : pinQuestion(questionId)
+                          }
+                          disabled={isPinPending || isUnpinPending}
+                        >
+                          <HugeiconsIcon
+                            icon={isPinned ? PinOffIcon : Pin02Icon}
+                            className="mr-2 size-4"
+                          />
+                          {isPinned ? "Unpin" : "Pin"}
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -293,9 +329,10 @@ export function QuestionItem({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed">
-                {question.content}
-              </p>
+              <MentionText
+                content={question.content}
+                className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
+              />
             )}
           </div>
         </div>
@@ -310,6 +347,7 @@ export function QuestionItem({
             <ReplyItem
               key={reply.answer.uid ?? index}
               answerItem={reply}
+              canAccept={canAccept}
               onDelete={() =>
                 deleteReply({ questionId, replyId: reply.answer.uid ?? "" })
               }

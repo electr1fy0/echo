@@ -6,7 +6,7 @@ import {
   useQuestionsQuery,
 } from "@/hooks/use-questions";
 import { Link } from "react-router";
-import { Textarea } from "@/components/ui/textarea";
+import { MentionField } from "@/components/ui/mention-field";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,12 +29,15 @@ import { ChamberCard } from "@/components/chambers/chamber-list";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 
 import { PageTransition } from "@/components/page-transition";
+import { validateMentions } from "@/lib/mention-validation";
+import { toast } from "@/lib/toast";
 
 export function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
   const { mutate: submitQuestion, isPending: isCreatePending } =
     useCreateQuestion();
+  const [isValidating, setIsValidating] = useState(false);
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { data: chambersData, isLoading } = useListChambers();
@@ -49,17 +52,32 @@ export function Home() {
   const selectedChamberData = JOINED_CHAMBERS.find(
     (c) => c.uid === selectedChamber,
   );
-  const handleSubmit = () => {
-    if (!draft.content.trim() || !selectedChamber || isCreatePending) return;
-    submitQuestion(
-      { ...draft, chamberUid: selectedChamber },
-      {
-        onSuccess: () => {
-          resetDraft();
-          setSelectedChamber("");
+  const handleSubmit = async () => {
+    if (!draft.content.trim() || !selectedChamber || isCreatePending || isValidating) return;
+    setIsValidating(true);
+    try {
+      const result = await validateMentions(draft.content);
+      if (result.missing.length > 0) {
+        toast.error(`User not found: ${result.missing.join(", ")}`);
+        setIsValidating(false);
+        return;
+      }
+      submitQuestion(
+        { ...draft, chamberUid: selectedChamber },
+        {
+          onSuccess: () => {
+            resetDraft();
+            setSelectedChamber("");
+          },
+          onSettled: () => {
+            setIsValidating(false);
+          },
         },
-      },
-    );
+      );
+    } catch {
+      toast.error("Failed to validate mentions");
+      setIsValidating(false);
+    }
   };
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
@@ -78,19 +96,20 @@ export function Home() {
             transition-colors
             focus-within:border-neutral-400
             dark:focus-within:border-neutral-500
-            overflow-hidden
+            overflow-visible
           "
         >
-          <Textarea
+          <MentionField
             placeholder={
               selectedChamberData
                 ? `Ask in ${selectedChamberData.name}...`
                 : "Select a chamber to ask a question..."
             }
-            aria-label="Question content"
+            ariaLabel="Question content"
             className="resize-none h-20 border-none shadow-none focus-visible:ring-0 bg-transparent px-4 py-3 text-base"
             value={draft.content}
-            onChange={(e) => updateDraft({ content: e.target.value })}
+            onValueChange={(value) => updateDraft({ content: value })}
+            multiline
           />
           <div className="flex items-center justify-between p-2 bg-neutral-50/50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
             <DropdownMenu>
@@ -149,7 +168,7 @@ export function Home() {
               size="sm"
               className="font-normal rounded-lg h-8 px-4"
               onClick={handleSubmit}
-              disabled={!selectedChamber || !draft.content.trim()}
+              disabled={!selectedChamber || !draft.content.trim() || isValidating || isCreatePending}
             >
               Ask
               <HugeiconsIcon

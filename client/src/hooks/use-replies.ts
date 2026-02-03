@@ -1,5 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchReplies, createReply, deleteReply, updateReply } from "@/api/replies";
+import {
+  fetchReplies,
+  createReply,
+  deleteReply,
+  updateReply,
+  acceptReply,
+  unacceptReply,
+} from "@/api/replies";
 import type { AnswerItem } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -45,6 +52,7 @@ export function useCreateReply() {
               authorUsername: user.username,
               upvotes: 0,
               isUpvoted: false,
+              isAccepted: false,
             },
             author: user,
           };
@@ -116,6 +124,27 @@ export function useUpdateReply() {
       updateReply(qid, rid, content),
     onSuccess: (_, { qid }) => {
       queryClient.invalidateQueries({ queryKey: ["replies", qid] });
+    },
+  });
+}
+
+export function useAcceptReply() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      qid,
+      rid,
+      accept,
+    }: {
+      qid: string;
+      rid: string;
+      accept: boolean;
+    }) => (accept ? acceptReply(qid, rid) : unacceptReply(qid, rid)),
+    onSuccess: (_data, { qid }) => {
+      queryClient.invalidateQueries({ queryKey: ["replies", qid] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["question", qid] });
     },
   });
 }

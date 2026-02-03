@@ -43,3 +43,14 @@ export async function leaveChamber(uid: string): Promise<void> {
   });
   if (!res.ok) throw new Error("failed to leave chamber");
 }
+
+export async function updateChamber(uid: string, chamber: Chamber): Promise<void> {
+  const res = await fetch(`${API_URL}/chambers/${uid}`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(chamber),
+  });
+  if (!res.ok) throw new Error("failed to update chamber");
+}

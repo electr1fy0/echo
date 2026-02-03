@@ -49,13 +49,15 @@ type Notification struct {
 }
 
 type Question struct {
-	Uid           pgtype.UUID      `json:"uid"`
-	TimeCreated   pgtype.Timestamp `json:"time_created"`
-	Content       pgtype.Text      `json:"content"`
-	Author        string           `json:"author"`
-	ChamberUid    pgtype.UUID      `json:"chamber_uid"`
-	UpvotesCount  pgtype.Int4      `json:"upvotes_count"`
-	RedditUpvotes pgtype.Int4      `json:"reddit_upvotes"`
+	Uid               pgtype.UUID      `json:"uid"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Content           pgtype.Text      `json:"content"`
+	Author            string           `json:"author"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	UpvotesCount      pgtype.Int4      `json:"upvotes_count"`
+	RedditUpvotes     pgtype.Int4      `json:"reddit_upvotes"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 type QuestionUpvote struct {

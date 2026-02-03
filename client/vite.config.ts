@@ -45,6 +45,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        mode: "development",
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
@@ -92,4 +93,3 @@ export default defineConfig({
     },
   },
 });
-

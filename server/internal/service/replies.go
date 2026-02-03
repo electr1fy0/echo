@@ -42,6 +42,7 @@ func (s *Service) CreateReply(ctx context.Context, questionUID string, author, c
 
 	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, pgtype.UUID{Bytes: qUID, Valid: true})
 	if err != nil {
+		s.notifyMentions(ctx, content, author, pgtype.UUID{Bytes: newUID, Valid: true}, true, "")
 		return newUID.String(), nil
 	}
 
@@ -53,6 +54,7 @@ func (s *Service) CreateReply(ctx context.Context, questionUID string, author, c
 			ReferenceUid:  pgtype.UUID{Bytes: newUID, Valid: true},
 		})
 	}
+	s.notifyMentions(ctx, content, author, pgtype.UUID{Bytes: newUID, Valid: true}, true, qAuthor)
 	return newUID.String(), nil
 }
 
@@ -136,4 +138,62 @@ func (s *Service) UpdateReplyVote(ctx context.Context, username string, ruid str
 	} else {
 		return err
 	}
+}
+
+func (s *Service) AcceptReply(ctx context.Context, questionUID, replyUID, actor string) error {
+	qUID, err := uuid.Parse(questionUID)
+	if err != nil {
+		return errors.New("invalid question uid")
+	}
+	rUID, err := uuid.Parse(replyUID)
+	if err != nil {
+		return errors.New("invalid reply uid")
+	}
+	qUidPg := pgtype.UUID{Bytes: qUID, Valid: true}
+	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, qUidPg)
+	if err == pgx.ErrNoRows {
+		return errors.New("question not found")
+	} else if err != nil {
+		return err
+	}
+	if qAuthor != actor {
+		return errors.New("unauthorized")
+	}
+	rows, err := s.Repo.SetQuestionAcceptedAnswer(ctx, qUidPg, pgtype.UUID{Bytes: rUID, Valid: true})
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("reply not found")
+	}
+	return nil
+}
+
+func (s *Service) UnacceptReply(ctx context.Context, questionUID, replyUID, actor string) error {
+	qUID, err := uuid.Parse(questionUID)
+	if err != nil {
+		return errors.New("invalid question uid")
+	}
+	rUID, err := uuid.Parse(replyUID)
+	if err != nil {
+		return errors.New("invalid reply uid")
+	}
+	qUidPg := pgtype.UUID{Bytes: qUID, Valid: true}
+	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, qUidPg)
+	if err == pgx.ErrNoRows {
+		return errors.New("question not found")
+	} else if err != nil {
+		return err
+	}
+	if qAuthor != actor {
+		return errors.New("unauthorized")
+	}
+	rows, err := s.Repo.ClearQuestionAcceptedAnswer(ctx, qUidPg, pgtype.UUID{Bytes: rUID, Valid: true})
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("reply not found")
+	}
+	return nil
 }

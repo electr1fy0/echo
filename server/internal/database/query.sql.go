@@ -120,20 +120,31 @@ func (q *Queries) CreateNotification(ctx context.Context, arg CreateNotification
 	return err
 }
 
-const createQuestion = `-- name: CreateQuestion :exec
-INSERT INTO questions (content, author, chamber_uid) 
-VALUES ($1, $2, $3)
+const createQuestion = `-- name: CreateQuestion :one
+INSERT INTO questions (uid, content, author, chamber_uid, time_created) 
+VALUES ($1, $2, $3, $4, $5)
+RETURNING uid
 `
 
 type CreateQuestionParams struct {
-	Content    pgtype.Text `json:"content"`
-	Author     string      `json:"author"`
-	ChamberUid pgtype.UUID `json:"chamber_uid"`
+	Uid         pgtype.UUID      `json:"uid"`
+	Content     pgtype.Text      `json:"content"`
+	Author      string           `json:"author"`
+	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
+	TimeCreated pgtype.Timestamp `json:"time_created"`
 }
 
-func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) error {
-	_, err := q.db.Exec(ctx, createQuestion, arg.Content, arg.Author, arg.ChamberUid)
-	return err
+func (q *Queries) CreateQuestion(ctx context.Context, arg CreateQuestionParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, createQuestion,
+		arg.Uid,
+		arg.Content,
+		arg.Author,
+		arg.ChamberUid,
+		arg.TimeCreated,
+	)
+	var uid pgtype.UUID
+	err := row.Scan(&uid)
+	return uid, err
 }
 
 const createQuestionVote = `-- name: CreateQuestionVote :exec
@@ -334,6 +345,19 @@ func (q *Queries) GetAnswerVote(ctx context.Context, arg GetAnswerVoteParams) (A
 	return i, err
 }
 
+const getChamberCreator = `-- name: GetChamberCreator :one
+SELECT creator_username
+FROM chambers
+WHERE uid = $1
+`
+
+func (q *Queries) GetChamberCreator(ctx context.Context, uid pgtype.UUID) (pgtype.Text, error) {
+	row := q.db.QueryRow(ctx, getChamberCreator, uid)
+	var creator_username pgtype.Text
+	err := row.Scan(&creator_username)
+	return creator_username, err
+}
+
 const getProfile = `-- name: GetProfile :one
 SELECT
     u.username, u.email, COALESCE(u.bio, '') as bio, COALESCE(u.avatar, '') as avatar, COALESCE(u.links, '') as links,
@@ -413,7 +437,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = $1
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u on u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -426,15 +452,17 @@ type GetQuestionParams struct {
 }
 
 type GetQuestionRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     pgtype.Text      `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
-	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
-	ChamberName string           `json:"chamber_name"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	ChamberName       string           `json:"chamber_name"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) GetQuestion(ctx context.Context, arg GetQuestionParams) (GetQuestionRow, error) {
@@ -450,6 +478,8 @@ func (q *Queries) GetQuestion(ctx context.Context, arg GetQuestionParams) (GetQu
 		&i.IsUpvoted,
 		&i.ChamberUid,
 		&i.ChamberName,
+		&i.AcceptedAnswerUid,
+		&i.PinnedAt,
 	)
 	return i, err
 }
@@ -600,6 +630,7 @@ SELECT
     c.uid, 
     c.name, 
     COALESCE(c.description, '') as description, 
+    c.creator_username,
     c.color_index,
     c.created_at,
     (SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
@@ -614,13 +645,14 @@ type ListChambersParams struct {
 }
 
 type ListChambersRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	ColorIndex  pgtype.Int4      `json:"color_index"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	MemberCount int64            `json:"member_count"`
-	IsJoined    bool             `json:"is_joined"`
+	Uid             pgtype.UUID      `json:"uid"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	CreatorUsername pgtype.Text      `json:"creator_username"`
+	ColorIndex      pgtype.Int4      `json:"color_index"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	MemberCount     int64            `json:"member_count"`
+	IsJoined        bool             `json:"is_joined"`
 }
 
 func (q *Queries) ListChambers(ctx context.Context, arg ListChambersParams) ([]ListChambersRow, error) {
@@ -636,6 +668,7 @@ func (q *Queries) ListChambers(ctx context.Context, arg ListChambersParams) ([]L
 			&i.Uid,
 			&i.Name,
 			&i.Description,
+			&i.CreatorUsername,
 			&i.ColorIndex,
 			&i.CreatedAt,
 			&i.MemberCount,
@@ -665,8 +698,8 @@ SELECT
     COALESCE(q2.content, '') as question_content
 FROM notifications n
 LEFT JOIN users u ON n.actor_username = u.username
-LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
-LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
+LEFT JOIN questions q ON n.reference_uid = q.uid AND (n.type = 'upvote_question' OR n.type = 'mention_question')
+LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply' OR n.type = 'mention_reply')
 LEFT JOIN questions q2 ON a.question_uid = q2.uid
 WHERE n.user_username = $1
 ORDER BY n.created_at DESC
@@ -736,7 +769,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = $3
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -751,15 +786,17 @@ type ListQuestionsParams struct {
 }
 
 type ListQuestionsRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     pgtype.Text      `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
-	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
-	ChamberName string           `json:"chamber_name"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	ChamberName       string           `json:"chamber_name"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) ListQuestions(ctx context.Context, arg ListQuestionsParams) ([]ListQuestionsRow, error) {
@@ -781,6 +818,8 @@ func (q *Queries) ListQuestions(ctx context.Context, arg ListQuestionsParams) ([
 			&i.IsUpvoted,
 			&i.ChamberUid,
 			&i.ChamberName,
+			&i.AcceptedAnswerUid,
+			&i.PinnedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -805,7 +844,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = $3
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -822,15 +863,17 @@ type ListQuestionsByAuthorParams struct {
 }
 
 type ListQuestionsByAuthorRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     pgtype.Text      `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
-	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
-	ChamberName string           `json:"chamber_name"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	ChamberName       string           `json:"chamber_name"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) ListQuestionsByAuthor(ctx context.Context, arg ListQuestionsByAuthorParams) ([]ListQuestionsByAuthorRow, error) {
@@ -857,6 +900,8 @@ func (q *Queries) ListQuestionsByAuthor(ctx context.Context, arg ListQuestionsBy
 			&i.IsUpvoted,
 			&i.ChamberUid,
 			&i.ChamberName,
+			&i.AcceptedAnswerUid,
+			&i.PinnedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -881,7 +926,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = $3
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -898,15 +945,17 @@ type ListQuestionsByChamberParams struct {
 }
 
 type ListQuestionsByChamberRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     pgtype.Text      `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
-	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
-	ChamberName string           `json:"chamber_name"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	ChamberName       string           `json:"chamber_name"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) ListQuestionsByChamber(ctx context.Context, arg ListQuestionsByChamberParams) ([]ListQuestionsByChamberRow, error) {
@@ -933,6 +982,8 @@ func (q *Queries) ListQuestionsByChamber(ctx context.Context, arg ListQuestionsB
 			&i.IsUpvoted,
 			&i.ChamberUid,
 			&i.ChamberName,
+			&i.AcceptedAnswerUid,
+			&i.PinnedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -957,7 +1008,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = $1
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -967,6 +1020,8 @@ WHERE
     AND ($3::text IS NULL OR q.author = $3)
     AND ($4::boolean IS NULL OR ($4 = TRUE AND cm.username IS NOT NULL))
 ORDER BY
+    (q.pinned_at IS NOT NULL) DESC,
+    q.pinned_at DESC,
     CASE WHEN $5::text = 'votes' THEN q.upvotes_count END DESC,
     q.time_created DESC
 LIMIT $7 OFFSET $6
@@ -983,15 +1038,17 @@ type ListQuestionsFilteredParams struct {
 }
 
 type ListQuestionsFilteredRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     pgtype.Text      `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
-	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
-	ChamberName string           `json:"chamber_name"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	ChamberName       string           `json:"chamber_name"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) ListQuestionsFiltered(ctx context.Context, arg ListQuestionsFilteredParams) ([]ListQuestionsFilteredRow, error) {
@@ -1021,6 +1078,8 @@ func (q *Queries) ListQuestionsFiltered(ctx context.Context, arg ListQuestionsFi
 			&i.IsUpvoted,
 			&i.ChamberUid,
 			&i.ChamberName,
+			&i.AcceptedAnswerUid,
+			&i.PinnedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1045,7 +1104,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = $3
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -1060,15 +1121,17 @@ type ListQuestionsTopParams struct {
 }
 
 type ListQuestionsTopRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     pgtype.Text      `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
-	ChamberUid  pgtype.UUID      `json:"chamber_uid"`
-	ChamberName string           `json:"chamber_name"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	ChamberUid        pgtype.UUID      `json:"chamber_uid"`
+	ChamberName       string           `json:"chamber_name"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) ListQuestionsTop(ctx context.Context, arg ListQuestionsTopParams) ([]ListQuestionsTopRow, error) {
@@ -1090,6 +1153,8 @@ func (q *Queries) ListQuestionsTop(ctx context.Context, arg ListQuestionsTopPara
 			&i.IsUpvoted,
 			&i.ChamberUid,
 			&i.ChamberName,
+			&i.AcceptedAnswerUid,
+			&i.PinnedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1114,9 +1179,13 @@ SELECT
         select 1 from answer_upvotes v2
         where v2.answer_uid = a.uid and v2.username = $2
     ) as is_upvoted
+    ,
+    q.accepted_answer_uid
 FROM answers a
 LEFT JOIN users u ON u.username = a.author
+LEFT JOIN questions q ON q.uid = a.question_uid
 WHERE a.question_uid = $1
+ORDER BY (q.accepted_answer_uid = a.uid) DESC, a.time_created ASC
 LIMIT 200 OFFSET 0
 `
 
@@ -1126,14 +1195,15 @@ type ListRepliesParams struct {
 }
 
 type ListRepliesRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Content     string           `json:"content"`
-	TimeCreated pgtype.Timestamp `json:"time_created"`
-	QuestionUid pgtype.UUID      `json:"question_uid"`
-	Author      string           `json:"author"`
-	Avatar      pgtype.Text      `json:"avatar"`
-	Upvotes     pgtype.Int4      `json:"upvotes"`
-	IsUpvoted   bool             `json:"is_upvoted"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           string           `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	QuestionUid       pgtype.UUID      `json:"question_uid"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	Upvotes           pgtype.Int4      `json:"upvotes"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
 }
 
 func (q *Queries) ListReplies(ctx context.Context, arg ListRepliesParams) ([]ListRepliesRow, error) {
@@ -1154,6 +1224,7 @@ func (q *Queries) ListReplies(ctx context.Context, arg ListRepliesParams) ([]Lis
 			&i.Avatar,
 			&i.Upvotes,
 			&i.IsUpvoted,
+			&i.AcceptedAnswerUid,
 		); err != nil {
 			return nil, err
 		}
@@ -1167,7 +1238,7 @@ func (q *Queries) ListReplies(ctx context.Context, arg ListRepliesParams) ([]Lis
 
 const searchChambers = `-- name: SearchChambers :many
 SELECT 
-    c.uid, c.name, COALESCE(c.description, '') as description, c.color_index, c.created_at,
+    c.uid, c.name, COALESCE(c.description, '') as description, c.creator_username, c.color_index, c.created_at,
     (SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
     EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = $1) as is_joined
 FROM chambers c
@@ -1181,13 +1252,14 @@ type SearchChambersParams struct {
 }
 
 type SearchChambersRow struct {
-	Uid         pgtype.UUID      `json:"uid"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	ColorIndex  pgtype.Int4      `json:"color_index"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
-	MemberCount int64            `json:"member_count"`
-	IsJoined    bool             `json:"is_joined"`
+	Uid             pgtype.UUID      `json:"uid"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	CreatorUsername pgtype.Text      `json:"creator_username"`
+	ColorIndex      pgtype.Int4      `json:"color_index"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+	MemberCount     int64            `json:"member_count"`
+	IsJoined        bool             `json:"is_joined"`
 }
 
 func (q *Queries) SearchChambers(ctx context.Context, arg SearchChambersParams) ([]SearchChambersRow, error) {
@@ -1203,6 +1275,7 @@ func (q *Queries) SearchChambers(ctx context.Context, arg SearchChambersParams) 
 			&i.Uid,
 			&i.Name,
 			&i.Description,
+			&i.CreatorUsername,
 			&i.ColorIndex,
 			&i.CreatedAt,
 			&i.MemberCount,
@@ -1223,7 +1296,9 @@ SELECT
     q.uid, q.content, q.time_created, q.author,
     u.avatar,
     q.upvotes_count,
-    exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $3) as is_upvoted
+    exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = $3) as is_upvoted,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u on u.username = q.author
 WHERE q.content ilike $4
@@ -1238,13 +1313,15 @@ type SearchQuestionsParams struct {
 }
 
 type SearchQuestionsRow struct {
-	Uid          pgtype.UUID      `json:"uid"`
-	Content      pgtype.Text      `json:"content"`
-	TimeCreated  pgtype.Timestamp `json:"time_created"`
-	Author       string           `json:"author"`
-	Avatar       pgtype.Text      `json:"avatar"`
-	UpvotesCount pgtype.Int4      `json:"upvotes_count"`
-	IsUpvoted    bool             `json:"is_upvoted"`
+	Uid               pgtype.UUID      `json:"uid"`
+	Content           pgtype.Text      `json:"content"`
+	TimeCreated       pgtype.Timestamp `json:"time_created"`
+	Author            string           `json:"author"`
+	Avatar            pgtype.Text      `json:"avatar"`
+	UpvotesCount      pgtype.Int4      `json:"upvotes_count"`
+	IsUpvoted         bool             `json:"is_upvoted"`
+	AcceptedAnswerUid pgtype.UUID      `json:"accepted_answer_uid"`
+	PinnedAt          pgtype.Timestamp `json:"pinned_at"`
 }
 
 func (q *Queries) SearchQuestions(ctx context.Context, arg SearchQuestionsParams) ([]SearchQuestionsRow, error) {
@@ -1269,6 +1346,8 @@ func (q *Queries) SearchQuestions(ctx context.Context, arg SearchQuestionsParams
 			&i.Avatar,
 			&i.UpvotesCount,
 			&i.IsUpvoted,
+			&i.AcceptedAnswerUid,
+			&i.PinnedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1399,6 +1478,34 @@ type SetVerificationTokenParams struct {
 func (q *Queries) SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error {
 	_, err := q.db.Exec(ctx, setVerificationToken, arg.VerificationToken, arg.Email)
 	return err
+}
+
+const updateChamber = `-- name: UpdateChamber :one
+UPDATE chambers
+SET name = $2, description = $3, color_index = $4
+WHERE uid = $1 AND creator_username = $5
+RETURNING uid
+`
+
+type UpdateChamberParams struct {
+	Uid             pgtype.UUID `json:"uid"`
+	Name            string      `json:"name"`
+	Description     pgtype.Text `json:"description"`
+	ColorIndex      pgtype.Int4 `json:"color_index"`
+	CreatorUsername pgtype.Text `json:"creator_username"`
+}
+
+func (q *Queries) UpdateChamber(ctx context.Context, arg UpdateChamberParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, updateChamber,
+		arg.Uid,
+		arg.Name,
+		arg.Description,
+		arg.ColorIndex,
+		arg.CreatorUsername,
+	)
+	var uid pgtype.UUID
+	err := row.Scan(&uid)
+	return uid, err
 }
 
 const updatePassword = `-- name: UpdatePassword :exec

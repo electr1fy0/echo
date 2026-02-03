@@ -73,3 +73,29 @@ export async function updateReply(
   );
   if (!res.ok) throw new Error("failed to update reply");
 }
+
+export async function acceptReply(qid: string, rid: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(qid)}/replies/${encodeURIComponent(rid)}/accept`,
+    {
+      method: "POST",
+      headers: {
+        ...getAuthHeaders(),
+      },
+    },
+  );
+  if (!res.ok) throw new Error("failed to accept reply");
+}
+
+export async function unacceptReply(qid: string, rid: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(qid)}/replies/${encodeURIComponent(rid)}/accept`,
+    {
+      method: "DELETE",
+      headers: {
+        ...getAuthHeaders(),
+      },
+    },
+  );
+  if (!res.ok) throw new Error("failed to unaccept reply");
+}

@@ -64,11 +64,15 @@ func (r *Repository) ListQuestions(ctx context.Context, params ListQuestionsPara
 				Upvotes:        int(row.Upvotes.Int32),
 				IsUpvoted:      row.IsUpvoted,
 				ChamberName:    row.ChamberName,
+				IsPinned:       row.PinnedAt.Valid,
 			},
 			Author: types.Profile{
 				Username: row.Author,
 				Avatar:   row.Avatar.String,
 			},
+		}
+		if row.AcceptedAnswerUid.Valid {
+			q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
 		}
 		if row.ChamberUid.Valid {
 			q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
@@ -79,7 +83,8 @@ func (r *Repository) ListQuestions(ctx context.Context, params ListQuestionsPara
 }
 
 func (r *Repository) CreateQuestion(ctx context.Context, arg database.CreateQuestionParams) error {
-	return r.Q.CreateQuestion(ctx, arg)
+	_, err := r.Q.CreateQuestion(ctx, arg)
+	return err
 }
 
 func (r *Repository) GetQuestion(ctx context.Context, arg database.GetQuestionParams) (database.GetQuestionRow, error) {
@@ -132,4 +137,62 @@ func (r *Repository) CheckNotificationExists(ctx context.Context, arg database.C
 
 func (r *Repository) CreateNotification(ctx context.Context, arg database.CreateNotificationParams) error {
 	return r.Q.CreateNotification(ctx, arg)
+}
+
+func (r *Repository) GetChamberCreatorByQuestion(ctx context.Context, questionUid pgtype.UUID) (string, error) {
+	row := r.DB.QueryRow(ctx, `
+		SELECT c.creator_username
+		FROM chambers c
+		JOIN questions q ON q.chamber_uid = c.uid
+		WHERE q.uid = $1
+	`, questionUid)
+	var creator pgtype.Text
+	if err := row.Scan(&creator); err != nil {
+		return "", err
+	}
+	if !creator.Valid {
+		return "", nil
+	}
+	return creator.String, nil
+}
+
+func (r *Repository) SetQuestionPinnedAt(ctx context.Context, questionUid pgtype.UUID, pinnedAt pgtype.Timestamp) (int64, error) {
+	tag, err := r.DB.Exec(ctx, `UPDATE questions SET pinned_at = $1 WHERE uid = $2`, pinnedAt, questionUid)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+func (r *Repository) ClearQuestionPinnedAt(ctx context.Context, questionUid pgtype.UUID) (int64, error) {
+	tag, err := r.DB.Exec(ctx, `UPDATE questions SET pinned_at = NULL WHERE uid = $1`, questionUid)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+func (r *Repository) SetQuestionAcceptedAnswer(ctx context.Context, questionUid pgtype.UUID, answerUid pgtype.UUID) (int64, error) {
+	tag, err := r.DB.Exec(ctx, `
+		UPDATE questions q
+		SET accepted_answer_uid = $1
+		FROM answers a
+		WHERE q.uid = $2 AND a.uid = $1 AND a.question_uid = q.uid
+	`, answerUid, questionUid)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+func (r *Repository) ClearQuestionAcceptedAnswer(ctx context.Context, questionUid pgtype.UUID, answerUid pgtype.UUID) (int64, error) {
+	tag, err := r.DB.Exec(ctx, `
+		UPDATE questions
+		SET accepted_answer_uid = NULL
+		WHERE uid = $1 AND accepted_answer_uid = $2
+	`, questionUid, answerUid)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
 }

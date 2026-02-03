@@ -9,6 +9,8 @@ import {
   updateQuestion,
   fetchUserQuestions,
   searchQuestions,
+  pinQuestion,
+  unpinQuestion,
 } from "@/api/questions";
 
 export function useQuestionQuery(questionId: string | undefined) {
@@ -123,6 +125,32 @@ export function useUpdateQuestion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
+    },
+  });
+}
+
+export function usePinQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (questionId: string) => pinQuestion(questionId),
+    onSuccess: (_data, questionId) => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["search-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["question", questionId] });
+    },
+  });
+}
+
+export function useUnpinQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (questionId: string) => unpinQuestion(questionId),
+    onSuccess: (_data, questionId) => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["user-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["search-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["question", questionId] });
     },
   });
 }

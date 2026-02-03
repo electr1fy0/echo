@@ -6,6 +6,7 @@ import (
 	"echo/internal/repository"
 	"echo/internal/types"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -16,16 +17,25 @@ func (s *Service) ListQuestions(ctx context.Context, params repository.ListQuest
 	return s.Repo.ListQuestions(ctx, params)
 }
 
-func (s *Service) CreateQuestion(ctx context.Context, question types.Question, author string) error {
+func (s *Service) CreateQuestion(ctx context.Context, question types.Question, author string) (string, error) {
 	chamberUUID, err := uuid.Parse(question.ChamberUID)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return s.Repo.CreateQuestion(ctx, database.CreateQuestionParams{
-		Content:    pgtype.Text{String: question.Content, Valid: true},
-		Author:     author,
-		ChamberUid: pgtype.UUID{Bytes: chamberUUID, Valid: true},
+	newUID := uuid.New()
+	now := time.Now().UTC()
+	err = s.Repo.CreateQuestion(ctx, database.CreateQuestionParams{
+		Uid:         pgtype.UUID{Bytes: newUID, Valid: true},
+		Content:     pgtype.Text{String: question.Content, Valid: true},
+		Author:      author,
+		ChamberUid:  pgtype.UUID{Bytes: chamberUUID, Valid: true},
+		TimeCreated: pgtype.Timestamp{Time: now, Valid: true},
 	})
+	if err != nil {
+		return "", err
+	}
+	s.notifyMentions(ctx, question.Content, author, pgtype.UUID{Bytes: newUID, Valid: true}, false, "")
+	return newUID.String(), nil
 }
 
 func (s *Service) GetQuestion(ctx context.Context, uid string, currentUser string) (*types.QuestionItem, error) {
@@ -50,6 +60,7 @@ func (s *Service) GetQuestion(ctx context.Context, uid string, currentUser strin
 			IsUpvoted:      row.IsUpvoted,
 			AuthorUsername: row.Author,
 			ChamberName:    row.ChamberName,
+			IsPinned:       row.PinnedAt.Valid,
 		},
 		Author: types.Profile{
 			Username: row.Author,
@@ -58,6 +69,9 @@ func (s *Service) GetQuestion(ctx context.Context, uid string, currentUser strin
 	}
 	if row.ChamberUid.Valid {
 		q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
+	}
+	if row.AcceptedAnswerUid.Valid {
+		q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
 	}
 	return q, nil
 }
@@ -120,6 +134,7 @@ func (s *Service) ListUserQuestions(ctx context.Context, limit, offset int32, cu
 				Upvotes:        int(row.Upvotes.Int32),
 				IsUpvoted:      row.IsUpvoted,
 				AuthorUsername: row.Author,
+				IsPinned:       row.PinnedAt.Valid,
 			},
 			Author: types.Profile{
 				Username: row.Author,
@@ -128,6 +143,9 @@ func (s *Service) ListUserQuestions(ctx context.Context, limit, offset int32, cu
 		}
 		if row.ChamberUid.Valid {
 			q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
+		}
+		if row.AcceptedAnswerUid.Valid {
+			q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
 		}
 		q.Question.ChamberName = row.ChamberName
 		questions = append(questions, q)
@@ -156,15 +174,69 @@ func (s *Service) SearchQuestions(ctx context.Context, query string, limit, offs
 				Upvotes:        int(row.UpvotesCount.Int32),
 				IsUpvoted:      row.IsUpvoted,
 				AuthorUsername: row.Author,
+				IsPinned:       row.PinnedAt.Valid,
 			},
 			Author: types.Profile{
 				Username: row.Author,
 				Avatar:   row.Avatar.String,
 			},
 		}
+		if row.AcceptedAnswerUid.Valid {
+			q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
+		}
 		questions = append(questions, q)
 	}
 	return questions, nil
+}
+
+func (s *Service) PinQuestion(ctx context.Context, uid string, actor string) error {
+	parsedUID, err := uuid.Parse(uid)
+	if err != nil {
+		return errors.New("invalid uid")
+	}
+	uidPg := pgtype.UUID{Bytes: parsedUID, Valid: true}
+	creator, err := s.Repo.GetChamberCreatorByQuestion(ctx, uidPg)
+	if err == pgx.ErrNoRows {
+		return errors.New("question not found")
+	} else if err != nil {
+		return err
+	}
+	if creator != actor {
+		return errors.New("unauthorized")
+	}
+	rows, err := s.Repo.SetQuestionPinnedAt(ctx, uidPg, pgtype.Timestamp{Time: time.Now().UTC(), Valid: true})
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("question not found")
+	}
+	return nil
+}
+
+func (s *Service) UnpinQuestion(ctx context.Context, uid string, actor string) error {
+	parsedUID, err := uuid.Parse(uid)
+	if err != nil {
+		return errors.New("invalid uid")
+	}
+	uidPg := pgtype.UUID{Bytes: parsedUID, Valid: true}
+	creator, err := s.Repo.GetChamberCreatorByQuestion(ctx, uidPg)
+	if err == pgx.ErrNoRows {
+		return errors.New("question not found")
+	} else if err != nil {
+		return err
+	}
+	if creator != actor {
+		return errors.New("unauthorized")
+	}
+	rows, err := s.Repo.ClearQuestionPinnedAt(ctx, uidPg)
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("question not found")
+	}
+	return nil
 }
 
 func (s *Service) UpdateQuestionVote(ctx context.Context, username string, quid string) error {

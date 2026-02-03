@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"echo/internal/database"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (r *Repository) ListChambers(ctx context.Context, arg database.ListChambersParams) ([]database.ListChambersRow, error) {
@@ -27,4 +29,19 @@ func (r *Repository) JoinChamber(ctx context.Context, arg database.JoinChamberPa
 
 func (r *Repository) LeaveChamber(ctx context.Context, arg database.LeaveChamberParams) error {
 	return r.Q.LeaveChamber(ctx, arg)
+}
+
+func (r *Repository) GetChamberCreator(ctx context.Context, uid pgtype.UUID) (string, error) {
+	row, err := r.Q.GetChamberCreator(ctx, uid)
+	if err != nil {
+		return "", err
+	}
+	if !row.Valid {
+		return "", nil
+	}
+	return row.String, nil
+}
+
+func (r *Repository) UpdateChamber(ctx context.Context, arg database.UpdateChamberParams) (pgtype.UUID, error) {
+	return r.Q.UpdateChamber(ctx, arg)
 }

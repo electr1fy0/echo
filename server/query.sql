@@ -110,7 +110,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u on u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -120,9 +122,10 @@ WHERE q.uid = sqlc.arg('uid');
 DELETE FROM questions 
 WHERE uid = $1 AND author = $2;
 
--- name: CreateQuestion :exec
-INSERT INTO questions (content, author, chamber_uid) 
-VALUES ($1, $2, $3);
+-- name: CreateQuestion :one
+INSERT INTO questions (uid, content, author, chamber_uid, time_created) 
+VALUES ($1, $2, $3, $4, $5)
+RETURNING uid;
 
 -- name: UpdateQuestion :one
 UPDATE questions SET content = $1 
@@ -142,7 +145,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -162,7 +167,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -183,7 +190,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -204,7 +213,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -216,7 +227,9 @@ SELECT
     q.uid, q.content, q.time_created, q.author,
     u.avatar,
     q.upvotes_count,
-    exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')) as is_upvoted
+    exists (select 1 from question_upvotes v2 where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')) as is_upvoted,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u on u.username = q.author
 WHERE q.content ilike sqlc.arg('query')
@@ -235,9 +248,13 @@ SELECT
         select 1 from answer_upvotes v2
         where v2.answer_uid = a.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted
+    ,
+    q.accepted_answer_uid
 FROM answers a
 LEFT JOIN users u ON u.username = a.author
+LEFT JOIN questions q ON q.uid = a.question_uid
 WHERE a.question_uid = $1
+ORDER BY (q.accepted_answer_uid = a.uid) DESC, a.time_created ASC
 LIMIT 200 OFFSET 0;
 
 -- name: CreateReply :exec
@@ -289,11 +306,23 @@ VALUES ($1, $2);
 DELETE FROM chambers 
 WHERE creator_username = $1 AND name = $2;
 
+-- name: GetChamberCreator :one
+SELECT creator_username
+FROM chambers
+WHERE uid = $1;
+
+-- name: UpdateChamber :one
+UPDATE chambers
+SET name = $2, description = $3, color_index = $4
+WHERE uid = $1 AND creator_username = $5
+RETURNING uid;
+
 -- name: ListChambers :many
 SELECT 
     c.uid, 
     c.name, 
     COALESCE(c.description, '') as description, 
+    c.creator_username,
     c.color_index,
     c.created_at,
     (SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
@@ -324,8 +353,8 @@ SELECT
     COALESCE(q2.content, '') as question_content
 FROM notifications n
 LEFT JOIN users u ON n.actor_username = u.username
-LEFT JOIN questions q ON n.type = 'upvote_question' AND n.reference_uid = q.uid
-LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply')
+LEFT JOIN questions q ON n.reference_uid = q.uid AND (n.type = 'upvote_question' OR n.type = 'mention_question')
+LEFT JOIN answers a ON n.reference_uid = a.uid AND (n.type = 'reply_question' OR n.type = 'upvote_reply' OR n.type = 'mention_reply')
 LEFT JOIN questions q2 ON a.question_uid = q2.uid
 WHERE n.user_username = $1
 ORDER BY n.created_at DESC
@@ -333,7 +362,7 @@ LIMIT $2 OFFSET $3;
 
 -- name: SearchChambers :many
 SELECT 
-    c.uid, c.name, COALESCE(c.description, '') as description, c.color_index, c.created_at,
+    c.uid, c.name, COALESCE(c.description, '') as description, c.creator_username, c.color_index, c.created_at,
     (SELECT COUNT(*) FROM chamber_members cm WHERE cm.chamber_uid = c.uid) as member_count,
     EXISTS(SELECT 1 FROM chamber_members cm WHERE cm.chamber_uid = c.uid AND cm.username = sqlc.arg('current_user')) as is_joined
 FROM chambers c
@@ -370,7 +399,9 @@ SELECT
         where v2.question_uid = q.uid and v2.username = sqlc.arg('current_user')
     ) as is_upvoted,
     q.chamber_uid,
-    coalesce(c.name, '') as chamber_name
+    coalesce(c.name, '') as chamber_name,
+    q.accepted_answer_uid,
+    q.pinned_at
 FROM questions q
 LEFT JOIN users u ON u.username = q.author
 LEFT JOIN chambers c ON c.uid = q.chamber_uid
@@ -380,6 +411,8 @@ WHERE
     AND (sqlc.narg('author')::text IS NULL OR q.author = sqlc.narg('author'))
     AND (sqlc.narg('filter_joined')::boolean IS NULL OR (sqlc.narg('filter_joined') = TRUE AND cm.username IS NOT NULL))
 ORDER BY
+    (q.pinned_at IS NOT NULL) DESC,
+    q.pinned_at DESC,
     CASE WHEN sqlc.arg('sort')::text = 'votes' THEN q.upvotes_count END DESC,
     q.time_created DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');

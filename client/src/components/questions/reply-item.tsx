@@ -17,22 +17,28 @@ import {
   PencilEdit02Icon,
   Copy01Icon,
   Alert01Icon,
+  CheckmarkCircle02Icon,
+  CancelCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
-import { useUpdateReply } from "@/hooks/use-replies";
+import { useAcceptReply, useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { MentionText } from "@/components/mentions/mention-text";
 
 type ReplyItemProps = {
   answerItem: AnswerItem;
   onDelete: () => void;
+  canAccept?: boolean;
 };
 
-export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
+export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
   const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
   const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
+  const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
   const { data: user } = useAuth();
 
   const reply = answerItem.answer;
@@ -46,12 +52,17 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
       { qid: reply.questionUid, rid: reply.uid, content: editedContent },
       {
         onSuccess: () => setIsEditing(false),
-      }
+      },
     );
   }
 
   return (
-    <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
+    <div
+      className={cn(
+        "flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group",
+        reply.isAccepted && "",
+      )}
+    >
       <div className="pt-0.5">
         <UpvoteButton
           count={reply.upvotes}
@@ -82,6 +93,11 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
               {reply.timeCreated &&
                 formatRelativeTime(new Date(reply.timeCreated))}
             </span>
+            {reply.isAccepted && (
+              <span className="text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-1.5 py-0.5 rounded">
+                Accepted
+              </span>
+            )}
           </span>
           {isEditing ? (
             <div
@@ -119,9 +135,10 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
               </div>
             </div>
           ) : (
-            <span className="block text-sm text-neutral-700 dark:text-neutral-300 ">
-              {reply.content}
-            </span>
+            <MentionText
+              content={reply.content}
+              className="block text-sm text-neutral-700 dark:text-neutral-300"
+            />
           )}
         </p>
       </div>
@@ -132,7 +149,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
               variant="ghost"
               size="icon"
               aria-label="More options"
-              className="size-6 opacity-0 group-hover:opacity-100 text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 transition-opacity shrink-0"
+              className="size-6   text-neutral-400 hover:text-neutral-700 dark:text-neutral-500 dark:hover:text-neutral-200 transition-opacity shrink-0"
             >
               <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
             </Button>
@@ -144,10 +161,7 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
                 toast.success("Copied to clipboard");
               }}
             >
-              <HugeiconsIcon
-                icon={Copy01Icon}
-                className="mr-2 size-4"
-              />
+              <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
               Copy Text
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => alert("Reported content")}>
@@ -168,6 +182,26 @@ export function ReplyItem({ answerItem, onDelete }: ReplyItemProps) {
                   Delete
                 </DropdownMenuItem>
               </>
+            )}
+            {canAccept && (
+              <DropdownMenuItem
+                onClick={() =>
+                  toggleAccept({
+                    qid: reply.questionUid,
+                    rid: reply.uid,
+                    accept: !reply.isAccepted,
+                  })
+                }
+                disabled={isAcceptPending}
+              >
+                <HugeiconsIcon
+                  icon={
+                    reply.isAccepted ? CancelCircleIcon : CheckmarkCircle02Icon
+                  }
+                  className="mr-2 size-4"
+                />
+                {reply.isAccepted ? "Unaccept answer" : "Accept answer"}
+              </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

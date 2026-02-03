@@ -83,3 +83,49 @@ func (h *UserHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, http.StatusOK, profile)
 }
+
+func (h *UserHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	_, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		respondWithJSON(w, http.StatusOK, []types.Profile{})
+		return
+	}
+	users, err := h.Service.SearchUsers(r.Context(), query)
+	if err != nil {
+		respondWithError(w, "failed to search users", err, http.StatusInternalServerError)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, users)
+}
+
+func (h *UserHandler) ResolveUsers(w http.ResponseWriter, r *http.Request) {
+	_, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	defer r.Body.Close()
+
+	var body struct {
+		Usernames []string `json:"usernames"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		return
+	}
+	if len(body.Usernames) == 0 {
+		respondWithJSON(w, http.StatusOK, map[string][]string{"existing": {}})
+		return
+	}
+	existing, err := h.Service.ResolveUsers(r.Context(), body.Usernames)
+	if err != nil {
+		respondWithError(w, "failed to resolve users", err, http.StatusInternalServerError)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string][]string{"existing": existing})
+}

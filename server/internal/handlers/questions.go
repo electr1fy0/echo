@@ -106,7 +106,7 @@ func (h *QuestionHandler) CreateQuestion(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = h.Service.CreateQuestion(ctx, question, sub)
+	_, err = h.Service.CreateQuestion(ctx, question, sub)
 	if err != nil {
 		respondWithError(w, "failed to create question", err, http.StatusInternalServerError)
 		return
@@ -149,6 +149,62 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "question updated"})
+}
+func (h *QuestionHandler) PinQuestion(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	uid := r.PathValue("uid")
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	err = h.Service.PinQuestion(ctx, uid, sub)
+	if err != nil {
+		if err.Error() == "unauthorized" {
+			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
+		} else if err.Error() == "question not found" {
+			respondWithError(w, "question not found", nil, http.StatusNotFound)
+		} else if err.Error() == "invalid uid" {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to pin question", err, http.StatusInternalServerError)
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "question pinned"})
+}
+func (h *QuestionHandler) UnpinQuestion(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	uid := r.PathValue("uid")
+	if uid == "" {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	}
+	sub, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
+		return
+	}
+	err = h.Service.UnpinQuestion(ctx, uid, sub)
+	if err != nil {
+		if err.Error() == "unauthorized" {
+			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
+		} else if err.Error() == "question not found" {
+			respondWithError(w, "question not found", nil, http.StatusNotFound)
+		} else if err.Error() == "invalid uid" {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to unpin question", err, http.StatusInternalServerError)
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "question unpinned"})
 }
 func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)

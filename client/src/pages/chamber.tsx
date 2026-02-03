@@ -1,4 +1,5 @@
 import { useParams } from "react-router";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -6,6 +7,7 @@ import {
   UserMultiple02Icon,
   ArrowLeft02Icon,
   Calendar03Icon,
+  PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import { useNavigate } from "react-router";
 import { QuestionList } from "@/components/questions/question-list";
@@ -15,10 +17,12 @@ import {
   useLeaveChamber,
   useListChambers,
 } from "@/hooks/use-chamber";
+import { useAuth } from "@/hooks/use-auth";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
 import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
 import { PageTransition } from "@/components/page-transition";
+import { EditChamberDialog } from "@/components/chambers/edit-chamber-dialog";
 
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
@@ -31,6 +35,7 @@ export function ChamberPage() {
   const navigate = useNavigate();
   const { data: chambersData, isLoading: isChamberLoading } =
     useListChambers();
+  const { data: user } = useAuth();
   const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
   const { mutate: deleteQn } = useDeleteQuestion();
@@ -43,6 +48,7 @@ export function ChamberPage() {
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   if (isChamberLoading) {
     return (
@@ -85,6 +91,7 @@ export function ChamberPage() {
       joinMutation.mutate(chamber.uid);
     }
   };
+  const canPin = !!user?.username && user.username === chamber.creatorUsername;
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 mb-40 relative px-4 pb-20 md:pb-0">
       <button
@@ -125,14 +132,26 @@ export function ChamberPage() {
             </span>
           </div>
         </div>
-        <Button
-          variant={chamber.isJoined ? "outline" : "default"}
-          className="rounded-full shrink-0"
-          disabled={isPending}
-          onClick={handleToggleJoin}
-        >
-          {chamber.isJoined ? "Joined" : "Join"}
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          {canPin && (
+            <Button
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setIsEditOpen(true)}
+            >
+              <HugeiconsIcon icon={PencilEdit02Icon} className="mr-1 size-4" />
+              Edit
+            </Button>
+          )}
+          <Button
+            variant={chamber.isJoined ? "outline" : "default"}
+            className="rounded-full"
+            disabled={isPending}
+            onClick={handleToggleJoin}
+          >
+            {chamber.isJoined ? "Joined" : "Join"}
+          </Button>
+        </div>
       </div>
       <div className="space-y-4">
         <h2 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
@@ -141,7 +160,11 @@ export function ChamberPage() {
         {isLoading ? (
           <QuestionListSkeleton count={3} />
         ) : questions.length > 0 ? (
-          <QuestionList questions={questions} onDelete={(id) => deleteQn(id)} />
+          <QuestionList
+            questions={questions}
+            onDelete={(id) => deleteQn(id)}
+            canPin={canPin}
+          />
         ) : (
           <div className="text-center py-12 text-neutral-500">
             <p className="text-sm">No questions yet in this chamber.</p>
@@ -149,6 +172,13 @@ export function ChamberPage() {
           </div>
         )}
       </div>
+      {canPin && chamber.uid && (
+        <EditChamberDialog
+          open={isEditOpen}
+          onOpenChange={setIsEditOpen}
+          chamber={chamber}
+        />
+      )}
     </PageTransition>
   );
 }

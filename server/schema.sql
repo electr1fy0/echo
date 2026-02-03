@@ -39,7 +39,9 @@ CREATE TABLE questions (
     author text NOT NULL REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE,
     chamber_uid uuid NOT NULL REFERENCES chambers(uid) ON DELETE CASCADE,
     upvotes_count integer DEFAULT 0,
-    reddit_upvotes integer DEFAULT 0
+    reddit_upvotes integer DEFAULT 0,
+    accepted_answer_uid uuid,
+    pinned_at timestamp without time zone
 );
 
 CREATE TABLE answers (
@@ -51,6 +53,12 @@ CREATE TABLE answers (
     upvotes_count integer DEFAULT 0,
     reddit_upvotes integer DEFAULT 0
 );
+
+ALTER TABLE questions
+    ADD CONSTRAINT questions_accepted_answer_fkey
+    FOREIGN KEY (accepted_answer_uid)
+    REFERENCES answers(uid)
+    ON DELETE SET NULL;
 
 CREATE TABLE question_upvotes (
     username text NOT NULL REFERENCES users(username) ON UPDATE CASCADE ON DELETE CASCADE,

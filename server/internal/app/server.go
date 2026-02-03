@@ -64,6 +64,8 @@ func (s *Server) setupRouter() {
 	mux.HandleFunc("DELETE /users/me", middleware.Auth(userH.DeleteUser))
 	mux.HandleFunc("GET /users/{username}", userH.GetPublicProfile)
 	mux.HandleFunc("PATCH /users/me", middleware.Auth(userH.UpdateUser))
+	mux.HandleFunc("GET /users/search", middleware.Auth(userH.SearchUsers))
+	mux.HandleFunc("POST /users/resolve", middleware.Auth(userH.ResolveUsers))
 
 	mux.HandleFunc("GET /users/me/questions", middleware.Auth(questionH.ListUserQuestions))
 	mux.HandleFunc("GET /users/me/notifications", middleware.Auth(notifH.ListNotifications))
@@ -75,16 +77,21 @@ func (s *Server) setupRouter() {
 	mux.HandleFunc("DELETE /questions/{uid}", middleware.Auth(questionH.DeleteQuestion))
 	mux.HandleFunc("PATCH /questions/{uid}", middleware.Auth(questionH.UpdateQuestion))
 	mux.HandleFunc("POST /questions/{uid}/votes", middleware.Auth(questionH.UpdateQuestionVote))
+	mux.HandleFunc("POST /questions/{uid}/pin", middleware.Auth(questionH.PinQuestion))
+	mux.HandleFunc("DELETE /questions/{uid}/pin", middleware.Auth(questionH.UnpinQuestion))
 
 	mux.HandleFunc("POST /questions/{uid}/replies", middleware.Auth(replyH.CreateReply))
 	mux.HandleFunc("GET /questions/{uid}/replies", middleware.Auth(replyH.ListReplies))
 	mux.HandleFunc("PATCH /questions/{quid}/replies/{ruid}", middleware.Auth(replyH.UpdateReply))
 	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}", middleware.Auth(replyH.DeleteReply))
 	mux.HandleFunc("POST /questions/{quid}/replies/{ruid}/votes", middleware.Auth(replyH.UpdateReplyVote))
+	mux.HandleFunc("POST /questions/{quid}/replies/{ruid}/accept", middleware.Auth(replyH.AcceptReply))
+	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}/accept", middleware.Auth(replyH.UnacceptReply))
 
 	mux.HandleFunc("POST /chambers", middleware.Auth(chamberH.CreateChamber))
 	mux.HandleFunc("GET /chambers", middleware.Auth(chamberH.ListChambers))
 	mux.HandleFunc("DELETE /chambers", middleware.Auth(chamberH.DeleteChamber))
+	mux.HandleFunc("PATCH /chambers/{uid}", middleware.Auth(chamberH.UpdateChamber))
 	mux.HandleFunc("POST /chambers/{uid}/join", middleware.Auth(chamberH.JoinChamber))
 	mux.HandleFunc("POST /chambers/{uid}/leave", middleware.Auth(chamberH.LeaveChamber))
 
