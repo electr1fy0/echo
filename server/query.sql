@@ -87,15 +87,36 @@ WHERE uid = $1;
 -- name: GetQuestionAuthor :one
 SELECT author FROM questions WHERE uid = $1;
 
--- name: CheckNotificationExists :one
-SELECT exists(
-    SELECT 1 FROM notifications 
-    WHERE type = $1 AND actor_username = $2 AND reference_uid = $3
-);
-
 -- name: CreateNotification :exec
 INSERT INTO notifications (user_username, actor_username, type, reference_uid) 
-VALUES ($1, $2, $3, $4);
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (user_username, actor_username, type, reference_uid) DO NOTHING;
+
+-- name: GetChamberCreatorByQuestion :one
+SELECT c.creator_username
+FROM chambers c
+JOIN questions q ON q.chamber_uid = c.uid
+WHERE q.uid = $1;
+
+-- name: SetQuestionPinnedAt :execrows
+UPDATE questions SET pinned_at = $1 WHERE uid = $2;
+
+-- name: ClearQuestionPinnedAt :execrows
+UPDATE questions SET pinned_at = NULL WHERE uid = $1;
+
+-- name: SetQuestionAcceptedAnswer :execrows
+UPDATE questions q
+SET accepted_answer_uid = $1
+FROM answers a
+WHERE q.uid = $2 AND a.uid = $1 AND a.question_uid = q.uid;
+
+-- name: ClearQuestionAcceptedAnswer :execrows
+UPDATE questions
+SET accepted_answer_uid = NULL
+WHERE uid = $1 AND accepted_answer_uid = $2;
+
+-- name: ResolveUsers :many
+SELECT username FROM users WHERE username = ANY($1::text[]);
 
 -- name: GetQuestion :one
 SELECT

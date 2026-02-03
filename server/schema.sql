@@ -81,3 +81,6 @@ CREATE TABLE notifications (
     is_read boolean DEFAULT false,
     created_at timestamp without time zone DEFAULT now()
 );
+
+ALTER TABLE notifications
+    ADD CONSTRAINT notifications_dedupe_unique UNIQUE (user_username, actor_username, type, reference_uid);

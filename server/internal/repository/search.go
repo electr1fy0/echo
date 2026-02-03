@@ -5,11 +5,10 @@ import (
 	"echo/internal/database"
 	"echo/internal/types"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (r *Repository) SearchChambersRaw(ctx context.Context, query string, currentUser string) ([]types.Chamber, error) {
+func (r *Repository) SearchChambers(ctx context.Context, query string, currentUser string) ([]types.Chamber, error) {
 	rows, err := r.Q.SearchChambers(ctx, database.SearchChambersParams{
 		Query:       pgtype.Text{String: query, Valid: true},
 		CurrentUser: currentUser,
@@ -18,57 +17,32 @@ func (r *Repository) SearchChambersRaw(ctx context.Context, query string, curren
 		return nil, err
 	}
 
-	var chambers []types.Chamber
+	chambers := make([]types.Chamber, 0, len(rows))
 	for _, row := range rows {
-		chambers = append(chambers, types.Chamber{
-			UID:         uuid.UUID(row.Uid.Bytes).String(),
-			Name:        row.Name,
-			Description: row.Description,
-			CreatorUsername: row.CreatorUsername.String,
-			ColorIndex:  row.ColorIndex.Int32,
-			TimeCreated: row.CreatedAt.Time,
-			MemberCount: int(row.MemberCount),
-			IsJoined:    row.IsJoined,
-		})
+		chambers = append(chambers, chamberFromSearchRow(row))
 	}
 	return chambers, nil
 }
 
-func (r *Repository) SearchQuestionsRaw(ctx context.Context, query string, currentUser string) ([]types.QuestionItem, error) {
+func (r *Repository) SearchQuestionsPreview(ctx context.Context, query string, currentUser string) ([]types.QuestionItem, error) {
 	rows, err := r.Q.SearchQuestions(ctx, database.SearchQuestionsParams{
 		Query:       pgtype.Text{String: "%" + query + "%", Valid: true},
 		CurrentUser: currentUser,
+		Limit:       5,
+		Offset:      0,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	var questions []types.QuestionItem
+	questions := make([]types.QuestionItem, 0, len(rows))
 	for _, row := range rows {
-		q := types.QuestionItem{
-			Question: types.Question{
-				UID:            uuid.UUID(row.Uid.Bytes).String(),
-				Content:        row.Content.String,
-				TimeCreated:    row.TimeCreated.Time,
-				AuthorUsername: row.Author,
-				Upvotes:        int(row.UpvotesCount.Int32),
-				IsUpvoted:      row.IsUpvoted,
-				IsPinned:       row.PinnedAt.Valid,
-			},
-			Author: types.Profile{
-				Username: row.Author,
-				Avatar:   row.Avatar.String,
-			},
-		}
-		if row.AcceptedAnswerUid.Valid {
-			q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
-		}
-		questions = append(questions, q)
+		questions = append(questions, questionItemFromSearchRow(row))
 	}
 	return questions, nil
 }
 
-func (r *Repository) SearchRepliesRaw(ctx context.Context, query string, currentUser string) ([]types.AnswerItem, error) {
+func (r *Repository) SearchReplies(ctx context.Context, query string, currentUser string) ([]types.AnswerItem, error) {
 	rows, err := r.Q.SearchReplies(ctx, database.SearchRepliesParams{
 		Query:       pgtype.Text{String: query, Valid: true},
 		CurrentUser: currentUser,
@@ -77,36 +51,20 @@ func (r *Repository) SearchRepliesRaw(ctx context.Context, query string, current
 		return nil, err
 	}
 
-	var replies []types.AnswerItem
+	replies := make([]types.AnswerItem, 0, len(rows))
 	for _, row := range rows {
-		ans := types.AnswerItem{
-			Answer: types.Answer{
-				UID:            uuid.UUID(row.Uid.Bytes).String(),
-				Content:        row.Content,
-				TimeCreated:    row.TimeCreated.Time,
-				QuestionUID:    uuid.UUID(row.QuestionUid.Bytes).String(),
-				AuthorUsername: row.Author,
-				Upvotes:        int(row.UpvotesCount.Int32),
-				IsUpvoted:      row.IsUpvoted,
-				IsAccepted:     false,
-			},
-			Author: types.Profile{
-				Username: row.Author,
-				Avatar:   row.Avatar.String,
-			},
-		}
-		replies = append(replies, ans)
+		replies = append(replies, answerItemFromSearchRow(row))
 	}
 	return replies, nil
 }
 
-func (r *Repository) SearchUsersRaw(ctx context.Context, query string) ([]types.Profile, error) {
+func (r *Repository) SearchUsers(ctx context.Context, query string) ([]types.Profile, error) {
 	rows, err := r.Q.SearchUsers(ctx, pgtype.Text{String: query, Valid: true})
 	if err != nil {
 		return nil, err
 	}
 
-	var users []types.Profile
+	users := make([]types.Profile, 0, len(rows))
 	for _, row := range rows {
 		users = append(users, types.Profile{
 			Username: row.Username,

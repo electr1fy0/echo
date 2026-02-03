@@ -5,6 +5,7 @@ import (
 	"echo/internal/service"
 	"echo/internal/types"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -22,7 +23,7 @@ func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.Signup(r.Context(), user); err != nil {
-		if err.Error() == "username already taken" {
+		if errors.Is(err, service.ErrUserExists) {
 			respondWithError(w, "username already taken", nil, http.StatusConflict)
 		} else {
 			respondWithError(w, "signup failed", err, http.StatusInternalServerError)
@@ -61,9 +62,9 @@ func (h *AuthHandler) Signin(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.Service.Signin(r.Context(), user)
 	if err != nil {
-		if err == service.ErrInvalidCredentials {
+		if errors.Is(err, service.ErrInvalidCredentials) {
 			respondWithError(w, err.Error(), nil, http.StatusUnauthorized)
-		} else if err == service.ErrNotVerified {
+		} else if errors.Is(err, service.ErrNotVerified) {
 			respondWithError(w, err.Error(), nil, http.StatusForbidden)
 		} else {
 			respondWithError(w, "internal error", err, http.StatusInternalServerError)

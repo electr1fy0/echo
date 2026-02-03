@@ -26,26 +26,6 @@ func (q *Queries) AddChamberMember(ctx context.Context, arg AddChamberMemberPara
 	return err
 }
 
-const checkNotificationExists = `-- name: CheckNotificationExists :one
-SELECT exists(
-    SELECT 1 FROM notifications 
-    WHERE type = $1 AND actor_username = $2 AND reference_uid = $3
-)
-`
-
-type CheckNotificationExistsParams struct {
-	Type          string      `json:"type"`
-	ActorUsername pgtype.Text `json:"actor_username"`
-	ReferenceUid  pgtype.UUID `json:"reference_uid"`
-}
-
-func (q *Queries) CheckNotificationExists(ctx context.Context, arg CheckNotificationExistsParams) (bool, error) {
-	row := q.db.QueryRow(ctx, checkNotificationExists, arg.Type, arg.ActorUsername, arg.ReferenceUid)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const checkUsernameExists = `-- name: CheckUsernameExists :one
 SELECT count(*) 
 FROM users 
@@ -57,6 +37,37 @@ func (q *Queries) CheckUsernameExists(ctx context.Context, username string) (int
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const clearQuestionAcceptedAnswer = `-- name: ClearQuestionAcceptedAnswer :execrows
+UPDATE questions
+SET accepted_answer_uid = NULL
+WHERE uid = $1 AND accepted_answer_uid = $2
+`
+
+type ClearQuestionAcceptedAnswerParams struct {
+	Uid               pgtype.UUID `json:"uid"`
+	AcceptedAnswerUid pgtype.UUID `json:"accepted_answer_uid"`
+}
+
+func (q *Queries) ClearQuestionAcceptedAnswer(ctx context.Context, arg ClearQuestionAcceptedAnswerParams) (int64, error) {
+	result, err := q.db.Exec(ctx, clearQuestionAcceptedAnswer, arg.Uid, arg.AcceptedAnswerUid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const clearQuestionPinnedAt = `-- name: ClearQuestionPinnedAt :execrows
+UPDATE questions SET pinned_at = NULL WHERE uid = $1
+`
+
+func (q *Queries) ClearQuestionPinnedAt(ctx context.Context, uid pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, clearQuestionPinnedAt, uid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const createAnswerVote = `-- name: CreateAnswerVote :exec
@@ -101,6 +112,7 @@ func (q *Queries) CreateChamber(ctx context.Context, arg CreateChamberParams) er
 const createNotification = `-- name: CreateNotification :exec
 INSERT INTO notifications (user_username, actor_username, type, reference_uid) 
 VALUES ($1, $2, $3, $4)
+ON CONFLICT (user_username, actor_username, type, reference_uid) DO NOTHING
 `
 
 type CreateNotificationParams struct {
@@ -353,6 +365,20 @@ WHERE uid = $1
 
 func (q *Queries) GetChamberCreator(ctx context.Context, uid pgtype.UUID) (pgtype.Text, error) {
 	row := q.db.QueryRow(ctx, getChamberCreator, uid)
+	var creator_username pgtype.Text
+	err := row.Scan(&creator_username)
+	return creator_username, err
+}
+
+const getChamberCreatorByQuestion = `-- name: GetChamberCreatorByQuestion :one
+SELECT c.creator_username
+FROM chambers c
+JOIN questions q ON q.chamber_uid = c.uid
+WHERE q.uid = $1
+`
+
+func (q *Queries) GetChamberCreatorByQuestion(ctx context.Context, uid pgtype.UUID) (pgtype.Text, error) {
+	row := q.db.QueryRow(ctx, getChamberCreatorByQuestion, uid)
 	var creator_username pgtype.Text
 	err := row.Scan(&creator_username)
 	return creator_username, err
@@ -1236,6 +1262,30 @@ func (q *Queries) ListReplies(ctx context.Context, arg ListRepliesParams) ([]Lis
 	return items, nil
 }
 
+const resolveUsers = `-- name: ResolveUsers :many
+SELECT username FROM users WHERE username = ANY($1::text[])
+`
+
+func (q *Queries) ResolveUsers(ctx context.Context, dollar_1 []string) ([]string, error) {
+	rows, err := q.db.Query(ctx, resolveUsers, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var username string
+		if err := rows.Scan(&username); err != nil {
+			return nil, err
+		}
+		items = append(items, username)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const searchChambers = `-- name: SearchChambers :many
 SELECT 
     c.uid, c.name, COALESCE(c.description, '') as description, c.creator_username, c.color_index, c.created_at,
@@ -1463,6 +1513,43 @@ type SetPasswordResetTokenParams struct {
 func (q *Queries) SetPasswordResetToken(ctx context.Context, arg SetPasswordResetTokenParams) error {
 	_, err := q.db.Exec(ctx, setPasswordResetToken, arg.ResetToken, arg.ResetExpiry, arg.Email)
 	return err
+}
+
+const setQuestionAcceptedAnswer = `-- name: SetQuestionAcceptedAnswer :execrows
+UPDATE questions q
+SET accepted_answer_uid = $1
+FROM answers a
+WHERE q.uid = $2 AND a.uid = $1 AND a.question_uid = q.uid
+`
+
+type SetQuestionAcceptedAnswerParams struct {
+	AcceptedAnswerUid pgtype.UUID `json:"accepted_answer_uid"`
+	Uid               pgtype.UUID `json:"uid"`
+}
+
+func (q *Queries) SetQuestionAcceptedAnswer(ctx context.Context, arg SetQuestionAcceptedAnswerParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setQuestionAcceptedAnswer, arg.AcceptedAnswerUid, arg.Uid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setQuestionPinnedAt = `-- name: SetQuestionPinnedAt :execrows
+UPDATE questions SET pinned_at = $1 WHERE uid = $2
+`
+
+type SetQuestionPinnedAtParams struct {
+	PinnedAt pgtype.Timestamp `json:"pinned_at"`
+	Uid      pgtype.UUID      `json:"uid"`
+}
+
+func (q *Queries) SetQuestionPinnedAt(ctx context.Context, arg SetQuestionPinnedAtParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setQuestionPinnedAt, arg.PinnedAt, arg.Uid)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const setVerificationToken = `-- name: SetVerificationToken :exec

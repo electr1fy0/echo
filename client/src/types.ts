@@ -34,6 +34,12 @@ export interface AnswerItem {
   answer: Reply;
   author: User;
 }
+export interface SearchResponse {
+  chambers: Chamber[];
+  questions: QuestionItem[];
+  replies: AnswerItem[];
+  users: UserSummary[];
+}
 export interface QuestionDraft {
   content: string;
   chamberUid?: string;

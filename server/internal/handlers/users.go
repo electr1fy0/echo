@@ -5,6 +5,7 @@ import (
 	"echo/internal/service"
 	"echo/internal/types"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -23,7 +24,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	newToken, err := h.Service.UpdateUser(r.Context(), sub, profile)
 	if err != nil {
-		if err == service.ErrUserExists {
+		if errors.Is(err, service.ErrUserExists) {
 			respondWithError(w, err.Error(), nil, http.StatusConflict)
 		} else {
 			respondWithError(w, "failed to update profile", err, http.StatusInternalServerError)

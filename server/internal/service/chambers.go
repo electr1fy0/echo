@@ -4,7 +4,6 @@ import (
 	"context"
 	"echo/internal/database"
 	"echo/internal/types"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -41,7 +40,7 @@ func (s *Service) DeleteChamber(ctx context.Context, creator, name string) error
 	})
 }
 
-func (s *Service) ListChambers(ctx context.Context, filter string, currentUser string) ([]database.ListChambersRow, error) {
+func (s *Service) ListChambers(ctx context.Context, filter string, currentUser string) ([]types.Chamber, error) {
 	return s.Repo.ListChambers(ctx, database.ListChambersParams{
 		Column1:     filter,
 		CurrentUser: currentUser,
@@ -51,7 +50,7 @@ func (s *Service) ListChambers(ctx context.Context, filter string, currentUser s
 func (s *Service) JoinChamber(ctx context.Context, uid string, username string) error {
 	pUID, err := uuid.Parse(uid)
 	if err != nil {
-		return errors.New("invalid uid")
+		return ErrInvalidUID
 	}
 	return s.Repo.JoinChamber(ctx, database.JoinChamberParams{
 		ChamberUid: pgtype.UUID{Bytes: pUID, Valid: true},
@@ -62,7 +61,7 @@ func (s *Service) JoinChamber(ctx context.Context, uid string, username string) 
 func (s *Service) LeaveChamber(ctx context.Context, uid string, username string) error {
 	pUID, err := uuid.Parse(uid)
 	if err != nil {
-		return errors.New("invalid uid")
+		return ErrInvalidUID
 	}
 	return s.Repo.LeaveChamber(ctx, database.LeaveChamberParams{
 		ChamberUid: pgtype.UUID{Bytes: pUID, Valid: true},
@@ -73,17 +72,17 @@ func (s *Service) LeaveChamber(ctx context.Context, uid string, username string)
 func (s *Service) UpdateChamber(ctx context.Context, uid string, actor string, chamber types.Chamber) error {
 	pUID, err := uuid.Parse(uid)
 	if err != nil {
-		return errors.New("invalid uid")
+		return ErrInvalidUID
 	}
 	uidPg := pgtype.UUID{Bytes: pUID, Valid: true}
 	creator, err := s.Repo.GetChamberCreator(ctx, uidPg)
 	if err == pgx.ErrNoRows {
-		return errors.New("chamber not found")
+		return ErrChamberNotFound
 	} else if err != nil {
 		return err
 	}
 	if creator != actor {
-		return errors.New("unauthorized")
+		return ErrUnauthorized
 	}
 	_, err = s.Repo.UpdateChamber(ctx, database.UpdateChamberParams{
 		Uid:             uidPg,

@@ -4,8 +4,10 @@ import (
 	"context"
 	"echo/internal/middleware"
 	"echo/internal/repository"
+	"echo/internal/service"
 	"echo/internal/types"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -28,7 +30,11 @@ func (h *QuestionHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := h.Service.UpdateQuestionVote(ctx, sub, quid); err != nil {
-		respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
+		if errors.Is(err, service.ErrInvalidUID) {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "vote updated"})
@@ -48,7 +54,10 @@ func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q, err := h.Service.GetQuestion(ctx, quid, sub)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, service.ErrInvalidUID) {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	} else if err == pgx.ErrNoRows {
 		respondWithError(w, "question not found", err, http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -73,10 +82,12 @@ func (h *QuestionHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request)
 	}
 	err = h.Service.DeleteQuestion(ctx, uid, sub)
 	if err != nil {
-		if err.Error() == "unauthorized" {
+		if errors.Is(err, service.ErrUnauthorized) {
 			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
-		} else if err.Error() == "question not found" {
+		} else if errors.Is(err, service.ErrQuestionNotFound) {
 			respondWithError(w, "question not found", nil, http.StatusNotFound)
+		} else if errors.Is(err, service.ErrInvalidUID) {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		} else {
 			respondWithError(w, "failed to delete question", err, http.StatusInternalServerError)
 		}
@@ -140,7 +151,10 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 	}
 
 	err = h.Service.UpdateQuestion(ctx, uid, sub, body.Content)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, service.ErrInvalidUID) {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	} else if err == pgx.ErrNoRows {
 		respondWithError(w, "question not found or unauthorized", nil, http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -165,11 +179,11 @@ func (h *QuestionHandler) PinQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.Service.PinQuestion(ctx, uid, sub)
 	if err != nil {
-		if err.Error() == "unauthorized" {
+		if errors.Is(err, service.ErrUnauthorized) {
 			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
-		} else if err.Error() == "question not found" {
+		} else if errors.Is(err, service.ErrQuestionNotFound) {
 			respondWithError(w, "question not found", nil, http.StatusNotFound)
-		} else if err.Error() == "invalid uid" {
+		} else if errors.Is(err, service.ErrInvalidUID) {
 			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		} else {
 			respondWithError(w, "failed to pin question", err, http.StatusInternalServerError)
@@ -193,11 +207,11 @@ func (h *QuestionHandler) UnpinQuestion(w http.ResponseWriter, r *http.Request) 
 	}
 	err = h.Service.UnpinQuestion(ctx, uid, sub)
 	if err != nil {
-		if err.Error() == "unauthorized" {
+		if errors.Is(err, service.ErrUnauthorized) {
 			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
-		} else if err.Error() == "question not found" {
+		} else if errors.Is(err, service.ErrQuestionNotFound) {
 			respondWithError(w, "question not found", nil, http.StatusNotFound)
-		} else if err.Error() == "invalid uid" {
+		} else if errors.Is(err, service.ErrInvalidUID) {
 			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		} else {
 			respondWithError(w, "failed to unpin question", err, http.StatusInternalServerError)
@@ -210,7 +224,7 @@ func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer r.Body.Close()
 	defer cancel()
-	
+
 	limit, offset := parsePagination(r)
 
 	q := r.URL.Query()
@@ -218,7 +232,7 @@ func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) 
 	filter := q.Get("filter")
 	targetChamberUID := q.Get("chamber_uid")
 	author := q.Get("author")
-	
+
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
@@ -243,9 +257,9 @@ func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) 
 func (h *QuestionHandler) ListUserQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-	
+
 	limit, offset := parsePagination(r)
-	
+
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
@@ -262,10 +276,10 @@ func (h *QuestionHandler) ListUserQuestions(w http.ResponseWriter, r *http.Reque
 func (h *QuestionHandler) SearchQuestions(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-	
+
 	limit, offset := parsePagination(r)
 	query := r.URL.Query().Get("q")
-	
+
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)

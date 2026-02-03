@@ -3,12 +3,21 @@ package repository
 import (
 	"context"
 	"echo/internal/database"
+	"echo/internal/types"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (r *Repository) ListChambers(ctx context.Context, arg database.ListChambersParams) ([]database.ListChambersRow, error) {
-	return r.Q.ListChambers(ctx, arg)
+func (r *Repository) ListChambers(ctx context.Context, arg database.ListChambersParams) ([]types.Chamber, error) {
+	rows, err := r.Q.ListChambers(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	chambers := make([]types.Chamber, 0, len(rows))
+	for _, row := range rows {
+		chambers = append(chambers, chamberFromListRow(row))
+	}
+	return chambers, nil
 }
 
 func (r *Repository) CreateChamber(ctx context.Context, arg database.CreateChamberParams) error {

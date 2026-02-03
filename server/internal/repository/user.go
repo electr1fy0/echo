@@ -139,21 +139,5 @@ func (r *Repository) ResolveUsers(ctx context.Context, usernames []string) ([]st
 	if len(usernames) == 0 {
 		return []string{}, nil
 	}
-	rows, err := r.DB.Query(ctx, `SELECT username FROM users WHERE username = ANY($1)`, usernames)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	existing := []string{}
-	for rows.Next() {
-		var username string
-		if err := rows.Scan(&username); err != nil {
-			return nil, err
-		}
-		existing = append(existing, username)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return existing, nil
+	return r.Q.ResolveUsers(ctx, usernames)
 }

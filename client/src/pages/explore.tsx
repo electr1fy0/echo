@@ -57,8 +57,7 @@ export function Explore() {
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
 
-  const { data: searchResults, isLoading: isSearching } =
-    useGlobalSearch(query);
+  const { data: searchResults, isLoading: isSearching } = useGlobalSearch(query);
   const {
     data: trendingQuestions = [],
     isLoading: isTrendingLoading,
@@ -69,6 +68,17 @@ export function Explore() {
 
   const isSearchMode = query.length > 0;
   const isLoading = isSearchMode ? isSearching : isTrendingLoading;
+  const {
+    users,
+    chambers: searchChambers,
+    questions: searchQuestions,
+    replies,
+  } = searchResults;
+  const hasSearchResults =
+    users.length > 0 ||
+    searchChambers.length > 0 ||
+    searchQuestions.length > 0 ||
+    replies.length > 0;
 
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
@@ -94,15 +104,15 @@ export function Explore() {
         <div className="space-y-8">
           {isLoading ? (
             <QuestionListSkeleton count={3} />
-          ) : searchResults ? (
+          ) : (
             <>
-              {searchResults.users.length > 0 && (
+              {users.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
                     Users
                   </h3>
                   <div className="flex flex-col gap-2">
-                    {searchResults.users.map((user) => (
+                    {users.map((user) => (
                       <div
                         key={user.username}
                         onClick={() => navigate(`/u/${user.username}`)}
@@ -128,47 +138,44 @@ export function Explore() {
                   </div>
                 </div>
               )}
-              {searchResults.chambers.length > 0 && (
+              {searchChambers.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
                     Chambers
                   </h3>
-                  <ChamberList chambers={searchResults.chambers} />
+                  <ChamberList chambers={searchChambers} />
                 </div>
               )}
-              {searchResults.questions.length > 0 && (
+              {searchQuestions.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
                     Questions
                   </h3>
                   <QuestionList
-                    questions={searchResults.questions}
+                    questions={searchQuestions}
                     onDelete={deleteQuestion}
                   />
                 </div>
               )}
-              {searchResults.replies.length > 0 && (
+              {replies.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
                     Replies
                   </h3>
                   <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-100 dark:divide-neutral-800 overflow-hidden">
-                    {searchResults.replies.map((reply) => (
+                    {replies.map((reply) => (
                       <ReplyResult key={reply.answer.uid} item={reply} />
                     ))}
                   </div>
                 </div>
               )}
-              {searchResults.users.length === 0 &&
-                searchResults.chambers.length === 0 &&
-                searchResults.questions.length === 0 &&
-                searchResults.replies.length === 0 && (
-                  <p className="text-sm text-neutral-500 text-center py-10">
-                    No results found for "{query}"
-                  </p>
-                )}
+              {!hasSearchResults && (
+                <p className="text-sm text-neutral-500 text-center py-10">
+                  No results found for "{query}"
+                </p>
+              )}
             </>
-          ) : null}
+          )}
         </div>
       ) : (
         <>

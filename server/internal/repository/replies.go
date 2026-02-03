@@ -3,11 +3,21 @@ package repository
 import (
 	"context"
 	"echo/internal/database"
+	"echo/internal/types"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (r *Repository) ListReplies(ctx context.Context, arg database.ListRepliesParams) ([]database.ListRepliesRow, error) {
-	return r.Q.ListReplies(ctx, arg)
+func (r *Repository) ListReplies(ctx context.Context, arg database.ListRepliesParams) ([]types.AnswerItem, error) {
+	rows, err := r.Q.ListReplies(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	replies := make([]types.AnswerItem, 0, len(rows))
+	for _, row := range rows {
+		replies = append(replies, answerItemFromListRow(row))
+	}
+	return replies, nil
 }
 
 func (r *Repository) CreateReply(ctx context.Context, arg database.CreateReplyParams) error {

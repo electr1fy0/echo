@@ -63,7 +63,7 @@ func (s *Service) DeleteUser(ctx context.Context, username string) error {
 }
 
 func (s *Service) SearchUsers(ctx context.Context, query string) ([]types.Profile, error) {
-	return s.Repo.SearchUsersRaw(ctx, query)
+	return s.Repo.SearchUsers(ctx, query)
 }
 
 func (s *Service) ResolveUsers(ctx context.Context, usernames []string) ([]string, error) {

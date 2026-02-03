@@ -53,31 +53,9 @@ func (r *Repository) ListQuestions(ctx context.Context, params ListQuestionsPara
 		return nil, err
 	}
 
-	questions := make([]types.QuestionItem, 0)
+	questions := make([]types.QuestionItem, 0, len(rows))
 	for _, row := range rows {
-		q := types.QuestionItem{
-			Question: types.Question{
-				UID:            uuid.UUID(row.Uid.Bytes).String(),
-				Content:        row.Content.String,
-				TimeCreated:    row.TimeCreated.Time,
-				AuthorUsername: row.Author,
-				Upvotes:        int(row.Upvotes.Int32),
-				IsUpvoted:      row.IsUpvoted,
-				ChamberName:    row.ChamberName,
-				IsPinned:       row.PinnedAt.Valid,
-			},
-			Author: types.Profile{
-				Username: row.Author,
-				Avatar:   row.Avatar.String,
-			},
-		}
-		if row.AcceptedAnswerUid.Valid {
-			q.Question.AcceptedAnswerUID = uuid.UUID(row.AcceptedAnswerUid.Bytes).String()
-		}
-		if row.ChamberUid.Valid {
-			q.Question.ChamberUID = uuid.UUID(row.ChamberUid.Bytes).String()
-		}
-		questions = append(questions, q)
+		questions = append(questions, questionItemFromListFilteredRow(row))
 	}
 	return questions, nil
 }
@@ -87,8 +65,12 @@ func (r *Repository) CreateQuestion(ctx context.Context, arg database.CreateQues
 	return err
 }
 
-func (r *Repository) GetQuestion(ctx context.Context, arg database.GetQuestionParams) (database.GetQuestionRow, error) {
-	return r.Q.GetQuestion(ctx, arg)
+func (r *Repository) GetQuestion(ctx context.Context, arg database.GetQuestionParams) (types.QuestionItem, error) {
+	row, err := r.Q.GetQuestion(ctx, arg)
+	if err != nil {
+		return types.QuestionItem{}, err
+	}
+	return questionItemFromGetRow(row), nil
 }
 
 func (r *Repository) DeleteQuestion(ctx context.Context, arg database.DeleteQuestionParams) error {
@@ -99,12 +81,28 @@ func (r *Repository) UpdateQuestion(ctx context.Context, arg database.UpdateQues
 	return r.Q.UpdateQuestion(ctx, arg)
 }
 
-func (r *Repository) ListUserQuestions(ctx context.Context, arg database.ListQuestionsByAuthorParams) ([]database.ListQuestionsByAuthorRow, error) {
-	return r.Q.ListQuestionsByAuthor(ctx, arg)
+func (r *Repository) ListUserQuestions(ctx context.Context, arg database.ListQuestionsByAuthorParams) ([]types.QuestionItem, error) {
+	rows, err := r.Q.ListQuestionsByAuthor(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	questions := make([]types.QuestionItem, 0, len(rows))
+	for _, row := range rows {
+		questions = append(questions, questionItemFromListByAuthorRow(row))
+	}
+	return questions, nil
 }
 
-func (r *Repository) SearchQuestions(ctx context.Context, arg database.SearchQuestionsParams) ([]database.SearchQuestionsRow, error) {
-	return r.Q.SearchQuestions(ctx, arg)
+func (r *Repository) SearchQuestions(ctx context.Context, arg database.SearchQuestionsParams) ([]types.QuestionItem, error) {
+	rows, err := r.Q.SearchQuestions(ctx, arg)
+	if err != nil {
+		return nil, err
+	}
+	questions := make([]types.QuestionItem, 0, len(rows))
+	for _, row := range rows {
+		questions = append(questions, questionItemFromSearchRow(row))
+	}
+	return questions, nil
 }
 
 func (r *Repository) GetQuestionVote(ctx context.Context, arg database.GetQuestionVoteParams) (database.QuestionUpvote, error) {
@@ -131,23 +129,13 @@ func (r *Repository) GetQuestionAuthor(ctx context.Context, uid pgtype.UUID) (st
 	return r.Q.GetQuestionAuthor(ctx, uid)
 }
 
-func (r *Repository) CheckNotificationExists(ctx context.Context, arg database.CheckNotificationExistsParams) (bool, error) {
-	return r.Q.CheckNotificationExists(ctx, arg)
-}
-
 func (r *Repository) CreateNotification(ctx context.Context, arg database.CreateNotificationParams) error {
 	return r.Q.CreateNotification(ctx, arg)
 }
 
 func (r *Repository) GetChamberCreatorByQuestion(ctx context.Context, questionUid pgtype.UUID) (string, error) {
-	row := r.DB.QueryRow(ctx, `
-		SELECT c.creator_username
-		FROM chambers c
-		JOIN questions q ON q.chamber_uid = c.uid
-		WHERE q.uid = $1
-	`, questionUid)
-	var creator pgtype.Text
-	if err := row.Scan(&creator); err != nil {
+	creator, err := r.Q.GetChamberCreatorByQuestion(ctx, questionUid)
+	if err != nil {
 		return "", err
 	}
 	if !creator.Valid {
@@ -157,42 +145,26 @@ func (r *Repository) GetChamberCreatorByQuestion(ctx context.Context, questionUi
 }
 
 func (r *Repository) SetQuestionPinnedAt(ctx context.Context, questionUid pgtype.UUID, pinnedAt pgtype.Timestamp) (int64, error) {
-	tag, err := r.DB.Exec(ctx, `UPDATE questions SET pinned_at = $1 WHERE uid = $2`, pinnedAt, questionUid)
-	if err != nil {
-		return 0, err
-	}
-	return tag.RowsAffected(), nil
+	return r.Q.SetQuestionPinnedAt(ctx, database.SetQuestionPinnedAtParams{
+		PinnedAt: pinnedAt,
+		Uid:      questionUid,
+	})
 }
 
 func (r *Repository) ClearQuestionPinnedAt(ctx context.Context, questionUid pgtype.UUID) (int64, error) {
-	tag, err := r.DB.Exec(ctx, `UPDATE questions SET pinned_at = NULL WHERE uid = $1`, questionUid)
-	if err != nil {
-		return 0, err
-	}
-	return tag.RowsAffected(), nil
+	return r.Q.ClearQuestionPinnedAt(ctx, questionUid)
 }
 
 func (r *Repository) SetQuestionAcceptedAnswer(ctx context.Context, questionUid pgtype.UUID, answerUid pgtype.UUID) (int64, error) {
-	tag, err := r.DB.Exec(ctx, `
-		UPDATE questions q
-		SET accepted_answer_uid = $1
-		FROM answers a
-		WHERE q.uid = $2 AND a.uid = $1 AND a.question_uid = q.uid
-	`, answerUid, questionUid)
-	if err != nil {
-		return 0, err
-	}
-	return tag.RowsAffected(), nil
+	return r.Q.SetQuestionAcceptedAnswer(ctx, database.SetQuestionAcceptedAnswerParams{
+		AcceptedAnswerUid: answerUid,
+		Uid:               questionUid,
+	})
 }
 
 func (r *Repository) ClearQuestionAcceptedAnswer(ctx context.Context, questionUid pgtype.UUID, answerUid pgtype.UUID) (int64, error) {
-	tag, err := r.DB.Exec(ctx, `
-		UPDATE questions
-		SET accepted_answer_uid = NULL
-		WHERE uid = $1 AND accepted_answer_uid = $2
-	`, questionUid, answerUid)
-	if err != nil {
-		return 0, err
-	}
-	return tag.RowsAffected(), nil
+	return r.Q.ClearQuestionAcceptedAnswer(ctx, database.ClearQuestionAcceptedAnswerParams{
+		Uid:               questionUid,
+		AcceptedAnswerUid: answerUid,
+	})
 }

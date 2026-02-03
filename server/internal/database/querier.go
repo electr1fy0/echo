@@ -12,8 +12,9 @@ import (
 
 type Querier interface {
 	AddChamberMember(ctx context.Context, arg AddChamberMemberParams) error
-	CheckNotificationExists(ctx context.Context, arg CheckNotificationExistsParams) (bool, error)
 	CheckUsernameExists(ctx context.Context, username string) (int64, error)
+	ClearQuestionAcceptedAnswer(ctx context.Context, arg ClearQuestionAcceptedAnswerParams) (int64, error)
+	ClearQuestionPinnedAt(ctx context.Context, uid pgtype.UUID) (int64, error)
 	CreateAnswerVote(ctx context.Context, arg CreateAnswerVoteParams) error
 	CreateChamber(ctx context.Context, arg CreateChamberParams) error
 	CreateNotification(ctx context.Context, arg CreateNotificationParams) error
@@ -32,6 +33,7 @@ type Querier interface {
 	GetAnswerAuthor(ctx context.Context, uid pgtype.UUID) (string, error)
 	GetAnswerVote(ctx context.Context, arg GetAnswerVoteParams) (AnswerUpvote, error)
 	GetChamberCreator(ctx context.Context, uid pgtype.UUID) (pgtype.Text, error)
+	GetChamberCreatorByQuestion(ctx context.Context, uid pgtype.UUID) (pgtype.Text, error)
 	GetProfile(ctx context.Context, username string) (GetProfileRow, error)
 	GetPublicProfile(ctx context.Context, username string) (GetPublicProfileRow, error)
 	GetQuestion(ctx context.Context, arg GetQuestionParams) (GetQuestionRow, error)
@@ -52,11 +54,14 @@ type Querier interface {
 	ListQuestionsFiltered(ctx context.Context, arg ListQuestionsFilteredParams) ([]ListQuestionsFilteredRow, error)
 	ListQuestionsTop(ctx context.Context, arg ListQuestionsTopParams) ([]ListQuestionsTopRow, error)
 	ListReplies(ctx context.Context, arg ListRepliesParams) ([]ListRepliesRow, error)
+	ResolveUsers(ctx context.Context, dollar_1 []string) ([]string, error)
 	SearchChambers(ctx context.Context, arg SearchChambersParams) ([]SearchChambersRow, error)
 	SearchQuestions(ctx context.Context, arg SearchQuestionsParams) ([]SearchQuestionsRow, error)
 	SearchReplies(ctx context.Context, arg SearchRepliesParams) ([]SearchRepliesRow, error)
 	SearchUsers(ctx context.Context, query pgtype.Text) ([]SearchUsersRow, error)
 	SetPasswordResetToken(ctx context.Context, arg SetPasswordResetTokenParams) error
+	SetQuestionAcceptedAnswer(ctx context.Context, arg SetQuestionAcceptedAnswerParams) (int64, error)
+	SetQuestionPinnedAt(ctx context.Context, arg SetQuestionPinnedAtParams) (int64, error)
 	SetVerificationToken(ctx context.Context, arg SetVerificationTokenParams) error
 	UpdateChamber(ctx context.Context, arg UpdateChamberParams) (pgtype.UUID, error)
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error

@@ -3,13 +3,13 @@ package handlers
 import (
 	"context"
 	"echo/internal/middleware"
+	"echo/internal/service"
 	"echo/internal/types"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -36,7 +36,7 @@ func (h *ChamberHandler) CreateChamber(w http.ResponseWriter, r *http.Request) {
 	chamber.CreatorUsername = sub
 	chamber.MemberCount = 1
 	chamber.IsJoined = true
-	
+
 	respondWithJSON(w, http.StatusCreated, chamber)
 }
 
@@ -64,7 +64,6 @@ func (h *ChamberHandler) DeleteChamber(w http.ResponseWriter, r *http.Request) {
 func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	var chambers []types.Chamber = make([]types.Chamber, 0)
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
@@ -73,25 +72,12 @@ func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filterQuery := q.Get("q")
 
-	rows, err := h.Service.ListChambers(ctx, filterQuery, sub)
+	chambers, err := h.Service.ListChambers(ctx, filterQuery, sub)
 	if err != nil {
 		respondWithError(w, "failed to query chambers", err, http.StatusInternalServerError)
 		return
 	}
 
-	for _, row := range rows {
-		c := types.Chamber{
-			UID:         uuid.UUID(row.Uid.Bytes).String(),
-			Name:        row.Name,
-			Description: row.Description,
-			CreatorUsername: row.CreatorUsername.String,
-			ColorIndex:  row.ColorIndex.Int32,
-			TimeCreated: row.CreatedAt.Time,
-			MemberCount: int(row.MemberCount),
-			IsJoined:    row.IsJoined,
-		}
-		chambers = append(chambers, c)
-	}
 	respondWithJSON(w, http.StatusOK, chambers)
 }
 
@@ -112,7 +98,11 @@ func (h *ChamberHandler) JoinChamber(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.JoinChamber(ctx, chamberUID, sub)
 	if err != nil {
-		respondWithError(w, "failed to join chamber", err, http.StatusInternalServerError)
+		if errors.Is(err, service.ErrInvalidUID) {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to join chamber", err, http.StatusInternalServerError)
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "joined chamber"})
@@ -135,7 +125,11 @@ func (h *ChamberHandler) LeaveChamber(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.LeaveChamber(ctx, chamberUID, sub)
 	if err != nil {
-		respondWithError(w, "failed to leave chamber", err, http.StatusInternalServerError)
+		if errors.Is(err, service.ErrInvalidUID) {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to leave chamber", err, http.StatusInternalServerError)
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "left chamber"})
@@ -171,11 +165,11 @@ func (h *ChamberHandler) UpdateChamber(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.UpdateChamber(ctx, uid, sub, chamber)
 	if err != nil {
-		if err.Error() == "unauthorized" {
+		if errors.Is(err, service.ErrUnauthorized) {
 			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
-		} else if err.Error() == "chamber not found" {
+		} else if errors.Is(err, service.ErrChamberNotFound) {
 			respondWithError(w, "chamber not found", nil, http.StatusNotFound)
-		} else if err.Error() == "invalid uid" {
+		} else if errors.Is(err, service.ErrInvalidUID) {
 			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		} else {
 			var pgErr *pgconn.PgError

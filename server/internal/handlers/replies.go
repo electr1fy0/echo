@@ -3,12 +3,13 @@ package handlers
 import (
 	"context"
 	"echo/internal/middleware"
+	"echo/internal/service"
 	"echo/internal/types"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -29,32 +30,16 @@ func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.Service.ListReplies(ctx, uid, sub)
+	answer, err := h.Service.ListReplies(ctx, uid, sub)
 	if err != nil {
-		respondWithError(w, "failed to query replies: "+err.Error(), err, http.StatusBadRequest)
+		if errors.Is(err, service.ErrInvalidQuestionUID) {
+			respondWithError(w, "invalid question uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to query replies", err, http.StatusInternalServerError)
+		}
 		return
 	}
 
-	answer := []types.AnswerItem{}
-	for _, row := range rows {
-		ans := types.AnswerItem{
-			Answer: types.Answer{
-				UID:            uuid.UUID(row.Uid.Bytes).String(),
-				Content:        row.Content,
-				TimeCreated:    row.TimeCreated.Time,
-				QuestionUID:    uuid.UUID(row.QuestionUid.Bytes).String(),
-				AuthorUsername: row.Author,
-				Upvotes:        int(row.Upvotes.Int32),
-				IsUpvoted:      row.IsUpvoted,
-				IsAccepted:     row.AcceptedAnswerUid.Valid && row.AcceptedAnswerUid.Bytes == row.Uid.Bytes,
-			},
-			Author: types.Profile{
-				Username: row.Author,
-				Avatar:   row.Avatar.String,
-			},
-		}
-		answer = append(answer, ans)
-	}
 	respondWithJSON(w, http.StatusOK, answer)
 }
 func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +64,11 @@ func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 
 	newUID, err := h.Service.CreateReply(ctx, uid, sub, ans.Content)
 	if err != nil {
-		respondWithError(w, "failed to save reply to db", err, http.StatusInternalServerError)
+		if errors.Is(err, service.ErrInvalidQuestionUID) {
+			respondWithError(w, "invalid question uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to save reply to db", err, http.StatusInternalServerError)
+		}
 		return
 	}
 	ans.UID = newUID
@@ -87,7 +76,7 @@ func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 	ans.AuthorUsername = sub
 	ans.TimeCreated = time.Now().UTC()
 	ans.IsAccepted = false
-	
+
 	respondWithJSON(w, http.StatusCreated, ans)
 }
 func (h *ReplyHandler) UpdateReply(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +105,10 @@ func (h *ReplyHandler) UpdateReply(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.Service.UpdateReply(ctx, ruid, sub, body.Content)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, service.ErrInvalidReplyUID) {
+		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		return
+	} else if err == pgx.ErrNoRows {
 		respondWithError(w, "reply not found or unauthorized", nil, http.StatusNotFound)
 		return
 	} else if err != nil {
@@ -143,7 +135,11 @@ func (h *ReplyHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.UpdateReplyVote(ctx, sub, ruid); err != nil {
-		respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
+		if errors.Is(err, service.ErrInvalidReplyUID) {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to update vote", err, http.StatusInternalServerError)
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "vote updated"})
@@ -162,7 +158,11 @@ func (h *ReplyHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := h.Service.DeleteReply(ctx, ruid, quid, sub); err != nil {
-		respondWithError(w, "failed to delete reply", err, http.StatusInternalServerError)
+		if errors.Is(err, service.ErrInvalidReplyUID) || errors.Is(err, service.ErrInvalidQuestionUID) {
+			respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
+		} else {
+			respondWithError(w, "failed to delete reply", err, http.StatusInternalServerError)
+		}
 		return
 	}
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "reply deleted"})
@@ -186,12 +186,16 @@ func (h *ReplyHandler) AcceptReply(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.AcceptReply(ctx, quid, ruid, sub)
 	if err != nil {
-		if err.Error() == "unauthorized" {
+		if errors.Is(err, service.ErrUnauthorized) {
 			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
-		} else if err.Error() == "question not found" || err.Error() == "reply not found" {
-			respondWithError(w, err.Error(), nil, http.StatusNotFound)
-		} else if err.Error() == "invalid question uid" || err.Error() == "invalid reply uid" {
-			respondWithError(w, err.Error(), nil, http.StatusBadRequest)
+		} else if errors.Is(err, service.ErrQuestionNotFound) {
+			respondWithError(w, "question not found", nil, http.StatusNotFound)
+		} else if errors.Is(err, service.ErrReplyNotFound) {
+			respondWithError(w, "reply not found", nil, http.StatusNotFound)
+		} else if errors.Is(err, service.ErrInvalidQuestionUID) {
+			respondWithError(w, "invalid question uid", nil, http.StatusBadRequest)
+		} else if errors.Is(err, service.ErrInvalidReplyUID) {
+			respondWithError(w, "invalid reply uid", nil, http.StatusBadRequest)
 		} else {
 			respondWithError(w, "failed to accept reply", err, http.StatusInternalServerError)
 		}
@@ -218,12 +222,16 @@ func (h *ReplyHandler) UnacceptReply(w http.ResponseWriter, r *http.Request) {
 
 	err = h.Service.UnacceptReply(ctx, quid, ruid, sub)
 	if err != nil {
-		if err.Error() == "unauthorized" {
+		if errors.Is(err, service.ErrUnauthorized) {
 			respondWithError(w, "unauthorized", nil, http.StatusForbidden)
-		} else if err.Error() == "question not found" || err.Error() == "reply not found" {
-			respondWithError(w, err.Error(), nil, http.StatusNotFound)
-		} else if err.Error() == "invalid question uid" || err.Error() == "invalid reply uid" {
-			respondWithError(w, err.Error(), nil, http.StatusBadRequest)
+		} else if errors.Is(err, service.ErrQuestionNotFound) {
+			respondWithError(w, "question not found", nil, http.StatusNotFound)
+		} else if errors.Is(err, service.ErrReplyNotFound) {
+			respondWithError(w, "reply not found", nil, http.StatusNotFound)
+		} else if errors.Is(err, service.ErrInvalidQuestionUID) {
+			respondWithError(w, "invalid question uid", nil, http.StatusBadRequest)
+		} else if errors.Is(err, service.ErrInvalidReplyUID) {
+			respondWithError(w, "invalid reply uid", nil, http.StatusBadRequest)
 		} else {
 			respondWithError(w, "failed to unaccept reply", err, http.StatusInternalServerError)
 		}
