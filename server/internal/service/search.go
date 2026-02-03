@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"echo/internal/database"
 	"echo/internal/types"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (s *Service) GlobalSearch(ctx context.Context, query string, currentUser string) (types.SearchResponse, error) {
@@ -12,26 +15,37 @@ func (s *Service) GlobalSearch(ctx context.Context, query string, currentUser st
 		Replies:   []types.AnswerItem{},
 		Users:     []types.Profile{},
 	}
-	chambers, err := s.Repo.SearchChambers(ctx, query, currentUser)
+	chambers, err := s.Q.SearchChambers(ctx, database.SearchChambersParams{
+		Query:       pgtype.Text{String: query, Valid: true},
+		CurrentUser: currentUser,
+	})
 	if err != nil {
 		return resp, err
 	}
-	questions, err := s.Repo.SearchQuestionsPreview(ctx, query, currentUser)
+	questions, err := s.Q.SearchQuestions(ctx, database.SearchQuestionsParams{
+		Query:       pgtype.Text{String: "%" + query + "%", Valid: true},
+		CurrentUser: currentUser,
+		Limit:       5,
+		Offset:      0,
+	})
 	if err != nil {
 		return resp, err
 	}
-	replies, err := s.Repo.SearchReplies(ctx, query, currentUser)
+	replies, err := s.Q.SearchReplies(ctx, database.SearchRepliesParams{
+		Query:       pgtype.Text{String: query, Valid: true},
+		CurrentUser: currentUser,
+	})
 	if err != nil {
 		return resp, err
 	}
-	users, err := s.Repo.SearchUsers(ctx, query)
+	users, err := s.Q.SearchUsers(ctx, pgtype.Text{String: query, Valid: true})
 	if err != nil {
 		return resp, err
 	}
 
-	resp.Chambers = chambers
-	resp.Questions = questions
-	resp.Replies = replies
-	resp.Users = users
+	resp.Chambers = mapSearchChambers(chambers)
+	resp.Questions = mapSearchQuestions(questions)
+	resp.Replies = mapSearchReplies(replies)
+	resp.Users = mapSearchUsers(users)
 	return resp, nil
 }

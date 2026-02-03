@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"echo/internal/database"
 	"echo/internal/email"
 	"echo/internal/types"
 	"echo/internal/utils"
@@ -12,6 +13,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -43,27 +47,43 @@ func (s *Service) Signup(ctx context.Context, user types.User) error {
 			slog.Error("failed to send verification email", "error", err, "user", user.Username)
 		}
 	}()
-	return s.Repo.CreateUser(ctx, user, hash, token)
+	if err := s.Q.CreateUser(ctx, database.CreateUserParams{
+		Username:          user.Username,
+		Email:             user.Email,
+		Password:          pgtype.Text{String: string(hash), Valid: true},
+		VerificationToken: pgtype.Text{String: token, Valid: true},
+		IsVerified:        pgtype.Bool{Bool: false, Valid: true},
+	}); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return ErrUserExists
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *Service) VerifyEmail(ctx context.Context, token string) (string, error) {
-	return s.Repo.VerifyUser(ctx, token)
+	return s.Q.VerifyUser(ctx, pgtype.Text{String: token, Valid: true})
 }
 
 func (s *Service) Signin(ctx context.Context, user types.User) (string, error) {
 	user.Username = strings.TrimSpace(user.Username)
-	dbUser, isVerified, err := s.Repo.GetUserByUsername(ctx, user.Username)
+	row, err := s.Q.GetUserByUsername(ctx, user.Username)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return "", ErrInvalidCredentials
+		}
 		return "", ErrInvalidCredentials
 	}
-	if dbUser.Username == "" {
+	if row.Username == "" {
 		return "", ErrInvalidCredentials
 	}
 
-	if bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(user.Password)) != nil {
+	if !row.Password.Valid || bcrypt.CompareHashAndPassword([]byte(row.Password.String), []byte(user.Password)) != nil {
 		return "", ErrInvalidCredentials
 	}
-	if !isVerified {
+	if !row.IsVerified.Bool {
 		return "", ErrNotVerified
 	}
 
@@ -81,11 +101,8 @@ func (s *Service) Signin(ctx context.Context, user types.User) (string, error) {
 }
 
 func (s *Service) RequestPasswordReset(ctx context.Context, reqEmail string) error {
-	username, _, err := s.Repo.GetUserByEmail(ctx, reqEmail)
-	if err != nil {
-		return nil
-	}
-	if username == "" {
+	row, err := s.Q.GetUserByEmail(ctx, reqEmail)
+	if err != nil || row.Username == "" {
 		return nil
 	}
 
@@ -94,12 +111,19 @@ func (s *Service) RequestPasswordReset(ctx context.Context, reqEmail string) err
 		return err
 	}
 
-	if err := s.Repo.SetPasswordResetToken(ctx, reqEmail, token, time.Now().UTC().Add(time.Hour)); err != nil {
+	if err := s.Q.SetPasswordResetToken(ctx, database.SetPasswordResetTokenParams{
+		ResetToken: pgtype.Text{String: token, Valid: true},
+		ResetExpiry: pgtype.Timestamp{
+			Time:  time.Now().UTC().Add(time.Hour),
+			Valid: true,
+		},
+		Email: reqEmail,
+	}); err != nil {
 		return err
 	}
 
 	go func() {
-		if err := email.SendPasswordResetEmail(reqEmail, username, token); err != nil {
+		if err := email.SendPasswordResetEmail(reqEmail, row.Username, token); err != nil {
 			slog.Error("failed to send reset email", "error", err, "email", reqEmail)
 		}
 	}()
@@ -107,12 +131,12 @@ func (s *Service) RequestPasswordReset(ctx context.Context, reqEmail string) err
 }
 
 func (s *Service) ResetPassword(ctx context.Context, token, newPassword string) error {
-	email, expiry, err := s.Repo.GetUserByResetToken(ctx, token)
-	if err != nil || email == "" {
+	row, err := s.Q.GetUserByResetToken(ctx, pgtype.Text{String: token, Valid: true})
+	if err != nil || row.Email == "" {
 		return ErrInvalidToken
 	}
 
-	if time.Now().UTC().After(expiry) {
+	if time.Now().UTC().After(row.ResetExpiry.Time) {
 		return errors.New("token expired")
 	}
 
@@ -121,15 +145,18 @@ func (s *Service) ResetPassword(ctx context.Context, token, newPassword string) 
 		return err
 	}
 
-	return s.Repo.UpdatePassword(ctx, email, hash)
+	return s.Q.UpdatePassword(ctx, database.UpdatePasswordParams{
+		Password: pgtype.Text{String: string(hash), Valid: true},
+		Email:    row.Email,
+	})
 }
 
 func (s *Service) ResendVerification(ctx context.Context, reqEmail string) error {
-	username, isVerified, err := s.Repo.GetUserByEmail(ctx, reqEmail)
-	if err != nil || username == "" {
+	row, err := s.Q.GetUserByEmail(ctx, reqEmail)
+	if err != nil || row.Username == "" {
 		return nil
 	}
-	if isVerified {
+	if row.IsVerified.Bool {
 		return errors.New("account is already verified")
 	}
 
@@ -138,15 +165,16 @@ func (s *Service) ResendVerification(ctx context.Context, reqEmail string) error
 		return err
 	}
 
-	if err := s.Repo.SetVerificationToken(ctx, reqEmail, token); err != nil {
-
+	if err := s.Q.SetVerificationToken(ctx, database.SetVerificationTokenParams{
+		VerificationToken: pgtype.Text{String: token, Valid: true},
+		Email:             reqEmail,
+	}); err != nil {
 		return err
-
 	}
 
 	go func() {
 
-		if err := email.SendVerificationEmail(reqEmail, username, token); err != nil {
+		if err := email.SendVerificationEmail(reqEmail, row.Username, token); err != nil {
 
 			slog.Error("failed to send verification email", "error", err, "email", reqEmail)
 

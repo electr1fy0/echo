@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"echo/internal/middleware"
-	"echo/internal/repository"
 	"echo/internal/service"
 	"echo/internal/types"
 	"encoding/json"
@@ -239,7 +238,7 @@ func (h *QuestionHandler) ListQuestions(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	questions, err := h.Service.ListQuestions(ctx, repository.ListQuestionsParams{
+	questions, err := h.Service.ListQuestions(ctx, service.ListQuestionsParams{
 		Limit:            int(limit),
 		Offset:           int(offset),
 		Sort:             sort,

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"echo/internal/database"
 	"echo/internal/types"
 	"errors"
 	"os"
@@ -9,14 +10,38 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (s *Service) GetProfile(ctx context.Context, username string) (types.Profile, error) {
-	return s.Repo.GetProfile(ctx, username)
+	row, err := s.Q.GetProfile(ctx, username)
+	if err != nil {
+		return types.Profile{}, err
+	}
+	return types.Profile{
+		Username: row.Username,
+		Email:    row.Email,
+		Bio:      row.Bio,
+		Avatar:   row.Avatar,
+		Link:     row.Links,
+		Posted:   int(row.Posted),
+		Answered: int(row.Answered),
+	}, nil
 }
 
 func (s *Service) GetPublicProfile(ctx context.Context, username string) (types.Profile, error) {
-	return s.Repo.GetPublicProfile(ctx, username)
+	row, err := s.Q.GetPublicProfile(ctx, username)
+	if err != nil {
+		return types.Profile{}, err
+	}
+	return types.Profile{
+		Username: row.Username,
+		Bio:      row.Bio,
+		Avatar:   row.Avatar,
+		Link:     row.Links,
+		Posted:   int(row.Posted),
+		Answered: int(row.Answered),
+	}, nil
 }
 
 func (s *Service) UpdateUser(ctx context.Context, currentUsername string, profile types.Profile) (string, error) {
@@ -27,11 +52,11 @@ func (s *Service) UpdateUser(ctx context.Context, currentUsername string, profil
 			return "", errors.New("username cannot contain spaces")
 		}
 
-		exists, err := s.Repo.CheckUsernameExists(ctx, profile.Username)
+		count, err := s.Q.CheckUsernameExists(ctx, profile.Username)
 		if err != nil {
 			return "", err
 		}
-		if exists {
+		if count > 0 {
 			return "", ErrUserExists
 		}
 		newUsername = profile.Username
@@ -39,7 +64,13 @@ func (s *Service) UpdateUser(ctx context.Context, currentUsername string, profil
 		profile.Username = currentUsername
 	}
 
-	if err := s.Repo.UpdateUser(ctx, currentUsername, profile); err != nil {
+	if err := s.Q.UpdateUser(ctx, database.UpdateUserParams{
+		Bio:        pgtype.Text{String: profile.Bio, Valid: true},
+		Avatar:     pgtype.Text{String: profile.Avatar, Valid: true},
+		Links:      pgtype.Text{String: profile.Link, Valid: true},
+		Username:   profile.Username,
+		Username_2: currentUsername,
+	}); err != nil {
 		return "", err
 	}
 
@@ -59,13 +90,20 @@ func (s *Service) UpdateUser(ctx context.Context, currentUsername string, profil
 }
 
 func (s *Service) DeleteUser(ctx context.Context, username string) error {
-	return s.Repo.DeleteUser(ctx, username)
+	return s.Q.DeleteUser(ctx, username)
 }
 
 func (s *Service) SearchUsers(ctx context.Context, query string) ([]types.Profile, error) {
-	return s.Repo.SearchUsers(ctx, query)
+	rows, err := s.Q.SearchUsers(ctx, pgtype.Text{String: query, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+	return mapSearchUsers(rows), nil
 }
 
 func (s *Service) ResolveUsers(ctx context.Context, usernames []string) ([]string, error) {
-	return s.Repo.ResolveUsers(ctx, usernames)
+	if len(usernames) == 0 {
+		return []string{}, nil
+	}
+	return s.Q.ResolveUsers(ctx, usernames)
 }

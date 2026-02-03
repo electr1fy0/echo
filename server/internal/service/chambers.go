@@ -13,7 +13,7 @@ import (
 func (s *Service) CreateChamber(ctx context.Context, name, description, creator string, colorIndex int32) (string, error) {
 	newUID := uuid.New()
 	uidPg := pgtype.UUID{Bytes: newUID, Valid: true}
-	err := s.Repo.CreateChamber(ctx, database.CreateChamberParams{
+	err := s.Q.CreateChamber(ctx, database.CreateChamberParams{
 		Uid:             uidPg,
 		Name:            name,
 		Description:     pgtype.Text{String: description, Valid: true},
@@ -23,7 +23,7 @@ func (s *Service) CreateChamber(ctx context.Context, name, description, creator 
 	if err != nil {
 		return "", err
 	}
-	err = s.Repo.AddChamberMember(ctx, database.AddChamberMemberParams{
+	err = s.Q.AddChamberMember(ctx, database.AddChamberMemberParams{
 		ChamberUid: uidPg,
 		Username:   creator,
 	})
@@ -34,17 +34,25 @@ func (s *Service) CreateChamber(ctx context.Context, name, description, creator 
 }
 
 func (s *Service) DeleteChamber(ctx context.Context, creator, name string) error {
-	return s.Repo.DeleteChamber(ctx, database.DeleteChamberParams{
+	return s.Q.DeleteChamber(ctx, database.DeleteChamberParams{
 		CreatorUsername: pgtype.Text{String: creator, Valid: true},
 		Name:            name,
 	})
 }
 
 func (s *Service) ListChambers(ctx context.Context, filter string, currentUser string) ([]types.Chamber, error) {
-	return s.Repo.ListChambers(ctx, database.ListChambersParams{
+	rows, err := s.Q.ListChambers(ctx, database.ListChambersParams{
 		Column1:     filter,
 		CurrentUser: currentUser,
 	})
+	if err != nil {
+		return nil, err
+	}
+	chambers := make([]types.Chamber, 0, len(rows))
+	for _, row := range rows {
+		chambers = append(chambers, chamberFromListRow(row))
+	}
+	return chambers, nil
 }
 
 func (s *Service) JoinChamber(ctx context.Context, uid string, username string) error {
@@ -52,7 +60,7 @@ func (s *Service) JoinChamber(ctx context.Context, uid string, username string) 
 	if err != nil {
 		return ErrInvalidUID
 	}
-	return s.Repo.JoinChamber(ctx, database.JoinChamberParams{
+	return s.Q.JoinChamber(ctx, database.JoinChamberParams{
 		ChamberUid: pgtype.UUID{Bytes: pUID, Valid: true},
 		Username:   username,
 	})
@@ -63,7 +71,7 @@ func (s *Service) LeaveChamber(ctx context.Context, uid string, username string)
 	if err != nil {
 		return ErrInvalidUID
 	}
-	return s.Repo.LeaveChamber(ctx, database.LeaveChamberParams{
+	return s.Q.LeaveChamber(ctx, database.LeaveChamberParams{
 		ChamberUid: pgtype.UUID{Bytes: pUID, Valid: true},
 		Username:   username,
 	})
@@ -75,16 +83,19 @@ func (s *Service) UpdateChamber(ctx context.Context, uid string, actor string, c
 		return ErrInvalidUID
 	}
 	uidPg := pgtype.UUID{Bytes: pUID, Valid: true}
-	creator, err := s.Repo.GetChamberCreator(ctx, uidPg)
+	creator, err := s.Q.GetChamberCreator(ctx, uidPg)
 	if err == pgx.ErrNoRows {
 		return ErrChamberNotFound
 	} else if err != nil {
 		return err
 	}
-	if creator != actor {
+	if !creator.Valid {
+		return ErrChamberNotFound
+	}
+	if creator.String != actor {
 		return ErrUnauthorized
 	}
-	_, err = s.Repo.UpdateChamber(ctx, database.UpdateChamberParams{
+	_, err = s.Q.UpdateChamber(ctx, database.UpdateChamberParams{
 		Uid:             uidPg,
 		Name:            chamber.Name,
 		Description:     pgtype.Text{String: chamber.Description, Valid: true},

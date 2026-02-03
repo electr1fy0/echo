@@ -51,11 +51,11 @@ func (s *Service) notifyMentions(ctx context.Context, content, actor string, ref
 		if skipUser != "" && username == skipUser {
 			continue
 		}
-		exists, err := s.Repo.CheckUsernameExists(ctx, username)
-		if err != nil || !exists {
+		count, err := s.Q.CheckUsernameExists(ctx, username)
+		if err != nil || count == 0 {
 			continue
 		}
-		_ = s.Repo.CreateNotification(ctx, database.CreateNotificationParams{
+		_ = s.Q.CreateNotification(ctx, database.CreateNotificationParams{
 			UserUsername:  username,
 			ActorUsername: pgtype.Text{String: actor, Valid: true},
 			Type:          notificationType,

@@ -16,10 +16,18 @@ func (s *Service) ListReplies(ctx context.Context, questionUID string, currentUs
 	if err != nil {
 		return nil, ErrInvalidQuestionUID
 	}
-	return s.Repo.ListReplies(ctx, database.ListRepliesParams{
+	rows, err := s.Q.ListReplies(ctx, database.ListRepliesParams{
 		QuestionUid: pgtype.UUID{Bytes: qUID, Valid: true},
 		CurrentUser: currentUser,
 	})
+	if err != nil {
+		return nil, err
+	}
+	replies := make([]types.AnswerItem, 0, len(rows))
+	for _, row := range rows {
+		replies = append(replies, answerItemFromListRow(row))
+	}
+	return replies, nil
 }
 
 func (s *Service) CreateReply(ctx context.Context, questionUID string, author, content string) (string, error) {
@@ -29,7 +37,7 @@ func (s *Service) CreateReply(ctx context.Context, questionUID string, author, c
 	}
 	newUID := uuid.New()
 
-	err = s.Repo.CreateReply(ctx, database.CreateReplyParams{
+	err = s.Q.CreateReply(ctx, database.CreateReplyParams{
 		Uid:         pgtype.UUID{Bytes: newUID, Valid: true},
 		Content:     content,
 		QuestionUid: pgtype.UUID{Bytes: qUID, Valid: true},
@@ -40,14 +48,14 @@ func (s *Service) CreateReply(ctx context.Context, questionUID string, author, c
 		return "", err
 	}
 
-	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, pgtype.UUID{Bytes: qUID, Valid: true})
+	qAuthor, err := s.Q.GetQuestionAuthor(ctx, pgtype.UUID{Bytes: qUID, Valid: true})
 	if err != nil {
 		s.notifyMentions(ctx, content, author, pgtype.UUID{Bytes: newUID, Valid: true}, true, "")
 		return newUID.String(), nil
 	}
 
 	if qAuthor != "" && qAuthor != author {
-		_ = s.Repo.CreateNotification(ctx, database.CreateNotificationParams{
+		_ = s.Q.CreateNotification(ctx, database.CreateNotificationParams{
 			UserUsername:  qAuthor,
 			ActorUsername: pgtype.Text{String: author, Valid: true},
 			Type:          "reply_question",
@@ -63,7 +71,7 @@ func (s *Service) UpdateReply(ctx context.Context, uid string, author, content s
 	if err != nil {
 		return ErrInvalidReplyUID
 	}
-	_, err = s.Repo.UpdateReply(ctx, database.UpdateReplyParams{
+	_, err = s.Q.UpdateReply(ctx, database.UpdateReplyParams{
 		Content: content,
 		Uid:     pgtype.UUID{Bytes: pUID, Valid: true},
 		Author:  author,
@@ -80,7 +88,7 @@ func (s *Service) DeleteReply(ctx context.Context, uid, questionUID string, auth
 	if err != nil {
 		return ErrInvalidQuestionUID
 	}
-	return s.Repo.DeleteReply(ctx, database.DeleteReplyParams{
+	return s.Q.DeleteReply(ctx, database.DeleteReplyParams{
 		Uid:         pgtype.UUID{Bytes: pUID, Valid: true},
 		QuestionUid: pgtype.UUID{Bytes: qUID, Valid: true},
 		Author:      author,
@@ -93,24 +101,24 @@ func (s *Service) UpdateReplyVote(ctx context.Context, username string, ruid str
 		return ErrInvalidReplyUID
 	}
 	ruidPg := pgtype.UUID{Bytes: pRUID, Valid: true}
-	_, err = s.Repo.GetAnswerVote(ctx, database.GetAnswerVoteParams{
+	_, err = s.Q.GetAnswerVote(ctx, database.GetAnswerVoteParams{
 		Username:  username,
 		AnswerUid: ruidPg,
 	})
 
 	if err == pgx.ErrNoRows {
-		err := s.Repo.CreateAnswerVote(ctx, database.CreateAnswerVoteParams{
+		err := s.Q.CreateAnswerVote(ctx, database.CreateAnswerVoteParams{
 			Username:  username,
 			AnswerUid: ruidPg,
 		})
 		if err != nil {
 			return err
 		}
-		_ = s.Repo.IncrementAnswerUpvotes(ctx, ruidPg)
+		_ = s.Q.IncrementAnswerUpvotes(ctx, ruidPg)
 
-		author, err := s.Repo.GetAnswerAuthor(ctx, ruidPg)
+		author, err := s.Q.GetAnswerAuthor(ctx, ruidPg)
 		if err == nil && author != "" && author != username {
-			_ = s.Repo.CreateNotification(ctx, database.CreateNotificationParams{
+			_ = s.Q.CreateNotification(ctx, database.CreateNotificationParams{
 				UserUsername:  author,
 				ActorUsername: pgtype.Text{String: username, Valid: true},
 				Type:          "upvote_reply",
@@ -119,14 +127,14 @@ func (s *Service) UpdateReplyVote(ctx context.Context, username string, ruid str
 		}
 		return nil
 	} else if err == nil {
-		err := s.Repo.DeleteAnswerVote(ctx, database.DeleteAnswerVoteParams{
+		err := s.Q.DeleteAnswerVote(ctx, database.DeleteAnswerVoteParams{
 			Username:  username,
 			AnswerUid: ruidPg,
 		})
 		if err != nil {
 			return err
 		}
-		_ = s.Repo.DecrementAnswerUpvotes(ctx, ruidPg)
+		_ = s.Q.DecrementAnswerUpvotes(ctx, ruidPg)
 		return nil
 	} else {
 		return err
@@ -143,7 +151,7 @@ func (s *Service) AcceptReply(ctx context.Context, questionUID, replyUID, actor 
 		return ErrInvalidReplyUID
 	}
 	qUidPg := pgtype.UUID{Bytes: qUID, Valid: true}
-	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, qUidPg)
+	qAuthor, err := s.Q.GetQuestionAuthor(ctx, qUidPg)
 	if err == pgx.ErrNoRows {
 		return ErrQuestionNotFound
 	} else if err != nil {
@@ -152,7 +160,10 @@ func (s *Service) AcceptReply(ctx context.Context, questionUID, replyUID, actor 
 	if qAuthor != actor {
 		return ErrUnauthorized
 	}
-	rows, err := s.Repo.SetQuestionAcceptedAnswer(ctx, qUidPg, pgtype.UUID{Bytes: rUID, Valid: true})
+	rows, err := s.Q.SetQuestionAcceptedAnswer(ctx, database.SetQuestionAcceptedAnswerParams{
+		AcceptedAnswerUid: pgtype.UUID{Bytes: rUID, Valid: true},
+		Uid:               qUidPg,
+	})
 	if err != nil {
 		return err
 	}
@@ -172,7 +183,7 @@ func (s *Service) UnacceptReply(ctx context.Context, questionUID, replyUID, acto
 		return ErrInvalidReplyUID
 	}
 	qUidPg := pgtype.UUID{Bytes: qUID, Valid: true}
-	qAuthor, err := s.Repo.GetQuestionAuthor(ctx, qUidPg)
+	qAuthor, err := s.Q.GetQuestionAuthor(ctx, qUidPg)
 	if err == pgx.ErrNoRows {
 		return ErrQuestionNotFound
 	} else if err != nil {
@@ -181,7 +192,10 @@ func (s *Service) UnacceptReply(ctx context.Context, questionUID, replyUID, acto
 	if qAuthor != actor {
 		return ErrUnauthorized
 	}
-	rows, err := s.Repo.ClearQuestionAcceptedAnswer(ctx, qUidPg, pgtype.UUID{Bytes: rUID, Valid: true})
+	rows, err := s.Q.ClearQuestionAcceptedAnswer(ctx, database.ClearQuestionAcceptedAnswerParams{
+		Uid:               qUidPg,
+		AcceptedAnswerUid: pgtype.UUID{Bytes: rUID, Valid: true},
+	})
 	if err != nil {
 		return err
 	}

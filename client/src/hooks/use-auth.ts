@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signin, signup, verifySession, signout } from "@/api/auth";
+import { getToken } from "@/lib/utils";
 export function useSignin() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -18,7 +19,8 @@ export function useAuth() {
   return useQuery({
     queryKey: ["auth"],
     queryFn: verifySession,
-    retry: 2,
+    enabled: !!getToken(),
+    retry: false,
     staleTime: 5 * 60 * 1000,
   });
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"echo/internal/handlers"
 	"echo/internal/middleware"
-	"echo/internal/repository"
 	"echo/internal/service"
 	"fmt"
 	"log/slog"
@@ -30,8 +29,7 @@ func New() (*Server, error) {
 		return nil, fmt.Errorf("failed to create db pool: %w", err)
 	}
 
-	repo := repository.New(db)
-	svc := service.New(repo)
+	svc := service.New(db)
 
 	s := &Server{
 		svc: svc,
