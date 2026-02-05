@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,6 +74,7 @@ function SkeletonHome() {
   );
 }
 export function Auth() {
+  const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
@@ -127,11 +128,18 @@ export function Auth() {
         },
       );
     } else {
-      signIn({
-        ...user,
-        username: user.username.trim(),
-        email: user.email.trim(),
-      });
+      signIn(
+        {
+          ...user,
+          username: user.username.trim(),
+          email: user.email.trim(),
+        },
+        {
+          onSuccess: () => {
+            navigate("/home");
+          },
+        },
+      );
     }
   }
 
