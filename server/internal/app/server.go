@@ -48,6 +48,11 @@ func (s *Server) setupRouter() {
 	searchH := &handlers.SearchHandler{Service: s.svc}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /ping", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("pong"))
+	})
 
 	mux.HandleFunc("POST /auth/signup", authH.Signup)
 	mux.HandleFunc("POST /auth/signin", authH.Signin)

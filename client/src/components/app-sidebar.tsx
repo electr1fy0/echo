@@ -164,21 +164,15 @@ function CreateQueryDialog({
   const selectedChamberData = chambers.find((c) => c.uid === selectedChamber);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]   pb-1 p-0     ">
+      <DialogContent
+        showCloseButton={false}
+        className="sm:max-w-[500px] overflow-hidden p-0 pb-1"
+      >
         <DialogHeader>
           <DialogTitle className="pt-6 px-4">New Query</DialogTitle>
         </DialogHeader>
         <div className="pt-4">
-          <div
-            className="
-            bg-background rounded-2xl
-            transition-colors
-            focus-within:border-neutral-400
-            dark:focus-within:border-neutral-500
-            overflow-visible
-
-          "
-          >
+          <div className="bg-background transition-colors focus-within:border-neutral-400 dark:focus-within:border-neutral-500">
             <MentionField
               placeholder={
                 selectedChamberData
