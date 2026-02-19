@@ -109,31 +109,37 @@ export function Auth() {
   const { mutate: resendVerification, isPending: isResendPending } =
     useResendVerification();
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const payload: AuthPayload = {
+      username: formData.get("username")?.toString().trim() ?? "",
+      email: formData.get("email")?.toString().trim() ?? "",
+      password: formData.get("password")?.toString() ?? "",
+    };
+    updateUser(payload);
+
     if (isForgotPassword) {
-      if (!user.email) return;
-      requestReset(user.email, {
+      if (!payload.email) return;
+      requestReset(payload.email, {
         onSuccess: () => setForgotPasswordSuccess(true),
       });
       return;
     }
 
     if (isSignUp) {
+      if (!payload.username || !payload.email || !payload.password) return;
       signUp(
-        { ...user, username: user.username.trim(), email: user.email.trim() },
+        payload,
         {
           onSuccess: () => setSignupSuccess(true),
           onError: (err) => console.error(err),
         },
       );
     } else {
+      if (!payload.username || !payload.password) return;
       signIn(
-        {
-          ...user,
-          username: user.username.trim(),
-          email: user.email.trim(),
-        },
+        payload,
         {
           onSuccess: () => {
             navigate("/home");
@@ -284,10 +290,12 @@ export function Auth() {
               {!isForgotPassword && (
                 <Input
                   id="username"
+                  name="username"
                   type="text"
                   placeholder="Username"
                   aria-label="Username"
                   autoComplete="username"
+                  required
                   className="text-base pl-3"
                   onChange={(e) => {
                     updateUser({ username: e.target.value });
@@ -297,10 +305,12 @@ export function Auth() {
               {(isSignUp || isForgotPassword) && (
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="Email"
                   aria-label="Email"
                   autoComplete="email"
+                  required
                   className="text-base pl-3"
                   onChange={(e) => {
                     updateUser({ email: e.target.value });
@@ -310,10 +320,12 @@ export function Auth() {
               {!isForgotPassword && (
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   placeholder={isSignUp ? "Create Password" : "Password"}
                   aria-label="Password"
                   autoComplete={isSignUp ? "new-password" : "current-password"}
+                  required
                   className="text-base pl-3"
                   onChange={(e) => {
                     updateUser({ password: e.target.value });
@@ -326,14 +338,7 @@ export function Auth() {
                 disabled={
                   isInPending ||
                   isUpPending ||
-                  isResetPending ||
-                  (isForgotPassword
-                    ? !user.email.trim()
-                    : isSignUp
-                      ? !user.username.trim() ||
-                        !user.email.trim() ||
-                        !user.password.trim()
-                      : !user.username.trim() || !user.password.trim())
+                  isResetPending
                 }
               >
                 {isInPending || isUpPending || isResetPending ? (
