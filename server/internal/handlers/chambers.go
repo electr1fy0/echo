@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -84,7 +85,7 @@ func (h *ChamberHandler) ListChambers(w http.ResponseWriter, r *http.Request) {
 func (h *ChamberHandler) JoinChamber(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	chamberUID := r.PathValue("uid")
+	chamberUID := chi.URLParam(r, "uid")
 	if chamberUID == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -111,7 +112,7 @@ func (h *ChamberHandler) JoinChamber(w http.ResponseWriter, r *http.Request) {
 func (h *ChamberHandler) LeaveChamber(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	chamberUID := r.PathValue("uid")
+	chamberUID := chi.URLParam(r, "uid")
 	if chamberUID == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -140,7 +141,7 @@ func (h *ChamberHandler) UpdateChamber(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	defer r.Body.Close()
 
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return

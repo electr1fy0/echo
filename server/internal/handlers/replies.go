@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -18,7 +19,7 @@ func (h *ReplyHandler) ListReplies(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	defer r.Body.Close()
 
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -53,7 +54,7 @@ func (h *ReplyHandler) CreateReply(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, "unauthorized", err, http.StatusUnauthorized)
 		return
 	}
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -84,7 +85,7 @@ func (h *ReplyHandler) UpdateReply(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	defer r.Body.Close()
 
-	ruid := r.PathValue("ruid")
+	ruid := chi.URLParam(r, "ruid")
 	if ruid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -122,7 +123,7 @@ func (h *ReplyHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
-	ruid := r.PathValue("ruid")
+	ruid := chi.URLParam(r, "ruid")
 	if ruid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -146,8 +147,8 @@ func (h *ReplyHandler) UpdateReplyVote(w http.ResponseWriter, r *http.Request) {
 }
 func (h *ReplyHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	quid := r.PathValue("quid")
-	ruid := r.PathValue("ruid")
+	quid := chi.URLParam(r, "uid")
+	ruid := chi.URLParam(r, "ruid")
 
 	sub, err := middleware.GetUserID(r.Context())
 	if err != nil {
@@ -170,8 +171,8 @@ func (h *ReplyHandler) DeleteReply(w http.ResponseWriter, r *http.Request) {
 
 func (h *ReplyHandler) AcceptReply(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	quid := r.PathValue("quid")
-	ruid := r.PathValue("ruid")
+	quid := chi.URLParam(r, "uid")
+	ruid := chi.URLParam(r, "ruid")
 	if quid == "" || ruid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -206,8 +207,8 @@ func (h *ReplyHandler) AcceptReply(w http.ResponseWriter, r *http.Request) {
 
 func (h *ReplyHandler) UnacceptReply(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	quid := r.PathValue("quid")
-	ruid := r.PathValue("ruid")
+	quid := chi.URLParam(r, "uid")
+	ruid := chi.URLParam(r, "ruid")
 	if quid == "" || ruid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return

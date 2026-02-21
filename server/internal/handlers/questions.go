@@ -10,13 +10,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 )
 
 func (h *QuestionHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	quid := r.PathValue("uid")
+	quid := chi.URLParam(r, "uid")
 	if quid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -41,7 +42,7 @@ func (h *QuestionHandler) UpdateQuestionVote(w http.ResponseWriter, r *http.Requ
 func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	quid := r.PathValue("uid")
+	quid := chi.URLParam(r, "uid")
 	if quid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -67,7 +68,7 @@ func (h *QuestionHandler) GetQuestion(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, q)
 }
 func (h *QuestionHandler) DeleteQuestion(w http.ResponseWriter, r *http.Request) {
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -129,7 +130,7 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 	defer cancel()
 	defer r.Body.Close()
 
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -166,7 +167,7 @@ func (h *QuestionHandler) UpdateQuestion(w http.ResponseWriter, r *http.Request)
 func (h *QuestionHandler) PinQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return
@@ -194,7 +195,7 @@ func (h *QuestionHandler) PinQuestion(w http.ResponseWriter, r *http.Request) {
 func (h *QuestionHandler) UnpinQuestion(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	uid := r.PathValue("uid")
+	uid := chi.URLParam(r, "uid")
 	if uid == "" {
 		respondWithError(w, "invalid uid", nil, http.StatusBadRequest)
 		return

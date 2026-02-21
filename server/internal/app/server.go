@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Server struct {
-	router *http.ServeMux
+	router chi.Router
 	svc    *service.Service
 }
 
@@ -47,60 +49,89 @@ func (s *Server) setupRouter() {
 	notifH := &handlers.NotificationHandler{Service: s.svc}
 	searchH := &handlers.SearchHandler{Service: s.svc}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /ping", func(w http.ResponseWriter, _ *http.Request) {
+	r := chi.NewRouter()
+	r.Use(chimiddleware.Logger)
+	r.Use(chimiddleware.Recoverer)
+	r.Use(middleware.CORS)
+
+	r.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("pong"))
 	})
 
-	mux.HandleFunc("POST /auth/signup", authH.Signup)
-	mux.HandleFunc("POST /auth/signin", authH.Signin)
-	mux.HandleFunc("POST /auth/signout", middleware.Auth(authH.Signout))
-	mux.HandleFunc("GET /auth/verify", middleware.Auth(authH.Verify))
-	mux.HandleFunc("POST /auth/verify-email", authH.VerifyEmail)
-	mux.HandleFunc("POST /auth/resend-verification", authH.ResendVerification)
-	mux.HandleFunc("POST /auth/request-password-reset", authH.RequestPasswordReset)
-	mux.HandleFunc("POST /auth/reset-password", authH.ResetPassword)
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/signup", authH.Signup)
+		r.Post("/signin", authH.Signin)
+		r.Post("/verify-email", authH.VerifyEmail)
+		r.Post("/resend-verification", authH.ResendVerification)
+		r.Post("/request-password-reset", authH.RequestPasswordReset)
+		r.Post("/reset-password", authH.ResetPassword)
 
-	mux.HandleFunc("GET /users/me", middleware.Auth(userH.GetProfile))
-	mux.HandleFunc("DELETE /users/me", middleware.Auth(userH.DeleteUser))
-	mux.HandleFunc("GET /users/{username}", userH.GetPublicProfile)
-	mux.HandleFunc("PATCH /users/me", middleware.Auth(userH.UpdateUser))
-	mux.HandleFunc("GET /users/search", middleware.Auth(userH.SearchUsers))
-	mux.HandleFunc("POST /users/resolve", middleware.Auth(userH.ResolveUsers))
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Auth)
+			r.Post("/signout", authH.Signout)
+			r.Get("/verify", authH.Verify)
+		})
+	})
 
-	mux.HandleFunc("GET /users/me/questions", middleware.Auth(questionH.ListUserQuestions))
-	mux.HandleFunc("GET /users/me/notifications", middleware.Auth(notifH.ListNotifications))
+	r.Route("/users", func(r chi.Router) {
+		r.Get("/{username}", userH.GetPublicProfile)
 
-	mux.HandleFunc("POST /questions", middleware.Auth(questionH.CreateQuestion))
-	mux.HandleFunc("GET /questions", middleware.Auth(questionH.ListQuestions))
-	mux.HandleFunc("GET /questions/{uid}", questionH.GetQuestion)
-	mux.HandleFunc("GET /questions/search", middleware.Auth(questionH.SearchQuestions))
-	mux.HandleFunc("DELETE /questions/{uid}", middleware.Auth(questionH.DeleteQuestion))
-	mux.HandleFunc("PATCH /questions/{uid}", middleware.Auth(questionH.UpdateQuestion))
-	mux.HandleFunc("POST /questions/{uid}/votes", middleware.Auth(questionH.UpdateQuestionVote))
-	mux.HandleFunc("POST /questions/{uid}/pin", middleware.Auth(questionH.PinQuestion))
-	mux.HandleFunc("DELETE /questions/{uid}/pin", middleware.Auth(questionH.UnpinQuestion))
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.Auth)
+			r.Get("/me", userH.GetProfile)
+			r.Patch("/me", userH.UpdateUser)
+			r.Delete("/me", userH.DeleteUser)
+			r.Get("/me/questions", questionH.ListUserQuestions)
+			r.Get("/me/notifications", notifH.ListNotifications)
+			r.Get("/search", userH.SearchUsers)
+			r.Post("/resolve", userH.ResolveUsers)
+		})
+	})
 
-	mux.HandleFunc("POST /questions/{uid}/replies", middleware.Auth(replyH.CreateReply))
-	mux.HandleFunc("GET /questions/{uid}/replies", middleware.Auth(replyH.ListReplies))
-	mux.HandleFunc("PATCH /questions/{quid}/replies/{ruid}", middleware.Auth(replyH.UpdateReply))
-	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}", middleware.Auth(replyH.DeleteReply))
-	mux.HandleFunc("POST /questions/{quid}/replies/{ruid}/votes", middleware.Auth(replyH.UpdateReplyVote))
-	mux.HandleFunc("POST /questions/{quid}/replies/{ruid}/accept", middleware.Auth(replyH.AcceptReply))
-	mux.HandleFunc("DELETE /questions/{quid}/replies/{ruid}/accept", middleware.Auth(replyH.UnacceptReply))
+	r.Route("/questions", func(r chi.Router) {
+		r.Use(middleware.Auth)
+		r.Get("/", questionH.ListQuestions)
+		r.Post("/", questionH.CreateQuestion)
+		r.Get("/search", questionH.SearchQuestions)
 
-	mux.HandleFunc("POST /chambers", middleware.Auth(chamberH.CreateChamber))
-	mux.HandleFunc("GET /chambers", middleware.Auth(chamberH.ListChambers))
-	mux.HandleFunc("DELETE /chambers", middleware.Auth(chamberH.DeleteChamber))
-	mux.HandleFunc("PATCH /chambers/{uid}", middleware.Auth(chamberH.UpdateChamber))
-	mux.HandleFunc("POST /chambers/{uid}/join", middleware.Auth(chamberH.JoinChamber))
-	mux.HandleFunc("POST /chambers/{uid}/leave", middleware.Auth(chamberH.LeaveChamber))
+		r.Route("/{uid}", func(r chi.Router) {
+			r.Get("/", questionH.GetQuestion)
+			r.Patch("/", questionH.UpdateQuestion)
+			r.Delete("/", questionH.DeleteQuestion)
+			r.Post("/votes", questionH.UpdateQuestionVote)
+			r.Post("/pin", questionH.PinQuestion)
+			r.Delete("/pin", questionH.UnpinQuestion)
 
-	mux.HandleFunc("GET /search", middleware.Auth(searchH.GlobalSearch))
+			r.Get("/replies", replyH.ListReplies)
+			r.Post("/replies", replyH.CreateReply)
+			r.Route("/replies/{ruid}", func(r chi.Router) {
+				r.Patch("/", replyH.UpdateReply)
+				r.Delete("/", replyH.DeleteReply)
+				r.Post("/votes", replyH.UpdateReplyVote)
+				r.Post("/accept", replyH.AcceptReply)
+				r.Delete("/accept", replyH.UnacceptReply)
+			})
+		})
+	})
 
-	s.router = mux
+	r.Route("/chambers", func(r chi.Router) {
+		r.Use(middleware.Auth)
+		r.Get("/", chamberH.ListChambers)
+		r.Post("/", chamberH.CreateChamber)
+		r.Delete("/", chamberH.DeleteChamber)
+
+		r.Route("/{uid}", func(r chi.Router) {
+			r.Patch("/", chamberH.UpdateChamber)
+			r.Post("/join", chamberH.JoinChamber)
+			r.Post("/leave", chamberH.LeaveChamber)
+		})
+	})
+
+	r.With(middleware.Auth).Get("/search", searchH.GlobalSearch)
+
+	s.router = r
 }
 
 func (s *Server) Run() error {
@@ -111,7 +142,7 @@ func (s *Server) Run() error {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: middleware.Logger(middleware.CORS(s.router)),
+		Handler: s.router,
 	}
 
 	slog.Info("starting server", "port", port)

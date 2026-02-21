@@ -3,10 +3,8 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -15,36 +13,8 @@ type contextKey string
 
 const ClaimsContextKey contextKey = "claims"
 
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (r *statusRecorder) WriteHeader(statusCode int) {
-	r.statusCode = statusCode
-	r.ResponseWriter.WriteHeader(statusCode)
-}
-
-func Logger(next http.Handler) http.Handler {
+func CORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		recorder := &statusRecorder{
-			ResponseWriter: w,
-			statusCode:     http.StatusOK,
-		}
-		next.ServeHTTP(recorder, r)
-		duration := time.Since(start)
-		slog.Info("request completed",
-			"method", r.Method,
-			"path", r.URL.Path,
-			"status", recorder.statusCode,
-			"duration", duration,
-		)
-	})
-}
-
-func CORS(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
 		origin := os.Getenv("CORS_ORIGIN")
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -56,11 +26,11 @@ func CORS(next http.Handler) http.HandlerFunc {
 			return
 		}
 		next.ServeHTTP(w, r)
-	}
+	})
 }
 
-func Auth(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func Auth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			http.Error(w, `{"error":"missing token"}`, http.StatusUnauthorized)
@@ -90,7 +60,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		}
 		ctx := context.WithValue(r.Context(), ClaimsContextKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
-	}
+	})
 }
 
 func GetClaims(ctx context.Context) (jwt.MapClaims, error) {

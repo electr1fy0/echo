@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +73,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetPublicProfile(w http.ResponseWriter, r *http.Request) {
-	username := r.PathValue("username")
+	username := chi.URLParam(r, "username")
 	if username == "" {
 		respondWithError(w, "username required", nil, http.StatusBadRequest)
 		return
