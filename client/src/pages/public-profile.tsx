@@ -9,7 +9,7 @@ import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
 
-export function PublicProfile() {
+export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
 
   const {

@@ -19,14 +19,18 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const isMentionQuestion = notification.type === "mention_question";
   const isMentionReply = notification.type === "mention_reply";
 
-  if (!isUpvote && !isReply && !isUpvoteReply && !isMentionQuestion && !isMentionReply) {
+  if (
+    !isUpvote &&
+    !isReply &&
+    !isUpvoteReply &&
+    !isMentionQuestion &&
+    !isMentionReply
+  ) {
     return null;
   }
 
   return (
-    <div
-      className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-4 px-4 transition-colors group"
-    >
+    <div className="flex gap-4 py-4 border-b border-neutral-200 dark:border-neutral-800 last:border-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 -mx-4 px-4 transition-colors group">
       <Link
         to={`/u/${notification.actor_username}`}
         onClick={(e) => e.stopPropagation()}
@@ -155,12 +159,12 @@ function NotificationItem({ notification }: { notification: Notification }) {
   );
 }
 
-export function Notifications() {
+export default function Notifications() {
   const { data, isLoading } = useNotificationsQuery();
   const notifications = data || [];
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-160 w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
       <div>
         <h1 className="text-lg text-neutral-900 dark:text-neutral-100">
           Activity

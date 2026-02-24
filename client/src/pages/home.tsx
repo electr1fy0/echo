@@ -32,7 +32,7 @@ import { PageTransition } from "@/components/page-transition";
 import { validateMentions } from "@/lib/mention-validation";
 import { toast } from "@/lib/toast";
 
-export function Home() {
+export default function Home() {
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
   const { mutate: submitQuestion, isPending: isCreatePending } =
@@ -53,7 +53,13 @@ export function Home() {
     (c) => c.uid === selectedChamber,
   );
   const handleSubmit = async () => {
-    if (!draft.content.trim() || !selectedChamber || isCreatePending || isValidating) return;
+    if (
+      !draft.content.trim() ||
+      !selectedChamber ||
+      isCreatePending ||
+      isValidating
+    )
+      return;
     setIsValidating(true);
     try {
       const result = await validateMentions(draft.content);
@@ -168,7 +174,12 @@ export function Home() {
               size="sm"
               className="font-normal rounded-lg h-8 px-4"
               onClick={handleSubmit}
-              disabled={!selectedChamber || !draft.content.trim() || isValidating || isCreatePending}
+              disabled={
+                !selectedChamber ||
+                !draft.content.trim() ||
+                isValidating ||
+                isCreatePending
+              }
             >
               Ask
               <HugeiconsIcon

@@ -20,11 +20,10 @@ import { useNavigate } from "react-router";
 import { PageTransition } from "@/components/page-transition";
 import { formatRelativeTime } from "@/lib/format-time";
 import { MentionText } from "@/components/mentions/mention-text";
+
 function ReplyResult({ item }: { item: AnswerItem }) {
   return (
-    <div
-      className="p-4 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
-    >
+    <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
       <div className="flex items-start gap-3">
         <UserAvatar
           src={item.author.avatar}
@@ -52,19 +51,21 @@ function ReplyResult({ item }: { item: AnswerItem }) {
     </div>
   );
 }
-export function Explore() {
+export default function Explore() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
 
-  const { data: searchResults, isLoading: isSearching } = useGlobalSearch(query);
+  const { data: searchResults, isLoading: isSearching } =
+    useGlobalSearch(query);
   const {
     data: trendingQuestions = [],
     isLoading: isTrendingLoading,
     error: trendingError,
   } = useQuestionsQuery("votes");
   const { mutate: deleteQuestion } = useDeleteQuestion();
-  const { data: chambers = [], isLoading: isChambersLoading } = useListChambers();
+  const { data: chambers = [], isLoading: isChambersLoading } =
+    useListChambers();
 
   const isSearchMode = query.length > 0;
   const isLoading = isSearchMode ? isSearching : isTrendingLoading;

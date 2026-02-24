@@ -53,7 +53,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/page-transition";
 
-export function Profile() {
+export default function Profile() {
   const {
     data: user,
     isLoading: isProfileLoading,
@@ -82,7 +82,8 @@ export function Profile() {
     answered: 0,
     posted: 0,
   });
-  const { data: chambers = [], isLoading: isChambersLoading } = useListChambers();
+  const { data: chambers = [], isLoading: isChambersLoading } =
+    useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,22 +151,38 @@ export function Profile() {
               Edit Profile
             </Button>
             <DropdownMenu>
-              <DropdownMenuTrigger render={(props) => (
-                <Button {...props} variant="outline" size="icon" className="size-8 rounded-full">
-                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
-                </Button>
-              )} />
+              <DropdownMenuTrigger
+                render={(props) => (
+                  <Button
+                    {...props}
+                    variant="outline"
+                    size="icon"
+                    className="size-8 rounded-full"
+                  >
+                    <HugeiconsIcon
+                      icon={MoreHorizontalIcon}
+                      className="size-5"
+                    />
+                  </Button>
+                )}
+              />
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuGroup>
                   <DropdownMenuLabel>Theme</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => setTheme("light")}>
-                    <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" /> Light
+                    <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" />{" "}
+                    Light
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setTheme("dark")}>
-                    <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" /> Dark
+                    <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" />{" "}
+                    Dark
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setTheme("system")}>
-                    <HugeiconsIcon icon={ComputerIcon} className="mr-2 size-4" /> System
+                    <HugeiconsIcon
+                      icon={ComputerIcon}
+                      className="mr-2 size-4"
+                    />{" "}
+                    System
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
@@ -174,7 +191,10 @@ export function Profile() {
                     onClick={() => signout()}
                     className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
                   >
-                    <HugeiconsIcon icon={Logout01Icon} className="mr-2 size-4" />
+                    <HugeiconsIcon
+                      icon={Logout01Icon}
+                      className="mr-2 size-4"
+                    />
                     Sign out
                   </DropdownMenuItem>
                   <DropdownMenuItem
@@ -302,7 +322,7 @@ export function Profile() {
                   className={cn(
                     "size-4 rounded-md",
                     CHAMBER_COLORS[
-                    (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                      (chamber.colorIndex || 0) % CHAMBER_COLORS.length
                     ],
                   )}
                 />

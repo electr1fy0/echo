@@ -11,7 +11,8 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { useNavigate } from "react-router";
 import { ChamberListSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
-export function AllChambers() {
+
+export default function AllChambers() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();

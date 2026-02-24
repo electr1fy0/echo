@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 
-export function Landing() {
+export default function Landing() {
   return (
     <PageTransition className="min-h-screen flex flex-col bg-background">
       <header className="w-full max-w-xl mx-auto px-4 py-8 flex items-center justify-between">

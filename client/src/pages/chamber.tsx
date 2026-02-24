@@ -30,11 +30,10 @@ function formatMemberCount(count: number): string {
   }
   return count.toString();
 }
-export function ChamberPage() {
+export default function ChamberPage() {
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
-  const { data: chambersData, isLoading: isChamberLoading } =
-    useListChambers();
+  const { data: chambersData, isLoading: isChamberLoading } = useListChambers();
   const { data: user } = useAuth();
   const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
@@ -125,9 +124,9 @@ export function ChamberPage() {
               Created{" "}
               {chamber.timeCreated
                 ? new Date(chamber.timeCreated).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric",
-                })
+                    month: "short",
+                    year: "numeric",
+                  })
                 : "Jan 2024"}
             </span>
           </div>

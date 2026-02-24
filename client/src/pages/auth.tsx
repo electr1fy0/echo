@@ -73,7 +73,7 @@ function SkeletonHome() {
     </div>
   );
 }
-export function Auth() {
+export default function Auth() {
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -129,23 +129,17 @@ export function Auth() {
 
     if (isSignUp) {
       if (!payload.username || !payload.email || !payload.password) return;
-      signUp(
-        payload,
-        {
-          onSuccess: () => setSignupSuccess(true),
-          onError: (err) => console.error(err),
-        },
-      );
+      signUp(payload, {
+        onSuccess: () => setSignupSuccess(true),
+        onError: (err) => console.error(err),
+      });
     } else {
       if (!payload.username || !payload.password) return;
-      signIn(
-        payload,
-        {
-          onSuccess: () => {
-            navigate("/home");
-          },
+      signIn(payload, {
+        onSuccess: () => {
+          navigate("/home");
         },
-      );
+      });
     }
   }
 
@@ -242,155 +236,153 @@ export function Auth() {
           className="w-full max-w-md mx-4"
         >
           <Card className="w-full shadow-2xl">
-          <CardHeader className="text-center pb-2">
-            <div className="my-2">
-              <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                <img
-                  src="/echologo.svg"
-                  alt="Echo"
-                  className="size-7 invert dark:invert-0 opacity-80"
-                />
-              </div>
-            </div>
-            <CardTitle className="text-lg text-left">
-              {isForgotPassword
-                ? "Reset Password"
-                : isSignUp
-                  ? "Create an account"
-                  : "Welcome back"}
-            </CardTitle>
-            <CardDescription className="text-left">
-              {isForgotPassword
-                ? "Enter your email to receive password reset instructions."
-                : isSignUp
-                  ? "Enter your details to start asking questions in Echo."
-                  : "Sign in to access your questions in Echo."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form className="space-y-3 " onSubmit={handleSubmit}>
-              {resetError && isForgotPassword && (
-                <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
-                  <HugeiconsIcon icon={Alert02Icon} size={20} />
-                  <span>{resetError.message}</span>
-                </div>
-              )}
-              {signInError && !isSignUp && !isForgotPassword && (
-                <div className="bg-destructive/15 text-destructive text-sm  px-4 py-3 rounded-lg flex items-center gap-3">
-                  <HugeiconsIcon icon={Alert02Icon} size={20} />
-                  <span>{signInError.message}</span>
-                </div>
-              )}
-              {signUpError && isSignUp && !isForgotPassword && (
-                <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
-                  <HugeiconsIcon icon={Alert02Icon} size={20} />
-                  <span>{signUpError.message}</span>
-                </div>
-              )}
-              {!isForgotPassword && (
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="Username"
-                  aria-label="Username"
-                  autoComplete="username"
-                  required
-                  className="text-base pl-3"
-                  onChange={(e) => {
-                    updateUser({ username: e.target.value });
-                  }}
-                />
-              )}
-              {(isSignUp || isForgotPassword) && (
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Email"
-                  aria-label="Email"
-                  autoComplete="email"
-                  required
-                  className="text-base pl-3"
-                  onChange={(e) => {
-                    updateUser({ email: e.target.value });
-                  }}
-                />
-              )}
-              {!isForgotPassword && (
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder={isSignUp ? "Create Password" : "Password"}
-                  aria-label="Password"
-                  autoComplete={isSignUp ? "new-password" : "current-password"}
-                  required
-                  className="text-base pl-3"
-                  onChange={(e) => {
-                    updateUser({ password: e.target.value });
-                  }}
-                />
-              )}
-              <Button
-                className="w-full"
-                type="submit"
-                disabled={
-                  isInPending ||
-                  isUpPending ||
-                  isResetPending
-                }
-              >
-                {isInPending || isUpPending || isResetPending ? (
-                  <HugeiconsIcon
-                    icon={Loading03Icon}
-                    className="size-5 animate-spin"
+            <CardHeader className="text-center pb-2">
+              <div className="my-2">
+                <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                  <img
+                    src="/echologo.svg"
+                    alt="Echo"
+                    className="size-7 invert dark:invert-0 opacity-80"
                   />
-                ) : isForgotPassword ? (
-                  "Send Reset Link"
-                ) : isSignUp ? (
-                  "Create Account"
-                ) : (
-                  "Sign in"
-                )}
-              </Button>
-            </form>
-            <div className="space-y-2 text-left">
-              {!isForgotPassword && !isSignUp && (
-                <button
-                  onClick={() => setIsForgotPassword(true)}
-                  className="text-xs mt-1 mb-7 ml-2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Forgot your password?
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  if (isForgotPassword) {
-                    setIsForgotPassword(false);
-                    setIsSignUp(false);
-                  } else {
-                    setIsSignUp(!isSignUp);
-                  }
-                }}
-                className="block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
+                </div>
+              </div>
+              <CardTitle className="text-lg text-left">
                 {isForgotPassword
-                  ? "Back to Sign In"
+                  ? "Reset Password"
                   : isSignUp
-                    ? "Already have an account?"
-                    : "Don't have an account?"}
-              </button>
-            </div>
-            <div className="pt-4 border-t mt-4 border-border">
-              <Link to="/landing">
-                <Button variant="outline" className="w-full">
-                  Back
+                    ? "Create an account"
+                    : "Welcome back"}
+              </CardTitle>
+              <CardDescription className="text-left">
+                {isForgotPassword
+                  ? "Enter your email to receive password reset instructions."
+                  : isSignUp
+                    ? "Enter your details to start asking questions in Echo."
+                    : "Sign in to access your questions in Echo."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form className="space-y-3 " onSubmit={handleSubmit}>
+                {resetError && isForgotPassword && (
+                  <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
+                    <HugeiconsIcon icon={Alert02Icon} size={20} />
+                    <span>{resetError.message}</span>
+                  </div>
+                )}
+                {signInError && !isSignUp && !isForgotPassword && (
+                  <div className="bg-destructive/15 text-destructive text-sm  px-4 py-3 rounded-lg flex items-center gap-3">
+                    <HugeiconsIcon icon={Alert02Icon} size={20} />
+                    <span>{signInError.message}</span>
+                  </div>
+                )}
+                {signUpError && isSignUp && !isForgotPassword && (
+                  <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
+                    <HugeiconsIcon icon={Alert02Icon} size={20} />
+                    <span>{signUpError.message}</span>
+                  </div>
+                )}
+                {!isForgotPassword && (
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="Username"
+                    aria-label="Username"
+                    autoComplete="username"
+                    required
+                    className="text-base pl-3"
+                    onChange={(e) => {
+                      updateUser({ username: e.target.value });
+                    }}
+                  />
+                )}
+                {(isSignUp || isForgotPassword) && (
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    aria-label="Email"
+                    autoComplete="email"
+                    required
+                    className="text-base pl-3"
+                    onChange={(e) => {
+                      updateUser({ email: e.target.value });
+                    }}
+                  />
+                )}
+                {!isForgotPassword && (
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder={isSignUp ? "Create Password" : "Password"}
+                    aria-label="Password"
+                    autoComplete={
+                      isSignUp ? "new-password" : "current-password"
+                    }
+                    required
+                    className="text-base pl-3"
+                    onChange={(e) => {
+                      updateUser({ password: e.target.value });
+                    }}
+                  />
+                )}
+                <Button
+                  className="w-full"
+                  type="submit"
+                  disabled={isInPending || isUpPending || isResetPending}
+                >
+                  {isInPending || isUpPending || isResetPending ? (
+                    <HugeiconsIcon
+                      icon={Loading03Icon}
+                      className="size-5 animate-spin"
+                    />
+                  ) : isForgotPassword ? (
+                    "Send Reset Link"
+                  ) : isSignUp ? (
+                    "Create Account"
+                  ) : (
+                    "Sign in"
+                  )}
                 </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+              </form>
+              <div className="space-y-2 text-left">
+                {!isForgotPassword && !isSignUp && (
+                  <button
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-xs mt-1 mb-7 ml-2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Forgot your password?
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (isForgotPassword) {
+                      setIsForgotPassword(false);
+                      setIsSignUp(false);
+                    } else {
+                      setIsSignUp(!isSignUp);
+                    }
+                  }}
+                  className="block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isForgotPassword
+                    ? "Back to Sign In"
+                    : isSignUp
+                      ? "Already have an account?"
+                      : "Don't have an account?"}
+                </button>
+              </div>
+              <div className="pt-4 border-t mt-4 border-border">
+                <Link to="/landing">
+                  <Button variant="outline" className="w-full">
+                    Back
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </div>
