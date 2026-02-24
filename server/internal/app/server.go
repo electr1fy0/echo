@@ -69,7 +69,7 @@ func (s *Server) setupRouter() {
 		r.Post("/reset-password", authH.ResetPassword)
 		r.Post("/google/onboarding", authH.CompleteGoogleOnboarding)
 		r.Get("/signin-with-google", authH.SigninWithGoogle)
-		r.Get("/callback", authH.CallbackHandler)
+		r.Get("/google/callback", authH.CallbackHandler)
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth)
