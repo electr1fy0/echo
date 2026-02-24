@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,7 +33,7 @@ var oauthConfig = &oauth2.Config{
 	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 	Endpoint:     google.Endpoint,
-	RedirectURL:  envOrDefault("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/callback"),
+	RedirectURL:  envOrDefault("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/google/callback"),
 	Scopes: []string{
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/userinfo.profile"},
@@ -48,9 +49,21 @@ func envOrDefault(key, fallback string) string {
 
 func (h *AuthHandler) SigninWithGoogle(w http.ResponseWriter, r *http.Request) {
 	buf := make([]byte, 32)
-	rand.Read(buf)
+	if _, err := rand.Read(buf); err != nil {
+		http.Error(w, "failed to initialize oauth state", http.StatusInternalServerError)
+		return
+	}
 
 	state := base64.RawURLEncoding.EncodeToString(buf)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    state,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   r.TLS != nil,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   600,
+	})
 
 	url := oauthConfig.AuthCodeURL(state)
 
@@ -59,6 +72,21 @@ func (h *AuthHandler) SigninWithGoogle(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	state := r.URL.Query().Get("state")
+	stateCookie, cookieErr := r.Cookie("oauth_state")
+	if state == "" || cookieErr != nil || stateCookie.Value != state {
+		http.Error(w, "invalid oauth state", http.StatusUnauthorized)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   r.TLS != nil,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
@@ -68,7 +96,7 @@ func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
-		http.Error(w, "oauth exchange failed", http.StatusBadGateway)
+		http.Error(w, "oauth exchange failed: "+err.Error(), http.StatusBadGateway)
 		return
 	}
 
@@ -100,7 +128,8 @@ func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	appToken, isNewUser, err := h.Service.SigninOrSignupWithGoogle(ctx, email)
 	if err != nil {
-		http.Error(w, "google signin failed", http.StatusInternalServerError)
+		slog.Error("google signin failed", "error", err, "email", email)
+		http.Error(w, "google signin failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -112,7 +141,8 @@ func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	if isNewUser {
 		onboardingToken, tokenErr := createGoogleOnboardingToken(email)
 		if tokenErr != nil {
-			http.Error(w, "failed to prepare onboarding", http.StatusInternalServerError)
+			slog.Error("failed to prepare onboarding", "error", tokenErr, "email", email)
+			http.Error(w, "failed to prepare onboarding: "+tokenErr.Error(), http.StatusInternalServerError)
 			return
 		}
 		redirectURL += "?onboarding=1&onboardingToken=" + url.QueryEscape(onboardingToken)
