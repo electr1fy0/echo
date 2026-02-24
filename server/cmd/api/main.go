@@ -11,12 +11,8 @@ import (
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
-	err := godotenv.Load()
+	_ = godotenv.Load()
 
-	if err != nil {
-		slog.Error("failed to load env", "error", err)
-		os.Exit(1)
-	}
 	server, err := app.New()
 	if err != nil {
 		slog.Error("failed to initialize app", "error", err)
