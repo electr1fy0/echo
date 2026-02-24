@@ -1,10 +1,10 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router";
+import { ErrorBoundary } from "react-error-boundary";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
 import { Toaster } from "@/components/ui/toast";
 import { ReloadPrompt } from "@/components/reload-prompt";
-import { ErrorBoundary } from "@/components/error-boundary";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const Home = lazy(() => import("@/pages/home"));
@@ -33,7 +33,13 @@ function AuthenticatedLayout() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
+    <ErrorBoundary
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <p className="text-sm text-muted-foreground">Something went wrong.</p>
+        </div>
+      }
+    >
       <BrowserRouter>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
