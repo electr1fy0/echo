@@ -18,6 +18,7 @@ const Auth = lazy(() => import("@/pages/auth"));
 const Landing = lazy(() => import("@/pages/landing"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
+const Onboarding = lazy(() => import("@/pages/onboarding"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 function AuthenticatedLayout() {
@@ -45,6 +46,7 @@ export default function App() {
           <Routes>
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/onboarding" element={<Onboarding />} />
 
             <Route element={<GuestRoute />}>
               <Route path="/" element={<Navigate to="/landing" replace />} />

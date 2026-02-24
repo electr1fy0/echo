@@ -87,10 +87,73 @@ func (s *Service) Signin(ctx context.Context, user types.User) (string, error) {
 		return "", ErrNotVerified
 	}
 
+	return s.generateToken(user.Username)
+}
+
+func (s *Service) SigninOrSignupWithGoogle(ctx context.Context, email string) (string, bool, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+	if email == "" {
+		return "", false, errors.New("missing email from google profile")
+	}
+
+	row, err := s.Q.GetUserByEmail(ctx, email)
+	if err == nil {
+		token, tokenErr := s.generateToken(row.Username)
+		return token, false, tokenErr
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return "", false, err
+	}
+
+	return "", true, nil
+}
+
+func (s *Service) CompleteGoogleOnboarding(ctx context.Context, email, username string) (string, error) {
+	email = strings.TrimSpace(strings.ToLower(email))
+	username = strings.TrimSpace(username)
+	if email == "" || username == "" {
+		return "", errors.New("email and username are required")
+	}
+	if strings.Contains(username, " ") {
+		return "", errors.New("username cannot contain spaces")
+	}
+
+	count, err := s.Q.CheckUsernameExists(ctx, username)
+	if err != nil {
+		return "", err
+	}
+	if count > 0 {
+		return "", ErrUserExists
+	}
+
+	if row, err := s.Q.GetUserByEmail(ctx, email); err == nil && row.Username != "" {
+		return s.generateToken(row.Username)
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return "", err
+	}
+
+	if err := s.Q.CreateUser(ctx, database.CreateUserParams{
+		Username:          username,
+		Email:             email,
+		Password:          pgtype.Text{},
+		VerificationToken: pgtype.Text{},
+		IsVerified:        pgtype.Bool{Bool: true, Valid: true},
+	}); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return "", ErrUserExists
+		}
+		return "", err
+	}
+
+	return s.generateToken(username)
+}
+
+func (s *Service) generateToken(username string) (string, error) {
 	claims := &jwt.MapClaims{
 		"iat":    time.Now().Unix(),
 		"exp":    time.Now().Add(48 * time.Hour).Unix(),
-		"sub":    user.Username,
+		"sub":    username,
 		"access": []string{"view", "create"},
 		"role":   "user",
 	}

@@ -1,16 +1,186 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"echo/internal/middleware"
 	"echo/internal/service"
 	"echo/internal/types"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 type VerifyEmailRequest struct {
 	Token string `json:"token"`
+}
+type GoogleOnboardingRequest struct {
+	Token    string `json:"token"`
+	Username string `json:"username"`
+}
+
+var oauthConfig = &oauth2.Config{
+	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+	Endpoint:     google.Endpoint,
+	RedirectURL:  envOrDefault("GOOGLE_REDIRECT_URL", "http://localhost:8080/auth/callback"),
+	Scopes: []string{
+		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/userinfo.profile"},
+}
+
+func envOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
+}
+
+func (h *AuthHandler) SigninWithGoogle(w http.ResponseWriter, r *http.Request) {
+	buf := make([]byte, 32)
+	rand.Read(buf)
+
+	state := base64.RawURLEncoding.EncodeToString(buf)
+
+	url := oauthConfig.AuthCodeURL(state)
+
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+func (h *AuthHandler) CallbackHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "missing code", http.StatusBadRequest)
+		return
+	}
+
+	token, err := oauthConfig.Exchange(ctx, code)
+	if err != nil {
+		http.Error(w, "oauth exchange failed", http.StatusBadGateway)
+		return
+	}
+
+	client := oauthConfig.Client(ctx, token)
+
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+	if err != nil {
+		http.Error(w, "failed to fetch profile", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		http.Error(w, "google userinfo failed: "+string(body), http.StatusBadGateway)
+		return
+	}
+
+	var user map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		http.Error(w, "invalid google profile response", http.StatusBadGateway)
+		return
+	}
+
+	email, _ := user["email"].(string)
+	if email == "" {
+		http.Error(w, "email not provided by google", http.StatusBadRequest)
+		return
+	}
+
+	appToken, isNewUser, err := h.Service.SigninOrSignupWithGoogle(ctx, email)
+	if err != nil {
+		http.Error(w, "google signin failed", http.StatusInternalServerError)
+		return
+	}
+
+	frontendURL := os.Getenv("CLIENT_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:5173"
+	}
+	redirectURL := frontendURL + "/auth"
+	if isNewUser {
+		onboardingToken, tokenErr := createGoogleOnboardingToken(email)
+		if tokenErr != nil {
+			http.Error(w, "failed to prepare onboarding", http.StatusInternalServerError)
+			return
+		}
+		redirectURL += "?onboarding=1&onboardingToken=" + url.QueryEscape(onboardingToken)
+	} else {
+		redirectURL += "?token=" + url.QueryEscape(appToken)
+	}
+	http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+
+}
+
+func (h *AuthHandler) CompleteGoogleOnboarding(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	var req GoogleOnboardingRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, "invalid request body", err, http.StatusBadRequest)
+		return
+	}
+
+	email, err := parseGoogleOnboardingToken(req.Token)
+	if err != nil {
+		respondWithError(w, "invalid onboarding token", err, http.StatusUnauthorized)
+		return
+	}
+
+	token, err := h.Service.CompleteGoogleOnboarding(r.Context(), email, strings.TrimSpace(req.Username))
+	if err != nil {
+		if errors.Is(err, service.ErrUserExists) {
+			respondWithError(w, err.Error(), nil, http.StatusConflict)
+			return
+		}
+		respondWithError(w, "failed to complete onboarding", err, http.StatusInternalServerError)
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{"token": token})
+}
+
+func createGoogleOnboardingToken(email string) (string, error) {
+	claims := jwt.MapClaims{
+		"email": email,
+		"iat":   time.Now().Unix(),
+		"exp":   time.Now().Add(30 * time.Minute).Unix(),
+		"typ":   "google_onboarding",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+}
+
+func parseGoogleOnboardingToken(rawToken string) (string, error) {
+	token, err := jwt.Parse(rawToken, func(t *jwt.Token) (any, error) {
+		return []byte(os.Getenv("SECRET_KEY")), nil
+	})
+	if err != nil || !token.Valid {
+		return "", errors.New("invalid token")
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return "", errors.New("invalid claims")
+	}
+	if claims["typ"] != "google_onboarding" {
+		return "", errors.New("invalid token type")
+	}
+	email, _ := claims["email"].(string)
+	if email == "" {
+		return "", errors.New("missing email")
+	}
+	return email, nil
 }
 
 func (h *AuthHandler) Signup(w http.ResponseWriter, r *http.Request) {

@@ -14,6 +14,7 @@ export function ProtectedRoute() {
   if (isError) {
     return <Navigate to="/auth" replace />;
   }
+
   return <Outlet />;
 }
 

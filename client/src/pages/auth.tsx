@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AuthPayload } from "@/api/auth";
@@ -20,6 +20,12 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { SkeletonHome } from "@/components/skeleton-home";
+import { API_URL } from "@/config";
+import {
+  clearGoogleOnboardingToken,
+  setGoogleOnboardingToken,
+  setToken,
+} from "@/lib/utils";
 
 type AuthMode =
   | "signin"
@@ -85,6 +91,7 @@ function AuthSuccessCard({
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>("signup");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [form, setForm] = useState<AuthPayload>({
     email: "",
     username: "",
@@ -118,6 +125,22 @@ export default function Auth() {
   const { mutateAsync: resendVerification, isPending: isResendPending } =
     useResendVerification();
 
+  useEffect(() => {
+    const onboarding = searchParams.get("onboarding") === "1";
+    const onboardingToken = searchParams.get("onboardingToken");
+    if (onboarding && onboardingToken) {
+      setGoogleOnboardingToken(onboardingToken);
+      navigate("/onboarding", { replace: true });
+      return;
+    }
+
+    const token = searchParams.get("token");
+    if (!token) return;
+    clearGoogleOnboardingToken();
+    setToken(token);
+    navigate("/home", { replace: true });
+  }, [navigate, searchParams]);
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const payload: AuthPayload = {
@@ -146,7 +169,7 @@ export default function Auth() {
   }
 
   async function handleSigninWithGoogle() {
-    window.location.href = "http://localhost:8080/auth/signin-with-google";
+    window.location.href = `${API_URL}/auth/signin-with-google`;
   }
   const error =
     formMode === "forgot"
@@ -323,15 +346,25 @@ export default function Auth() {
                   </button>
                 )}
 
-                <div className="text-center"> or</div>
-
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={handleSigninWithGoogle}
-                >
-                  Continue with Google
-                </Button>
+                {mode !== "forgot" && (
+                  <>
+                    <div className="text-center">or</div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="w-full"
+                      onClick={handleSigninWithGoogle}
+                    >
+                      <img
+                        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                        alt=""
+                        className="size-4"
+                        aria-hidden="true"
+                      />
+                      Continue with Google
+                    </Button>
+                  </>
+                )}
                 <button
                   onClick={() => {
                     if (mode === "forgot") {
