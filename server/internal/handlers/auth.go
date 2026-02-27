@@ -266,6 +266,8 @@ func (h *AuthHandler) Signin(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, err.Error(), nil, http.StatusUnauthorized)
 		} else if errors.Is(err, service.ErrNotVerified) {
 			respondWithError(w, err.Error(), nil, http.StatusForbidden)
+		} else if errors.Is(err, service.ErrAuthUnavailable) {
+			respondWithError(w, err.Error(), nil, http.StatusServiceUnavailable)
 		} else {
 			respondWithError(w, "internal error", err, http.StatusInternalServerError)
 		}

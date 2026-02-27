@@ -24,6 +24,7 @@ var (
 	ErrInvalidCredentials = errors.New("incorrect username or password")
 	ErrNotVerified        = errors.New("please verify your email before signing in")
 	ErrInvalidToken       = errors.New("invalid or expired token")
+	ErrAuthUnavailable    = errors.New("authentication service temporarily unavailable")
 )
 
 func (s *Service) Signup(ctx context.Context, user types.User) error {
@@ -70,11 +71,15 @@ func (s *Service) VerifyEmail(ctx context.Context, token string) (string, error)
 func (s *Service) Signin(ctx context.Context, user types.User) (string, error) {
 	user.Username = strings.TrimSpace(user.Username)
 	row, err := s.Q.GetUserByUsername(ctx, user.Username)
+	if err != nil && isRetryableDBError(err) {
+		time.Sleep(200 * time.Millisecond)
+		row, err = s.Q.GetUserByUsername(ctx, user.Username)
+	}
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return "", ErrInvalidCredentials
 		}
-		return "", ErrInvalidCredentials
+		return "", ErrAuthUnavailable
 	}
 	if row.Username == "" {
 		return "", ErrInvalidCredentials
@@ -88,6 +93,31 @@ func (s *Service) Signin(ctx context.Context, user types.User) (string, error) {
 	}
 
 	return s.generateToken(user.Username)
+}
+
+func isRetryableDBError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if pgconn.SafeToRetry(err) {
+		return true
+	}
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		switch pgErr.Code {
+		case "57P01", // admin_shutdown
+			"57P02", // crash_shutdown
+			"57P03", // cannot_connect_now
+			"08000", // connection_exception
+			"08003", // connection_does_not_exist
+			"08006": // connection_failure
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Service) SigninOrSignupWithGoogle(ctx context.Context, email string) (string, bool, error) {
