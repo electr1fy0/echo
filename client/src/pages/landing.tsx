@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 
 const pageClassName =
-  "relative h-[100lvh] min-h-screen overflow-hidden bg-white text-slate-900 md:h-dvh";
+  "relative h-dvh min-h-screen overflow-hidden bg-white text-slate-900";
 const heroCardClassName =
   "relative h-full w-full overflow-hidden rounded-none border-0 shadow-none md:mx-auto md:h-auto md:min-h-0 md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
 const headingStyle = { fontFamily: '"Lora", serif' } as const;
