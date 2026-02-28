@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 
 const pageClassName =
-  "relative h-dvh min-h-screen overflow-hidden bg-white text-slate-900";
+  "relative h-dvh overflow-hidden bg-white text-slate-900";
 const heroCardClassName =
-  "relative h-full w-full overflow-hidden rounded-none border-0 shadow-none md:mx-auto md:h-auto md:min-h-0 md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
+  "relative h-full w-full overflow-hidden rounded-none border-0 shadow-none md:mx-auto md:h-auto md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
 const headingStyle = { fontFamily: '"Lora", serif' } as const;
 
 export default function Landing() {
   return (
     <PageTransition className={pageClassName}>
-      <main className="relative h-full px-0 md:h-dvh md:px-8">
+      <main className="relative h-dvh px-0 md:px-8">
         <section className="mx-auto flex h-full w-full max-w-6xl items-center py-0 md:py-0">
           <div className={heroCardClassName}>
             <img
@@ -20,12 +20,18 @@ export default function Landing() {
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-white/15 via-white/30 to-white/45" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/95 via-white/55 to-transparent backdrop-blur-md md:hidden" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white/95 via-white/60 to-transparent backdrop-blur-md md:hidden" />
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.42] mix-blend-normal"
               style={{
                 backgroundImage:
                   "radial-gradient(circle at 18% 22%, rgba(0,0,0,0.26) 0.8px, transparent 1px), radial-gradient(circle at 76% 68%, rgba(0,0,0,0.2) 0.75px, transparent 1px), radial-gradient(circle at 40% 78%, rgba(255,255,255,0.25) 0.6px, transparent 0.95px)",
                 backgroundSize: "4px 4px, 5px 5px, 6px 6px",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent 0%, black 14%, black 84%, transparent 100%)",
+                maskImage:
+                  "linear-gradient(to bottom, transparent 0%, black 14%, black 84%, transparent 100%)",
               }}
             />
 
