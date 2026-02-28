@@ -20,7 +20,7 @@ export default function Landing() {
               className="absolute inset-0 h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-white/15 via-white/30 to-white/45" />
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/95 via-white/55 to-transparent backdrop-blur-md md:hidden" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white via-white/80 to-transparent backdrop-blur-lg md:hidden" />
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white/95 via-white/60 to-transparent backdrop-blur-md md:hidden" />
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.42] mix-blend-normal"
