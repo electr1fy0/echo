@@ -54,11 +54,16 @@ func (s *Server) setupRouter() {
 	r.Use(chimiddleware.Recoverer)
 	r.Use(middleware.CORS)
 
-	r.Get("/ping", func(w http.ResponseWriter, _ *http.Request) {
+	pingHandler := func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("pong"))
-	})
+		if req.Method != http.MethodHead {
+			_, _ = w.Write([]byte("pong"))
+		}
+	}
+	r.MethodFunc(http.MethodGet, "/ping", pingHandler)
+	r.MethodFunc(http.MethodHead, "/ping", pingHandler)
+	r.MethodFunc(http.MethodPost, "/ping", pingHandler)
 
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/signup", authH.Signup)
