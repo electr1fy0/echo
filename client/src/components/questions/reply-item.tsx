@@ -94,7 +94,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
                 formatRelativeTime(new Date(reply.timeCreated))}
             </span>
             {reply.isAccepted && (
-              <span className="text-[10px] uppercase tracking-wide text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/40 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
                 Accepted
               </span>
             )}
