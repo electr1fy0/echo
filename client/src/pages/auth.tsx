@@ -38,9 +38,9 @@ type FormMode = "signin" | "signup" | "forgot";
 const lightOnlyClassName =
   "[color-scheme:light] [--background:oklch(1_0_0)] [--foreground:oklch(0.145_0_0)] [--card:oklch(1_0_0)] [--card-foreground:oklch(0.145_0_0)] [--popover:oklch(1_0_0)] [--popover-foreground:oklch(0.145_0_0)] [--primary:oklch(0.646_0.222_41.116)] [--primary-foreground:oklch(0.98_0.016_73.684)] [--secondary:oklch(0.967_0.001_286.375)] [--secondary-foreground:oklch(0.21_0.006_285.885)] [--muted:oklch(0.97_0_0)] [--muted-foreground:oklch(0.556_0_0)] [--accent:oklch(0.97_0_0)] [--accent-foreground:oklch(0.205_0_0)] [--destructive:oklch(0.58_0.22_27)] [--border:oklch(0.922_0_0)] [--input:oklch(0.922_0_0)] [--ring:oklch(0.708_0_0)]";
 const pageClassName =
-  "relative min-h-dvh overflow-hidden bg-gradient-to-b from-[#f5f5f5] via-[#efefef] to-[#e7e7e7] text-slate-900";
+  "relative min-h-dvh overflow-hidden bg-white text-slate-900";
 const splitCardClassName =
-  "relative mx-auto h-[78svh] w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-white/60 shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)] sm:h-[72svh] md:h-auto md:aspect-video md:rounded-[2rem]";
+  "relative mx-auto h-dvh w-full overflow-hidden rounded-none border-0 shadow-none md:h-auto md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
 
 const MODE_COPY: Record<
   FormMode,
@@ -78,7 +78,7 @@ function AuthSuccessCard({
 }) {
   return (
     <div
-      className={`min-h-screen flex items-center justify-center bg-[#f0f0f0] p-4 ${lightOnlyClassName}`}
+      className={`min-h-screen flex items-center justify-center bg-white p-4 ${lightOnlyClassName}`}
     >
       <Card className="w-full max-w-md text-center bg-white text-slate-900">
         <CardHeader>
@@ -256,8 +256,8 @@ export default function Auth() {
 
   return (
     <PageTransition className={`${pageClassName} ${lightOnlyClassName}`}>
-      <main className="relative min-h-dvh px-4 py-6 md:px-8 md:py-10">
-        <section className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-6xl items-center md:min-h-[calc(100dvh-5rem)]">
+      <main className="relative min-h-dvh px-0 py-0 md:px-8 md:py-10">
+        <section className="mx-auto flex min-h-dvh w-full max-w-6xl items-center md:min-h-[calc(100dvh-5rem)]">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -265,7 +265,7 @@ export default function Auth() {
           className={splitCardClassName}
         >
           <div className="grid h-full grid-cols-1 md:grid-cols-2">
-            <div className="relative min-h-[220px] overflow-hidden md:min-h-full">
+            <div className="relative hidden min-h-[220px] overflow-hidden md:block md:min-h-full">
               <img
                 src="/landing_background.png"
                 alt="Floral sky background"

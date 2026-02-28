@@ -49,8 +49,8 @@ export default function App() {
             <Route path="/onboarding" element={<Onboarding />} />
 
             <Route element={<GuestRoute />}>
-              <Route path="/" element={<Navigate to="/landing" replace />} />
-              <Route path="/landing" element={<Landing />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/landing" element={<Navigate to="/" replace />} />
               <Route path="/auth" element={<Auth />} />
             </Route>
 
