@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 
 const pageClassName =
-  "relative min-h-screen min-h-[100svh] overflow-hidden bg-white text-slate-900";
+  "relative h-[100lvh] min-h-screen overflow-hidden bg-white text-slate-900 md:h-dvh";
 const heroCardClassName =
-  "relative h-[100svh] min-h-[100svh] w-full overflow-hidden rounded-none border-0 shadow-none md:mx-auto md:h-auto md:min-h-0 md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
+  "relative h-full w-full overflow-hidden rounded-none border-0 shadow-none md:mx-auto md:h-auto md:min-h-0 md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
 const headingStyle = { fontFamily: '"Lora", serif' } as const;
 
 export default function Landing() {
   return (
     <PageTransition className={pageClassName}>
-      <main className="relative h-[100svh] min-h-[100svh] px-0 md:h-dvh md:min-h-0 md:px-8">
+      <main className="relative h-full px-0 md:h-dvh md:px-8">
         <section className="mx-auto flex h-full w-full max-w-6xl items-center py-0 md:py-0">
           <div className={heroCardClassName}>
             <img
@@ -31,7 +31,7 @@ export default function Landing() {
 
             <div className="relative flex h-full flex-col items-center justify-center px-5 text-center md:px-20">
               <Link to="/auth" className="mb-4 inline-block md:mb-6">
-                <img src="/echo.svg" alt="Echo" className="size-7 md:size-10" />
+                <img src="/echo.svg" alt="Echo" className="size-9 md:size-10" />
               </Link>
               <h1
                 className="max-w-4xl text-3xl leading-[1.08] text-slate-900 sm:text-4xl md:text-6xl lg:text-7xl"
