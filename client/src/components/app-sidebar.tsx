@@ -278,11 +278,15 @@ export function AppSidebar() {
       hasBadge: true,
     },
   ];
+  const navigateTo = (path: string) => {
+    if (path === location.pathname) return;
+    navigate(path);
+  };
   const handleNavClick = (item: NavItem) => {
     if (item.isAction) {
       setCreateOpen(true);
     } else if (item.path) {
-      navigate(item.path);
+      navigateTo(item.path);
     }
   };
   const isActive = (path?: string) => path === location.pathname;
@@ -323,7 +327,7 @@ export function AppSidebar() {
                 user={user}
                 isMobile={true}
                 isActive={isActive("/profile")}
-                onClick={() => navigate("/profile")}
+                onClick={() => navigateTo("/profile")}
               />
             </div>
           </div>
@@ -358,7 +362,7 @@ export function AppSidebar() {
             user={user}
             isMobile={false}
             isActive={isActive("/profile")}
-            onClick={() => navigate("/profile")}
+            onClick={() => navigateTo("/profile")}
           />
         </nav>
       </aside>

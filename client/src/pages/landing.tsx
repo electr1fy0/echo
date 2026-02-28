@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 
 const pageClassName =
-  "relative h-dvh overflow-hidden bg-gradient-to-b from-[#fffaf4] via-[#fff3e8] to-[#ffeedf] text-slate-900";
+  "relative h-dvh overflow-hidden bg-gradient-to-b from-[#f5f5f5] via-[#efefef] to-[#e7e7e7] text-slate-900";
 const heroCardClassName =
-  "relative mx-auto h-[78svh] w-full overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_45px_120px_-65px_rgba(30,58,138,0.7)] sm:h-[72svh] md:h-auto md:aspect-video md:rounded-[2.25rem]";
+  "relative mx-auto h-[78svh] w-full overflow-hidden rounded-[1.75rem] border border-white/60 shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)] sm:h-[72svh] md:h-auto md:aspect-video md:rounded-[2rem]";
 const headingStyle = { fontFamily: '"Lora", serif' } as const;
 
 export default function Landing() {
