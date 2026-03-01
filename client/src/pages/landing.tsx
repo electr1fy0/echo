@@ -2,8 +2,7 @@ import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 
-const pageClassName =
-  "relative h-dvh overflow-hidden bg-white text-slate-900";
+const pageClassName = "relative h-dvh overflow-hidden bg-white text-slate-900";
 const heroCardClassName =
   "relative h-full w-full overflow-hidden rounded-none border-0 shadow-none md:mx-auto md:h-auto md:max-w-6xl md:aspect-video md:rounded-[2rem] md:border md:border-white/60 md:shadow-[0_16px_40px_-30px_rgba(30,58,138,0.24)]";
 const headingStyle = { fontFamily: '"Lora", serif' } as const;
@@ -48,14 +47,14 @@ export default function Landing() {
                 for the rest of us.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-700 sm:mt-5 md:mt-6 md:text-lg">
-                Questions stay clear, answers stay readable,
+                Ask. Join. Interact.
                 <br />
-                and each Chamber keeps its own context.
+                Engage with real humans.
               </p>
               <div className="mt-7 sm:mt-8 md:mt-9">
                 <Link to="/auth">
                   <Button className="h-11 w-full rounded-full bg-[#ff5a1f] px-8 text-sm text-white hover:bg-[#e94a12] sm:w-auto">
-                    Create an account
+                    Start asking Questions
                   </Button>
                 </Link>
               </div>
