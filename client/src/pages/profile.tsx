@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
@@ -120,6 +120,14 @@ export default function Profile() {
     answered: 0,
     posted: 0,
   };
+  const resolvedLink = useMemo(() => {
+    const raw = (displayUser.link || "").trim();
+    if (!raw) return null;
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {
+      return raw;
+    }
+    return `https://${raw}`;
+  }, [displayUser.link]);
 
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
@@ -230,11 +238,11 @@ export default function Profile() {
                   <HugeiconsIcon icon={Mail01Icon} className="size-4" />
                   <span>{displayUser.email}</span>
                 </div>
-                {displayUser.link && (
+                {resolvedLink && (
                   <div className="flex items-center gap-2">
                     <HugeiconsIcon icon={Link01Icon} className="size-4" />
                     <a
-                      href={displayUser.link}
+                      href={resolvedLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:underline hover:text-foreground transition-colors"

@@ -35,6 +35,14 @@ export default function PublicProfile() {
       <div className="mt-20 text-sm text-red-500 px-4">Profile not found</div>
     );
   }
+  const resolvedLink = (() => {
+    const raw = (user.link || "").trim();
+    if (!raw) return null;
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {
+      return raw;
+    }
+    return `https://${raw}`;
+  })();
 
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
@@ -51,11 +59,11 @@ export default function PublicProfile() {
             {user.username}
           </h1>
           <div className="flex flex-col gap-1 text-neutral-500 text-sm">
-            {user.link && (
+            {resolvedLink && (
               <div className="flex items-center gap-2">
                 <HugeiconsIcon icon={Link01Icon} className="size-4" />
                 <a
-                  href={user.link}
+                  href={resolvedLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:underline hover:text-foreground transition-colors"
