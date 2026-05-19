@@ -1,8 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "serverless",
+  "name": "echo",
   "main": "src/index.ts",
-  "compatibility_date": "2026-05-19"
+  "compatibility_date": "2026-05-19",
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

@@ -32,11 +32,11 @@ A question remains a question. An answer an answer. No nested replies. No algori
 Has dark mode, PWA, Responsiveness and tons of microinteractions.
 
 ### Tech Stack
-React, TailwindCSS, Vite, Typescript, Tanstack Query, Go, sqlc, pgx, JWT
+React, TailwindCSS, Vite, TypeScript, Tanstack Query, Hono, Cloudflare Workers, Drizzle ORM, Neon
 
 ## Development
 
-It's a monorepo containing both client and server.
+It's a monorepo containing both client and serverless backend.
 
 1. Clone the repository
    ```bash
@@ -44,14 +44,15 @@ It's a monorepo containing both client and server.
    cd echo
    ```
 
-### Server (Go)
+### Backend (Hono)
 
- Located in `server/`.
+ Located in `serverless/`.
 
 ```bash
-cd server
-# Set up your .env file with DATABASE_URL
-go run cmd/api/main.go
+cd serverless
+# Set up your .dev.vars with DATABASE_URL
+npm install
+npm run dev
 ```
 
 ### Client (React)
@@ -66,5 +67,6 @@ pnpm dev
 
 ## Requirements
 
-- **Go**: 1.25+
-- **PostgreSQL**: Latest stable
+- **Node.js**: (or Bun)
+- **Wrangler CLI**: For Cloudflare Workers development
+- **Neon/PostgreSQL**: Database provider
