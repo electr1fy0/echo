@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -54,40 +54,29 @@ export default function ChamberPage() {
   const hasNextPageRef = useRef(hasNextPage);
   const isFetchingNextPageRef = useRef(isFetchingNextPage);
 
-  useEffect(() => {
-    fetchNextPageRef.current = fetchNextPage;
-    hasNextPageRef.current = hasNextPage;
-    isFetchingNextPageRef.current = isFetchingNextPage;
-  });
+  /* eslint-disable react-hooks/refs */
+  fetchNextPageRef.current = fetchNextPage;
+  hasNextPageRef.current = hasNextPage;
+  isFetchingNextPageRef.current = isFetchingNextPage;
+  /* eslint-enable react-hooks/refs */
 
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) {
-      console.log("Echo Scroll (Chamber): Disconnecting old observer");
       observerRef.current.disconnect();
       observerRef.current = null;
     }
 
     if (node) {
-      console.log("Echo Scroll (Chamber): Attaching observer to sentinel node");
       const observer = new IntersectionObserver(
         (entries) => {
           const entry = entries[0];
-          console.log(
-            "Echo Scroll (Chamber): Intersection event:",
-            entry.isIntersecting,
-            "hasNextPage:",
-            hasNextPageRef.current,
-            "isFetching:",
-            isFetchingNextPageRef.current
-          );
           if (
             entry.isIntersecting &&
             hasNextPageRef.current &&
             !isFetchingNextPageRef.current
           ) {
-            console.log("Echo Scroll (Chamber): Fetching next page...");
             fetchNextPageRef.current();
           }
         },

@@ -12,8 +12,12 @@ export interface Notification {
     is_read: boolean;
     created_at: string;
 }
-export async function listNotifications(): Promise<Notification[]> {
-    const res = await fetch(`${API_URL}/users/me/notifications`, {
+export async function listNotifications(limit?: number, offset?: number): Promise<Notification[]> {
+    const params = new URLSearchParams({
+        ...(limit !== undefined ? { limit: limit.toString() } : {}),
+        ...(offset !== undefined ? { offset: offset.toString() } : {}),
+    });
+    const res = await fetch(`${API_URL}/users/me/notifications?${params}`, {
         method: "GET",
         headers: {
             ...getAuthHeaders(),

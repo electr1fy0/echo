@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useRef, useCallback } from "react";
 import { useParams } from "react-router";
 import { useFetchPublicProfile } from "@/hooks/use-profile";
 import { useInfiniteQuestionsQuery } from "@/hooks/use-questions";
@@ -38,40 +38,29 @@ export default function PublicProfile() {
   const hasNextPageRef = useRef(hasNextPage);
   const isFetchingNextPageRef = useRef(isFetchingNextPage);
 
-  useEffect(() => {
-    fetchNextPageRef.current = fetchNextPage;
-    hasNextPageRef.current = hasNextPage;
-    isFetchingNextPageRef.current = isFetchingNextPage;
-  });
+  /* eslint-disable react-hooks/refs */
+  fetchNextPageRef.current = fetchNextPage;
+  hasNextPageRef.current = hasNextPage;
+  isFetchingNextPageRef.current = isFetchingNextPage;
+  /* eslint-enable react-hooks/refs */
 
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) {
-      console.log("Echo Scroll (Profile): Disconnecting old observer");
       observerRef.current.disconnect();
       observerRef.current = null;
     }
 
     if (node) {
-      console.log("Echo Scroll (Profile): Attaching observer to sentinel node");
       const observer = new IntersectionObserver(
         (entries) => {
           const entry = entries[0];
-          console.log(
-            "Echo Scroll (Profile): Intersection event:",
-            entry.isIntersecting,
-            "hasNextPage:",
-            hasNextPageRef.current,
-            "isFetching:",
-            isFetchingNextPageRef.current
-          );
           if (
             entry.isIntersecting &&
             hasNextPageRef.current &&
             !isFetchingNextPageRef.current
           ) {
-            console.log("Echo Scroll (Profile): Fetching next page...");
             fetchNextPageRef.current();
           }
         },

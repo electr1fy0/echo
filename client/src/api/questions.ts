@@ -40,8 +40,12 @@ export async function fetchQuestions(
   return res.json() as Promise<QuestionItem[]>;
 }
 
-export async function fetchUserQuestions() {
-  const res = await fetch(`${API_URL}/users/me/questions`, {
+export async function fetchUserQuestions(limit?: number, offset?: number) {
+  const params = new URLSearchParams({
+    ...(limit !== undefined ? { limit: limit.toString() } : {}),
+    ...(offset !== undefined ? { offset: offset.toString() } : {}),
+  });
+  const res = await fetch(`${API_URL}/users/me/questions?${params}`, {
     headers: {
       ...getAuthHeaders(),
     },

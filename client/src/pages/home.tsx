@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
   useQuestionDraft,
   useCreateQuestion,
@@ -59,40 +59,29 @@ export default function Home() {
   const hasNextPageRef = useRef(hasNextPage);
   const isFetchingNextPageRef = useRef(isFetchingNextPage);
 
-  useEffect(() => {
-    fetchNextPageRef.current = fetchNextPage;
-    hasNextPageRef.current = hasNextPage;
-    isFetchingNextPageRef.current = isFetchingNextPage;
-  });
+  /* eslint-disable react-hooks/refs */
+  fetchNextPageRef.current = fetchNextPage;
+  hasNextPageRef.current = hasNextPage;
+  isFetchingNextPageRef.current = isFetchingNextPage;
+  /* eslint-enable react-hooks/refs */
 
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
     if (observerRef.current) {
-      console.log("Echo Scroll (Home): Disconnecting old observer");
       observerRef.current.disconnect();
       observerRef.current = null;
     }
 
     if (node) {
-      console.log("Echo Scroll (Home): Attaching observer to sentinel node");
       const observer = new IntersectionObserver(
         (entries) => {
           const entry = entries[0];
-          console.log(
-            "Echo Scroll (Home): Intersection event:",
-            entry.isIntersecting,
-            "hasNextPage:",
-            hasNextPageRef.current,
-            "isFetching:",
-            isFetchingNextPageRef.current
-          );
           if (
             entry.isIntersecting &&
             hasNextPageRef.current &&
             !isFetchingNextPageRef.current
           ) {
-            console.log("Echo Scroll (Home): Fetching next page...");
             fetchNextPageRef.current();
           }
         },

@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import {
-  useUserQuestionsQuery,
+  useInfiniteUserQuestionsQuery,
   useDeleteQuestion,
 } from "@/hooks/use-questions";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -65,10 +65,50 @@ export default function Profile() {
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const {
     data: qnData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isQnLoading,
     error: qnError,
-  } = useUserQuestionsQuery();
-  const questions = qnData || [];
+  } = useInfiniteUserQuestionsQuery();
+  const questions = qnData ? qnData.pages.flat() : [];
+
+  const fetchNextPageRef = useRef(fetchNextPage);
+  const hasNextPageRef = useRef(hasNextPage);
+  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+
+  /* eslint-disable react-hooks/refs */
+  fetchNextPageRef.current = fetchNextPage;
+  hasNextPageRef.current = hasNextPage;
+  isFetchingNextPageRef.current = isFetchingNextPage;
+  /* eslint-enable react-hooks/refs */
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            fetchNextPageRef.current();
+          }
+        },
+        { threshold: 0, rootMargin: "200px" }
+      );
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { mutate: deleteAccount } = useDeleteAccount();
   const { mutate: signout } = useSignout();
@@ -105,12 +145,6 @@ export default function Profile() {
     });
   };
 
-  if (profileError) {
-    return (
-      <div className="mt-20 text-sm text-red-500">Failed to load profile</div>
-    );
-  }
-
   const displayUser = user || {
     username: "",
     email: "",
@@ -128,6 +162,12 @@ export default function Profile() {
     }
     return `https://${raw}`;
   }, [displayUser.link]);
+
+  if (profileError) {
+    return (
+      <div className="mt-20 text-sm text-red-500">Failed to load profile</div>
+    );
+  }
 
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 pb-36 md:pb-16 relative px-4">
@@ -354,10 +394,31 @@ export default function Profile() {
         ) : qnError ? (
           <p className="text-red-500 text-sm">Failed to load activity</p>
         ) : (
-          <QuestionList
-            questions={questions}
-            onDelete={(id) => deleteQuestion(id)}
-          />
+          <div className="space-y-4">
+            <QuestionList
+              questions={questions}
+              onDelete={(id) => deleteQuestion(id)}
+            />
+            {hasNextPage && (
+              <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                      Loading more...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         )}
       </div>
       <Dialog

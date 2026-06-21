@@ -1,4 +1,5 @@
-import { useNotificationsQuery } from "@/hooks/use-notifications";
+import { useRef, useCallback } from "react";
+import { useInfiniteNotificationsQuery } from "@/hooks/use-notifications";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Message01Icon,
@@ -11,6 +12,7 @@ import { formatRelativeTime } from "@/lib/format-time";
 import { NotificationListSkeleton } from "@/components/ui/skeletons";
 import { Link } from "react-router";
 import { PageTransition } from "@/components/page-transition";
+import { Button } from "@/components/ui/button";
 
 function NotificationItem({ notification }: { notification: Notification }) {
   const isUpvote = notification.type === "upvote_question";
@@ -160,8 +162,51 @@ function NotificationItem({ notification }: { notification: Notification }) {
 }
 
 export default function Notifications() {
-  const { data, isLoading } = useNotificationsQuery();
-  const notifications = data || [];
+  const {
+    data: notificationsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteNotificationsQuery();
+  const notifications = notificationsData ? notificationsData.pages.flat() : [];
+
+  const fetchNextPageRef = useRef(fetchNextPage);
+  const hasNextPageRef = useRef(hasNextPage);
+  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+
+  /* eslint-disable react-hooks/refs */
+  fetchNextPageRef.current = fetchNextPage;
+  hasNextPageRef.current = hasNextPage;
+  isFetchingNextPageRef.current = isFetchingNextPage;
+  /* eslint-enable react-hooks/refs */
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            fetchNextPageRef.current();
+          }
+        },
+        { threshold: 0, rootMargin: "200px" }
+      );
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
 
   return (
     <PageTransition className="max-w-160 w-full md:mt-24 mt-16 space-y-6 pb-36 md:pb-16 relative px-4">
@@ -178,9 +223,30 @@ export default function Notifications() {
         {isLoading ? (
           <NotificationListSkeleton count={8} />
         ) : notifications.length > 0 ? (
-          notifications.map((n) => (
-            <NotificationItem key={n.uid} notification={n} />
-          ))
+          <>
+            {notifications.map((n) => (
+              <NotificationItem key={n.uid} notification={n} />
+            ))}
+            {hasNextPage && (
+              <div ref={loadMoreCallbackRef} className="flex justify-center py-4 border-t border-neutral-200 dark:border-neutral-800 -mx-4 px-4">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                      Loading more...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
             <HugeiconsIcon

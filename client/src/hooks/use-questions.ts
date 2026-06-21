@@ -40,7 +40,7 @@ export function useInfiniteQuestionsQuery(
   filter?: "joined",
   chamberId?: string,
   author?: string,
-  pageSize = 10
+  pageSize = 20
 ) {
   return useInfiniteQuery({
     queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize],
@@ -59,6 +59,20 @@ export function useUserQuestionsQuery() {
   return useQuery({
     queryKey: ["user-questions"],
     queryFn: () => fetchUserQuestions(),
+    staleTime: 30_000,
+  });
+}
+
+export function useInfiniteUserQuestionsQuery(pageSize = 20) {
+  return useInfiniteQuery({
+    queryKey: ["user-questions", "infinite", pageSize],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchUserQuestions(pageSize, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < pageSize) return undefined;
+      return allPages.length * pageSize;
+    },
     staleTime: 30_000,
   });
 }
