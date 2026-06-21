@@ -1,6 +1,7 @@
+import { useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router";
 import { useFetchPublicProfile } from "@/hooks/use-profile";
-import { useQuestionsQuery } from "@/hooks/use-questions";
+import { useInfiniteQuestionsQuery } from "@/hooks/use-questions";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link01Icon } from "@hugeicons/core-free-icons";
@@ -8,6 +9,7 @@ import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
+import { Button } from "@/components/ui/button";
 
 export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
@@ -18,13 +20,67 @@ export default function PublicProfile() {
     error: profileError,
   } = useFetchPublicProfile(username);
 
-  const { data: qnData, isLoading: isQnLoading } = useQuestionsQuery(
+  const {
+    data: qnData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isQnLoading,
+  } = useInfiniteQuestionsQuery(
     undefined,
     undefined,
     undefined,
     username,
   );
-  const questions = qnData || [];
+  const questions = qnData ? qnData.pages.flat() : [];
+
+  const fetchNextPageRef = useRef(fetchNextPage);
+  const hasNextPageRef = useRef(hasNextPage);
+  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+
+  useEffect(() => {
+    fetchNextPageRef.current = fetchNextPage;
+    hasNextPageRef.current = hasNextPage;
+    isFetchingNextPageRef.current = isFetchingNextPage;
+  });
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      console.log("Echo Scroll (Profile): Disconnecting old observer");
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      console.log("Echo Scroll (Profile): Attaching observer to sentinel node");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          console.log(
+            "Echo Scroll (Profile): Intersection event:",
+            entry.isIntersecting,
+            "hasNextPage:",
+            hasNextPageRef.current,
+            "isFetching:",
+            isFetchingNextPageRef.current
+          );
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            console.log("Echo Scroll (Profile): Fetching next page...");
+            fetchNextPageRef.current();
+          }
+        },
+        { threshold: 0, rootMargin: "200px" }
+      );
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
 
   if (isProfileLoading) {
     return <ProfileSkeleton />;
@@ -45,7 +101,7 @@ export default function PublicProfile() {
   })();
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 pb-36 md:pb-16 relative px-4">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           <UserAvatar
@@ -106,7 +162,28 @@ export default function PublicProfile() {
         {isQnLoading ? (
           <QuestionListSkeleton count={3} />
         ) : questions.length > 0 ? (
-          <QuestionList questions={questions} />
+          <div className="space-y-4">
+            <QuestionList questions={questions} />
+            {hasNextPage && (
+              <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                      Loading more...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         ) : (
           <p className="text-neutral-500 text-sm">No questions posted yet.</p>
         )}

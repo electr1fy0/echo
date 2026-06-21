@@ -1,5 +1,4 @@
-import { useParams } from "react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -9,7 +8,7 @@ import {
   Calendar03Icon,
   PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import {
@@ -20,7 +19,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
-import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
+import { useDeleteQuestion, useInfiniteQuestionsQuery } from "@/hooks/use-questions";
 import { PageTransition } from "@/components/page-transition";
 import { EditChamberDialog } from "@/components/chambers/edit-chamber-dialog";
 
@@ -38,12 +37,66 @@ export default function ChamberPage() {
   const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
   const { mutate: deleteQn } = useDeleteQuestion();
-  const { data: questionsData, isLoading } = useQuestionsQuery(
+  const {
+    data: questionsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useInfiniteQuestionsQuery(
     "time_created",
     undefined,
     chamberId,
   );
-  const questions = questionsData || [];
+  const questions = questionsData ? questionsData.pages.flat() : [];
+
+  const fetchNextPageRef = useRef(fetchNextPage);
+  const hasNextPageRef = useRef(hasNextPage);
+  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+
+  useEffect(() => {
+    fetchNextPageRef.current = fetchNextPage;
+    hasNextPageRef.current = hasNextPage;
+    isFetchingNextPageRef.current = isFetchingNextPage;
+  });
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      console.log("Echo Scroll (Chamber): Disconnecting old observer");
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      console.log("Echo Scroll (Chamber): Attaching observer to sentinel node");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          console.log(
+            "Echo Scroll (Chamber): Intersection event:",
+            entry.isIntersecting,
+            "hasNextPage:",
+            hasNextPageRef.current,
+            "isFetching:",
+            isFetchingNextPageRef.current
+          );
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            console.log("Echo Scroll (Chamber): Fetching next page...");
+            fetchNextPageRef.current();
+          }
+        },
+        { threshold: 0, rootMargin: "200px" }
+      );
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
@@ -92,7 +145,7 @@ export default function ChamberPage() {
   };
   const canPin = !!user?.username && user.username === chamber.creatorUsername;
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 pb-36 md:pb-16 relative px-4">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 mb-6 transition-colors"
@@ -159,11 +212,32 @@ export default function ChamberPage() {
         {isLoading ? (
           <QuestionListSkeleton count={3} />
         ) : questions.length > 0 ? (
-          <QuestionList
-            questions={questions}
-            onDelete={(id) => deleteQn(id)}
-            canPin={canPin}
-          />
+          <div className="space-y-4">
+            <QuestionList
+              questions={questions}
+              onDelete={(id) => deleteQn(id)}
+              canPin={canPin}
+            />
+            {hasNextPage && (
+              <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                      Loading more...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="text-center py-12 text-neutral-500">
             <p className="text-sm">No questions yet in this chamber.</p>

@@ -164,7 +164,7 @@ export default function Notifications() {
   const notifications = data || [];
 
   return (
-    <PageTransition className="max-w-160 w-full md:mt-24 mt-16 space-y-6 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-160 w-full md:mt-24 mt-16 space-y-6 pb-36 md:pb-16 relative px-4">
       <div>
         <h1 className="text-lg text-neutral-900 dark:text-neutral-100">
           Activity

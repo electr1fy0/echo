@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { QuestionDraft, QuestionItem } from "@/types";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import {
   fetchQuestion,
   fetchQuestions,
@@ -31,6 +31,26 @@ export function useQuestionsQuery(
   return useQuery({
     queryKey: ["questions", sort, filter, chamberId, author],
     queryFn: () => fetchQuestions(sort, filter, chamberId, author),
+    staleTime: 30_000,
+  });
+}
+
+export function useInfiniteQuestionsQuery(
+  sort?: "votes" | "time_created",
+  filter?: "joined",
+  chamberId?: string,
+  author?: string,
+  pageSize = 10
+) {
+  return useInfiniteQuery({
+    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.length < pageSize) return undefined;
+      return allPages.length * pageSize;
+    },
     staleTime: 30_000,
   });
 }
@@ -80,14 +100,25 @@ export function useDeleteQuestion() {
 
       const previousData = matchingQueries.map((query) => ({
         queryKey: query.queryKey,
-        data: query.state.data as QuestionItem[] | undefined,
+        data: query.state.data,
       }));
 
       matchingQueries.forEach((query) => {
-        const data = query.state.data as QuestionItem[] | undefined;
+        const data = query.state.data;
         if (!data) return;
-        const filtered = data.filter((item) => item.question.uid !== questionId);
-        queryClient.setQueryData(query.queryKey, filtered);
+        if (typeof data === "object" && data !== null && "pages" in data) {
+          const infiniteData = data as { pages: QuestionItem[][]; pageParams: any[] };
+          const updatedPages = infiniteData.pages.map((page) =>
+            page.filter((item) => item.question.uid !== questionId)
+          );
+          queryClient.setQueryData(query.queryKey, {
+            ...infiniteData,
+            pages: updatedPages,
+          });
+        } else if (Array.isArray(data)) {
+          const filtered = data.filter((item) => item.question.uid !== questionId);
+          queryClient.setQueryData(query.queryKey, filtered);
+        }
       });
 
       return { previousData };

@@ -20,12 +20,16 @@ export async function fetchQuestions(
   filter?: "joined",
   chamberId?: string,
   author?: string,
+  limit?: number,
+  offset?: number,
 ) {
   const params = new URLSearchParams({
     ...(sort ? { sort } : {}),
     ...(filter ? { filter } : {}),
     ...(chamberId ? { chamber_uid: chamberId } : {}),
     ...(author ? { author } : {}),
+    ...(limit !== undefined ? { limit: limit.toString() } : {}),
+    ...(offset !== undefined ? { offset: offset.toString() } : {}),
   });
   const res = await fetch(`${API_URL}/questions?${params}`, {
     headers: {

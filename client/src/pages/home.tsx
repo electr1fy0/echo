@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   useQuestionDraft,
   useCreateQuestion,
   useDeleteQuestion,
-  useQuestionsQuery,
+  useInfiniteQuestionsQuery,
 } from "@/hooks/use-questions";
 import { Link } from "react-router";
 import { MentionField } from "@/components/ui/mention-field";
@@ -43,12 +43,65 @@ export default function Home() {
   const { data: chambersData, isLoading } = useListChambers();
   const chambers = chambersData || [];
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
-  const { data: questionsData, isLoading: isQuestionsLoading } =
-    useQuestionsQuery(
-      activeTab === "trending" ? "votes" : "time_created",
-      "joined",
-    );
-  const questions = questionsData || [];
+  const {
+    data: questionsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isQuestionsLoading,
+  } = useInfiniteQuestionsQuery(
+    activeTab === "trending" ? "votes" : "time_created",
+    "joined",
+  );
+  const questions = questionsData ? questionsData.pages.flat() : [];
+
+  const fetchNextPageRef = useRef(fetchNextPage);
+  const hasNextPageRef = useRef(hasNextPage);
+  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+
+  useEffect(() => {
+    fetchNextPageRef.current = fetchNextPage;
+    hasNextPageRef.current = hasNextPage;
+    isFetchingNextPageRef.current = isFetchingNextPage;
+  });
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      console.log("Echo Scroll (Home): Disconnecting old observer");
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      console.log("Echo Scroll (Home): Attaching observer to sentinel node");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          console.log(
+            "Echo Scroll (Home): Intersection event:",
+            entry.isIntersecting,
+            "hasNextPage:",
+            hasNextPageRef.current,
+            "isFetching:",
+            isFetchingNextPageRef.current
+          );
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            console.log("Echo Scroll (Home): Fetching next page...");
+            fetchNextPageRef.current();
+          }
+        },
+        { threshold: 0, rootMargin: "200px" }
+      );
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
   const selectedChamberData = JOINED_CHAMBERS.find(
     (c) => c.uid === selectedChamber,
   );
@@ -86,7 +139,7 @@ export default function Home() {
     }
   };
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 pb-36 md:pb-16 relative px-4">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Echo
       </h1>
@@ -276,11 +329,32 @@ export default function Home() {
         ) : isQuestionsLoading ? (
           <QuestionListSkeleton count={3} />
         ) : questions.length > 0 ? (
-          <QuestionList
-            questions={questions}
-            onDelete={(id) => deleteQuestion(id)}
-            showChamberName
-          />
+          <div className="space-y-4">
+            <QuestionList
+              questions={questions}
+              onDelete={(id) => deleteQuestion(id)}
+              showChamberName
+            />
+            {hasNextPage && (
+              <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                      Loading more...
+                    </>
+                  ) : (
+                    "Load More"
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="text-center py-12 text-neutral-500">
             <p className="text-sm">No questions in your feed.</p>

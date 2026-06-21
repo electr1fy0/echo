@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
 import { Search01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useDeleteQuestion, useQuestionsQuery } from "@/hooks/use-questions";
+import { useDeleteQuestion, useInfiniteQuestionsQuery } from "@/hooks/use-questions";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ChamberListSkeleton } from "@/components/ui/skeletons";
 import {
@@ -59,10 +59,62 @@ export default function Explore() {
   const { data: searchResults, isLoading: isSearching } =
     useGlobalSearch(query);
   const {
-    data: trendingQuestions = [],
+    data: trendingData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isTrendingLoading,
     error: trendingError,
-  } = useQuestionsQuery("votes");
+  } = useInfiniteQuestionsQuery("votes");
+  const trendingQuestions = trendingData ? trendingData.pages.flat() : [];
+
+  const fetchNextPageRef = useRef(fetchNextPage);
+  const hasNextPageRef = useRef(hasNextPage);
+  const isFetchingNextPageRef = useRef(isFetchingNextPage);
+
+  useEffect(() => {
+    fetchNextPageRef.current = fetchNextPage;
+    hasNextPageRef.current = hasNextPage;
+    isFetchingNextPageRef.current = isFetchingNextPage;
+  });
+
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const loadMoreCallbackRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      console.log("Echo Scroll (Explore): Disconnecting old observer");
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (node) {
+      console.log("Echo Scroll (Explore): Attaching observer to sentinel node");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          console.log(
+            "Echo Scroll (Explore): Intersection event:",
+            entry.isIntersecting,
+            "hasNextPage:",
+            hasNextPageRef.current,
+            "isFetching:",
+            isFetchingNextPageRef.current
+          );
+          if (
+            entry.isIntersecting &&
+            hasNextPageRef.current &&
+            !isFetchingNextPageRef.current
+          ) {
+            console.log("Echo Scroll (Explore): Fetching next page...");
+            fetchNextPageRef.current();
+          }
+        },
+        { threshold: 0, rootMargin: "200px" }
+      );
+      observer.observe(node);
+      observerRef.current = observer;
+    }
+  }, []);
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { data: chambers = [], isLoading: isChambersLoading } =
     useListChambers();
@@ -82,7 +134,7 @@ export default function Explore() {
     replies.length > 0;
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 pb-36 md:pb-16 relative px-4">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Explore
       </h1>
@@ -213,10 +265,31 @@ export default function Explore() {
                 Failed to load questions
               </p>
             ) : (
-              <QuestionList
-                questions={trendingQuestions}
-                onDelete={(id) => deleteQuestion(id)}
-              />
+              <div className="space-y-4">
+                <QuestionList
+                  questions={trendingQuestions}
+                  onDelete={(id) => deleteQuestion(id)}
+                />
+                {hasNextPage && (
+                  <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                          Loading more...
+                        </>
+                      ) : (
+                        "Load More"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </>

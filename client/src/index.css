@@ -129,7 +129,7 @@
         @apply border-border outline-ring/50;
     }
 
-    body {
+    html, body {
         @apply font-sans bg-background text-foreground;
     }
 

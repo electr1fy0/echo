@@ -19,7 +19,7 @@ export default function AllChambers() {
   const { data: chambersData, isLoading } = useListChambers(query);
   const chambers = chambersData || [];
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 mb-40 relative px-4 pb-20 md:pb-0">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 pb-36 md:pb-16 relative px-4">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 mb-2 transition-colors"

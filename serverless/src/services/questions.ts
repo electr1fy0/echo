@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql, isNotNull } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -137,6 +137,10 @@ export const getQuestionItems = async (
     conditions.push(ilike(schema.questions.content, `%${params.query}%`));
   }
 
+  if (params.filter === "joined") {
+    conditions.push(isNotNull(schema.chamberMembers.username));
+  }
+
   const rows = await db
     .select({
       uid: schema.questions.uid,
@@ -176,12 +180,7 @@ export const getQuestionItems = async (
     .limit(params.limit)
     .offset(params.offset);
 
-  const filteredRows =
-    params.filter === "joined"
-      ? rows.filter((row) => row.joinedByCurrentUser !== null)
-      : rows;
-
-  return filteredRows.map(({ joinedByCurrentUser: _joinedByCurrentUser, ...row }) =>
+  return rows.map(({ joinedByCurrentUser: _joinedByCurrentUser, ...row }) =>
     mapQuestionItem(row),
   );
 };
