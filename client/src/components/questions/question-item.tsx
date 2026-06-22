@@ -229,7 +229,7 @@ export function QuestionItem({
             {question.expiresAt && question.timeCreated && (
               <CountdownRing
                 expiresAt={question.expiresAt as string}
-                timeCreated={question.timeCreated as string}
+                timeCreated={String(question.timeCreated)}
                 size={28}
               />
             )}
