@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { useListChambers } from "@/hooks/use-chamber";
 import { ChamberCard } from "@/components/chambers/chamber-list";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
+import { TextFlip } from "@/components/text-flip";
 
 import { PageTransition } from "@/components/page-transition";
 import { validateMentions } from "@/lib/mention-validation";
@@ -136,8 +137,21 @@ export default function Home() {
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         TurnsOut
       </h1>
-      <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
-        An Open QnA platform
+      <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance inline-grid">
+        <span className="invisible col-start-1 row-start-1 select-none" aria-hidden>
+          Campus questions, answered by the people who get it.
+        </span>
+        <TextFlip
+          as="span"
+          interval={3}
+          className="col-start-1 row-start-1"
+        >
+          <span>Ask. Trade. Ride. Connect.</span>
+          <span>The platform built for campus life.</span>
+          <span>Where students help students.</span>
+          <span>Campus questions, answered by the people who get it.</span>
+          <span>Your campus community, one message away.</span>
+        </TextFlip>
       </h2>
       {user ? (
         <div className="space-y-3">
