@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PageTransition } from "@/components/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Message01Icon, UserGroupIcon } from "@hugeicons/core-free-icons";
+import { UserGroupIcon } from "@hugeicons/core-free-icons";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 
@@ -32,10 +32,14 @@ export default function DMsPage() {
 
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 px-4 pb-24 md:pb-8">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center gap-2">
-        <HugeiconsIcon icon={Message01Icon} className="size-5" />
-        Messages
-      </h1>
+      <div className="mb-6">
+        <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
+          Messages
+        </h1>
+        <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
+          Chat with other members
+        </h2>
+      </div>
 
       <div className="flex gap-2 mb-8">
         <Input

@@ -5,8 +5,8 @@ function SkeletonSidebar() {
     <aside className="hidden md:flex fixed top-0 left-0 h-screen flex-col items-center py-8 border-r border-neutral-200 dark:border-neutral-800 bg-background w-20">
       <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
         <img
-          src="/echologo.svg"
-          alt="Echo"
+          src="/turnsoutlogo.svg"
+          alt="TurnsOut"
           className="size-7 invert dark:invert-0 opacity-60"
         />
       </div>

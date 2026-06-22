@@ -50,7 +50,7 @@ export default function VerifyEmail() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link to="/auth" className="w-full">
+            <Link to="/" className="w-full">
               <Button className="w-full">Back to Login</Button>
             </Link>
           </CardContent>

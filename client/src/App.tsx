@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useSearchParams, useNavigate } from "react-router";
 import { ErrorBoundary } from "react-error-boundary";
 import { AppSidebar } from "@/components/app-sidebar";
-import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
+import { ProtectedRoute } from "@/components/route-guards";
 import { Toaster } from "@/components/ui/toast";
 import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { AuthDialog } from "@/components/auth-dialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { clearGoogleOnboardingToken, setGoogleOnboardingToken, setToken } from "@/lib/utils";
 
 const Home = lazy(() => import("@/pages/home"));
@@ -19,7 +20,6 @@ const Explore = lazy(() => import("@/pages/explore"));
 const AllChambers = lazy(() => import("@/pages/all-chambers"));
 const ChamberPage = lazy(() => import("@/pages/chamber"));
 const Notifications = lazy(() => import("@/pages/notifications"));
-const Auth = lazy(() => import("@/pages/auth"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
@@ -31,6 +31,7 @@ const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
 function AuthenticatedLayout() {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -47,9 +48,11 @@ function AuthenticatedLayout() {
     if (token) {
       clearGoogleOnboardingToken();
       setToken(token);
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
       navigate("/", { replace: true });
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, queryClient]);
 
   return (
     <div className="flex min-h-screen">
@@ -63,7 +66,7 @@ function AuthenticatedLayout() {
           <div>
             <h4 className="text-sm font-semibold">Don't miss what's happening</h4>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              People on Echo are asking questions and sharing answers in real-time. Sign up to join them!
+              People on TurnsOut are asking questions and sharing answers in real-time. Sign up to join them!
             </p>
           </div>
           <div className="flex gap-3">
@@ -102,10 +105,6 @@ export default function App() {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/onboarding" element={<Onboarding />} />
-
-            <Route element={<GuestRoute />}>
-              <Route path="/auth" element={<Auth />} />
-            </Route>
 
             {/* Public layout routes */}
             <Route element={<AuthenticatedLayout />}>

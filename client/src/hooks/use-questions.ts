@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import type { QuestionDraft, QuestionItem } from "@/types";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -11,6 +12,8 @@ import {
   searchQuestions,
   pinQuestion,
   unpinQuestion,
+  expressInterest,
+  expressInterestViaDM,
   applyToPartner,
   fetchPartnerApplications,
   updatePartnerApplicationStatus,
@@ -237,6 +240,30 @@ export function useSearchQuestions(query: string) {
     queryFn: () => searchQuestions(query),
     enabled: query.length > 0,
     staleTime: 30_000,
+  });
+}
+
+export function useExpressInterest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ questionId, message }: { questionId: string; message?: string }) =>
+      expressInterest(questionId, message),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
+  });
+}
+
+export function useExpressInterestViaDM() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  return useMutation({
+    mutationFn: ({ authorUsername, templateMessage }: { authorUsername: string; templateMessage: string }) =>
+      expressInterestViaDM(authorUsername, templateMessage),
+    onSuccess: (conv) => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      navigate(`/dm/${conv.uid}`);
+    },
   });
 }
 

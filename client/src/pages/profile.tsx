@@ -360,7 +360,7 @@ export default function Profile() {
           )}
         </div>
       </div>
-      <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800" />
+      <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
@@ -408,7 +408,7 @@ export default function Profile() {
           <p className="text-sm text-neutral-500">No chambers joined yet.</p>
         )}
       </div>
-      <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800" />
+      <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
       <div className="space-y-4">
         <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
           Recent Activity

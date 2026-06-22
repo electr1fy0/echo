@@ -8,11 +8,11 @@ export function ProtectedRoute() {
   const token = getToken();
 
   if (!token) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace />;
   }
 
   if (isError) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

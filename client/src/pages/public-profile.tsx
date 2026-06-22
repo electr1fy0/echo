@@ -176,7 +176,7 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800" />
+      <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
 
       <div className="space-y-4">
         <h3 className="font-medium text-neutral-900 dark:text-neutral-100">

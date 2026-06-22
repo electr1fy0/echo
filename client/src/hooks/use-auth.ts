@@ -7,6 +7,7 @@ export function useSignin() {
     mutationFn: signin,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
   });
 }
@@ -28,7 +29,11 @@ export function useSignout() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: signout,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["auth"] }),
+    onSuccess: () => {
+      queryClient.setQueryData(["auth"], undefined);
+      queryClient.removeQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+    },
   });
 }
 
@@ -40,7 +45,9 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: deleteAccount,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.setQueryData(["auth"], undefined);
+      queryClient.removeQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
   });
 }

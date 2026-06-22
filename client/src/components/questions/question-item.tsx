@@ -20,7 +20,8 @@ import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
-import { usePinQuestion, useUnpinQuestion, useUpdateQuestion } from "@/hooks/use-questions";
+import { usePinQuestion, useUnpinQuestion, useUpdateQuestion, useExpressInterestViaDM } from "@/hooks/use-questions";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -34,6 +35,8 @@ import {
   BookOpen01Icon,
   Share01Icon,
   UserMultiple02Icon,
+  ShoppingBag01Icon,
+  Car01Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
@@ -158,6 +161,7 @@ export function QuestionItem({
     useUpdateQuestion();
   const { mutate: pinQuestion, isPending: isPinPending } = usePinQuestion();
   const { mutate: unpinQuestion, isPending: isUnpinPending } = useUnpinQuestion();
+  const { mutate: sendInterestDM, isPending: isDMPending } = useExpressInterestViaDM();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question?.content ?? "");
@@ -172,6 +176,8 @@ export function QuestionItem({
   const [editedTaxiDestination, setEditedTaxiDestination] = useState(question?.taxiDestination ?? "");
   const [editedTaxiDatetime, setEditedTaxiDatetime] = useState(question?.taxiDatetime ?? "");
   const [editedTaxiSeatsAvailable, setEditedTaxiSeatsAvailable] = useState(question?.taxiSeatsAvailable ?? 1);
+
+  const [interestSent, setInterestSent] = useState(false);
 
   if (!question || !questionId) return null;
   const isPinned = !!question.isPinned;
@@ -268,21 +274,6 @@ export function QuestionItem({
                 {isSolved && (
                   <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
                     Solved
-                  </span>
-                )}
-                {question.postType === "partner" && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-[#ff5a1f] dark:bg-[#ff5a1f]/10 dark:text-[#ff5a1f] px-1.5 py-0.5 rounded border border-orange-250/50 dark:border-[#ff5a1f]/20">
-                    Partner Finder
-                  </span>
-                )}
-                {question.postType === "trade" && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200/50 dark:border-blue-900/20">
-                    Marketplace
-                  </span>
-                )}
-                {question.postType === "taxi" && (
-                  <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200/50 dark:border-purple-900/20">
-                    Taxi Sharing
                   </span>
                 )}
                 {replies && replies.length > 0 && (
@@ -536,11 +527,10 @@ export function QuestionItem({
                       onChange={(e) => setEditedTaxiDestination(e.target.value)}
                       className="w-24 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
                     />
-                    <input
-                      type="datetime-local"
+                    <DateTimePicker
                       value={editedTaxiDatetime}
-                      onChange={(e) => setEditedTaxiDatetime(e.target.value)}
-                      className="w-36 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
+                      onChange={setEditedTaxiDatetime}
+                      placeholder="Pick date & time"
                     />
                     <div className="flex items-center gap-1">
                       <span className="text-[10px] font-semibold text-neutral-400 select-none">Seats</span>
@@ -598,61 +588,191 @@ export function QuestionItem({
                   content={question.content}
                   className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
                 />
+
+                {/* Post type chips */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  {question.postType === "partner" && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-[#ff5a1f] dark:bg-[#ff5a1f]/10 dark:text-[#ff5a1f] px-1.5 py-0.5 rounded border border-orange-250/50 dark:border-[#ff5a1f]/20">
+                      Partner Finder
+                    </span>
+                  )}
+                  {question.postType === "trade" && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200/50 dark:border-blue-900/20">
+                      Marketplace
+                    </span>
+                  )}
+                  {question.postType === "taxi" && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200/50 dark:border-purple-900/20">
+                      Taxi Sharing
+                    </span>
+                  )}
+                </div>
                 
-                {/* Trade metadata — inline chip strip */}
+                {/* Trade metadata + interest button */}
                 {question.postType === "trade" && (
-                  <div className="mt-2.5 flex items-center gap-2 flex-wrap text-xs">
-                    <span className="font-bold text-[#ff5a1f]">
-                      ₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}
-                    </span>
-                    <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                    <span className="text-neutral-500 dark:text-neutral-400">{question.tradeCondition}</span>
-                    <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                    <span className={cn(
-                      "flex items-center gap-1 font-medium",
-                      question.tradeStatus === "available"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-neutral-400 dark:text-neutral-500"
-                    )}>
-                      <span className={cn(
-                        "size-1.5 rounded-full inline-block shrink-0",
-                        question.tradeStatus === "available" ? "bg-emerald-500" : "bg-neutral-400"
-                      )} />
-                      {question.tradeStatus === "available" ? "Available" : "Sold"}
-                    </span>
-                  </div>
-                )}
-
-                {/* Partner metadata — inline chip */}
-                {question.postType === "partner" && question.partnerSlotsNeeded && (
-                  <div className="mt-2.5 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5 shrink-0" />
-                    <span>
-                      <strong className="text-neutral-700 dark:text-neutral-200">{question.partnerSlotsNeeded}</strong>
-                      {" "}{question.partnerSlotsNeeded === 1 ? "slot" : "slots"} open
-                    </span>
-                  </div>
-                )}
-
-                {/* Taxi metadata — inline chips */}
-                {question.postType === "taxi" && (
-                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-                    {question.taxiDeparture && question.taxiDestination && (
-                      <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                        {question.taxiDeparture} <span className="text-neutral-300 dark:text-neutral-500">→</span> {question.taxiDestination}
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap text-xs min-w-0">
+                      <span className="font-bold text-[#ff5a1f]">
+                        ₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}
                       </span>
+                      <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                      <span className="text-neutral-500 dark:text-neutral-400">{question.tradeCondition}</span>
+                      <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                      <span className={cn(
+                        "flex items-center gap-1 font-medium",
+                        question.tradeStatus === "available"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-neutral-400 dark:text-neutral-500"
+                      )}>
+                        <span className={cn(
+                          "size-1.5 rounded-full inline-block shrink-0",
+                          question.tradeStatus === "available" ? "bg-emerald-500" : "bg-neutral-400"
+                        )} />
+                        {question.tradeStatus === "available" ? "Available" : "Sold"}
+                      </span>
+                    </div>
+                    {question.tradeStatus === "available" && user?.username !== question.authorUsername && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!user) { openAuthModal("signin"); return; }
+                          sendInterestDM({
+                            authorUsername: question.authorUsername!,
+                            templateMessage: `Hey! I'm interested in: ${question.content.slice(0, 200)}`,
+                          });
+                          setInterestSent(true);
+                          setTimeout(() => setInterestSent(false), 2000);
+                        }}
+                        disabled={isDMPending || interestSent}
+                        className={cn(
+                          "shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer",
+                          interestSent
+                            ? "bg-emerald-500 text-white"
+                            : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                        )}
+                      >
+                        {interestSent ? (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Sent
+                          </>
+                        ) : (
+                          <>
+                            <HugeiconsIcon icon={ShoppingBag01Icon} className="size-3.5" />
+                            Interested
+                          </>
+                        )}
+                      </button>
                     )}
-                    {question.taxiDatetime && (
-                      <>
-                        <span className="text-neutral-300 dark:text-neutral-600 hidden sm:inline">·</span>
-                        <span>{new Date(question.taxiDatetime).toLocaleString()}</span>
-                      </>
+                  </div>
+                )}
+
+                {/* Partner metadata + interest button */}
+                {question.postType === "partner" && (
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 min-w-0">
+                      <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5 shrink-0" />
+                      <span>
+                        <strong className="text-neutral-700 dark:text-neutral-200">{question.partnerSlotsNeeded || 0}</strong>
+                        {" "}{question.partnerSlotsNeeded === 1 ? "slot" : "slots"} open
+                      </span>
+                    </div>
+                    {user?.username !== question.authorUsername && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!user) { openAuthModal("signin"); return; }
+                          sendInterestDM({
+                            authorUsername: question.authorUsername!,
+                            templateMessage: `Hey! I'd like to join your partner group. Are you still looking for members?`,
+                          });
+                          setInterestSent(true);
+                          setTimeout(() => setInterestSent(false), 2000);
+                        }}
+                        disabled={isDMPending || interestSent}
+                        className={cn(
+                          "shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer",
+                          interestSent
+                            ? "bg-emerald-500 text-white"
+                            : "bg-orange-600 text-white hover:bg-orange-700 active:scale-95"
+                        )}
+                      >
+                        {interestSent ? (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Sent
+                          </>
+                        ) : (
+                          <>
+                            <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5" />
+                            Interested
+                          </>
+                        )}
+                      </button>
                     )}
-                    {question.taxiSeatsAvailable && (
-                      <>
-                        <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                        <span>{question.taxiSeatsAvailable} {question.taxiSeatsAvailable === 1 ? "seat" : "seats"} available</span>
-                      </>
+                  </div>
+                )}
+
+                {/* Taxi metadata + interest button */}
+                {question.postType === "taxi" && (
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400 min-w-0">
+                      {question.taxiDeparture && question.taxiDestination && (
+                        <span className="font-medium text-neutral-700 dark:text-neutral-200">
+                          {question.taxiDeparture} <span className="text-neutral-300 dark:text-neutral-500">→</span> {question.taxiDestination}
+                        </span>
+                      )}
+                      {question.taxiDatetime && (
+                        <>
+                          <span className="text-neutral-300 dark:text-neutral-600 hidden sm:inline">·</span>
+                          <span>{new Date(question.taxiDatetime).toLocaleString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true })}</span>
+                        </>
+                      )}
+                      {question.taxiSeatsAvailable && (
+                        <>
+                          <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                          <span>{question.taxiSeatsAvailable} {question.taxiSeatsAvailable === 1 ? "seat" : "seats"} available</span>
+                        </>
+                      )}
+                    </div>
+                    {user?.username !== question.authorUsername && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!user) { openAuthModal("signin"); return; }
+                          sendInterestDM({
+                            authorUsername: question.authorUsername!,
+                            templateMessage: `Hey! I'd like to join the trip from ${question.taxiDeparture || "?"} to ${question.taxiDestination || "?"}. Is there still space?`,
+                          });
+                          setInterestSent(true);
+                          setTimeout(() => setInterestSent(false), 2000);
+                        }}
+                        disabled={isDMPending || interestSent}
+                        className={cn(
+                          "shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer",
+                          interestSent
+                            ? "bg-emerald-500 text-white"
+                            : "bg-purple-600 text-white hover:bg-purple-700 active:scale-95"
+                        )}
+                      >
+                        {interestSent ? (
+                          <>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Sent
+                          </>
+                        ) : (
+                          <>
+                            <HugeiconsIcon icon={Car01Icon} className="size-3.5" />
+                            Join
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
                 )}

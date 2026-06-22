@@ -19,6 +19,21 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Alert02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/config";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { ShimmeringText } from "@/components/shimmering-text";
+import {
+  SlideToUnlock,
+  SlideToUnlockHandle,
+  SlideToUnlockText,
+  SlideToUnlockTrack,
+} from "@/components/slide-to-unlock";
+import { useSound } from "@/hooks/use-sound";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 type FormMode = "signin" | "signup" | "forgot" | "forgot-success" | "signup-success";
 
@@ -28,12 +43,12 @@ const MODE_COPY: Record<
 > = {
   signin: {
     title: "Welcome back",
-    description: "Sign in to access your questions in Echo.",
+    description: "Sign in to access your questions in TurnsOut.",
     submitLabel: "Sign in",
   },
   signup: {
     title: "Create an account",
-    description: "Enter your details to start asking questions in Echo.",
+    description: "Enter your details to start asking questions in TurnsOut.",
     submitLabel: "Create Account",
   },
   forgot: {
@@ -89,8 +104,12 @@ export function AuthDialog() {
   const { mutateAsync: resendVerification, isPending: isResendPending } =
     useResendVerification();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const [play] = useSound("https://assets.chanhdai.com/sounds/ios/unlock.mp3", {
+    volume: 0.5,
+  });
+
+  async function handleSubmit(e?: React.FormEvent<HTMLFormElement>) {
+    e?.preventDefault();
     const payload: AuthPayload = {
       username: form.username.trim(),
       email: form.email.trim(),
@@ -194,8 +213,8 @@ export function AuthDialog() {
               <div className="my-2 flex justify-start">
                 <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                   <img
-                    src="/echologo.svg"
-                    alt="Echo"
+                    src="/turnsoutlogo.svg"
+                    alt="TurnsOut"
                     className="size-7 invert dark:invert-0 opacity-80"
                   />
                 </div>
@@ -229,16 +248,46 @@ export function AuthDialog() {
                 )}
 
                 {(formMode === "signup" || formMode === "forgot") && (
-                  <Input
-                    name="email"
-                    type="email"
-                    placeholder="Email"
-                    autoComplete="email"
-                    required
-                    className="text-base md:text-sm pl-3 h-10 rounded-xl"
-                    value={form.email}
-                    onChange={(e) => updateForm({ email: e.target.value })}
-                  />
+                  <div className="space-y-1">
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Email"
+                      autoComplete="email"
+                      required
+                      className="text-base md:text-sm pl-3 h-10 rounded-xl"
+                      value={form.email}
+                      onChange={(e) => updateForm({ email: e.target.value })}
+                    />
+                    {formMode === "signup" && (
+                      <Drawer>
+                        <DrawerTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-[11px] text-muted-foreground/70 px-1 hover:text-muted-foreground transition-colors cursor-pointer"
+                          >
+                            Only university emails are accepted
+                          </button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHeader>
+                            <DrawerTitle>Supported Universities</DrawerTitle>
+                          </DrawerHeader>
+                          <div className="px-4 pb-4 space-y-2">
+                            <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                              <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                                V
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">VIT University</p>
+                                <p className="text-xs text-muted-foreground">@vitstudent.ac.in</p>
+                              </div>
+                            </div>
+                          </div>
+                        </DrawerContent>
+                      </Drawer>
+                    )}
+                  </div>
                 )}
 
                 {formMode !== "forgot" && (
@@ -258,16 +307,40 @@ export function AuthDialog() {
                   />
                 )}
 
-                <Button className="w-full h-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white cursor-pointer" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <HugeiconsIcon
-                      icon={Loading03Icon}
-                      className="size-5 animate-spin"
-                    />
-                  ) : (
-                    copy.submitLabel
-                  )}
-                </Button>
+                {formMode === "signin" ? (
+                  <SlideToUnlock
+                    onUnlock={() => {
+                      play();
+                      handleSubmit();
+                    }}
+                    disabled={!form.username || !form.password}
+                    className="w-full"
+                  >
+                    <SlideToUnlockTrack>
+                      <SlideToUnlockText>
+                        {({ isDragging }) => (
+                          <ShimmeringText
+                            text="slide to sign in"
+                            isStopped={isDragging}
+                            className="[--color:rgba(120,113,108,0.6)] [--shimmering-color:rgb(120,113,108)]"
+                          />
+                        )}
+                      </SlideToUnlockText>
+                      <SlideToUnlockHandle className="bg-[#ff5a1f] text-white" />
+                    </SlideToUnlockTrack>
+                  </SlideToUnlock>
+                ) : (
+                  <Button className="w-full h-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white cursor-pointer" type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <HugeiconsIcon
+                        icon={Loading03Icon}
+                        className="size-5 animate-spin"
+                      />
+                    ) : (
+                      copy.submitLabel
+                    )}
+                  </Button>
+                )}
               </form>
 
               <div className="space-y-4 text-center">

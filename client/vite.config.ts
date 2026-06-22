@@ -10,12 +10,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["echo.svg", "echologo.svg", "thumb.jpeg"],
+      includeAssets: ["turnsout.svg", "turnsoutlogo.svg", "thumb.jpeg"],
       manifest: {
-        name: "Echo - An Open QnA Platform",
-        short_name: "Echo",
+        name: "TurnsOut",
+        short_name: "TurnsOut",
         description:
-          "Echo is an open Q&A platform where you can ask questions, share knowledge, and connect with communities through chambers.",
+          "TurnsOut is an open community platform where you can ask questions, share knowledge, and connect with communities through chambers.",
         theme_color: "#171717",
         background_color: "#171717",
         display: "standalone",

@@ -61,7 +61,6 @@ function DirectoryChamberCard({ chamber, onJoinClick }: { chamber: Chamber; onJo
   return (
     <div className="p-3 border border-neutral-200 dark:border-neutral-800 bg-background rounded-xl flex items-center justify-between gap-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-950">
       <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/chamber/${chamber.uid}`)}>
-        {/* Full initials-based icon */}
         <div
           className={cn(
             "size-9 rounded-lg flex items-center justify-center text-white font-bold text-xs shrink-0 select-none",
@@ -72,16 +71,10 @@ function DirectoryChamberCard({ chamber, onJoinClick }: { chamber: Chamber; onJo
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100 truncate">
-            {chamber.courseCode ? `[${chamber.courseCode}] ` : ""}{chamber.name}
+            {chamber.name}
           </h4>
           <div className="flex items-center gap-2 mt-0.5 text-[10px] text-neutral-500 dark:text-neutral-400">
             <span>{chamber.memberCount || 0} members</span>
-            {chamber.semester && (
-              <>
-                <span>•</span>
-                <span className="text-[10px]">{chamber.semester}</span>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -108,7 +101,6 @@ export default function Explore() {
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"trending" | "directory">("trending");
-  const [expandedBranch, setExpandedBranch] = useState<string | null>("Computer Science");
   const navigate = useNavigate();
 
   const { data: searchResults, isLoading: isSearching } = useGlobalSearch(query);
@@ -195,22 +187,13 @@ export default function Explore() {
     searchQuestions.length > 0 ||
     replies.length > 0;
 
-  // Group directory chambers
-  const globalChambers = chambers.filter(c => c.type === "global" || !c.type);
-  const courseChambers = chambers.filter(c => c.type === "course");
-  
-  // Dynamic list of branches
-  const activeBranches = Array.from(
-    new Set(courseChambers.map(c => c.branchName).filter(Boolean))
-  ) as string[];
-
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 pb-36 md:pb-16 relative px-4">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
         Explore
       </h1>
       <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
-        Discover chambers, search topics, or find course study hubs.
+        Discover chambers, search topics, or find people.
       </h2>
       <div className="relative">
         <HugeiconsIcon
@@ -218,7 +201,7 @@ export default function Explore() {
           className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 size-5"
         />
         <Input
-          placeholder="Search for courses, textbooks, or users..."
+          placeholder="Search for chambers, questions, or users..."
           className="pl-10 h-10 bg-neutral-100 dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-2xl"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -312,7 +295,6 @@ export default function Explore() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Inner Tabs Selection */}
           <div className="flex border-b border-neutral-100 dark:border-neutral-800">
             <button
               onClick={() => setActiveTab("trending")}
@@ -339,20 +321,19 @@ export default function Explore() {
               )}
             >
               <HugeiconsIcon icon={BookOpen01Icon} className="size-4" />
-              Course Directory
+              All Chambers
               {activeTab === "directory" && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ff5a1f]" />
               )}
             </button>
           </div>
 
-          {/* TAB CONTENT: TRENDING FEED */}
           {activeTab === "trending" && (
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between px-1">
                   <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">
-                    Recommended Communities
+                    Recommended Chambers
                   </h3>
                   <Button
                     variant="ghost"
@@ -368,7 +349,7 @@ export default function Explore() {
                   <ChamberListSkeleton count={3} />
                 ) : (
                   <div className="grid grid-cols-1 gap-3">
-                    {globalChambers.slice(0, 3).map((chamber) => (
+                    {chambers.slice(0, 3).map((chamber) => (
                       <DirectoryChamberCard
                         key={chamber.uid}
                         chamber={chamber}
@@ -426,88 +407,32 @@ export default function Explore() {
             </>
           )}
 
-          {/* TAB CONTENT: COURSE DIRECTORY */}
           {activeTab === "directory" && (
-            <div className="space-y-6">
-              {/* Global General Chambers Section */}
-              {globalChambers.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 px-1 border-l-2 border-[#ff5a1f] pl-3">
-                    Campus Communities & Utilities
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {globalChambers.map((chamber) => (
-                      <DirectoryChamberCard
-                        key={chamber.uid}
-                        chamber={chamber}
-                        onJoinClick={handleJoinLeave}
-                      />
-                    ))}
-                  </div>
+            <div className="space-y-4">
+              {isChambersLoading ? (
+                <ChamberListSkeleton count={4} />
+              ) : chambers.length === 0 ? (
+                <p className="text-sm text-neutral-500 text-center py-6">
+                  No chambers created yet. Be the first to create one!
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {chambers.map((chamber) => (
+                    <DirectoryChamberCard
+                      key={chamber.uid}
+                      chamber={chamber}
+                      onJoinClick={handleJoinLeave}
+                    />
+                  ))}
                 </div>
               )}
-
-              {/* Branch Academic Chambers Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 px-1 border-l-2 border-[#ff5a1f] pl-3">
-                  Academic Branches & Courses
-                </h3>
-                
-                {isChambersLoading ? (
-                  <ChamberListSkeleton count={4} />
-                ) : activeBranches.length === 0 ? (
-                  <p className="text-sm text-neutral-500 text-center py-6">
-                    No course chambers created yet. Be the first to create one!
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {activeBranches.map((branchName) => {
-                      const branchCourses = courseChambers.filter(
-                        c => c.branchName === branchName
-                      );
-                      const isExpanded = expandedBranch === branchName;
-
-                      return (
-                        <div 
-                          key={branchName}
-                          className="border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden bg-neutral-50/30 dark:bg-neutral-900/10"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setExpandedBranch(isExpanded ? null : branchName)}
-                            className="w-full flex items-center justify-between p-4 font-semibold text-sm text-left text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100/50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-                          >
-                            <span>{branchName}</span>
-                            <span className="text-xs text-neutral-400 font-normal">
-                              {branchCourses.length} {branchCourses.length === 1 ? "course" : "courses"}
-                            </span>
-                          </button>
-                          
-                          {isExpanded && (
-                            <div className="p-4 bg-background border-t border-neutral-100 dark:border-neutral-800 grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {branchCourses.map((chamber) => (
-                                <DirectoryChamberCard
-                                  key={chamber.uid}
-                                  chamber={chamber}
-                                  onJoinClick={handleJoinLeave}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                <CreateChamberButton onClick={() => {
-                  if (!user) {
-                    openAuthModal("signin");
-                  } else {
-                    setCreateChamberOpen(true);
-                  }
-                }} />
-              </div>
+              <CreateChamberButton onClick={() => {
+                if (!user) {
+                  openAuthModal("signin");
+                } else {
+                  setCreateChamberOpen(true);
+                }
+              }} />
             </div>
           )}
         </div>

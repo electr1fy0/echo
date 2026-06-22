@@ -243,7 +243,7 @@ export default function Home() {
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1">
               <h3 className="text-base font-normal text-neutral-800 dark:text-neutral-100">
-                Join the Echo community
+                Join the TurnsOut community
               </h3>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-[28rem] leading-relaxed">
                 Sign in or register today to join chambers, upvote questions, share your knowledge, and ask questions of your own!

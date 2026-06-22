@@ -25,7 +25,7 @@ export default function ResetPassword() {
 
   useEffect(() => {
     if (!token) {
-      navigate("/auth");
+      navigate("/");
     }
   }, [token, navigate]);
 
@@ -63,7 +63,7 @@ export default function ResetPassword() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" onClick={() => navigate("/auth")}>
+            <Button className="w-full" onClick={() => navigate("/")}>
               Go to Sign In
             </Button>
           </CardContent>
@@ -79,8 +79,8 @@ export default function ResetPassword() {
           <div className="my-2">
             <div className="mx-auto size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
               <img
-                src="/echologo.svg"
-                alt="Echo"
+                src="/turnsoutlogo.svg"
+                alt="TurnsOut"
                 className="size-7 invert dark:invert-0 opacity-80"
               />
             </div>

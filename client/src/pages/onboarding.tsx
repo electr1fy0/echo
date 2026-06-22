@@ -24,7 +24,7 @@ export default function Onboarding() {
     e.preventDefault();
     const onboardingToken = getGoogleOnboardingToken();
     if (!onboardingToken) {
-      navigate("/auth", { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 
@@ -65,7 +65,7 @@ export default function Onboarding() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Pick your username</CardTitle>
-          <CardDescription>Finish onboarding to continue into Echo.</CardDescription>
+          <CardDescription>Finish onboarding to continue into TurnsOut.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-3" onSubmit={handleSubmit}>

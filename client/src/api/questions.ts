@@ -1,4 +1,4 @@
-import type { QuestionDraft, QuestionItem } from "@/types";
+import type { Conversation, QuestionDraft, QuestionItem } from "@/types";
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
 
@@ -162,6 +162,43 @@ export async function unpinQuestion(questionId: string) {
     }
   );
   if (!res.ok) throw new Error("Failed to unpin question");
+}
+
+export async function expressInterest(questionId: string, message?: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/interest`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ message }),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to express interest");
+}
+
+export async function expressInterestViaDM(authorUsername: string, templateMessage: string) {
+  const convRes = await fetch(`${API_URL}/dms/conversations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ username: authorUsername }),
+  });
+  if (!convRes.ok) {
+    const data = await convRes.json().catch(() => ({}));
+    throw new Error(data.error || data.message || "Failed to create conversation");
+  }
+  const conv = await convRes.json() as Conversation;
+
+  const msgRes = await fetch(`${API_URL}/dms/conversations/${conv.uid}/messages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ content: templateMessage }),
+  });
+  if (!msgRes.ok) throw new Error("Failed to send message");
+
+  return conv;
 }
 
 export async function applyToPartner(questionId: string, pitch: string) {

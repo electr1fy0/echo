@@ -34,12 +34,6 @@ export const chambers = pgTable("chambers", {
   }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   colorIndex: integer("color_index").default(0),
-  
-  // Pivot columns
-  type: text("type").default("global").notNull(), // 'global' | 'branch' | 'course'
-  branchName: text("branch_name"),
-  courseCode: text("course_code"),
-  semester: text("semester"),
 }, (table) => [unique("chambers_name_key").on(table.name)]);
 
 export const chamberMembers = pgTable("chamber_members", {

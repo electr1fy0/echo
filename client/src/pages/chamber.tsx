@@ -46,6 +46,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { MentionField } from "@/components/ui/mention-field";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 
@@ -275,16 +276,6 @@ export default function ChamberPage() {
             <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               {chamber.name}
             </h1>
-            {chamber.courseCode && (
-              <span className="text-[10px] uppercase font-bold bg-[#ff5a1f]/10 text-[#ff5a1f] px-2 py-0.5 rounded border border-[#ff5a1f]/20">
-                {chamber.courseCode}
-              </span>
-            )}
-            {chamber.semester && (
-              <span className="text-[10px] uppercase font-bold bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400 px-2 py-0.5 rounded">
-                {chamber.semester}
-              </span>
-            )}
           </div>
           <p className="text-sm text-neutral-500 mt-1.5 leading-relaxed">{chamber.description}</p>
           <div className="flex items-center gap-4 mt-3 text-xs text-neutral-400 dark:text-neutral-500">
@@ -302,11 +293,6 @@ export default function ChamberPage() {
                   })
                 : "Jan 2026"}
             </span>
-            {chamber.branchName && (
-              <span className="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 px-2 py-0.5 rounded-full text-[10px] font-medium text-neutral-500">
-                {chamber.branchName}
-              </span>
-            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -514,11 +500,10 @@ export default function ChamberPage() {
                   onChange={(e) => setTaxiDestination(e.target.value)}
                   className="w-24 h-7 text-xs px-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none"
                 />
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={taxiDatetime}
-                  onChange={(e) => setTaxiDatetime(e.target.value)}
-                  className="w-40 h-7 text-xs px-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background text-neutral-800 dark:text-neutral-200 focus:outline-none"
+                  onChange={setTaxiDatetime}
+                  placeholder="Pick date & time"
                 />
               </div>
             )}

@@ -46,7 +46,7 @@ const getTemplate = (
 <body>
   <div class="container">
     <div class="header">
-      <span class="logo">Echo</span>
+      <span class="logo">TurnsOut</span>
     </div>
     <div class="content">
       <h1 class="h1">${title}</h1>
@@ -59,7 +59,7 @@ const getTemplate = (
       <p style="font-size: 13px; margin: 0;"><a href="${actionUrl}" class="link">${actionUrl}</a></p>
     </div>
     <div class="footer">
-      &copy; Echo. All rights reserved.
+      &copy; TurnsOut. All rights reserved.
     </div>
   </div>
 </body>
@@ -75,7 +75,7 @@ const sendEmail = async (
     return;
   }
 
-  const from = `Echo <hello@${toSenderDomain(env.ECHO_DOMAIN)}>`;
+  const from = `TurnsOut <hello@${toSenderDomain(env.ECHO_DOMAIN)}>`;
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -111,7 +111,7 @@ export const sendVerificationEmail = async (
     getTemplate(
       "Verify your email",
       username,
-      "Thanks for joining echo. To get started, please verify your email address.",
+      "Thanks for joining TurnsOut. To get started, please verify your email address.",
       "Verify Email",
       verifyLink,
     ),

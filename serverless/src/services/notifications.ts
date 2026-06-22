@@ -85,7 +85,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       let content = "";
       let questionContent = "";
 
-      if (row.type === "upvote_question" || row.type === "mention_question" || row.type === "upvote_post" || row.type === "mention_post") {
+      if (row.type === "upvote_question" || row.type === "mention_question" || row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest") {
         const [post] = await db
           .select({ content: schema.posts.content })
           .from(schema.posts)

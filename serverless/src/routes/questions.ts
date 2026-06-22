@@ -405,6 +405,30 @@ questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   return c.json({ message: "reply unaccepted" });
 });
 
+// Express interest route (for trade, taxi, partner posts)
+questionRoutes.post("/:uid/interest", requireAuth, async (c) => {
+  const postUid = c.req.param("uid");
+  const currentUser = c.get("user");
+  const body = (await c.req.json()) as { message?: string };
+
+  const [post] = await c.get("db").select({ author: schema.posts.author }).from(schema.posts).where(eq(schema.posts.uid, postUid)).limit(1);
+  if (!post) {
+    throw new ApiError(404, "post not found");
+  }
+  if (post.author === currentUser) {
+    throw new ApiError(400, "cannot express interest in your own post");
+  }
+
+  await createNotification(c.get("db"), {
+    userUsername: post.author,
+    actorUsername: currentUser,
+    type: "express_interest",
+    referenceUid: postUid,
+  });
+
+  return c.json({ message: "interest expressed" });
+});
+
 // Partner application routes
 questionRoutes.post("/:uid/apply", requireAuth, async (c) => {
   const postUid = c.req.param("uid");

@@ -130,6 +130,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
             Taxi Sharing
           </span>
         )}
+
       </div>
 
       {/* Bottom Section: Upvote, Replies, and extra meta */}

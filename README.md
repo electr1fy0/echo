@@ -1,11 +1,11 @@
-# Echo
+# TurnsOut
 
-![Echo Thumbnail](https://echo.aysh.site/thumb.jpeg)
+![TurnsOut Thumbnail](https://echo.aysh.site/thumb.jpeg)
 
 
-An open QnA platform built for communities. Ask questions, share knowledge, and curate your feed through isolated chambers.
+An open community platform built for communities. Ask questions, share knowledge, and curate your feed through isolated chambers.
 
-Echo is a modern social platform that separates content into dedicated spaces, keeping your feed focused and minimal.
+TurnsOut is a modern social platform that separates content into dedicated spaces, keeping your feed focused and minimal.
 
 
 
@@ -17,7 +17,7 @@ Echo is a modern social platform that separates content into dedicated spaces, k
 
 ## Background
 
-Community platforms are often noisy and disorganized. Echo solves this by using **Chambers**. Isolated spaces for specific topics. Join what matters to you, ignore the rest.
+Community platforms are often noisy and disorganized. TurnsOut solves this by using **Chambers**. Isolated spaces for specific topics. Join what matters to you, ignore the rest.
 A question remains a question. An answer an answer. No nested replies. No algorithms.
 
 ## Features

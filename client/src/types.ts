@@ -116,8 +116,4 @@ export interface Chamber {
   colorIndex?: number;
   timeCreated?: string;
   creatorUsername?: string;
-  type?: "global" | "branch" | "course";
-  branchName?: string;
-  courseCode?: string;
-  semester?: string;
 }

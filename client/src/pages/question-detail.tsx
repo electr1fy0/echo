@@ -15,7 +15,7 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useQuestionQuery, useDeleteQuestion, useUpdateQuestion } from "@/hooks/use-questions";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
-import { useApplyToPartner, usePartnerApplicationsQuery, useUpdatePartnerApplicationStatus } from "@/hooks/use-questions";
+import { useApplyToPartner, usePartnerApplicationsQuery, useUpdatePartnerApplicationStatus, useExpressInterestViaDM } from "@/hooks/use-questions";
 import { PageTransition } from "@/components/page-transition";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
@@ -43,9 +43,12 @@ export default function QuestionDetailPage() {
   const [editedContent, setEditedContent] = useState("");
   const [pitchContent, setPitchContent] = useState("");
   const [isApplying, setIsApplying] = useState(false);
+  const [interestMessage, setInterestMessage] = useState("");
+  const [showInterestForm, setShowInterestForm] = useState(false);
 
   // Partner application hooks
   const { mutate: applyToPartner, isPending: isApplyPending } = useApplyToPartner();
+  const { mutate: sendInterestDM, isPending: isDMPending } = useExpressInterestViaDM();
   const { data: applications = [] } = usePartnerApplicationsQuery(
     questionItem?.question?.postType === "partner" && user?.username === questionItem?.question?.authorUsername
       ? questionId
@@ -227,45 +230,96 @@ export default function QuestionDetailPage() {
 
         {/* METADATA INTERFACE FOR TRADE OR PARTNERS */}
         {question.postType === "trade" && (
-          <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 grid grid-cols-2 gap-4">
-            <div>
-              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">
-                Price
-              </span>
-              <span className="text-lg font-bold text-neutral-800 dark:text-neutral-200 mt-1 block">
-                ₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}
-              </span>
-            </div>
-            <div>
-              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">
-                Condition
-              </span>
-              <span className="text-sm font-semibold capitalize text-neutral-800 dark:text-neutral-200 mt-1 block">
-                {question.tradeCondition || "Unknown"}
-              </span>
-            </div>
-            {question.tradeBookIsbn && (
-              <div className="col-span-2 border-t border-neutral-200/50 pt-2">
+          <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">
-                  Book ISBN
+                  Price
                 </span>
-                <span className="text-xs font-mono text-neutral-700 dark:text-neutral-300 block">
-                  {question.tradeBookIsbn}
+                <span className="text-lg font-bold text-neutral-800 dark:text-neutral-200 mt-1 block">
+                  ₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}
                 </span>
               </div>
-            )}
-            <div className="col-span-2 border-t border-neutral-200/50 pt-2 flex items-center justify-between">
-              <span className="text-xs text-neutral-500">Status</span>
-              <span
-                className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize ${
-                  question.tradeStatus === "available"
-                    ? "bg-green-100 text-green-700 dark:bg-green-950/20 dark:text-green-400"
-                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800"
-                }`}
-              >
-                {question.tradeStatus}
-              </span>
+              <div>
+                <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">
+                  Condition
+                </span>
+                <span className="text-sm font-semibold capitalize text-neutral-800 dark:text-neutral-200 mt-1 block">
+                  {question.tradeCondition || "Unknown"}
+                </span>
+              </div>
+              {question.tradeBookIsbn && (
+                <div className="col-span-2 border-t border-neutral-200/50 pt-2">
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">
+                    Book ISBN
+                  </span>
+                  <span className="text-xs font-mono text-neutral-700 dark:text-neutral-300 block">
+                    {question.tradeBookIsbn}
+                  </span>
+                </div>
+              )}
+              <div className="col-span-2 border-t border-neutral-200/50 pt-2 flex items-center justify-between">
+                <span className="text-xs text-neutral-500">Status</span>
+                <span
+                  className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize ${
+                    question.tradeStatus === "available"
+                      ? "bg-green-100 text-green-700 dark:bg-green-950/20 dark:text-green-400"
+                      : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800"
+                  }`}
+                >
+                  {question.tradeStatus}
+                </span>
+              </div>
             </div>
+            {user?.username !== question.authorUsername && question.tradeStatus === "available" && (
+              <div className="border-t border-neutral-200/50 pt-3">
+                {!showInterestForm ? (
+                  <Button
+                    onClick={() => {
+                      if (!user) { openAuthModal("signin"); return; }
+                      setShowInterestForm(true);
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs h-9 cursor-pointer"
+                  >
+                    I'm Interested
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+                      Message for {question.authorUsername} (optional)
+                    </label>
+                    <Textarea
+                      placeholder="e.g. Is this still available? Can I pick it up today?"
+                      value={interestMessage}
+                      onChange={(e) => setInterestMessage(e.target.value)}
+                      className="min-h-16 text-xs rounded-xl"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => { setShowInterestForm(false); setInterestMessage(""); }} type="button">
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          sendInterestDM({
+                            authorUsername: question.authorUsername!,
+                            templateMessage: interestMessage
+                              ? `${interestMessage}\n\n(re: ${question.content.slice(0, 200)})`
+                              : `Hey! I'm interested in: ${question.content.slice(0, 200)}`,
+                          });
+                          setShowInterestForm(false);
+                          setInterestMessage("");
+                        }}
+                        disabled={isDMPending}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {isDMPending ? "Sending..." : "Send Message"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -335,6 +389,87 @@ export default function QuestionDetailPage() {
                       </Button>
                     </div>
                   </form>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        {question.postType === "taxi" && (
+          <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {question.taxiDeparture && (
+                <div>
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">From</span>
+                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mt-1 block">{question.taxiDeparture}</span>
+                </div>
+              )}
+              {question.taxiDestination && (
+                <div>
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">To</span>
+                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mt-1 block">{question.taxiDestination}</span>
+                </div>
+              )}
+              {question.taxiDatetime && (
+                <div className="col-span-2 border-t border-neutral-200/50 pt-2">
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">Departure Time</span>
+                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mt-1 block">
+                    {new Date(question.taxiDatetime).toLocaleString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true })}
+                  </span>
+                </div>
+              )}
+              {question.taxiSeatsAvailable && (
+                <div className="col-span-2 border-t border-neutral-200/50 pt-2">
+                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500 uppercase font-semibold block">Seats Available</span>
+                  <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mt-1 block">{question.taxiSeatsAvailable}</span>
+                </div>
+              )}
+            </div>
+            {user?.username !== question.authorUsername && (
+              <div className="border-t border-neutral-200/50 pt-3">
+                {!showInterestForm ? (
+                  <Button
+                    onClick={() => {
+                      if (!user) { openAuthModal("signin"); return; }
+                      setShowInterestForm(true);
+                    }}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs h-9 cursor-pointer"
+                  >
+                    I Want to Join
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+                      Message for {question.authorUsername} (optional)
+                    </label>
+                    <Textarea
+                      placeholder="e.g. I'm at the same departure point, happy to split!"
+                      value={interestMessage}
+                      onChange={(e) => setInterestMessage(e.target.value)}
+                      className="min-h-16 text-xs rounded-xl"
+                    />
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => { setShowInterestForm(false); setInterestMessage(""); }} type="button">
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          sendInterestDM({
+                            authorUsername: question.authorUsername!,
+                            templateMessage: interestMessage
+                              ? `${interestMessage}\n\n(joining trip from ${question.taxiDeparture || "?"} to ${question.taxiDestination || "?"})`
+                              : `Hey! I'd like to join the trip from ${question.taxiDeparture || "?"} to ${question.taxiDestination || "?"}. Is there still space?`,
+                          });
+                          setShowInterestForm(false);
+                          setInterestMessage("");
+                        }}
+                        disabled={isDMPending}
+                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        {isDMPending ? "Sending..." : "Send Request"}
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
