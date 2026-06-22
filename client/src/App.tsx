@@ -29,7 +29,7 @@ const DMsPage = lazy(() => import("@/pages/dms"));
 const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
 
 function AuthenticatedLayout() {
-  const { data: user } = useAuth();
+  const { data: user, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
@@ -61,7 +61,7 @@ function AuthenticatedLayout() {
         <Outlet />
       </main>
       <AuthDialog />
-      {!user && (
+      {!user && !isLoading && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] animate-in slide-in-from-bottom duration-500">
           <div>
             <h4 className="text-sm font-semibold">Don't miss what's happening</h4>

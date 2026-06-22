@@ -61,7 +61,7 @@ export default function ChamberPage() {
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
   const { data: chambersData, isLoading: isChamberLoading } = useListChambers();
-  const { data: user } = useAuth();
+  const { data: user, isLoading: isAuthLoading } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
@@ -411,7 +411,15 @@ export default function ChamberPage() {
       </div>
 
       {/* Dynamic Publisher Card */}
-      {user && chamber.isJoined && (
+      {isAuthLoading && chamber.isJoined ? (
+        <div className="border border-dashed border-neutral-300 dark:border-neutral-700 bg-background rounded-2xl mb-6 p-4 space-y-3 animate-pulse">
+          <div className="h-10 bg-neutral-100 dark:bg-neutral-800 rounded-xl" />
+          <div className="flex justify-between items-center">
+            <div className="h-7 w-20 bg-neutral-100 dark:bg-neutral-800 rounded-lg" />
+            <div className="h-7 w-16 bg-neutral-100 dark:bg-neutral-800 rounded-lg" />
+          </div>
+        </div>
+      ) : user && chamber.isJoined ? (
         <div className="border border-dashed border-neutral-300 dark:border-neutral-700 bg-background rounded-2xl mb-6 transition-colors focus-within:border-neutral-400 dark:focus-within:border-neutral-500 overflow-hidden">
           <MentionField
               placeholder={
@@ -581,7 +589,7 @@ export default function ChamberPage() {
             </Button>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Pinned Posts Carousel */}
       {pinnedPosts.length > 0 && (

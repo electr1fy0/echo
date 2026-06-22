@@ -66,11 +66,13 @@ function NavButton({
 
 function ProfileButton({
   user,
+  isLoading,
   isMobile,
   isActive,
   onClick,
 }: {
   user: User | null | undefined;
+  isLoading?: boolean;
   isMobile: boolean;
   isActive: boolean;
   onClick: () => void;
@@ -87,7 +89,9 @@ function ProfileButton({
           : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
       )}
     >
-      {user ? (
+      {isLoading ? (
+        <div className="size-6 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
+      ) : user ? (
         <UserAvatar
           src={user.avatar}
           name={user.username}
@@ -106,7 +110,7 @@ export function AppSidebar() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
-  const { data: user } = useAuth();
+  const { data: user, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const { data: chambersData = [] } = useListChambers();
 
@@ -161,6 +165,7 @@ export function AppSidebar() {
           ))}
           <ProfileButton
             user={user}
+            isLoading={isLoading}
             isMobile={true}
             isActive={isActive("/profile")}
             onClick={() => {
@@ -230,6 +235,7 @@ export function AppSidebar() {
         <div className="flex flex-col items-center pt-4 border-t border-neutral-100 dark:border-neutral-800 w-full shrink-0">
           <ProfileButton
             user={user}
+            isLoading={isLoading}
             isMobile={false}
             isActive={isActive("/profile")}
             onClick={() => {
