@@ -109,11 +109,17 @@ function ProfileButton({
           : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
       )}
     >
-      <UserAvatar
-        src={user?.avatar}
-        name={user?.username || "U"}
-        className="size-6"
-      />
+      {user ? (
+        <UserAvatar
+          src={user.avatar}
+          name={user.username}
+          className="size-6"
+        />
+      ) : (
+        <div className="size-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-neutral-600 dark:text-neutral-400 select-none">
+          G
+        </div>
+      )}
     </button>
   );
 }
@@ -283,6 +289,10 @@ export function AppSidebar() {
     navigate(path);
   };
   const handleNavClick = (item: NavItem) => {
+    if (!user && (item.isAction || item.path === "/notifications")) {
+      navigate("/auth");
+      return;
+    }
     if (item.isAction) {
       setCreateOpen(true);
     } else if (item.path) {
@@ -327,7 +337,13 @@ export function AppSidebar() {
                 user={user}
                 isMobile={true}
                 isActive={isActive("/profile")}
-                onClick={() => navigateTo("/profile")}
+                onClick={() => {
+                  if (!user) {
+                    navigate("/auth");
+                  } else {
+                    navigateTo("/profile");
+                  }
+                }}
               />
             </div>
           </div>
@@ -362,7 +378,13 @@ export function AppSidebar() {
             user={user}
             isMobile={false}
             isActive={isActive("/profile")}
-            onClick={() => navigateTo("/profile")}
+            onClick={() => {
+              if (!user) {
+                navigate("/auth");
+              } else {
+                navigateTo("/profile");
+              }
+            }}
           />
         </nav>
       </aside>

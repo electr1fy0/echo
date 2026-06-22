@@ -3,18 +3,19 @@ import { and, eq } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, optionalAuth } from "../middleware/auth";
 import { listChambers, mapChamber } from "../services/questions";
 import type { AppEnv } from "../types/app";
 
 export const chamberRoutes = new Hono<AppEnv>();
 
-chamberRoutes.use("*", requireAuth);
-
-chamberRoutes.get("/", async (c) => {
+chamberRoutes.get("/", optionalAuth, async (c) => {
   const rows = await listChambers(c.get("db"), c.get("user"), c.req.query("q") ?? "");
   return c.json(rows.map(mapChamber));
 });
+
+chamberRoutes.use("*", requireAuth);
+
 
 chamberRoutes.post("/", async (c) => {
   const body = (await c.req.json()) as { name?: string; description?: string; colorIndex?: number };

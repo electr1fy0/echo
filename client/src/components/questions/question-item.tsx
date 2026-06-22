@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   AccordionContent,
   AccordionItem,
@@ -92,6 +92,7 @@ export function QuestionItem({
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { data: user } = useAuth();
+  const navigate = useNavigate();
   const { mutate: updateQuestion, isPending: isUpdatePending } =
     useUpdateQuestion();
   const { mutate: pinQuestion, isPending: isPinPending } = usePinQuestion();
@@ -206,7 +207,13 @@ export function QuestionItem({
                   <UpvoteButton
                     count={question.upvotes}
                     isUpvoted={question.isUpvoted}
-                    onToggle={() => handleVote(questionId)}
+                    onToggle={() => {
+                      if (!user) {
+                        navigate("/auth");
+                      } else {
+                        handleVote(questionId);
+                      }
+                    }}
                     isPending={isVotePending}
                     className="w-14 text-right h-7 px-2.5 transition-colors"
                   />

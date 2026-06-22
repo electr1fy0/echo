@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   useQuestionDraft,
   useCreateQuestion,
@@ -33,6 +34,7 @@ import { validateMentions } from "@/lib/mention-validation";
 import { toast } from "@/lib/toast";
 
 export default function Home() {
+  const { data: user } = useAuth();
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
   const { mutate: submitQuestion, isPending: isCreatePending } =
@@ -51,7 +53,7 @@ export default function Home() {
     isLoading: isQuestionsLoading,
   } = useInfiniteQuestionsQuery(
     activeTab === "trending" ? "votes" : "time_created",
-    "joined",
+    user ? "joined" : undefined,
   );
   const questions = questionsData ? questionsData.pages.flat() : [];
 
@@ -135,108 +137,136 @@ export default function Home() {
       <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
         An Open QnA platform
       </h2>
-      <div className="space-y-3">
-        <div
-          className="
-            border border-dashed
-            border-neutral-300 dark:border-neutral-700
-            bg-background rounded-2xl
-            transition-colors
-            focus-within:border-neutral-400
-            dark:focus-within:border-neutral-500
-            overflow-visible
-          "
-        >
-          <MentionField
-            placeholder={
-              selectedChamberData
-                ? `Ask in ${selectedChamberData.name}...`
-                : "Select a chamber to ask a question..."
-            }
-            ariaLabel="Question content"
-            className="resize-none h-20 border-none shadow-none focus-visible:ring-0 bg-transparent px-4 py-3 text-base"
-            value={draft.content}
-            onValueChange={(value) => updateDraft({ content: value })}
-            multiline
-          />
-          <div className="flex items-center justify-between p-2 bg-neutral-50/50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-2 h-8 px-2.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none">
-                {selectedChamberData ? (
-                  <>
-                    <div
-                      className={cn(
-                        "size-2 rounded-full",
-                        CHAMBER_COLORS[
-                          (selectedChamberData.colorIndex || 0) %
-                            CHAMBER_COLORS.length
-                        ],
-                      )}
-                    />
-                    {selectedChamberData.name}
-                  </>
-                ) : (
-                  <>
-                    <HugeiconsIcon
-                      icon={ArrowDown01Icon}
-                      className="size-3.5 text-neutral-500"
-                    />
-                    Select Chamber
-                  </>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {JOINED_CHAMBERS.length > 0 ? (
-                  JOINED_CHAMBERS.map((chamber, i) => (
-                    <DropdownMenuItem
-                      key={chamber.uid || i}
-                      onClick={() => setSelectedChamber(chamber.uid!)}
-                      className="gap-2"
-                    >
+      {user ? (
+        <div className="space-y-3">
+          <div
+            className="
+              border border-dashed
+              border-neutral-300 dark:border-neutral-700
+              bg-background rounded-2xl
+              transition-colors
+              focus-within:border-neutral-400
+              dark:focus-within:border-neutral-500
+              overflow-visible
+            "
+          >
+            <MentionField
+              placeholder={
+                selectedChamberData
+                  ? `Ask in ${selectedChamberData.name}...`
+                  : "Select a chamber to ask a question..."
+              }
+              ariaLabel="Question content"
+              className="resize-none h-20 border-none shadow-none focus-visible:ring-0 bg-transparent px-4 py-3 text-base"
+              value={draft.content}
+              onValueChange={(value) => updateDraft({ content: value })}
+              multiline
+            />
+            <div className="flex items-center justify-between p-2 bg-neutral-50/50 dark:bg-neutral-900/50 border-t border-neutral-100 dark:border-neutral-800">
+              <DropdownMenu>
+                <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-2 h-8 px-2.5 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none">
+                  {selectedChamberData ? (
+                    <>
                       <div
                         className={cn(
-                          "size-3 rounded-full",
+                          "size-2 rounded-full",
                           CHAMBER_COLORS[
-                            (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                            (selectedChamberData.colorIndex || 0) %
+                              CHAMBER_COLORS.length
                           ],
                         )}
                       />
-                      {chamber.name}
-                    </DropdownMenuItem>
-                  ))
-                ) : (
-                  <div className="px-2 py-1.5 text-sm text-neutral-500">
-                    No chambers joined
-                  </div>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      {selectedChamberData.name}
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon
+                        icon={ArrowDown01Icon}
+                        className="size-3.5 text-neutral-500"
+                      />
+                      Select Chamber
+                    </>
+                  )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {JOINED_CHAMBERS.length > 0 ? (
+                    JOINED_CHAMBERS.map((chamber, i) => (
+                      <DropdownMenuItem
+                        key={chamber.uid || i}
+                        onClick={() => setSelectedChamber(chamber.uid!)}
+                        className="gap-2"
+                      >
+                        <div
+                          className={cn(
+                            "size-3 rounded-full",
+                            CHAMBER_COLORS[
+                              (chamber.colorIndex || 0) % CHAMBER_COLORS.length
+                            ],
+                          )}
+                        />
+                        {chamber.name}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-sm text-neutral-500">
+                      No chambers joined
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <Button
-              size="sm"
-              className="font-normal rounded-lg h-8 px-4"
-              onClick={handleSubmit}
-              disabled={
-                !selectedChamber ||
-                !draft.content.trim() ||
-                isValidating ||
-                isCreatePending
-              }
-            >
-              Ask
-              <HugeiconsIcon
-                icon={Add01Icon}
-                strokeWidth={2}
-                className="ml-1.5 size-3.5"
-              />
-            </Button>
+              <Button
+                size="sm"
+                className="font-normal rounded-lg h-8 px-4"
+                onClick={handleSubmit}
+                disabled={
+                  !selectedChamber ||
+                  !draft.content.trim() ||
+                  isValidating ||
+                  isCreatePending
+                }
+              >
+                Ask
+                <HugeiconsIcon
+                  icon={Add01Icon}
+                  strokeWidth={2}
+                  className="ml-1.5 size-3.5"
+                />
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-gradient-to-r from-[#ff5a1f]/10 to-amber-500/10 p-6 shadow-sm">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="text-base font-semibold text-neutral-800 dark:text-neutral-100">
+                Join the Echo community
+              </h3>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-[28rem] leading-relaxed">
+                Sign in or register today to join chambers, upvote questions, share your knowledge, and ask questions of your own!
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="rounded-full px-4 h-9 cursor-pointer">
+                  Sign in
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="sm" className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white px-4 h-9 border-none cursor-pointer">
+                  Sign up
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="absolute -right-10 -bottom-10 size-32 bg-[#ff5a1f]/20 rounded-full filter blur-2xl pointer-events-none" />
+        </div>
+      )}
       <div className="my-10">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-            From your chambers
+            {user ? "From your chambers" : "Public feed"}
           </h3>
           <div className="flex gap-1">
             <Button
@@ -277,7 +307,7 @@ export default function Home() {
             </Button>
           </div>
         </div>
-        {JOINED_CHAMBERS.length === 0 && !isLoading ? (
+        {user && JOINED_CHAMBERS.length === 0 && !isLoading ? (
           <div className="space-y-4">
             <div className="text-center py-6">
               <p className="text-sm text-neutral-600 dark:text-neutral-400 font-medium">

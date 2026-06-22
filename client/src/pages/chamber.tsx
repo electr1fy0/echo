@@ -125,6 +125,10 @@ export default function ChamberPage() {
   const colorClass =
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
   const handleToggleJoin = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
     if (!chamber?.uid) return;
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +40,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
   const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
   const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
   const { data: user } = useAuth();
+  const navigate = useNavigate();
 
   const reply = answerItem.answer;
 
@@ -69,7 +70,11 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
           isUpvoted={reply.isUpvoted}
           isPending={isPending}
           onToggle={() => {
-            updateUpvote({ qid: reply.questionUid, rid: reply.uid });
+            if (!user) {
+              navigate("/auth");
+            } else {
+              updateUpvote({ qid: reply.questionUid, rid: reply.uid });
+            }
           }}
           className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
         />

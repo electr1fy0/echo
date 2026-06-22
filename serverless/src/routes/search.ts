@@ -2,14 +2,15 @@ import { Hono } from "hono";
 import { eq, ilike, sql } from "drizzle-orm";
 
 import { schema } from "../db";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, optionalAuth } from "../middleware/auth";
 import { getQuestionItems, getReplies, listChambers, mapChamber, mapReplyItem } from "../services/questions";
 import { searchUsers } from "../services/questions";
 import type { AppEnv } from "../types/app";
 
 export const searchRoutes = new Hono<AppEnv>();
 
-searchRoutes.use("*", requireAuth);
+searchRoutes.use("*", optionalAuth);
+
 
 searchRoutes.get("/", async (c) => {
   const query = c.req.query("q") ?? "";

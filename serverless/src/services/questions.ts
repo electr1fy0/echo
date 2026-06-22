@@ -112,7 +112,7 @@ export const ensureReplyExists = async (db: DB, uid: string) => {
 
 export const getQuestionItems = async (
   db: DB,
-  currentUser: string,
+  currentUser: string | undefined | null,
   params: {
     limit: number;
     offset: number;
@@ -152,7 +152,7 @@ export const getQuestionItems = async (
       isUpvoted: sql<boolean>`exists (
         select 1 from question_upvotes qv
         where qv.question_uid = ${schema.questions.uid}
-          and qv.username = ${currentUser}
+          and qv.username = ${currentUser || ""}
       )`,
       chamberUid: schema.questions.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
@@ -167,7 +167,7 @@ export const getQuestionItems = async (
       schema.chamberMembers,
       and(
         eq(schema.chamberMembers.chamberUid, schema.questions.chamberUid),
-        eq(schema.chamberMembers.username, currentUser),
+        eq(schema.chamberMembers.username, currentUser || ""),
       ),
     )
     .where(conditions.length ? and(...conditions) : undefined)
@@ -185,7 +185,7 @@ export const getQuestionItems = async (
   );
 };
 
-export const getReplies = async (db: DB, currentUser: string, questionUid: string) => {
+export const getReplies = async (db: DB, currentUser: string | undefined | null, questionUid: string) => {
   const rows = await db
     .select({
       uid: schema.answers.uid,
@@ -198,7 +198,7 @@ export const getReplies = async (db: DB, currentUser: string, questionUid: strin
       isUpvoted: sql<boolean>`exists (
         select 1 from answer_upvotes av
         where av.answer_uid = ${schema.answers.uid}
-          and av.username = ${currentUser}
+          and av.username = ${currentUser || ""}
       )`,
       acceptedAnswerUid: schema.questions.acceptedAnswerUid,
     })
@@ -227,7 +227,7 @@ export const searchUsers = (db: DB, query: string) =>
     .where(ilike(schema.users.username, `%${query}%`))
     .limit(5);
 
-export const listChambers = (db: DB, currentUser: string, query = "") =>
+export const listChambers = (db: DB, currentUser: string | undefined | null, query = "") =>
   db
     .select({
       uid: schema.chambers.uid,
@@ -243,7 +243,7 @@ export const listChambers = (db: DB, currentUser: string, query = "") =>
       isJoined: sql<boolean>`exists(
         select 1 from chamber_members cm
         where cm.chamber_uid = ${schema.chambers.uid}
-          and cm.username = ${currentUser}
+          and cm.username = ${currentUser || ""}
       )`,
     })
     .from(schema.chambers)

@@ -27,3 +27,20 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
   c.set("user", payload.sub);
   await next();
 });
+
+export const optionalAuth = createMiddleware<AppEnv>(async (c, next) => {
+  const authorization = c.req.header("Authorization");
+  if (authorization && authorization.startsWith("Bearer ")) {
+    const token = authorization.slice("Bearer ".length).trim();
+    if (token) {
+      try {
+        const payload = await verifyAuthToken(c.env.SECRET_KEY, token);
+        c.set("user", payload.sub);
+      } catch {
+        // Ignore invalid token and treat as guest
+      }
+    }
+  }
+  await next();
+});
+

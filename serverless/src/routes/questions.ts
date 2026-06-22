@@ -3,7 +3,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, optionalAuth } from "../middleware/auth";
 import { createNotification, notifyMentions } from "../services/notifications";
 import {
   ensureQuestionExists,
@@ -16,9 +16,7 @@ import type { AppEnv } from "../types/app";
 
 export const questionRoutes = new Hono<AppEnv>();
 
-questionRoutes.use("*", requireAuth);
-
-questionRoutes.get("/", async (c) => {
+questionRoutes.get("/", optionalAuth, async (c) => {
   return c.json(await getQuestionItems(c.get("db"), c.get("user"), {
     ...parsePagination(c.req.query()),
     sort: c.req.query("sort"),
@@ -28,7 +26,7 @@ questionRoutes.get("/", async (c) => {
   }));
 });
 
-questionRoutes.post("/", async (c) => {
+questionRoutes.post("/", requireAuth, async (c) => {
   const body = (await c.req.json()) as { content?: string; chamberUid?: string };
   if (!body.chamberUid) {
     throw new ApiError(400, "chamber uid is required");
@@ -49,7 +47,7 @@ questionRoutes.post("/", async (c) => {
   return c.json({ message: "question created" }, 201);
 });
 
-questionRoutes.get("/search", async (c) => {
+questionRoutes.get("/search", optionalAuth, async (c) => {
   const { limit, offset } = parsePagination(c.req.query());
   return c.json(await getQuestionItems(c.get("db"), c.get("user"), {
     limit,
@@ -58,7 +56,7 @@ questionRoutes.get("/search", async (c) => {
   }));
 });
 
-questionRoutes.get("/:uid", async (c) => {
+questionRoutes.get("/:uid", optionalAuth, async (c) => {
   const uid = c.req.param("uid");
   if (!uid) {
     throw new ApiError(400, "invalid uid");
@@ -96,7 +94,7 @@ questionRoutes.get("/:uid", async (c) => {
   return c.json(mapQuestionItem(row));
 });
 
-questionRoutes.patch("/:uid", async (c) => {
+questionRoutes.patch("/:uid", requireAuth, async (c) => {
   const body = (await c.req.json()) as { content?: string };
   const updated = await c.get("db").update(schema.questions).set({ content: body.content ?? "" }).where(
     and(eq(schema.questions.uid, c.req.param("uid")), eq(schema.questions.author, c.get("user"))),
@@ -109,7 +107,7 @@ questionRoutes.patch("/:uid", async (c) => {
   return c.json({ message: "question updated" });
 });
 
-questionRoutes.delete("/:uid", async (c) => {
+questionRoutes.delete("/:uid", requireAuth, async (c) => {
   const question = await ensureQuestionExists(c.get("db"), c.req.param("uid"));
   if (question.author !== c.get("user")) {
     throw new ApiError(403, "unauthorized");
@@ -119,7 +117,7 @@ questionRoutes.delete("/:uid", async (c) => {
   return c.json({ message: "question deleted" });
 });
 
-questionRoutes.post("/:uid/votes", async (c) => {
+questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
   const uid = c.req.param("uid");
   const currentUser = c.get("user");
   const db = c.get("db");
@@ -155,7 +153,7 @@ questionRoutes.post("/:uid/votes", async (c) => {
   return c.json({ message: "vote updated" });
 });
 
-questionRoutes.post("/:uid/pin", async (c) => {
+questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
   const [question] = await c.get("db").select({
     creatorUsername: schema.chambers.creatorUsername,
   }).from(schema.questions).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.questions.chamberUid)).where(eq(schema.questions.uid, c.req.param("uid"))).limit(1);
@@ -171,7 +169,7 @@ questionRoutes.post("/:uid/pin", async (c) => {
   return c.json({ message: "question pinned" });
 });
 
-questionRoutes.delete("/:uid/pin", async (c) => {
+questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
   const [question] = await c.get("db").select({
     creatorUsername: schema.chambers.creatorUsername,
   }).from(schema.questions).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.questions.chamberUid)).where(eq(schema.questions.uid, c.req.param("uid"))).limit(1);
@@ -187,9 +185,9 @@ questionRoutes.delete("/:uid/pin", async (c) => {
   return c.json({ message: "question unpinned" });
 });
 
-questionRoutes.get("/:uid/replies", async (c) => c.json(await getReplies(c.get("db"), c.get("user"), c.req.param("uid"))));
+questionRoutes.get("/:uid/replies", optionalAuth, async (c) => c.json(await getReplies(c.get("db"), c.get("user"), c.req.param("uid"))));
 
-questionRoutes.post("/:uid/replies", async (c) => {
+questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
   const body = (await c.req.json()) as { content?: string };
   const uid = c.req.param("uid");
   const currentUser = c.get("user");
@@ -226,7 +224,7 @@ questionRoutes.post("/:uid/replies", async (c) => {
   }, 201);
 });
 
-questionRoutes.patch("/:uid/replies/:ruid", async (c) => {
+questionRoutes.patch("/:uid/replies/:ruid", requireAuth, async (c) => {
   const body = (await c.req.json()) as { content?: string };
   const updated = await c.get("db").update(schema.answers).set({ content: body.content ?? "" }).where(
     and(eq(schema.answers.uid, c.req.param("ruid")), eq(schema.answers.author, c.get("user"))),
@@ -239,7 +237,7 @@ questionRoutes.patch("/:uid/replies/:ruid", async (c) => {
   return c.json({ message: "reply updated" });
 });
 
-questionRoutes.delete("/:uid/replies/:ruid", async (c) => {
+questionRoutes.delete("/:uid/replies/:ruid", requireAuth, async (c) => {
   await c.get("db").delete(schema.answers).where(
     and(
       eq(schema.answers.uid, c.req.param("ruid")),
@@ -250,7 +248,7 @@ questionRoutes.delete("/:uid/replies/:ruid", async (c) => {
   return c.json({ message: "reply deleted" });
 });
 
-questionRoutes.post("/:uid/replies/:ruid/votes", async (c) => {
+questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
   const db = c.get("db");
   const currentUser = c.get("user");
   const ruid = c.req.param("ruid");
@@ -286,7 +284,7 @@ questionRoutes.post("/:uid/replies/:ruid/votes", async (c) => {
   return c.json({ message: "vote updated" });
 });
 
-questionRoutes.post("/:uid/replies/:ruid/accept", async (c) => {
+questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   const uid = c.req.param("uid");
   const ruid = c.req.param("ruid");
   const question = await ensureQuestionExists(c.get("db"), uid);
@@ -311,7 +309,7 @@ questionRoutes.post("/:uid/replies/:ruid/accept", async (c) => {
   return c.json({ message: "reply accepted" });
 });
 
-questionRoutes.delete("/:uid/replies/:ruid/accept", async (c) => {
+questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   const uid = c.req.param("uid");
   const ruid = c.req.param("ruid");
   const question = await ensureQuestionExists(c.get("db"), uid);

@@ -14,6 +14,7 @@ import {
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
 import { useListChambers } from "@/hooks/use-chamber";
 import { useGlobalSearch } from "@/hooks/use-search";
+import { useAuth } from "@/hooks/use-auth";
 import type { AnswerItem } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
@@ -52,6 +53,7 @@ function ReplyResult({ item }: { item: AnswerItem }) {
   );
 }
 export default function Explore() {
+  const { data: user } = useAuth();
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
@@ -230,7 +232,13 @@ export default function Explore() {
                 variant="ghost"
                 size="sm"
                 className="text-xs h-7 gap-1"
-                onClick={() => navigate("/chambers")}
+                onClick={() => {
+                  if (!user) {
+                    navigate("/auth");
+                  } else {
+                    navigate("/chambers");
+                  }
+                }}
               >
                 View all
                 <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
@@ -241,7 +249,13 @@ export default function Explore() {
             ) : (
               <ChamberList chambers={chambers} limit={3} />
             )}
-            <CreateChamberButton onClick={() => setCreateChamberOpen(true)} />
+            <CreateChamberButton onClick={() => {
+              if (!user) {
+                navigate("/auth");
+              } else {
+                setCreateChamberOpen(true);
+              }
+            }} />
           </div>
           <div className="space-y-4">
             <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
