@@ -4,6 +4,7 @@ import {
   joinChamber,
   leaveChamber,
   updateChamber,
+  deleteChamber,
 } from "@/api/chambers";
 import type { Chamber } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -121,6 +122,16 @@ export function useUpdateChamber() {
   return useMutation({
     mutationFn: ({ uid, chamber }: { uid: string; chamber: Chamber }) =>
       updateChamber(uid, chamber),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
+    },
+  });
+}
+
+export function useDeleteChamber() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => deleteChamber(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
     },

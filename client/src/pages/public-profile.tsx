@@ -1,18 +1,27 @@
 import { useRef, useCallback } from "react";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useFetchPublicProfile } from "@/hooks/use-profile";
 import { useInfiniteQuestionsQuery } from "@/hooks/use-questions";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link01Icon } from "@hugeicons/core-free-icons";
+import { Link01Icon, Message01Icon } from "@hugeicons/core-free-icons";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
+import { FluidGradientText } from "@/components/fluid-gradient-text";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useCreateConversation } from "@/hooks/use-dms";
+import { toast } from "@/lib/toast";
 
 export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
+  const { data: currentUser } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
+  const { mutate: startConversation, isPending } = useCreateConversation();
 
   const {
     data: user,
@@ -90,7 +99,11 @@ export default function PublicProfile() {
   })();
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 pb-36 md:pb-16 relative px-4">
+    <PageTransition className="max-w-[40rem] w-full mt-0 space-y-0 pb-36 md:pb-16 relative">
+      <div className="h-40 w-full mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
+        <FluidGradientText text={user.username} svgViewBoxHeight={240} />
+      </div>
+      <div className="px-4">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           <UserAvatar
@@ -98,6 +111,27 @@ export default function PublicProfile() {
             name={user.username}
             className="size-24"
           />
+          {currentUser?.username !== username && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              disabled={isPending}
+              onClick={() => {
+                if (!currentUser) {
+                  openAuthModal("signin");
+                  return;
+                }
+                startConversation(username!, {
+                  onSuccess: (conv) => navigate(`/dm/${conv.uid}`),
+                  onError: (err) => toast.error(err instanceof Error ? err.message : "Cannot start conversation"),
+                });
+              }}
+            >
+              <HugeiconsIcon icon={Message01Icon} className="mr-1.5 size-4" />
+              Message
+            </Button>
+          )}
         </div>
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
@@ -176,6 +210,7 @@ export default function PublicProfile() {
         ) : (
           <p className="text-neutral-500 text-sm">No questions posted yet.</p>
         )}
+      </div>
       </div>
     </PageTransition>
   );

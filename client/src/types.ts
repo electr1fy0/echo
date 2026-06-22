@@ -4,6 +4,7 @@ export interface Question {
   uid?: QuestionId;
   content: string;
   timeCreated?: Date;
+  expiresAt?: string | null;
   authorUsername: string;
   upvotes: number;
   isUpvoted: boolean;
@@ -11,6 +12,18 @@ export interface Question {
   chamberName?: string;
   acceptedAnswerUid?: string;
   isPinned?: boolean;
+  postType?: "qna" | "partner" | "trade" | "taxi";
+  partnerTargetGrade?: string;
+  partnerWorkstyle?: string;
+  partnerSlotsNeeded?: number;
+  tradePrice?: number;
+  tradeCondition?: string;
+  tradeBookIsbn?: string;
+  tradeStatus?: string;
+  taxiDeparture?: string;
+  taxiDestination?: string;
+  taxiDatetime?: string;
+  taxiSeatsAvailable?: number;
 }
 export interface User {
   username: string;
@@ -20,6 +33,7 @@ export interface User {
   link?: string;
   answered: number;
   posted: number;
+  dmEnabled?: boolean;
 }
 export interface UserSummary {
   username: string;
@@ -43,6 +57,18 @@ export interface SearchResponse {
 export interface QuestionDraft {
   content: string;
   chamberUid?: string;
+  postType?: "qna" | "partner" | "trade" | "taxi";
+  ttlHours?: number | null;
+  partnerTargetGrade?: string;
+  partnerWorkstyle?: string;
+  partnerSlotsNeeded?: number;
+  tradePrice?: number;
+  tradeCondition?: string;
+  tradeBookIsbn?: string;
+  taxiDeparture?: string;
+  taxiDestination?: string;
+  taxiDatetime?: string;
+  taxiSeatsAvailable?: number;
 }
 export interface Reply {
   uid: ReplyId;
@@ -60,6 +86,27 @@ export interface ReplyDraft {
 export interface UpvoteState {
   isUpvoted: boolean;
 }
+export interface Conversation {
+  uid: string;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  lastMessageSender: string | null;
+  participantA: string;
+  participantB: string;
+  otherUsername: string;
+  otherAvatar: string;
+  otherBio: string;
+  otherDmEnabled: boolean;
+}
+
+export interface Message {
+  uid: string;
+  conversationUid: string;
+  sender: string;
+  content: string;
+  timeCreated: string;
+}
+
 export interface Chamber {
   uid?: string;
   name: string;
@@ -69,4 +116,8 @@ export interface Chamber {
   colorIndex?: number;
   timeCreated?: string;
   creatorUsername?: string;
+  type?: "global" | "branch" | "course";
+  branchName?: string;
+  courseCode?: string;
+  semester?: string;
 }

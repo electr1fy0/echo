@@ -5,6 +5,7 @@ import {
   UserMultiple02Icon,
   Add01Icon,
   PencilEdit02Icon,
+  Delete02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn, getInitials } from "@/lib/utils";
 import { Link } from "react-router";
@@ -12,6 +13,14 @@ import type { Chamber } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { EditChamberDialog } from "@/components/chambers/edit-chamber-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`;
@@ -22,15 +31,17 @@ interface ChamberCardProps {
   chamber: Chamber;
   compact?: boolean;
 }
-import { useJoinChamber, useLeaveChamber } from "@/hooks/use-chamber";
+import { useJoinChamber, useLeaveChamber, useDeleteChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "./consts";
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
+  const deleteMutation = useDeleteChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const colorClass =
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
   const canEdit = !!user?.username && user.username === chamber.creatorUsername;
@@ -80,18 +91,32 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
       </Link>
       <div className="flex items-center gap-2">
         {canEdit && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            onClick={(e) => {
-              e.preventDefault();
-              setIsEditOpen(true);
-            }}
-            aria-label="Edit chamber"
-          >
-            <HugeiconsIcon icon={PencilEdit02Icon} className="size-4" />
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsEditOpen(true);
+              }}
+              aria-label="Edit chamber"
+            >
+              <HugeiconsIcon icon={PencilEdit02Icon} className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-neutral-500 hover:text-red-500 dark:text-neutral-400 dark:hover:text-red-400"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsDeleteOpen(true);
+              }}
+              aria-label="Delete chamber"
+            >
+              <HugeiconsIcon icon={Delete02Icon} className="size-4" />
+            </Button>
+          </>
         )}
         <Button
           variant={chamber.isJoined ? "secondary" : "default"}
@@ -115,6 +140,32 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
           chamber={chamber}
         />
       )}
+
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Chamber</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-neutral-500">
+            Are you sure you want to delete <strong>{chamber.name}</strong>? This will permanently remove the chamber and all its posts. This action cannot be undone.
+          </p>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" className="rounded-full" />}>
+              Cancel
+            </DialogClose>
+            <Button
+              variant="destructive"
+              className="rounded-full"
+              disabled={deleteMutation.isPending}
+              onClick={() => {
+                deleteMutation.mutate(chamber.name);
+              }}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Chamber"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CircleArrowUp01Icon } from "@hugeicons/core-free-icons";
 import type { UpvoteState } from "@/types";
+import { haptic } from "@/lib/haptic";
 
 type UpvoteButtonProps = UpvoteState & {
   onToggle: () => void;
@@ -26,6 +27,7 @@ export function UpvoteButton({
       onClick={(e) => {
         e.stopPropagation();
         if (isPending) return;
+        haptic();
         onToggle();
       }}
       className={cn(

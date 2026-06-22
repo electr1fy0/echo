@@ -22,6 +22,8 @@ export async function fetchQuestions(
   author?: string,
   limit?: number,
   offset?: number,
+  postType?: string,
+  pinned?: boolean,
 ) {
   const params = new URLSearchParams({
     ...(sort ? { sort } : {}),
@@ -30,6 +32,8 @@ export async function fetchQuestions(
     ...(author ? { author } : {}),
     ...(limit !== undefined ? { limit: limit.toString() } : {}),
     ...(offset !== undefined ? { offset: offset.toString() } : {}),
+    ...(postType ? { post_type: postType } : {}),
+    ...(pinned !== undefined ? { pinned: pinned.toString() } : {}),
   });
   const res = await fetch(`${API_URL}/questions?${params}`, {
     headers: {
@@ -103,7 +107,23 @@ export async function updateVotes(qid: string) {
   if (!res.ok) throw new Error("Failed to update votes");
 }
 
-export async function updateQuestion(questionId: string, content: string) {
+export async function updateQuestion(
+  questionId: string,
+  payload: {
+    content?: string;
+    tradePrice?: number;
+    tradeCondition?: string;
+    tradeBookIsbn?: string;
+    tradeStatus?: string;
+    partnerSlotsNeeded?: number;
+    partnerTargetGrade?: string;
+    partnerWorkstyle?: string;
+    taxiDeparture?: string;
+    taxiDestination?: string;
+    taxiDatetime?: string;
+    taxiSeatsAvailable?: number;
+  }
+) {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(questionId)}`,
     {
@@ -112,7 +132,7 @@ export async function updateQuestion(questionId: string, content: string) {
         "Content-Type": "application/json",
         ...getAuthHeaders(),
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(payload),
     }
   );
   if (!res.ok) throw new Error("Failed to update question");
@@ -142,4 +162,52 @@ export async function unpinQuestion(questionId: string) {
     }
   );
   if (!res.ok) throw new Error("Failed to unpin question");
+}
+
+export async function applyToPartner(questionId: string, pitch: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/apply`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ pitch }),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to apply to partner project");
+  return res.json() as Promise<{ uid: string }>;
+}
+
+export async function fetchPartnerApplications(questionId: string) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/applications`,
+    {
+      headers: {
+        ...getAuthHeaders(),
+      },
+    }
+  );
+  if (!res.ok) throw new Error("Failed to fetch partner applications");
+  return res.json() as Promise<any[]>;
+}
+
+export async function updatePartnerApplicationStatus(
+  questionId: string,
+  appUid: string,
+  status: "accepted" | "declined"
+) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/applications/${encodeURIComponent(appUid)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+  if (!res.ok) throw new Error(`Failed to update application status to ${status}`);
 }

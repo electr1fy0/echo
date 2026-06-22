@@ -18,6 +18,7 @@ import {
   Moon02Icon,
   Logout01Icon,
   ComputerIcon,
+  Message02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   DropdownMenu,
@@ -52,6 +53,7 @@ import { useTheme } from "@/hooks/use-theme";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/page-transition";
+import { FluidGradientText } from "@/components/fluid-gradient-text";
 
 export default function Profile() {
   const {
@@ -121,6 +123,7 @@ export default function Profile() {
     link: "",
     answered: 0,
     posted: 0,
+    dmEnabled: true,
   });
   const { data: chambers = [], isLoading: isChambersLoading } =
     useListChambers();
@@ -170,7 +173,15 @@ export default function Profile() {
   }
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-8 pb-36 md:pb-16 relative px-4">
+    <PageTransition className="max-w-[40rem] w-full mt-0 space-y-0 pb-36 md:pb-16 relative">
+      {isProfileLoading ? (
+        <Skeleton className="h-28 w-full mb-2 mx-4" />
+      ) : (
+        <div className="h-40 w-full mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
+          <FluidGradientText text={displayUser.username} svgViewBoxHeight={240} />
+        </div>
+      )}
+      <div className="px-4">
       <div className="flex flex-col items-start gap-4">
         <div className="flex w-full justify-between items-start">
           {isProfileLoading ? (
@@ -183,7 +194,7 @@ export default function Profile() {
             />
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <Button
               variant="outline"
               size="sm"
@@ -235,6 +246,18 @@ export default function Profile() {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
+                  <DropdownMenuLabel>Direct Messages</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() =>
+                      updateProfile({ ...displayUser, dmEnabled: !displayUser.dmEnabled })
+                    }
+                  >
+                    <HugeiconsIcon icon={Message02Icon} className="mr-2 size-4" />
+                    {displayUser.dmEnabled ? "Disable DMs" : "Enable DMs"}
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => signout()}
                     className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
@@ -258,14 +281,9 @@ export default function Profile() {
           </div>
         </div>
         <div className="space-y-1 w-full">
-          {isProfileLoading ? (
-            <Skeleton className="h-8 w-48 mb-2" />
-          ) : (
-            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-              {displayUser.username}
-            </h1>
-          )}
-
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+            {displayUser.username}
+          </h1>
           <div className="flex flex-col gap-1 text-neutral-500 text-sm">
             {isProfileLoading ? (
               <>
@@ -301,9 +319,15 @@ export default function Profile() {
             <Skeleton className="h-4 w-3/4" />
           </div>
         ) : (
-          <p className="text-neutral-600 dark:text-neutral-400 text-sm max-w-md whitespace-pre-wrap">
-            {displayUser.bio}
-          </p>
+          <>
+            <p className="text-neutral-600 dark:text-neutral-400 text-sm max-w-md whitespace-pre-wrap">
+              {displayUser.bio}
+            </p>
+            <div className="flex items-center gap-1.5 text-xs text-neutral-500 mt-1">
+              <HugeiconsIcon icon={Message02Icon} className="size-3.5" />
+              <span>DMs {displayUser.dmEnabled ? "enabled" : "disabled"}</span>
+            </div>
+          </>
         )}
 
         <div className="flex gap-6 pt-2">
@@ -489,6 +513,29 @@ export default function Profile() {
                   }}
                 />
               </div>
+              <div className="flex items-center justify-between py-2 border-t border-neutral-100 dark:border-neutral-800">
+                <div>
+                  <span className="text-sm font-medium">Allow DMs</span>
+                  <p className="text-xs text-neutral-500">Let other users message you</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={editForm.dmEnabled ?? true}
+                  onClick={() => updateDraft({ dmEnabled: !(editForm.dmEnabled ?? true) })}
+                  className={cn(
+                    "relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none",
+                    (editForm.dmEnabled ?? true) ? "bg-[#ff5a1f]" : "bg-neutral-300 dark:bg-neutral-700"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "pointer-events-none inline-block size-4 rounded-full bg-white shadow-sm transform transition-transform",
+                      (editForm.dmEnabled ?? true) ? "translate-x-4" : "translate-x-0.5"
+                    )}
+                  />
+                </button>
+              </div>
               <DialogFooter>
                 <DialogClose render={<Button variant="outline" />}>
                   Cancel
@@ -537,6 +584,7 @@ export default function Profile() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </PageTransition>
   );
 }

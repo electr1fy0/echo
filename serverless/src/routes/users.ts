@@ -5,7 +5,7 @@ import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
 import { listNotifications } from "../services/notifications";
-import { getQuestionItems, searchUsers } from "../services/questions";
+import { getPostItems, searchUsers } from "../services/questions";
 import { getProfileByUsername } from "../services/users";
 import { ensureValidUsername } from "../lib/utils";
 import type { AppEnv } from "../types/app";
@@ -18,7 +18,11 @@ userRoutes.use("/me/*", requireAuth);
 userRoutes.use("/search", requireAuth);
 userRoutes.use("/resolve", requireAuth);
 
-userRoutes.get("/me", async (c) => c.json(await getProfileByUsername(c.get("db"), c.get("user"), true)));
+userRoutes.get("/me", async (c) => {
+  const profile = await getProfileByUsername(c.get("db"), c.get("user"), true);
+  const [userRow] = await c.get("db").select({ dmEnabled: schema.users.dmEnabled }).from(schema.users).where(eq(schema.users.username, c.get("user"))).limit(1);
+  return c.json({ ...profile, dmEnabled: userRow?.dmEnabled ?? true });
+});
 
 userRoutes.patch("/me", async (c) => {
   const body = (await c.req.json()) as {
@@ -26,6 +30,7 @@ userRoutes.patch("/me", async (c) => {
     bio?: string;
     avatar?: string;
     link?: string;
+    dmEnabled?: boolean;
   };
   const currentUsername = c.get("user");
   const requestedUsername = body.username?.trim();
@@ -41,12 +46,14 @@ userRoutes.patch("/me", async (c) => {
     }
   }
 
-  await c.get("db").update(schema.users).set({
-    username: nextUsername,
-    bio: body.bio ?? "",
-    avatar: body.avatar ?? "",
-    links: body.link ?? "",
-  }).where(eq(schema.users.username, currentUsername));
+  const updates: Record<string, unknown> = {};
+  if (body.username !== undefined) updates.username = nextUsername;
+  if (body.bio !== undefined) updates.bio = body.bio;
+  if (body.avatar !== undefined) updates.avatar = body.avatar;
+  if (body.link !== undefined) updates.links = body.link;
+  if (body.dmEnabled !== undefined) updates.dmEnabled = body.dmEnabled;
+
+  await c.get("db").update(schema.users).set(updates).where(eq(schema.users.username, currentUsername));
 
   return nextUsername === currentUsername
     ? c.json({ message: "profile updated" })
@@ -60,7 +67,7 @@ userRoutes.delete("/me", async (c) => {
 
 userRoutes.get("/me/questions", async (c) => {
   const { limit, offset } = parsePagination(c.req.query());
-  return c.json(await getQuestionItems(c.get("db"), c.get("user"), { limit, offset, author: c.get("user") }));
+  return c.json(await getPostItems(c.get("db"), c.get("user"), { limit, offset, author: c.get("user") }));
 });
 
 userRoutes.get("/me/notifications", async (c) => {

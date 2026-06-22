@@ -54,3 +54,14 @@ export async function updateChamber(uid: string, chamber: Chamber): Promise<void
   });
   if (!res.ok) throw new Error("failed to update chamber");
 }
+
+export async function deleteChamber(name: string): Promise<void> {
+  const res = await fetch(`${API_URL}/chambers`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("failed to delete chamber");
+}

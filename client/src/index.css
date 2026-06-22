@@ -137,3 +137,39 @@
         @apply font-sans;
     }
 }
+
+.scrollbar-modern {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+.scrollbar-modern:hover {
+    scrollbar-color: oklch(0.65 0 0 / 0.4) transparent;
+}
+
+.scrollbar-modern::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-modern::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-modern::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+    transition: background 0.2s;
+}
+
+.scrollbar-modern:hover::-webkit-scrollbar-thumb {
+    background: oklch(0.65 0 0 / 0.4);
+}
+
+.scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}

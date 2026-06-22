@@ -74,6 +74,9 @@ authRoutes.post("/signup", async (c) => {
   ensureValidUsername(username);
 
   const email = (body.email ?? "").trim().toLowerCase();
+  if (!email.endsWith("@vitstudent.ac.in")) {
+    throw new ApiError(400, "only @vitstudent.ac.in emails are allowed");
+  }
   const passwordHash = await bcrypt.hash(body.password ?? "", 10);
   const verificationToken = randomToken(32);
 
@@ -270,6 +273,9 @@ authRoutes.get("/google/callback", handleGoogleCallback);
 authRoutes.post("/google/onboarding", async (c) => {
   const body = (await c.req.json()) as { token?: string; username?: string };
   const email = await verifyGoogleOnboardingToken(c.env.SECRET_KEY, body.token ?? "");
+  if (!email.endsWith("@vitstudent.ac.in")) {
+    throw new ApiError(400, "only @vitstudent.ac.in emails are allowed");
+  }
   const username = normalizeUsername(body.username ?? "");
   ensureValidUsername(username);
 

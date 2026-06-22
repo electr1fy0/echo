@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateVotes } from "@/api/questions";
 import { updateReplyVotes } from "@/api/replies";
 import type { QuestionItem, AnswerItem } from "@/types";
+
 export function useUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -12,6 +13,7 @@ export function useUpdateVote() {
         queryClient.cancelQueries({ queryKey: ["questions"] }),
         queryClient.cancelQueries({ queryKey: ["user-questions"] }),
         queryClient.cancelQueries({ queryKey: ["search-questions"] }),
+        queryClient.cancelQueries({ queryKey: ["question", qid] }),
       ]);
       const questionsCache = queryClient.getQueryCache();
       const matchingQueries = questionsCache.findAll({
@@ -20,36 +22,77 @@ export function useUpdateVote() {
           return (
             key[0] === "questions" ||
             key[0] === "user-questions" ||
-            key[0] === "search-questions"
+            key[0] === "search-questions" ||
+            (key[0] === "question" && key[1] === qid)
           );
         },
       });
       const previousData = matchingQueries.map((query) => ({
         queryKey: query.queryKey,
-        data: query.state.data as QuestionItem[] | undefined,
+        data: query.state.data,
       }));
+
       matchingQueries.forEach((query) => {
-        const data = query.state.data as QuestionItem[] | undefined;
+        const data = query.state.data;
         if (!data) return;
 
-        const updatedData = data.map((item) => {
-          if (item.question.uid === qid) {
-            const isUpvoted = !item.question.isUpvoted;
-            return {
-              ...item,
-              question: {
-                ...item.question,
-                isUpvoted,
-                upvotes: isUpvoted
-                  ? item.question.upvotes + 1
-                  : item.question.upvotes - 1,
-              },
-            };
-          }
-          return item;
-        });
+        // 1. Singular question query
+        if (query.queryKey[0] === "question" && query.queryKey[1] === qid) {
+          const item = data as QuestionItem;
+          const isUpvoted = !item.question.isUpvoted;
+          queryClient.setQueryData(query.queryKey, {
+            ...item,
+            question: {
+              ...item.question,
+              isUpvoted,
+              upvotes: isUpvoted ? item.question.upvotes + 1 : item.question.upvotes - 1,
+            },
+          });
+          return;
+        }
 
-        queryClient.setQueryData(query.queryKey, updatedData);
+        // 2. Infinite query caches
+        if (typeof data === "object" && data !== null && "pages" in data) {
+          const infiniteData = data as { pages: QuestionItem[][]; pageParams: any[] };
+          const updatedPages = infiniteData.pages.map((page) =>
+            page.map((item) => {
+              if (item.question.uid === qid) {
+                const isUpvoted = !item.question.isUpvoted;
+                return {
+                  ...item,
+                  question: {
+                    ...item.question,
+                    isUpvoted,
+                    upvotes: isUpvoted ? item.question.upvotes + 1 : item.question.upvotes - 1,
+                  },
+                };
+              }
+              return item;
+            })
+          );
+          queryClient.setQueryData(query.queryKey, {
+            ...infiniteData,
+            pages: updatedPages,
+          });
+        } 
+        // 3. Regular flat array caches (search / user lists)
+        else if (Array.isArray(data)) {
+          const updatedData = data.map((item) => {
+            if (item.question.uid === qid) {
+              const isUpvoted = !item.question.isUpvoted;
+              return {
+                ...item,
+                question: {
+                  ...item.question,
+                  isUpvoted,
+                  upvotes: isUpvoted ? item.question.upvotes + 1 : item.question.upvotes - 1,
+                },
+              };
+            }
+            return item;
+          });
+          queryClient.setQueryData(query.queryKey, updatedData);
+        }
       });
 
       return { previousData };
@@ -61,13 +104,15 @@ export function useUpdateVote() {
         });
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _err, qid) => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
       queryClient.invalidateQueries({ queryKey: ["search-questions"] });
+      queryClient.invalidateQueries({ queryKey: ["question", qid] });
     },
   });
 }
+
 export function useReplyUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -110,4 +155,3 @@ export function useReplyUpdateVote() {
     },
   });
 }
-

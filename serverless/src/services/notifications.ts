@@ -42,7 +42,7 @@ export const notifyMentions = async (
     .from(schema.users)
     .where(inArray(schema.users.username, mentions));
 
-  const notificationType = isReply ? "mention_reply" : "mention_question";
+  const notificationType = isReply ? "mention_reply" : "mention_post";
 
   await Promise.all(
     existingUsers
@@ -85,28 +85,28 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       let content = "";
       let questionContent = "";
 
-      if (row.type === "upvote_question" || row.type === "mention_question") {
-        const [question] = await db
-          .select({ content: schema.questions.content })
-          .from(schema.questions)
-          .where(eq(schema.questions.uid, row.referenceUid))
+      if (row.type === "upvote_question" || row.type === "mention_question" || row.type === "upvote_post" || row.type === "mention_post") {
+        const [post] = await db
+          .select({ content: schema.posts.content })
+          .from(schema.posts)
+          .where(eq(schema.posts.uid, row.referenceUid))
           .limit(1);
-        content = question?.content ?? "";
+        content = post?.content ?? "";
       } else {
-        const [answer] = await db
-          .select({ content: schema.answers.content, questionUid: schema.answers.questionUid })
-          .from(schema.answers)
-          .where(eq(schema.answers.uid, row.referenceUid))
+        const [reply] = await db
+          .select({ content: schema.replies.content, postUid: schema.replies.postUid })
+          .from(schema.replies)
+          .where(eq(schema.replies.uid, row.referenceUid))
           .limit(1);
-        content = answer?.content ?? "";
+        content = reply?.content ?? "";
 
-        if (answer?.questionUid) {
-          const [question] = await db
-            .select({ content: schema.questions.content })
-            .from(schema.questions)
-            .where(eq(schema.questions.uid, answer.questionUid))
+        if (reply?.postUid) {
+          const [post] = await db
+            .select({ content: schema.posts.content })
+            .from(schema.posts)
+            .where(eq(schema.posts.uid, reply.postUid))
             .limit(1);
-          questionContent = question?.content ?? "";
+          questionContent = post?.content ?? "";
         }
       }
 

@@ -11,12 +11,12 @@ const profileSelect = {
   avatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
   link: sql<string>`coalesce(${schema.users.links}, '')`,
   posted: sql<number>`(
-    select count(*)::int from ${schema.questions}
-    where ${schema.questions.author} = ${schema.users.username}
+    select count(*)::int from ${schema.posts}
+    where ${schema.posts.author} = ${schema.users.username}
   )`,
   answered: sql<number>`(
-    select count(*)::int from ${schema.answers}
-    where ${schema.answers.author} = ${schema.users.username}
+    select count(*)::int from ${schema.replies}
+    where ${schema.replies.author} = ${schema.users.username}
   )`,
 };
 

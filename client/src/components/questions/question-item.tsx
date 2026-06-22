@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   AccordionContent,
   AccordionItem,
@@ -31,6 +31,9 @@ import {
   Alert01Icon,
   Pin02Icon,
   PinOffIcon,
+  BookOpen01Icon,
+  Share01Icon,
+  UserMultiple02Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ReplyItem } from "./reply-item";
@@ -48,6 +51,62 @@ type QuestionItemProps = {
 };
 
 import { QuestionListSkeleton } from "./question-skeleton";
+
+function CountdownRing({ expiresAt, timeCreated, size = 28 }: { expiresAt: string; timeCreated: string; size?: number }) {
+  const ringSize = size + 4;
+  const stroke = 1.5;
+  const radius = (ringSize - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  const [progress, setProgress] = useState(() => {
+    const total = new Date(expiresAt).getTime() - new Date(timeCreated).getTime();
+    const elapsed = Date.now() - new Date(timeCreated).getTime();
+    return Math.max(0, Math.min(1, 1 - elapsed / total));
+  });
+
+  useEffect(() => {
+    const total = new Date(expiresAt).getTime() - new Date(timeCreated).getTime();
+    const tick = () => {
+      const elapsed = Date.now() - new Date(timeCreated).getTime();
+      setProgress(Math.max(0, Math.min(1, 1 - elapsed / total)));
+    };
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [expiresAt, timeCreated]);
+
+  const offset = circumference * (1 - progress);
+
+  return (
+    <svg
+      viewBox={`0 0 ${ringSize} ${ringSize}`}
+      className="absolute -inset-0.5 -rotate-90"
+      width={ringSize}
+      height={ringSize}
+    >
+      <circle
+        cx={ringSize / 2}
+        cy={ringSize / 2}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        opacity={0.15}
+      />
+      <circle
+        cx={ringSize / 2}
+        cy={ringSize / 2}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        className="transition-[stroke-dashoffset] duration-500 ease-linear text-neutral-500 dark:text-neutral-400"
+      />
+    </svg>
+  );
+}
 
 const TriggerWrapper = ({
   children,
@@ -86,6 +145,7 @@ export function QuestionItem({
   const question = questionItem?.question;
   const author = questionItem?.author ?? null;
   const questionId = question?.uid;
+  const navigate = useNavigate();
 
   const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(
     questionId || undefined,
@@ -102,16 +162,45 @@ export function QuestionItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(question?.content ?? "");
 
+  const [editedTradePrice, setEditedTradePrice] = useState(question?.tradePrice ? (question.tradePrice / 100).toString() : "");
+  const [editedTradeCondition, setEditedTradeCondition] = useState(question?.tradeCondition ?? "Like New");
+  const [editedTradeStatus, setEditedTradeStatus] = useState(question?.tradeStatus ?? "available");
+
+  const [editedPartnerSlotsNeeded, setEditedPartnerSlotsNeeded] = useState(question?.partnerSlotsNeeded ?? 1);
+
+  const [editedTaxiDeparture, setEditedTaxiDeparture] = useState(question?.taxiDeparture ?? "");
+  const [editedTaxiDestination, setEditedTaxiDestination] = useState(question?.taxiDestination ?? "");
+  const [editedTaxiDatetime, setEditedTaxiDatetime] = useState(question?.taxiDatetime ?? "");
+  const [editedTaxiSeatsAvailable, setEditedTaxiSeatsAvailable] = useState(question?.taxiSeatsAvailable ?? 1);
+
   if (!question || !questionId) return null;
   const isPinned = !!question.isPinned;
   const isSolved = !!question.acceptedAnswerUid;
+  const isExpiring = !!question.expiresAt;
   const canAccept = user?.username === question.authorUsername;
 
   function handleSave() {
     if (!questionId) return;
     if (!editedContent.trim()) return;
     updateQuestion(
-      { questionId, content: editedContent },
+      {
+        questionId,
+        content: editedContent,
+        ...(question.postType === "trade" ? {
+          tradePrice: editedTradePrice ? Math.round(Number(editedTradePrice) * 100) : undefined,
+          tradeCondition: editedTradeCondition,
+          tradeStatus: editedTradeStatus,
+        } : {}),
+        ...(question.postType === "partner" ? {
+          partnerSlotsNeeded: Number(editedPartnerSlotsNeeded),
+        } : {}),
+        ...(question.postType === "taxi" ? {
+          taxiDeparture: editedTaxiDeparture,
+          taxiDestination: editedTaxiDestination,
+          taxiDatetime: editedTaxiDatetime,
+          taxiSeatsAvailable: Number(editedTaxiSeatsAvailable),
+        } : {}),
+      },
       {
         onSuccess: () => setIsEditing(false),
       },
@@ -128,7 +217,7 @@ export function QuestionItem({
                 ? `/u/${question.authorUsername}`
                 : "#"
             }
-            className="shrink-0 mt-1"
+            className="shrink-0 mt-1 relative"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -137,6 +226,13 @@ export function QuestionItem({
               name={question.authorUsername || "Anonymous"}
               className="size-7"
             />
+            {question.expiresAt && question.timeCreated && (
+              <CountdownRing
+                expiresAt={question.expiresAt as string}
+                timeCreated={question.timeCreated as string}
+                size={28}
+              />
+            )}
           </Link>
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
@@ -153,6 +249,17 @@ export function QuestionItem({
                   {question.timeCreated &&
                     formatRelativeTime(new Date(question.timeCreated))}
                 </span>
+                {isExpiring && (
+                  <span className="text-neutral-400 dark:text-neutral-500 leading-none inline-flex items-center">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
+                      <path d="M9 10h.01" />
+                      <path d="M15 10h.01" />
+                      <path d="M12 2a8 8 0 0 0-8 8v6a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-6a8 8 0 0 0-8-8z" />
+                      <path d="M12 22v-4" />
+                      <path d="M9 18s.5 1 3 1 3-1 3-1" />
+                    </svg>
+                  </span>
+                )}
                 {isPinned && (
                   <span className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">
                     Pinned
@@ -161,6 +268,21 @@ export function QuestionItem({
                 {isSolved && (
                   <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
                     Solved
+                  </span>
+                )}
+                {question.postType === "partner" && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-[#ff5a1f] dark:bg-[#ff5a1f]/10 dark:text-[#ff5a1f] px-1.5 py-0.5 rounded border border-orange-250/50 dark:border-[#ff5a1f]/20">
+                    Partner Finder
+                  </span>
+                )}
+                {question.postType === "trade" && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200/50 dark:border-blue-900/20">
+                    Marketplace
+                  </span>
+                )}
+                {question.postType === "taxi" && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200/50 dark:border-purple-900/20">
+                    Taxi Sharing
                   </span>
                 )}
                 {replies && replies.length > 0 && (
@@ -241,6 +363,15 @@ export function QuestionItem({
                     />
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
+                        onClick={() => navigate(`/q/${questionId}`)}
+                      >
+                        <HugeiconsIcon
+                          icon={BookOpen01Icon}
+                          className="mr-2 size-4"
+                        />
+                        View Thread
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         onClick={() => {
                           navigator.clipboard.writeText(question.content);
                           toast.success("Copied to clipboard");
@@ -251,6 +382,19 @@ export function QuestionItem({
                           className="mr-2 size-4"
                         />
                         Copy Text
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const url = `${window.location.origin}/q/${questionId}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success("Link copied to clipboard");
+                        }}
+                      >
+                        <HugeiconsIcon
+                          icon={Share01Icon}
+                          className="mr-2 size-4"
+                        />
+                        Share
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => alert("Reported content")}
@@ -307,14 +451,118 @@ export function QuestionItem({
               <div
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
+                className="space-y-3"
               >
                 <Textarea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
                   onKeyDown={(e) => e.stopPropagation()}
                   onKeyUp={(e) => e.stopPropagation()}
-                  className="min-h-[80px] bg-background mb-2"
+                  className="min-h-[80px] bg-background"
                 />
+
+                {/* Marketplace edit sub-panel */}
+                {question.postType === "trade" && (
+                  <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                    <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden h-7 bg-background">
+                      <span className="px-2 text-xs text-neutral-400 font-medium select-none border-r border-neutral-200 dark:border-neutral-700">₹</span>
+                      <input
+                        type="number"
+                        min={0}
+                        placeholder="Price"
+                        value={editedTradePrice}
+                        onChange={(e) => setEditedTradePrice(e.target.value)}
+                        className="w-20 h-7 text-xs px-2 bg-transparent text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    </div>
+                    <select
+                      value={editedTradeCondition}
+                      onChange={(e) => setEditedTradeCondition(e.target.value)}
+                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
+                    >
+                      <option value="New">Brand New</option>
+                      <option value="Like New">Like New</option>
+                      <option value="Used">Used</option>
+                      <option value="PDF/Digital">Digital/PDF</option>
+                    </select>
+                    <select
+                      value={editedTradeStatus}
+                      onChange={(e) => setEditedTradeStatus(e.target.value)}
+                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
+                    >
+                      <option value="available">Available</option>
+                      <option value="sold">Sold</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Partners edit sub-panel */}
+                {question.postType === "partner" && (
+                  <div className="flex items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                    <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 select-none">Slots</span>
+                    <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setEditedPartnerSlotsNeeded(Math.max(1, editedPartnerSlotsNeeded - 1))}
+                        className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
+                      >−</button>
+                      <span className="w-7 h-7 flex items-center justify-center text-xs font-semibold text-neutral-800 dark:text-neutral-200 border-x border-neutral-200 dark:border-neutral-700 select-none">
+                        {editedPartnerSlotsNeeded}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEditedPartnerSlotsNeeded(Math.min(10, editedPartnerSlotsNeeded + 1))}
+                        className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
+                      >+</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Taxi edit sub-panel */}
+                {question.postType === "taxi" && (
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+                    <input
+                      type="text"
+                      placeholder="Departure"
+                      value={editedTaxiDeparture}
+                      onChange={(e) => setEditedTaxiDeparture(e.target.value)}
+                      className="w-24 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
+                    />
+                    <span className="text-neutral-400 text-xs">→</span>
+                    <input
+                      type="text"
+                      placeholder="Destination"
+                      value={editedTaxiDestination}
+                      onChange={(e) => setEditedTaxiDestination(e.target.value)}
+                      className="w-24 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
+                    />
+                    <input
+                      type="datetime-local"
+                      value={editedTaxiDatetime}
+                      onChange={(e) => setEditedTaxiDatetime(e.target.value)}
+                      className="w-36 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
+                    />
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] font-semibold text-neutral-400 select-none">Seats</span>
+                      <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setEditedTaxiSeatsAvailable(Math.max(1, editedTaxiSeatsAvailable - 1))}
+                          className="w-6 h-6 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-xs font-medium cursor-pointer select-none"
+                        >−</button>
+                        <span className="w-6 h-6 flex items-center justify-center text-xs font-semibold text-neutral-800 dark:text-neutral-200 border-x border-neutral-200 dark:border-neutral-700 select-none">
+                          {editedTaxiSeatsAvailable}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setEditedTaxiSeatsAvailable(Math.min(6, editedTaxiSeatsAvailable + 1))}
+                          className="w-6 h-6 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-xs font-medium cursor-pointer select-none"
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-2 justify-end">
                   <Button
                     size="sm"
@@ -322,6 +570,14 @@ export function QuestionItem({
                     onClick={() => {
                       setIsEditing(false);
                       setEditedContent(question.content);
+                      setEditedTradePrice(question.tradePrice ? (question.tradePrice / 100).toString() : "");
+                      setEditedTradeCondition(question.tradeCondition ?? "Like New");
+                      setEditedTradeStatus(question.tradeStatus ?? "available");
+                      setEditedPartnerSlotsNeeded(question.partnerSlotsNeeded ?? 1);
+                      setEditedTaxiDeparture(question.taxiDeparture ?? "");
+                      setEditedTaxiDestination(question.taxiDestination ?? "");
+                      setEditedTaxiDatetime(question.taxiDatetime ?? "");
+                      setEditedTaxiSeatsAvailable(question.taxiSeatsAvailable ?? 1);
                     }}
                     disabled={isUpdatePending}
                   >
@@ -337,10 +593,70 @@ export function QuestionItem({
                 </div>
               </div>
             ) : (
-              <MentionText
-                content={question.content}
-                className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
-              />
+              <>
+                <MentionText
+                  content={question.content}
+                  className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
+                />
+                
+                {/* Trade metadata — inline chip strip */}
+                {question.postType === "trade" && (
+                  <div className="mt-2.5 flex items-center gap-2 flex-wrap text-xs">
+                    <span className="font-bold text-[#ff5a1f]">
+                      ₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}
+                    </span>
+                    <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                    <span className="text-neutral-500 dark:text-neutral-400">{question.tradeCondition}</span>
+                    <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                    <span className={cn(
+                      "flex items-center gap-1 font-medium",
+                      question.tradeStatus === "available"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-neutral-400 dark:text-neutral-500"
+                    )}>
+                      <span className={cn(
+                        "size-1.5 rounded-full inline-block shrink-0",
+                        question.tradeStatus === "available" ? "bg-emerald-500" : "bg-neutral-400"
+                      )} />
+                      {question.tradeStatus === "available" ? "Available" : "Sold"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Partner metadata — inline chip */}
+                {question.postType === "partner" && question.partnerSlotsNeeded && (
+                  <div className="mt-2.5 flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                    <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5 shrink-0" />
+                    <span>
+                      <strong className="text-neutral-700 dark:text-neutral-200">{question.partnerSlotsNeeded}</strong>
+                      {" "}{question.partnerSlotsNeeded === 1 ? "slot" : "slots"} open
+                    </span>
+                  </div>
+                )}
+
+                {/* Taxi metadata — inline chips */}
+                {question.postType === "taxi" && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    {question.taxiDeparture && question.taxiDestination && (
+                      <span className="font-medium text-neutral-700 dark:text-neutral-200">
+                        {question.taxiDeparture} <span className="text-neutral-300 dark:text-neutral-500">→</span> {question.taxiDestination}
+                      </span>
+                    )}
+                    {question.taxiDatetime && (
+                      <>
+                        <span className="text-neutral-300 dark:text-neutral-600 hidden sm:inline">·</span>
+                        <span>{new Date(question.taxiDatetime).toLocaleString()}</span>
+                      </>
+                    )}
+                    {question.taxiSeatsAvailable && (
+                      <>
+                        <span className="text-neutral-300 dark:text-neutral-600">·</span>
+                        <span>{question.taxiSeatsAvailable} {question.taxiSeatsAvailable === 1 ? "seat" : "seats"} available</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -351,16 +667,25 @@ export function QuestionItem({
             <QuestionListSkeleton count={2} />
           </div>
         ) : replies && replies.length > 0 ? (
-          replies.map((reply, index) => (
-            <ReplyItem
-              key={reply.answer.uid ?? index}
-              answerItem={reply}
-              canAccept={canAccept}
-              onDelete={() =>
-                deleteReply({ questionId, replyId: reply.answer.uid ?? "" })
-              }
-            />
-          ))
+          <>
+            {replies.slice(0, 5).map((reply, index) => (
+              <ReplyItem
+                key={reply.answer.uid ?? index}
+                answerItem={reply}
+                canAccept={canAccept}
+                onDelete={() =>
+                  deleteReply({ questionId, replyId: reply.answer.uid ?? "" })
+                }
+              />
+            ))}
+            <Link
+              to={`/q/${questionId}`}
+              className="ml-10 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors block pt-2 pb-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View full thread {replies.length > 5 && `(${replies.length} replies)`}
+            </Link>
+          </>
         ) : (
           <div className="text-sm ml-10 text-neutral-500">
             No replies. Be the first to answer

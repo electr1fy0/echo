@@ -8,6 +8,7 @@ import { chamberRoutes } from "./routes/chambers";
 import { questionRoutes } from "./routes/questions";
 import { searchRoutes } from "./routes/search";
 import { userRoutes } from "./routes/users";
+import { dmRoutes } from "./routes/dms";
 import type { AppEnv } from "./types/app";
 
 export const app = new Hono<AppEnv>();
@@ -42,5 +43,6 @@ app.route("/users", userRoutes);
 app.route("/questions", questionRoutes);
 app.route("/chambers", chamberRoutes);
 app.route("/search", searchRoutes);
+app.route("/dms", dmRoutes);
 
 export default app;

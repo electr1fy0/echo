@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   links: text("links"),
   resetToken: text("reset_token"),
   resetExpiry: timestamp("reset_expiry", { mode: "date" }),
+  dmEnabled: boolean("dm_enabled").default(true).notNull(),
 }, (table) => [unique("users_email_key").on(table.email)]);
 
 export const chambers = pgTable("chambers", {
@@ -33,6 +34,12 @@ export const chambers = pgTable("chambers", {
   }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   colorIndex: integer("color_index").default(0),
+  
+  // Pivot columns
+  type: text("type").default("global").notNull(), // 'global' | 'branch' | 'course'
+  branchName: text("branch_name"),
+  courseCode: text("course_code"),
+  semester: text("semester"),
 }, (table) => [unique("chambers_name_key").on(table.name)]);
 
 export const chamberMembers = pgTable("chamber_members", {
@@ -47,7 +54,7 @@ export const chamberMembers = pgTable("chamber_members", {
   primaryKey({ columns: [table.chamberUid, table.username], name: "chamber_members_pkey" }),
 ]);
 
-export const questions = pgTable("questions", {
+export const posts = pgTable("posts", {
   uid: uuid("uid").defaultRandom().primaryKey(),
   timeCreated: timestamp("time_created", { mode: "date" }).defaultNow(),
   content: text("content"),
@@ -59,16 +66,37 @@ export const questions = pgTable("questions", {
     .references(() => chambers.uid, { onDelete: "cascade" }),
   upvotesCount: integer("upvotes_count").default(0),
   redditUpvotes: integer("reddit_upvotes").default(0),
-  acceptedAnswerUid: uuid("accepted_answer_uid"),
+  acceptedAnswerUid: uuid("accepted_answer_uid"), // Will reference replies.uid in relations
   pinnedAt: timestamp("pinned_at", { mode: "date" }),
+  expiresAt: timestamp("expires_at", { mode: "date" }),
+
+  // Pivot columns
+  postType: text("post_type").default("qna").notNull(), // 'qna' | 'partner' | 'trade' | 'taxi'
+  
+  // Partner Finder metadata
+  partnerTargetGrade: text("partner_target_grade"),
+  partnerWorkstyle: text("partner_workstyle"),
+  partnerSlotsNeeded: integer("partner_slots_needed"),
+
+  // Campus Trade metadata
+  tradePrice: integer("trade_price"),
+  tradeCondition: text("trade_condition"),
+  tradeBookIsbn: text("trade_book_isbn"),
+  tradeStatus: text("trade_status").default("available"),
+
+  // Taxi sharing metadata
+  taxiDeparture: text("taxi_departure"),
+  taxiDestination: text("taxi_destination"),
+  taxiDatetime: text("taxi_datetime"),
+  taxiSeatsAvailable: integer("taxi_seats_available"),
 });
 
-export const answers = pgTable("answers", {
+export const replies = pgTable("replies", {
   uid: uuid("uid").defaultRandom().primaryKey(),
   content: text("content").notNull(),
-  questionUid: uuid("question_uid")
+  postUid: uuid("post_uid")
     .notNull()
-    .references(() => questions.uid, { onDelete: "cascade" }),
+    .references(() => posts.uid, { onDelete: "cascade" }),
   timeCreated: timestamp("time_created", { mode: "date" }).defaultNow(),
   author: text("author")
     .notNull()
@@ -77,26 +105,26 @@ export const answers = pgTable("answers", {
   redditUpvotes: integer("reddit_upvotes").default(0),
 });
 
-export const questionUpvotes = pgTable("question_upvotes", {
+export const postUpvotes = pgTable("post_upvotes", {
   username: text("username")
     .notNull()
     .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
-  questionUid: uuid("question_uid")
+  postUid: uuid("post_uid")
     .notNull()
-    .references(() => questions.uid, { onDelete: "cascade" }),
+    .references(() => posts.uid, { onDelete: "cascade" }),
 }, (table) => [
-  primaryKey({ columns: [table.username, table.questionUid], name: "votes_pkey" }),
+  primaryKey({ columns: [table.username, table.postUid], name: "post_upvotes_pkey" }),
 ]);
 
-export const answerUpvotes = pgTable("answer_upvotes", {
-  answerUid: uuid("answer_uid")
+export const replyUpvotes = pgTable("reply_upvotes", {
+  replyUid: uuid("reply_uid")
     .notNull()
-    .references(() => answers.uid, { onDelete: "cascade" }),
+    .references(() => replies.uid, { onDelete: "cascade" }),
   username: text("username")
     .notNull()
     .references(() => users.username, { onUpdate: "cascade" }),
 }, (table) => [
-  primaryKey({ columns: [table.answerUid, table.username], name: "answer_upvotes_pkey" }),
+  primaryKey({ columns: [table.replyUid, table.username], name: "reply_upvotes_pkey" }),
 ]);
 
 export const notifications = pgTable("notifications", {
@@ -120,3 +148,44 @@ export const notifications = pgTable("notifications", {
     table.referenceUid,
   ),
 ]);
+
+export const conversations = pgTable("conversations", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  participantA: text("participant_a")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  participantB: text("participant_b")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  lastMessageAt: timestamp("last_message_at", { mode: "date" }),
+  lastMessagePreview: text("last_message_preview"),
+  lastMessageSender: text("last_message_sender"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+}, (table) => [
+  unique("conversations_participants_key").on(table.participantA, table.participantB),
+]);
+
+export const messages = pgTable("messages", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  conversationUid: uuid("conversation_uid")
+    .notNull()
+    .references(() => conversations.uid, { onDelete: "cascade" }),
+  sender: text("sender")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  content: text("content").notNull(),
+  timeCreated: timestamp("time_created", { mode: "date" }).defaultNow(),
+});
+
+export const partnerApplications = pgTable("partner_applications", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  postUid: uuid("post_uid")
+    .notNull()
+    .references(() => posts.uid, { onDelete: "cascade" }),
+  applicantUsername: text("applicant_username")
+    .notNull()
+    .references(() => users.username, { onDelete: "cascade", onUpdate: "cascade" }),
+  pitch: text("pitch").notNull(),
+  status: text("status").default("pending").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});

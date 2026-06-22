@@ -134,7 +134,7 @@ export default function Home() {
   return (
     <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-4 pb-36 md:pb-16 relative px-4">
       <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
-        Echo
+        TurnsOut
       </h1>
       <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
         An Open QnA platform

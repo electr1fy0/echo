@@ -18,12 +18,24 @@ chamberRoutes.use("*", requireAuth);
 
 
 chamberRoutes.post("/", async (c) => {
-  const body = (await c.req.json()) as { name?: string; description?: string; colorIndex?: number };
+  const body = (await c.req.json()) as {
+    name?: string;
+    description?: string;
+    colorIndex?: number;
+    type?: string;
+    branchName?: string;
+    courseCode?: string;
+    semester?: string;
+  };
   const [created] = await c.get("db").insert(schema.chambers).values({
     name: body.name ?? "",
     description: body.description ?? "",
     creatorUsername: c.get("user"),
     colorIndex: body.colorIndex ?? 0,
+    type: body.type ?? "global",
+    branchName: body.branchName ?? null,
+    courseCode: body.courseCode ?? null,
+    semester: body.semester ?? null,
   }).returning({ uid: schema.chambers.uid, createdAt: schema.chambers.createdAt });
 
   await c.get("db").insert(schema.chamberMembers).values({
@@ -40,6 +52,10 @@ chamberRoutes.post("/", async (c) => {
     isJoined: true,
     colorIndex: body.colorIndex ?? 0,
     timeCreated: created.createdAt?.toISOString() ?? null,
+    type: body.type ?? "global",
+    branchName: body.branchName ?? null,
+    courseCode: body.courseCode ?? null,
+    semester: body.semester ?? null,
   }, 201);
 });
 

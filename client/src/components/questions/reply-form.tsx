@@ -5,6 +5,7 @@ import { useCreateReply } from "@/hooks/use-replies";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Comment01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { toast } from "@/lib/toast";
+import { haptic } from "@/lib/haptic";
 import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
 
@@ -43,6 +44,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || isPending || isValidating) return;
+    haptic();
     setIsValidating(true);
     try {
       const result = await validateMentions(content);
@@ -74,14 +76,14 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   };
 
   return (
-    <form className="flex gap-4 mt-4" onSubmit={handleSubmit}>
+    <form className="flex gap-4 mt-4 items-start" onSubmit={handleSubmit}>
       <MentionField
         value={content}
         placeholder="Write a reply..."
         ariaLabel="Reply content"
         className="text-base"
         onValueChange={setContent}
-        multiline={false}
+        multiline={true}
         containerClassName="flex-1"
       />
       <Button

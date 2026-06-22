@@ -11,6 +11,9 @@ import {
   searchQuestions,
   pinQuestion,
   unpinQuestion,
+  applyToPartner,
+  fetchPartnerApplications,
+  updatePartnerApplicationStatus,
 } from "@/api/questions";
 
 export function useQuestionQuery(questionId: string | undefined) {
@@ -26,11 +29,12 @@ export function useQuestionsQuery(
   sort?: "votes" | "time_created",
   filter?: "joined",
   chamberId?: string,
-  author?: string
+  author?: string,
+  postType?: string
 ) {
   return useQuery({
-    queryKey: ["questions", sort, filter, chamberId, author],
-    queryFn: () => fetchQuestions(sort, filter, chamberId, author),
+    queryKey: ["questions", sort, filter, chamberId, author, postType],
+    queryFn: () => fetchQuestions(sort, filter, chamberId, author, undefined, undefined, postType),
     staleTime: 30_000,
   });
 }
@@ -40,17 +44,28 @@ export function useInfiniteQuestionsQuery(
   filter?: "joined",
   chamberId?: string,
   author?: string,
-  pageSize = 20
+  pageSize = 20,
+  postType?: string,
+  pinned?: boolean
 ) {
   return useInfiniteQuery({
-    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize],
+    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned],
     queryFn: ({ pageParam = 0 }) =>
-      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number),
+      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < pageSize) return undefined;
       return allPages.length * pageSize;
     },
+    staleTime: 30_000,
+  });
+}
+
+export function usePinnedQuestionsQuery(chamberId: string | undefined, postType?: string) {
+  return useQuery({
+    queryKey: ["questions", "pinned", chamberId, postType],
+    queryFn: () => fetchQuestions("time_created", undefined, chamberId, undefined, 10, 0, postType, true),
+    enabled: !!chamberId,
     staleTime: 30_000,
   });
 }
@@ -165,8 +180,24 @@ export function useQuestionDraft() {
 export function useUpdateQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ questionId, content }: { questionId: string; content: string }) =>
-      updateQuestion(questionId, content),
+    mutationFn: ({
+      questionId,
+      ...payload
+    }: {
+      questionId: string;
+      content?: string;
+      tradePrice?: number;
+      tradeCondition?: string;
+      tradeBookIsbn?: string;
+      tradeStatus?: string;
+      partnerSlotsNeeded?: number;
+      partnerTargetGrade?: string;
+      partnerWorkstyle?: string;
+      taxiDeparture?: string;
+      taxiDestination?: string;
+      taxiDatetime?: string;
+      taxiSeatsAvailable?: number;
+    }) => updateQuestion(questionId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
@@ -206,5 +237,43 @@ export function useSearchQuestions(query: string) {
     queryFn: () => searchQuestions(query),
     enabled: query.length > 0,
     staleTime: 30_000,
+  });
+}
+
+export function useApplyToPartner() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ questionId, pitch }: { questionId: string; pitch: string }) =>
+      applyToPartner(questionId, pitch),
+    onSuccess: (_data, { questionId }) => {
+      queryClient.invalidateQueries({ queryKey: ["partner-applications", questionId] });
+    },
+  });
+}
+
+export function usePartnerApplicationsQuery(questionId: string | undefined) {
+  return useQuery({
+    queryKey: ["partner-applications", questionId],
+    queryFn: () => fetchPartnerApplications(questionId!),
+    enabled: !!questionId,
+    staleTime: 10_000,
+  });
+}
+
+export function useUpdatePartnerApplicationStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      questionId,
+      appUid,
+      status,
+    }: {
+      questionId: string;
+      appUid: string;
+      status: "accepted" | "declined";
+    }) => updatePartnerApplicationStatus(questionId, appUid, status),
+    onSuccess: (_data, { questionId }) => {
+      queryClient.invalidateQueries({ queryKey: ["partner-applications", questionId] });
+    },
   });
 }

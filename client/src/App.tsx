@@ -24,6 +24,9 @@ const VerifyEmail = lazy(() => import("@/pages/verify-email"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const QuestionDetailPage = lazy(() => import("@/pages/question-detail"));
+const DMsPage = lazy(() => import("@/pages/dms"));
+const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
 
 function AuthenticatedLayout() {
   const { data: user } = useAuth();
@@ -110,6 +113,7 @@ export default function App() {
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/chamber/:chamberId" element={<ChamberPage />} />
+              <Route path="/q/:questionId" element={<QuestionDetailPage />} />
               <Route path="/u/:username" element={<PublicProfile />} />
             </Route>
 
@@ -119,6 +123,8 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/chambers" element={<AllChambers />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/dm" element={<DMsPage />} />
+                <Route path="/dm/:conversationId" element={<DMConversationPage />} />
               </Route>
             </Route>
 
