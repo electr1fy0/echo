@@ -43,12 +43,12 @@ const MODE_COPY: Record<
 > = {
   signin: {
     title: "Welcome back",
-    description: "Sign in to access your questions in TurnsOut.",
+    description: "Sign in to access your chambers and posts on TurnsOut.",
     submitLabel: "Sign in",
   },
   signup: {
     title: "Create an account",
-    description: "Enter your details to start asking questions in TurnsOut.",
+    description: "Enter your details to start posting and connecting on TurnsOut.",
     submitLabel: "Create Account",
   },
   forgot: {
@@ -307,20 +307,24 @@ export function AuthDialog() {
                   />
                 )}
 
-                {formMode === "signin" ? (
+                {formMode === "signin" || formMode === "signup" ? (
                   <SlideToUnlock
                     onUnlock={() => {
                       play();
                       handleSubmit();
                     }}
-                    disabled={!form.username || !form.password}
+                    disabled={
+                      formMode === "signin"
+                        ? !form.username || !form.password || isLoading
+                        : !form.username || !form.password || !form.email || isLoading
+                    }
                     className="w-full"
                   >
                     <SlideToUnlockTrack>
                       <SlideToUnlockText>
                         {({ isDragging }) => (
                           <ShimmeringText
-                            text="slide to sign in"
+                            text={formMode === "signin" ? "Slide to sign in" : "Slide to create account"}
                             isStopped={isDragging}
                             className="[--color:rgba(120,113,108,0.6)] [--shimmering-color:rgb(120,113,108)]"
                           />

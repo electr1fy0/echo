@@ -6,6 +6,7 @@ import {
   Search01Icon,
   FavouriteIcon,
   Message01Icon,
+  UserIcon,
 } from "@hugeicons/core-free-icons";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -98,8 +99,8 @@ function ProfileButton({
           className="size-6"
         />
       ) : (
-        <div className="size-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-neutral-600 dark:text-neutral-400 select-none">
-          G
+        <div className="size-6 rounded-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 dark:text-neutral-400 select-none">
+          <HugeiconsIcon icon={UserIcon} className="size-3.5" />
         </div>
       )}
     </button>
@@ -138,7 +139,7 @@ export function AppSidebar() {
   };
 
   const handleNavClick = (item: NavItem) => {
-    if (!user && item.path === "/notifications") {
+    if (!user && (item.path === "/notifications" || item.path === "/dm")) {
       openAuthModal("signin");
       return;
     }

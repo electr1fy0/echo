@@ -456,7 +456,7 @@ export default function Home() {
                 Join the TurnsOut community
               </h3>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-[28rem] leading-relaxed">
-                Sign in or register today to join chambers, upvote questions, share your knowledge, and ask questions of your own!
+                Sign in or register today to join chambers, find project partners, trade items, coordinate rides, and connect with your campus!
               </p>
             </div>
             <div className="flex gap-2 shrink-0">

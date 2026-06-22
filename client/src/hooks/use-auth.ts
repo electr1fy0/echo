@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signin, signup, verifySession, signout } from "@/api/auth";
 import { getToken } from "@/lib/utils";
+import { useNavigate } from "react-router";
 export function useSignin() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -27,12 +28,14 @@ export function useAuth() {
 }
 export function useSignout() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: signout,
     onSuccess: () => {
       queryClient.setQueryData(["auth"], undefined);
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      navigate("/", { replace: true });
     },
   });
 }
@@ -42,12 +45,14 @@ import { verifyEmail, requestPasswordReset, resetPassword, resendVerification, d
 
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: deleteAccount,
     onSuccess: () => {
       queryClient.setQueryData(["auth"], undefined);
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      navigate("/", { replace: true });
     },
   });
 }

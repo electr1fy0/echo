@@ -589,47 +589,34 @@ export function QuestionItem({
                   className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
                 />
 
-                {/* Post type chips */}
-                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                  {question.postType === "partner" && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-[#ff5a1f] dark:bg-[#ff5a1f]/10 dark:text-[#ff5a1f] px-1.5 py-0.5 rounded border border-orange-250/50 dark:border-[#ff5a1f]/20">
-                      Partner Finder
-                    </span>
-                  )}
-                  {question.postType === "trade" && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-200/50 dark:border-blue-900/20">
-                      Marketplace
-                    </span>
-                  )}
-                  {question.postType === "taxi" && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-600 dark:bg-purple-950/20 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-200/50 dark:border-purple-900/20">
-                      Taxi Sharing
-                    </span>
-                  )}
-                </div>
-                
-                {/* Trade metadata + interest button */}
+                          {/* Trade metadata + interest button */}
                 {question.postType === "trade" && (
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 flex-wrap text-xs min-w-0">
-                      <span className="font-bold text-[#ff5a1f]">
-                        ₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}
-                      </span>
-                      <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                      <span className="text-neutral-500 dark:text-neutral-400">{question.tradeCondition}</span>
-                      <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                      <span className={cn(
-                        "flex items-center gap-1 font-medium",
-                        question.tradeStatus === "available"
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-neutral-400 dark:text-neutral-500"
-                      )}>
-                        <span className={cn(
-                          "size-1.5 rounded-full inline-block shrink-0",
-                          question.tradeStatus === "available" ? "bg-emerald-500" : "bg-neutral-400"
-                        )} />
-                        {question.tradeStatus === "available" ? "Available" : "Sold"}
-                      </span>
+                  <div className="mt-3 p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
+                    <div className="flex items-center gap-3 text-xs min-w-0 flex-wrap">
+                      <div className="flex items-center justify-center size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-blue-500 dark:text-blue-400 shrink-0">
+                        <HugeiconsIcon icon={ShoppingBag01Icon} className="size-4" />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">Marketplace</span>
+                        <div className="flex items-center gap-2 flex-wrap text-xs">
+                          <span className="text-neutral-900 dark:text-neutral-100 font-bold text-sm">₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}</span>
+                          <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                          <span className="font-semibold text-neutral-600 dark:text-neutral-300">{question.tradeCondition}</span>
+                          <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                          <span className={cn(
+                            "flex items-center gap-1 font-semibold text-[11px]",
+                            question.tradeStatus === "available"
+                              ? "text-emerald-600 dark:text-emerald-450"
+                              : "text-neutral-500 dark:text-neutral-450"
+                          )}>
+                            <span className={cn(
+                              "size-1.5 rounded-full inline-block shrink-0",
+                              question.tradeStatus === "available" ? "bg-emerald-500" : "bg-neutral-400"
+                            )} />
+                            {question.tradeStatus === "available" ? "Available" : "Sold"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     {question.tradeStatus === "available" && user?.username !== question.authorUsername && (
                       <button
@@ -645,10 +632,10 @@ export function QuestionItem({
                         }}
                         disabled={isDMPending || interestSent}
                         className={cn(
-                          "shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer",
+                          "shrink-0 flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto justify-center",
                           interestSent
-                            ? "bg-emerald-500 text-white"
-                            : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
                         )}
                       >
                         {interestSent ? (
@@ -671,13 +658,18 @@ export function QuestionItem({
 
                 {/* Partner metadata + interest button */}
                 {question.postType === "partner" && (
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400 min-w-0">
-                      <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5 shrink-0" />
-                      <span>
-                        <strong className="text-neutral-700 dark:text-neutral-200">{question.partnerSlotsNeeded || 0}</strong>
-                        {" "}{question.partnerSlotsNeeded === 1 ? "slot" : "slots"} open
-                      </span>
+                  <div className="mt-3 p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
+                    <div className="flex items-center gap-3 text-xs min-w-0">
+                      <div className="flex items-center justify-center size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-orange-500 dark:text-orange-400 shrink-0">
+                        <HugeiconsIcon icon={UserMultiple02Icon} className="size-4" />
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">Partner Finder</span>
+                        <span className="text-neutral-700 dark:text-neutral-300 font-medium text-xs">
+                          Looking for <strong className="text-neutral-900 dark:text-neutral-100 font-bold text-sm bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded border border-neutral-200/50 dark:border-neutral-700/60">{question.partnerSlotsNeeded || 0}</strong>
+                          {" "}{question.partnerSlotsNeeded === 1 ? "partner" : "partners"}
+                        </span>
+                      </div>
                     </div>
                     {user?.username !== question.authorUsername && (
                       <button
@@ -693,10 +685,10 @@ export function QuestionItem({
                         }}
                         disabled={isDMPending || interestSent}
                         className={cn(
-                          "shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer",
+                          "shrink-0 flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto justify-center",
                           interestSent
-                            ? "bg-emerald-500 text-white"
-                            : "bg-orange-600 text-white hover:bg-orange-700 active:scale-95"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
                         )}
                       >
                         {interestSent ? (
@@ -719,25 +711,46 @@ export function QuestionItem({
 
                 {/* Taxi metadata + interest button */}
                 {question.postType === "taxi" && (
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400 min-w-0">
-                      {question.taxiDeparture && question.taxiDestination && (
-                        <span className="font-medium text-neutral-700 dark:text-neutral-200">
-                          {question.taxiDeparture} <span className="text-neutral-300 dark:text-neutral-500">→</span> {question.taxiDestination}
-                        </span>
-                      )}
-                      {question.taxiDatetime && (
-                        <>
-                          <span className="text-neutral-300 dark:text-neutral-600 hidden sm:inline">·</span>
-                          <span>{new Date(question.taxiDatetime).toLocaleString("en-IN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true })}</span>
-                        </>
-                      )}
-                      {question.taxiSeatsAvailable && (
-                        <>
-                          <span className="text-neutral-300 dark:text-neutral-600">·</span>
-                          <span>{question.taxiSeatsAvailable} {question.taxiSeatsAvailable === 1 ? "seat" : "seats"} available</span>
-                        </>
-                      )}
+                  <div className="mt-3 p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
+                    <div className="flex items-start sm:items-center gap-3 text-xs min-w-0 flex-1 flex-col sm:flex-row">
+                      <div className="flex items-center justify-center size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-purple-500 dark:text-purple-400 shrink-0">
+                        <HugeiconsIcon icon={Car01Icon} className="size-4" />
+                      </div>
+                      <div className="flex flex-col gap-0.5 min-w-0 w-full">
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Taxi Sharing</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-bold text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
+                            {question.taxiDeparture} <span className="text-purple-500 dark:text-purple-400 font-bold mx-0.5">→</span> {question.taxiDestination}
+                          </span>
+                          {question.taxiDatetime && (
+                            <>
+                              <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700 hidden sm:inline" />
+                              <span className="text-neutral-500 dark:text-neutral-450 flex items-center gap-1">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3 text-neutral-400 dark:text-neutral-500">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                                {new Date(question.taxiDatetime).toLocaleString("en-IN", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                  hour12: true,
+                                })}
+                              </span>
+                            </>
+                          )}
+                          {question.taxiSeatsAvailable && (
+                            <>
+                              <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
+                              <span className="flex items-center gap-1 text-neutral-500 dark:text-neutral-450 font-semibold">
+                                <HugeiconsIcon icon={UserMultiple02Icon} className="size-3 text-neutral-400 dark:text-neutral-500" />
+                                {question.taxiSeatsAvailable} {question.taxiSeatsAvailable === 1 ? "seat" : "seats"} left
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     {user?.username !== question.authorUsername && (
                       <button
@@ -753,10 +766,10 @@ export function QuestionItem({
                         }}
                         disabled={isDMPending || interestSent}
                         className={cn(
-                          "shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-150 cursor-pointer",
+                          "shrink-0 flex items-center gap-1.5 h-8 px-4 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm sm:self-center w-full sm:w-auto justify-center active:scale-95",
                           interestSent
-                            ? "bg-emerald-500 text-white"
-                            : "bg-purple-600 text-white hover:bg-purple-700 active:scale-95"
+                            ? "bg-emerald-600 text-white"
+                            : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
                         )}
                       >
                         {interestSent ? (

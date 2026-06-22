@@ -66,7 +66,7 @@ function AuthenticatedLayout() {
           <div>
             <h4 className="text-sm font-semibold">Don't miss what's happening</h4>
             <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              People on TurnsOut are asking questions and sharing answers in real-time. Sign up to join them!
+              People on TurnsOut are finding project partners, trading items, coordinating rides, and sharing ideas in real-time. Sign up to join them!
             </p>
           </div>
           <div className="flex gap-3">
