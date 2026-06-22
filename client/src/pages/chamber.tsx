@@ -17,6 +17,7 @@ import {
   useListChambers,
 } from "@/hooks/use-chamber";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
 import { useDeleteQuestion, useInfiniteQuestionsQuery } from "@/hooks/use-questions";
@@ -34,6 +35,7 @@ export default function ChamberPage() {
   const navigate = useNavigate();
   const { data: chambersData, isLoading: isChamberLoading } = useListChambers();
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
   const { mutate: deleteQn } = useDeleteQuestion();
@@ -126,7 +128,7 @@ export default function ChamberPage() {
     CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
   const handleToggleJoin = () => {
     if (!user) {
-      navigate("/auth");
+      openAuthModal("signin");
       return;
     }
     if (!chamber?.uid) return;

@@ -1,5 +1,5 @@
-import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Link, Outlet, Route, Routes } from "react-router";
+import { Suspense, lazy, useEffect } from "react";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useSearchParams, useNavigate } from "react-router";
 import { ErrorBoundary } from "react-error-boundary";
 import { AppSidebar } from "@/components/app-sidebar";
 import { GuestRoute, ProtectedRoute } from "@/components/route-guards";
@@ -8,6 +8,9 @@ import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { useAuthModal } from "@/hooks/use-auth-modal";
+import { AuthDialog } from "@/components/auth-dialog";
+import { clearGoogleOnboardingToken, setGoogleOnboardingToken, setToken } from "@/lib/utils";
 
 const Home = lazy(() => import("@/pages/home"));
 const Profile = lazy(() => import("@/pages/profile"));
@@ -17,7 +20,6 @@ const AllChambers = lazy(() => import("@/pages/all-chambers"));
 const ChamberPage = lazy(() => import("@/pages/chamber"));
 const Notifications = lazy(() => import("@/pages/notifications"));
 const Auth = lazy(() => import("@/pages/auth"));
-const Landing = lazy(() => import("@/pages/landing"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));
 const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
@@ -25,14 +27,36 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 
 function AuthenticatedLayout() {
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const onboarding = searchParams.get("onboarding") === "1";
+    const onboardingToken = searchParams.get("onboardingToken");
+    if (onboarding && onboardingToken) {
+      setGoogleOnboardingToken(onboardingToken);
+      navigate("/onboarding", { replace: true });
+      return;
+    }
+
+    const token = searchParams.get("token");
+    if (token) {
+      clearGoogleOnboardingToken();
+      setToken(token);
+      navigate("/", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   return (
     <div className="flex min-h-screen">
       <AppSidebar />
       <main className="w-full flex flex-col items-center md:pl-20">
         <Outlet />
       </main>
+      <AuthDialog />
       {!user && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ff5a1f] to-amber-500 text-white py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-500">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#ff5a1f] text-white py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-500">
           <div>
             <h4 className="text-base font-semibold">Don't miss what's happening</h4>
             <p className="text-xs text-white/95 mt-0.5">
@@ -40,16 +64,18 @@ function AuthenticatedLayout() {
             </p>
           </div>
           <div className="flex gap-3">
-            <Link to="/auth">
-              <Button className="rounded-full bg-white text-[#ff5a1f] hover:bg-neutral-100 font-semibold px-6 py-2 h-9 text-xs cursor-pointer border-none">
-                Log in
-              </Button>
-            </Link>
-            <Link to="/auth">
-              <Button className="rounded-full bg-neutral-900/40 text-white hover:bg-neutral-900/60 font-semibold px-6 py-2 h-9 text-xs border border-white/30 cursor-pointer">
-                Sign up
-              </Button>
-            </Link>
+            <Button
+              className="rounded-full bg-white text-[#ff5a1f] hover:bg-neutral-100 font-semibold px-6 py-2 h-9 text-xs cursor-pointer border-none"
+              onClick={() => openAuthModal("signin")}
+            >
+              Log in
+            </Button>
+            <Button
+              className="rounded-full bg-neutral-900/40 text-white hover:bg-neutral-900/60 font-semibold px-6 py-2 h-9 text-xs border border-white/30 cursor-pointer"
+              onClick={() => openAuthModal("signup")}
+            >
+              Sign up
+            </Button>
           </div>
         </div>
       )}
@@ -74,14 +100,13 @@ export default function App() {
             <Route path="/onboarding" element={<Onboarding />} />
 
             <Route element={<GuestRoute />}>
-              <Route path="/" element={<Landing />} />
-              <Route path="/landing" element={<Navigate to="/" replace />} />
               <Route path="/auth" element={<Auth />} />
             </Route>
 
             {/* Public layout routes */}
             <Route element={<AuthenticatedLayout />}>
-              <Route path="/home" element={<Home />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/chamber/:chamberId" element={<ChamberPage />} />
               <Route path="/u/:username" element={<PublicProfile />} />

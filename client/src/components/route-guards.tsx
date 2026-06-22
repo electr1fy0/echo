@@ -8,11 +8,11 @@ export function ProtectedRoute() {
   const token = getToken();
 
   if (!token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   if (isError) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return <Outlet />;
@@ -30,7 +30,7 @@ export function GuestRoute() {
     return <PageSkeleton />;
   }
   if (isSuccess) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/" replace />;
   }
   return <Outlet />;
 }

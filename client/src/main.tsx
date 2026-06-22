@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
 import App from "./App.tsx";
 import { ThemeProvider } from "./components/theme-provider.tsx";
+import { AuthModalProvider } from "./hooks/use-auth-modal.tsx";
 
 const queryClient = new QueryClient();
 
@@ -11,7 +12,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider defaultTheme="system" storageKey="echo-theme">
       <QueryClientProvider client={queryClient}>
-        <App />
+        <AuthModalProvider>
+          <App />
+        </AuthModalProvider>
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>,

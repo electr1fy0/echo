@@ -23,6 +23,7 @@ import {
 import { useReplyUpdateVote } from "@/hooks/use-upvote";
 import { useAcceptReply, useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
@@ -41,6 +42,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
   const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
   const { data: user } = useAuth();
   const navigate = useNavigate();
+  const { open: openAuthModal } = useAuthModal();
 
   const reply = answerItem.answer;
 
@@ -71,7 +73,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
           isPending={isPending}
           onToggle={() => {
             if (!user) {
-              navigate("/auth");
+              openAuthModal("signin");
             } else {
               updateUpvote({ qid: reply.questionUid, rid: reply.uid });
             }

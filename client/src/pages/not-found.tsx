@@ -51,7 +51,7 @@ export default function NotFound() {
               Back
             </Button>
           </Link>
-          <Link to="/home">
+          <Link to="/">
             <Button variant="outline" size="default">
               Home
             </Button>

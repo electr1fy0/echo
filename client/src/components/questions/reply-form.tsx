@@ -9,7 +9,7 @@ import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
 
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "react-router";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 
 type ReplyFormProps = {
   questionId: QuestionId;
@@ -18,6 +18,7 @@ type ReplyFormProps = {
 
 export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
   const { mutate: submitReply, isPending } = useCreateReply();
   const [isValidating, setIsValidating] = useState(false);
@@ -26,13 +27,17 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
     return (
       <div className="text-sm mt-4 text-neutral-500 py-2">
         Please{" "}
-        <Link to="/auth" className="text-[#ff5a1f] hover:underline font-semibold">
+        <button
+          onClick={() => openAuthModal("signin")}
+          className="text-[#ff5a1f] hover:underline font-semibold cursor-pointer bg-transparent border-none p-0 inline"
+        >
           sign in
-        </Link>{" "}
+        </button>{" "}
         to reply.
       </div>
     );
   }
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {

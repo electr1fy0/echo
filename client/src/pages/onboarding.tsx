@@ -52,7 +52,7 @@ export default function Onboarding() {
 
       setToken(data.token);
       clearGoogleOnboardingToken();
-      navigate("/home", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to complete onboarding");
     } finally {

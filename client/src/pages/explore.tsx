@@ -15,6 +15,7 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { useListChambers } from "@/hooks/use-chamber";
 import { useGlobalSearch } from "@/hooks/use-search";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import type { AnswerItem } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useNavigate } from "react-router";
@@ -54,6 +55,7 @@ function ReplyResult({ item }: { item: AnswerItem }) {
 }
 export default function Explore() {
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
   const navigate = useNavigate();
@@ -234,7 +236,7 @@ export default function Explore() {
                 className="text-xs h-7 gap-1"
                 onClick={() => {
                   if (!user) {
-                    navigate("/auth");
+                    openAuthModal("signin");
                   } else {
                     navigate("/chambers");
                   }
@@ -251,7 +253,7 @@ export default function Explore() {
             )}
             <CreateChamberButton onClick={() => {
               if (!user) {
-                navigate("/auth");
+                openAuthModal("signin");
               } else {
                 setCreateChamberOpen(true);
               }

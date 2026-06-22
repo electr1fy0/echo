@@ -146,7 +146,7 @@ export default function Auth() {
     if (!token) return;
     clearGoogleOnboardingToken();
     setToken(token);
-    navigate("/home", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate, searchParams]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -173,7 +173,7 @@ export default function Auth() {
 
     if (!payload.username || !payload.password) return;
     await signIn(payload);
-    navigate("/home");
+    navigate("/");
   }
 
   async function handleSigninWithGoogle() {

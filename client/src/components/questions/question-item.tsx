@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import { usePinQuestion, useUnpinQuestion, useUpdateQuestion } from "@/hooks/use-questions";
 import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -93,6 +94,7 @@ export function QuestionItem({
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { data: user } = useAuth();
   const navigate = useNavigate();
+  const { open: openAuthModal } = useAuthModal();
   const { mutate: updateQuestion, isPending: isUpdatePending } =
     useUpdateQuestion();
   const { mutate: pinQuestion, isPending: isPinPending } = usePinQuestion();
@@ -209,7 +211,7 @@ export function QuestionItem({
                     isUpvoted={question.isUpvoted}
                     onToggle={() => {
                       if (!user) {
-                        navigate("/auth");
+                        openAuthModal("signin");
                       } else {
                         handleVote(questionId);
                       }

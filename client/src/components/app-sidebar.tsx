@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -273,8 +274,9 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const navItems: NavItem[] = [
-    { icon: Home01Icon, path: "/home", label: "Home" },
+    { icon: Home01Icon, path: "/", label: "Home" },
     { icon: Search01Icon, path: "/explore", label: "Explore" },
     { icon: Add01Icon, label: "Create", isAction: true },
     {
@@ -290,7 +292,7 @@ export function AppSidebar() {
   };
   const handleNavClick = (item: NavItem) => {
     if (!user && (item.isAction || item.path === "/notifications")) {
-      navigate("/auth");
+      openAuthModal("signin");
       return;
     }
     if (item.isAction) {
@@ -339,7 +341,7 @@ export function AppSidebar() {
                 isActive={isActive("/profile")}
                 onClick={() => {
                   if (!user) {
-                    navigate("/auth");
+                    openAuthModal("signin");
                   } else {
                     navigateTo("/profile");
                   }
@@ -380,7 +382,7 @@ export function AppSidebar() {
             isActive={isActive("/profile")}
             onClick={() => {
               if (!user) {
-                navigate("/auth");
+                openAuthModal("signin");
               } else {
                 navigateTo("/profile");
               }

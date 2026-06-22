@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import {
   useQuestionDraft,
   useCreateQuestion,
@@ -35,6 +36,7 @@ import { toast } from "@/lib/toast";
 
 export default function Home() {
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const [activeTab, setActiveTab] = useState<"recent" | "trending">("recent");
   const [selectedChamber, setSelectedChamber] = useState<string>("");
   const { mutate: submitQuestion, isPending: isCreatePending } =
@@ -237,7 +239,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="relative overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-gradient-to-r from-[#ff5a1f]/10 to-amber-500/10 p-6 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-background p-6 shadow-sm">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1">
               <h3 className="text-base font-semibold text-neutral-800 dark:text-neutral-100">
@@ -248,19 +250,23 @@ export default function Home() {
               </p>
             </div>
             <div className="flex gap-2 shrink-0">
-              <Link to="/auth">
-                <Button variant="outline" size="sm" className="rounded-full px-4 h-9 cursor-pointer">
-                  Sign in
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button size="sm" className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white px-4 h-9 border-none cursor-pointer">
-                  Sign up
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full px-4 h-9 cursor-pointer"
+                onClick={() => openAuthModal("signin")}
+              >
+                Sign in
+              </Button>
+              <Button
+                size="sm"
+                className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white px-4 h-9 border-none cursor-pointer"
+                onClick={() => openAuthModal("signup")}
+              >
+                Sign up
+              </Button>
             </div>
           </div>
-          <div className="absolute -right-10 -bottom-10 size-32 bg-[#ff5a1f]/20 rounded-full filter blur-2xl pointer-events-none" />
         </div>
       )}
       <div className="my-10">

@@ -101,7 +101,7 @@ export default function VerifyEmail() {
         </CardHeader>
         <CardContent>
           {status !== "pending" && (
-            <Link to="/home" className="w-full">
+            <Link to="/" className="w-full">
               <Button className="w-full">Continue</Button>
             </Link>
           )}
