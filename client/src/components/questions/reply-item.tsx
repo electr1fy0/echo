@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +41,6 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
   const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
   const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
   const { data: user } = useAuth();
-  const navigate = useNavigate();
   const { open: openAuthModal } = useAuthModal();
 
   const reply = answerItem.answer;

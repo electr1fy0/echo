@@ -56,22 +56,23 @@ function AuthenticatedLayout() {
       </main>
       <AuthDialog />
       {!user && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#ff5a1f] text-white py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] animate-in slide-in-from-bottom duration-500">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] animate-in slide-in-from-bottom duration-500">
           <div>
-            <h4 className="text-base font-semibold">Don't miss what's happening</h4>
-            <p className="text-xs text-white/95 mt-0.5">
+            <h4 className="text-sm font-semibold">Don't miss what's happening</h4>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
               People on Echo are asking questions and sharing answers in real-time. Sign up to join them!
             </p>
           </div>
           <div className="flex gap-3">
             <Button
-              className="rounded-full bg-white text-[#ff5a1f] hover:bg-neutral-100 font-semibold px-6 py-2 h-9 text-xs cursor-pointer border-none"
+              variant="outline"
+              className="rounded-full px-5 h-9 text-xs font-medium cursor-pointer"
               onClick={() => openAuthModal("signin")}
             >
-              Log in
+              Sign in
             </Button>
             <Button
-              className="rounded-full bg-neutral-900/40 text-white hover:bg-neutral-900/60 font-semibold px-6 py-2 h-9 text-xs border border-white/30 cursor-pointer"
+              className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white font-semibold px-5 h-9 text-xs border-none cursor-pointer"
               onClick={() => openAuthModal("signup")}
             >
               Sign up

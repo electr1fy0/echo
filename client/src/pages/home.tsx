@@ -239,10 +239,10 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="relative overflow-hidden rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-background p-6 shadow-sm">
+        <div className="relative overflow-hidden rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-background p-6">
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-1">
-              <h3 className="text-base font-semibold text-neutral-800 dark:text-neutral-100">
+              <h3 className="text-base font-normal text-neutral-800 dark:text-neutral-100">
                 Join the Echo community
               </h3>
               <p className="text-xs text-neutral-600 dark:text-neutral-400 max-w-[28rem] leading-relaxed">

@@ -190,8 +190,8 @@ export function AuthDialog() {
           </div>
         ) : (
           <>
-            <DialogHeader className="text-center pb-2">
-              <div className="my-2 flex justify-center">
+            <DialogHeader className="text-left pb-2">
+              <div className="my-2 flex justify-start">
                 <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
                   <img
                     src="/echologo.svg"
@@ -200,8 +200,8 @@ export function AuthDialog() {
                   />
                 </div>
               </div>
-              <DialogTitle className="text-lg text-center font-semibold">{copy.title}</DialogTitle>
-              <DialogDescription className="text-center text-xs">
+              <DialogTitle className="text-lg text-left font-semibold">{copy.title}</DialogTitle>
+              <DialogDescription className="text-left text-xs">
                 {copy.description}
               </DialogDescription>
             </DialogHeader>

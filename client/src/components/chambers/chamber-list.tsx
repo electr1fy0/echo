@@ -10,6 +10,7 @@ import { cn, getInitials } from "@/lib/utils";
 import { Link } from "react-router";
 import type { Chamber } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
 import { EditChamberDialog } from "@/components/chambers/edit-chamber-dialog";
 function formatMemberCount(count: number): string {
   if (count >= 1000) {
@@ -25,6 +26,7 @@ import { useJoinChamber, useLeaveChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "./consts";
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const { data: user } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
   const joinMutation = useJoinChamber();
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
@@ -34,6 +36,10 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const canEdit = !!user?.username && user.username === chamber.creatorUsername;
   const handleToggleJoin = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!user) {
+      openAuthModal("signin");
+      return;
+    }
     if (!chamber.uid || isPending) return;
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid);
