@@ -171,11 +171,13 @@ export function QuestionItem({
   const [editedTradeStatus, setEditedTradeStatus] = useState(question?.tradeStatus ?? "available");
 
   const [editedPartnerSlotsNeeded, setEditedPartnerSlotsNeeded] = useState(question?.partnerSlotsNeeded ?? 1);
+  const [editedPartnerStatus, setEditedPartnerStatus] = useState(question?.partnerStatus ?? "open");
 
   const [editedTaxiDeparture, setEditedTaxiDeparture] = useState(question?.taxiDeparture ?? "");
   const [editedTaxiDestination, setEditedTaxiDestination] = useState(question?.taxiDestination ?? "");
   const [editedTaxiDatetime, setEditedTaxiDatetime] = useState(question?.taxiDatetime ?? "");
   const [editedTaxiSeatsAvailable, setEditedTaxiSeatsAvailable] = useState(question?.taxiSeatsAvailable ?? 1);
+  const [editedTaxiStatus, setEditedTaxiStatus] = useState(question?.taxiStatus ?? "open");
 
   const [interestSent, setInterestSent] = useState(false);
 
@@ -199,12 +201,14 @@ export function QuestionItem({
         } : {}),
         ...(question.postType === "partner" ? {
           partnerSlotsNeeded: Number(editedPartnerSlotsNeeded),
+          partnerStatus: editedPartnerStatus,
         } : {}),
         ...(question.postType === "taxi" ? {
           taxiDeparture: editedTaxiDeparture,
           taxiDestination: editedTaxiDestination,
           taxiDatetime: editedTaxiDatetime,
           taxiSeatsAvailable: Number(editedTaxiSeatsAvailable),
+          taxiStatus: editedTaxiStatus,
         } : {}),
       },
       {
@@ -491,7 +495,7 @@ export function QuestionItem({
                 {question.postType === "partner" && (
                   <div className="flex items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-neutral-800">
                     <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 select-none">Slots</span>
-                    <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                    <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden mr-2">
                       <button
                         type="button"
                         onClick={() => setEditedPartnerSlotsNeeded(Math.max(1, editedPartnerSlotsNeeded - 1))}
@@ -506,6 +510,14 @@ export function QuestionItem({
                         className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
                       >+</button>
                     </div>
+                    <select
+                      value={editedPartnerStatus}
+                      onChange={(e) => setEditedPartnerStatus(e.target.value)}
+                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
+                    >
+                      <option value="open">Open</option>
+                      <option value="done">Done</option>
+                    </select>
                   </div>
                 )}
 
@@ -534,7 +546,7 @@ export function QuestionItem({
                     />
                     <div className="flex items-center gap-1">
                       <span className="text-[10px] font-semibold text-neutral-400 select-none">Seats</span>
-                      <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
+                      <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden mr-2">
                         <button
                           type="button"
                           onClick={() => setEditedTaxiSeatsAvailable(Math.max(1, editedTaxiSeatsAvailable - 1))}
@@ -550,6 +562,14 @@ export function QuestionItem({
                         >+</button>
                       </div>
                     </div>
+                    <select
+                      value={editedTaxiStatus}
+                      onChange={(e) => setEditedTaxiStatus(e.target.value)}
+                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
+                    >
+                      <option value="open">Open</option>
+                      <option value="done">Done</option>
+                    </select>
                   </div>
                 )}
 
@@ -564,10 +584,12 @@ export function QuestionItem({
                       setEditedTradeCondition(question.tradeCondition ?? "Like New");
                       setEditedTradeStatus(question.tradeStatus ?? "available");
                       setEditedPartnerSlotsNeeded(question.partnerSlotsNeeded ?? 1);
+                      setEditedPartnerStatus(question.partnerStatus ?? "open");
                       setEditedTaxiDeparture(question.taxiDeparture ?? "");
                       setEditedTaxiDestination(question.taxiDestination ?? "");
                       setEditedTaxiDatetime(question.taxiDatetime ?? "");
                       setEditedTaxiSeatsAvailable(question.taxiSeatsAvailable ?? 1);
+                      setEditedTaxiStatus(question.taxiStatus ?? "open");
                     }}
                     disabled={isUpdatePending}
                   >
@@ -664,14 +686,28 @@ export function QuestionItem({
                         <HugeiconsIcon icon={UserMultiple02Icon} className="size-4" />
                       </div>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">Partner Finder</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">Partner Finder</span>
+                          <span className={cn(
+                            "flex items-center gap-1 font-semibold text-[10px]",
+                            (question.partnerStatus ?? "open") === "open"
+                              ? "text-emerald-600 dark:text-emerald-450"
+                              : "text-neutral-500 dark:text-neutral-450"
+                          )}>
+                            <span className={cn(
+                              "size-1.5 rounded-full inline-block shrink-0",
+                              (question.partnerStatus ?? "open") === "open" ? "bg-emerald-500" : "bg-neutral-400"
+                            )} />
+                            {(question.partnerStatus ?? "open") === "open" ? "Open" : "Done"}
+                          </span>
+                        </div>
                         <span className="text-neutral-700 dark:text-neutral-300 font-medium text-xs">
                           Looking for <strong className="text-neutral-900 dark:text-neutral-100 font-bold text-sm bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded border border-neutral-200/50 dark:border-neutral-700/60">{question.partnerSlotsNeeded || 0}</strong>
                           {" "}{question.partnerSlotsNeeded === 1 ? "partner" : "partners"}
                         </span>
                       </div>
                     </div>
-                    {user?.username !== question.authorUsername && (
+                    {user?.username !== question.authorUsername && (question.partnerStatus ?? "open") === "open" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -717,7 +753,21 @@ export function QuestionItem({
                         <HugeiconsIcon icon={Car01Icon} className="size-4" />
                       </div>
                       <div className="flex flex-col gap-0.5 min-w-0 w-full">
-                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Taxi Sharing</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Taxi Sharing</span>
+                          <span className={cn(
+                            "flex items-center gap-1 font-semibold text-[10px]",
+                            (question.taxiStatus ?? "open") === "open"
+                              ? "text-emerald-600 dark:text-emerald-450"
+                              : "text-neutral-500 dark:text-neutral-450"
+                          )}>
+                            <span className={cn(
+                              "size-1.5 rounded-full inline-block shrink-0",
+                              (question.taxiStatus ?? "open") === "open" ? "bg-emerald-500" : "bg-neutral-400"
+                            )} />
+                            {(question.taxiStatus ?? "open") === "open" ? "Open" : "Done"}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
                             {question.taxiDeparture} <span className="text-purple-500 dark:text-purple-400 font-bold mx-0.5">→</span> {question.taxiDestination}
@@ -752,7 +802,7 @@ export function QuestionItem({
                         </div>
                       </div>
                     </div>
-                    {user?.username !== question.authorUsername && (
+                    {user?.username !== question.authorUsername && (question.taxiStatus ?? "open") === "open" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

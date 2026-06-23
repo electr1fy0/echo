@@ -28,6 +28,8 @@ const QuestionDetailPage = lazy(() => import("@/pages/question-detail"));
 const DMsPage = lazy(() => import("@/pages/dms"));
 const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
 
+import { CreatePostDialog } from "@/components/questions/create-post-dialog";
+
 function AuthenticatedLayout() {
   const { data: user, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModal();
@@ -48,19 +50,20 @@ function AuthenticatedLayout() {
     if (token) {
       clearGoogleOnboardingToken();
       setToken(token);
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.refetchQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       navigate("/", { replace: true });
     }
   }, [searchParams, navigate, queryClient]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-hidden">
       <AppSidebar />
-      <main className="w-full flex flex-col items-center md:pl-20">
+      <main className="w-full flex flex-col items-center md:pl-20 min-h-0">
         <Outlet />
       </main>
       <AuthDialog />
+      <CreatePostDialog />
       {!user && !isLoading && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] animate-in slide-in-from-bottom duration-500">
           <div>

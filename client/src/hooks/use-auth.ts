@@ -1,13 +1,29 @@
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signin, signup, verifySession, signout } from "@/api/auth";
 import { getToken } from "@/lib/utils";
 import { useNavigate } from "react-router";
+
+export function useToken() {
+  const [token, setTokenState] = useState(getToken);
+  useEffect(() => {
+    const handleTokenChange = () => {
+      setTokenState(getToken());
+    };
+    window.addEventListener("auth-token-change", handleTokenChange);
+    return () => {
+      window.removeEventListener("auth-token-change", handleTokenChange);
+    };
+  }, []);
+  return token;
+}
+
 export function useSignin() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: signin,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth"] });
+      queryClient.refetchQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
   });
@@ -18,10 +34,11 @@ export function useSignup() {
   });
 }
 export function useAuth() {
+  const token = useToken();
   return useQuery({
-    queryKey: ["auth"],
+    queryKey: ["auth", token],
     queryFn: verifySession,
-    enabled: !!getToken(),
+    enabled: !!token,
     retry: false,
     staleTime: 5 * 60 * 1000,
   });
@@ -32,7 +49,8 @@ export function useSignout() {
   return useMutation({
     mutationFn: signout,
     onSuccess: () => {
-      queryClient.setQueryData(["auth"], undefined);
+      const token = getToken();
+      queryClient.setQueryData(["auth", token], undefined);
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       navigate("/", { replace: true });
@@ -49,7 +67,8 @@ export function useDeleteAccount() {
   return useMutation({
     mutationFn: deleteAccount,
     onSuccess: () => {
-      queryClient.setQueryData(["auth"], undefined);
+      const token = getToken();
+      queryClient.setQueryData(["auth", token], undefined);
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       navigate("/", { replace: true });

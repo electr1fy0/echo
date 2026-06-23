@@ -71,6 +71,7 @@ export const posts = pgTable("posts", {
   partnerTargetGrade: text("partner_target_grade"),
   partnerWorkstyle: text("partner_workstyle"),
   partnerSlotsNeeded: integer("partner_slots_needed"),
+  partnerStatus: text("partner_status").default("open"),
 
   // Campus Trade metadata
   tradePrice: integer("trade_price"),
@@ -83,6 +84,7 @@ export const posts = pgTable("posts", {
   taxiDestination: text("taxi_destination"),
   taxiDatetime: text("taxi_datetime"),
   taxiSeatsAvailable: integer("taxi_seats_available"),
+  taxiStatus: text("taxi_status").default("open"),
 });
 
 export const replies = pgTable("replies", {

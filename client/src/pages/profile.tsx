@@ -175,9 +175,9 @@ export default function Profile() {
   return (
     <PageTransition className="max-w-[40rem] w-full mt-0 space-y-0 pb-36 md:pb-16 relative">
       {isProfileLoading ? (
-        <Skeleton className="h-28 w-full mb-2 mx-4" />
+        <Skeleton className="h-28 w-auto mb-2 mx-4" />
       ) : (
-        <div className="h-40 w-full mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
+        <div className="h-40 w-auto mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
           <FluidGradientText text={displayUser.username} svgViewBoxHeight={240} />
         </div>
       )}
@@ -414,7 +414,7 @@ export default function Profile() {
           Recent Activity
         </h3>
         {isQnLoading ? (
-          <QuestionListSkeleton count={3} />
+          <QuestionListSkeleton />
         ) : qnError ? (
           <p className="text-red-500 text-sm">Failed to load activity</p>
         ) : (

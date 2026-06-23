@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
-import { Search01Icon, ArrowRight01Icon, BookOpen01Icon, Fire02Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useDeleteQuestion, useInfiniteQuestionsQuery } from "@/hooks/use-questions";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
@@ -100,7 +100,6 @@ export default function Explore() {
   const { open: openAuthModal } = useAuthModal();
   const [query, setQuery] = useState("");
   const [createChamberOpen, setCreateChamberOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"trending" | "directory">("trending");
   const navigate = useNavigate();
 
   const { data: searchResults, isLoading: isSearching } = useGlobalSearch(query);
@@ -112,7 +111,7 @@ export default function Explore() {
     isFetchingNextPage,
     isLoading: isTrendingLoading,
     error: trendingError,
-  } = useInfiniteQuestionsQuery("votes");
+  } = useInfiniteQuestionsQuery("hot");
   const trendingQuestions = trendingData ? trendingData.pages.flat() : [];
 
   const { mutate: deleteQuestion } = useDeleteQuestion();
@@ -211,7 +210,7 @@ export default function Explore() {
       {isSearchMode ? (
         <div className="space-y-8">
           {isLoading ? (
-            <QuestionListSkeleton count={3} />
+            <QuestionListSkeleton />
           ) : (
             <>
               {users.length > 0 && (
@@ -270,6 +269,7 @@ export default function Explore() {
                   <QuestionList
                     questions={searchQuestions}
                     onDelete={deleteQuestion}
+                    showChamberName
                   />
                 </div>
               )}
@@ -295,146 +295,86 @@ export default function Explore() {
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex border-b border-neutral-100 dark:border-neutral-800">
-            <button
-              onClick={() => setActiveTab("trending")}
-              className={cn(
-                "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer",
-                activeTab === "trending"
-                  ? "text-[#ff5a1f]"
-                  : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-              )}
-            >
-              <HugeiconsIcon icon={Fire02Icon} className="size-4" />
-              Trending Feed
-              {activeTab === "trending" && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ff5a1f]" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("directory")}
-              className={cn(
-                "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer",
-                activeTab === "directory"
-                  ? "text-[#ff5a1f]"
-                  : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-              )}
-            >
-              <HugeiconsIcon icon={BookOpen01Icon} className="size-4" />
-              All Chambers
-              {activeTab === "directory" && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#ff5a1f]" />
-              )}
-            </button>
-          </div>
-
-          {activeTab === "trending" && (
-            <>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between px-1">
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">
-                    Recommended Chambers
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs h-7 gap-1"
-                    onClick={() => setActiveTab("directory")}
-                  >
-                    Browse all
-                    <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
-                  </Button>
-                </div>
-                {isChambersLoading ? (
-                  <ChamberListSkeleton count={3} />
-                ) : (
-                  <div className="grid grid-cols-1 gap-3">
-                    {chambers.slice(0, 3).map((chamber) => (
-                      <DirectoryChamberCard
-                        key={chamber.uid}
-                        chamber={chamber}
-                        onJoinClick={handleJoinLeave}
-                      />
-                    ))}
-                  </div>
-                )}
-                <CreateChamberButton onClick={() => {
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">
+                Recommended Chambers
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7 gap-1"
+                onClick={() => {
                   if (!user) {
                     openAuthModal("signin");
                   } else {
-                    setCreateChamberOpen(true);
+                    navigate("/chambers");
                   }
-                }} />
+                }}
+              >
+                Browse all
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3" />
+              </Button>
+            </div>
+            {isChambersLoading ? (
+              <ChamberListSkeleton count={3} />
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {chambers.slice(0, 3).map((chamber) => (
+                  <DirectoryChamberCard
+                    key={chamber.uid}
+                    chamber={chamber}
+                    onJoinClick={handleJoinLeave}
+                  />
+                ))}
               </div>
+            )}
+            <CreateChamberButton onClick={() => {
+              if (!user) {
+                openAuthModal("signin");
+              } else {
+                setCreateChamberOpen(true);
+              }
+            }} />
+          </div>
+          <div className="space-y-4">
+            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm px-1">
+              Hot Conversations
+            </h3>
+            {isTrendingLoading ? (
+              <QuestionListSkeleton />
+            ) : trendingError ? (
+              <p className="text-red-500 text-sm px-1">
+                Failed to load questions
+              </p>
+            ) : (
               <div className="space-y-4">
-                <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm px-1">
-                  Trending Conversations
-                </h3>
-                {isTrendingLoading ? (
-                  <QuestionListSkeleton count={4} />
-                ) : trendingError ? (
-                  <p className="text-red-500 text-sm px-1">
-                    Failed to load questions
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    <QuestionList
-                      questions={trendingQuestions}
-                      onDelete={(id) => deleteQuestion(id)}
-                    />
-                    {hasNextPage && (
-                      <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
-                        <Button
-                          variant="outline"
-                          onClick={() => fetchNextPage()}
-                          disabled={isFetchingNextPage}
-                          className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
-                        >
-                          {isFetchingNextPage ? (
-                            <>
-                              <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
-                              Loading more...
-                            </>
-                          ) : (
-                            "Load More"
-                          )}
-                        </Button>
-                      </div>
-                    )}
+                <QuestionList
+                  questions={trendingQuestions}
+                  onDelete={(id) => deleteQuestion(id)}
+                />
+                {hasNextPage && (
+                  <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      className="rounded-full w-full py-5 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors gap-2 cursor-pointer"
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <span className="inline-block animate-spin size-4 rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-neutral-800 dark:border-t-neutral-200" />
+                          Loading more...
+                        </>
+                      ) : (
+                        "Load More"
+                      )}
+                    </Button>
                   </div>
                 )}
               </div>
-            </>
-          )}
-
-          {activeTab === "directory" && (
-            <div className="space-y-4">
-              {isChambersLoading ? (
-                <ChamberListSkeleton count={4} />
-              ) : chambers.length === 0 ? (
-                <p className="text-sm text-neutral-500 text-center py-6">
-                  No chambers created yet. Be the first to create one!
-                </p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {chambers.map((chamber) => (
-                    <DirectoryChamberCard
-                      key={chamber.uid}
-                      chamber={chamber}
-                      onJoinClick={handleJoinLeave}
-                    />
-                  ))}
-                </div>
-              )}
-              <CreateChamberButton onClick={() => {
-                if (!user) {
-                  openAuthModal("signin");
-                } else {
-                  setCreateChamberOpen(true);
-                }
-              }} />
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
       <CreateChamberDialog

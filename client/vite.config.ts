@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["turnsout.svg", "turnsoutlogo.svg", "thumb.jpeg"],
+      includeAssets: ["turnsout.svg", "turnsoutlogo.svg", "thumb.jpg"],
       manifest: {
         name: "TurnsOut",
         short_name: "TurnsOut",

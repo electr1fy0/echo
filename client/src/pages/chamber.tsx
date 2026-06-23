@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -7,12 +7,9 @@ import {
   ArrowLeft02Icon,
   Calendar03Icon,
   PencilEdit02Icon,
-  BubbleChatIcon,
-  UserGroupIcon,
-  ShoppingBag01Icon,
-  Car01Icon,
   Pin02Icon,
   Delete02Icon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { useNavigate, useParams } from "react-router";
 import { QuestionList } from "@/components/questions/question-list";
@@ -69,19 +66,20 @@ export default function ChamberPage() {
   const deleteChamberMutation = useDeleteChamber();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  // Tab State
-  const [activeSubTab, setActiveSubTab] = useState<"all" | "discussions" | "partners" | "marketplace" | "taxi">("all");
+  // Search, Sort, Filter state
+  const [searchVal, setSearchVal] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"time_created" | "votes" | "hot">("hot");
+  const [postScope, setPostScope] = useState<"all" | "my-posts">("all");
+  const [postTypeFilter, setPostTypeFilter] = useState<"all" | "qna" | "partner" | "trade" | "taxi">("all");
+  const [publisherPostType, setPublisherPostType] = useState<"qna" | "partner" | "trade" | "taxi">("qna");
 
-  // Map sub tab to API post type (undefined = fetch all)
-  const postTypeFilter: "qna" | "partner" | "trade" | "taxi" | undefined = activeSubTab === "discussions"
-    ? "qna"
-    : activeSubTab === "partners"
-      ? "partner"
-      : activeSubTab === "marketplace"
-        ? "trade"
-        : activeSubTab === "taxi"
-          ? "taxi"
-          : undefined;
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchVal);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
 
   const {
     data: questionsData,
@@ -90,16 +88,17 @@ export default function ChamberPage() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteQuestionsQuery(
-    "time_created",
+    sortBy,
     undefined,
     chamberId,
-    undefined,
+    postScope === "my-posts" ? user?.username : undefined,
     20,
-    postTypeFilter,
-    false
+    postTypeFilter === "all" ? undefined : postTypeFilter,
+    false,
+    debouncedSearch || undefined
   );
   const questions = questionsData ? questionsData.pages.flat() : [];
-  const { data: pinnedPosts = [] } = usePinnedQuestionsQuery(chamberId, postTypeFilter);
+  const { data: pinnedPosts = [] } = usePinnedQuestionsQuery(chamberId, postTypeFilter === "all" ? undefined : postTypeFilter);
 
   // Publisher State & Hooks
   const { mutate: submitQuestion, isPending: isCreatePending } = useCreateQuestion();
@@ -116,11 +115,7 @@ export default function ChamberPage() {
   const [taxiDestination, setTaxiDestination] = useState("");
   const [taxiDatetime, setTaxiDatetime] = useState("");
 
-  // All tab: selected post type
-  const [selectedAllPostType, setSelectedAllPostType] = useState<"qna" | "partner" | "trade" | "taxi">("qna");
 
-  // Effective post type for the publisher card
-  const effectivePostType = activeSubTab === "all" ? selectedAllPostType : postTypeFilter;
 
   const handlePublish = async () => {
     if (!draft.content.trim() || !chamberId || isCreatePending) return;
@@ -128,15 +123,15 @@ export default function ChamberPage() {
     const payload = {
       content: draft.content,
       chamberUid: chamberId,
-      postType: effectivePostType,
-      ...(effectivePostType === "partner" ? {
+      postType: publisherPostType,
+      ...(publisherPostType === "partner" ? {
         partnerSlotsNeeded: Number(partnerSlotsNeeded),
       } : {}),
-      ...(effectivePostType === "trade" ? {
+      ...(publisherPostType === "trade" ? {
         tradePrice: Math.round(Number(tradePrice) * 100), // Convert to cents
         tradeCondition,
       } : {}),
-      ...(effectivePostType === "taxi" ? {
+      ...(publisherPostType === "taxi" ? {
         taxiDeparture,
         taxiDestination,
         taxiDatetime,
@@ -218,7 +213,7 @@ export default function ChamberPage() {
           </div>
           <Skeleton className="h-9 w-20 rounded-full" />
         </div>
-        <QuestionListSkeleton count={3} />
+        <QuestionListSkeleton />
       </div>
     );
   }
@@ -332,85 +327,28 @@ export default function ChamberPage() {
         </div>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex border-b border-neutral-200 dark:border-neutral-800 mb-6 overflow-x-auto scrollbar-none">
-        <button
-          onClick={() => setActiveSubTab("all")}
-          className={cn(
-            "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer shrink-0",
-            activeSubTab === "all"
-              ? "text-neutral-900 dark:text-neutral-100"
-              : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-          )}
-        >
-          All
-          {activeSubTab === "all" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-neutral-100" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSubTab("discussions")}
-          className={cn(
-            "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer shrink-0",
-            activeSubTab === "discussions"
-              ? "text-neutral-900 dark:text-neutral-100"
-              : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-          )}
-        >
-          <HugeiconsIcon icon={BubbleChatIcon} className="size-4" />
-          Discussions
-          {activeSubTab === "discussions" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-neutral-100" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSubTab("partners")}
-          className={cn(
-            "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer shrink-0",
-            activeSubTab === "partners"
-              ? "text-neutral-900 dark:text-neutral-100"
-              : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-          )}
-        >
-          <HugeiconsIcon icon={UserGroupIcon} className="size-4" />
-          Find Partners
-          {activeSubTab === "partners" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-neutral-100" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSubTab("marketplace")}
-          className={cn(
-            "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer shrink-0",
-            activeSubTab === "marketplace"
-              ? "text-neutral-900 dark:text-neutral-100"
-              : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-          )}
-        >
-          <HugeiconsIcon icon={ShoppingBag01Icon} className="size-4" />
-          Marketplace
-          {activeSubTab === "marketplace" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-neutral-100" />
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSubTab("taxi")}
-          className={cn(
-            "flex items-center gap-2 pb-3 px-4 text-xs font-semibold tracking-wide relative cursor-pointer shrink-0",
-            activeSubTab === "taxi"
-              ? "text-neutral-900 dark:text-neutral-100"
-              : "text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-          )}
-        >
-          <HugeiconsIcon icon={Car01Icon} className="size-4" />
-          Taxi
-          {activeSubTab === "taxi" && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-neutral-900 dark:bg-neutral-100" />
-          )}
-        </button>
-      </div>
-
-      {/* Dynamic Publisher Card */}
+      {/* Search Input Bar (No Outer Box) */}
+      <div className="relative w-full mb-6">
+        <HugeiconsIcon
+          icon={Search01Icon}
+          className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400 dark:text-neutral-500"
+        />
+        <input
+          type="text"
+          placeholder="Search in this chamber..."
+          value={searchVal}
+          onChange={(e) => setSearchVal(e.target.value)}
+          className="w-full h-10 pl-10 pr-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background/50 dark:bg-background/20 text-sm text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-all shadow-sm"
+        />
+        {searchVal && (
+          <button
+            onClick={() => setSearchVal("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors text-xs font-semibold cursor-pointer border-none bg-transparent flex items-center justify-center"
+          >
+            ✕
+          </button>
+        )}
+      </div>      {/* Dynamic Publisher Card */}
       {isAuthLoading && chamber.isJoined ? (
         <div className="border border-dashed border-neutral-300 dark:border-neutral-700 bg-background rounded-2xl mb-6 p-4 space-y-3 animate-pulse">
           <div className="h-10 bg-neutral-100 dark:bg-neutral-800 rounded-xl" />
@@ -423,11 +361,11 @@ export default function ChamberPage() {
         <div className="border border-dashed border-neutral-300 dark:border-neutral-700 bg-background rounded-2xl mb-6 transition-colors focus-within:border-neutral-400 dark:focus-within:border-neutral-500 overflow-hidden">
           <MentionField
               placeholder={
-                activeSubTab === "all" || activeSubTab === "discussions"
+                publisherPostType === "qna"
                   ? "Ask a question or share class news..."
-                  : activeSubTab === "partners"
+                  : publisherPostType === "partner"
                     ? "Describe the project and what you're looking for..."
-                    : activeSubTab === "marketplace"
+                    : publisherPostType === "trade"
                       ? "List what you're selling and any relevant details..."
                       : "Describe your taxi route and ride details..."
               }
@@ -438,32 +376,30 @@ export default function ChamberPage() {
             multiline
           />
 
-          {/* All tab: post type selector above toolbar */}
-          {activeSubTab === "all" && (
-            <div className="flex items-center gap-1 px-3 py-1.5 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40">
-              {(["qna", "partner", "trade", "taxi"] as const).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setSelectedAllPostType(type)}
-                  className={cn(
-                    "h-6 px-2 rounded-md text-[11px] font-semibold transition-colors cursor-pointer border whitespace-nowrap",
-                    selectedAllPostType === type
-                      ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                      : "bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600",
-                  )}
-                >
-                  {type === "qna" ? "Discussions" : type === "partner" ? "Partners" : type === "trade" ? "Marketplace" : "Taxi"}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Post Type Selector tabs */}
+          <div className="flex items-center gap-1 px-3 py-1.5 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 overflow-x-auto scrollbar-none">
+            {(["qna", "partner", "trade", "taxi"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setPublisherPostType(type)}
+                className={cn(
+                  "h-6 px-2 rounded-md text-[11px] font-semibold transition-colors cursor-pointer border whitespace-nowrap",
+                  publisherPostType === type
+                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                    : "bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600",
+                )}
+              >
+                {type === "qna" ? "Discussions" : type === "partner" ? "Partners" : type === "trade" ? "Marketplace" : "Taxi"}
+              </button>
+            ))}
+          </div>
 
           {/* Single inline toolbar row */}
           <div className="flex items-center gap-2 px-3 py-2 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40">
 
             {/* Partners: compact slot stepper */}
-            {effectivePostType === "partner" && (
+            {publisherPostType === "partner" && (
               <div className="flex items-center gap-1.5 mr-auto">
                 <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 select-none">
                   Slots
@@ -491,7 +427,7 @@ export default function ChamberPage() {
             )}
 
             {/* Taxi: inline departure, destination, datetime, seats */}
-            {effectivePostType === "taxi" && (
+            {publisherPostType === "taxi" && (
               <div className="flex items-center gap-2 mr-auto flex-wrap">
                 <input
                   type="text"
@@ -517,7 +453,7 @@ export default function ChamberPage() {
             )}
 
             {/* Marketplace: inline price + condition */}
-            {effectivePostType === "trade" && (
+            {publisherPostType === "trade" && (
               <div className="flex items-center gap-2 mr-auto">
                 <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden h-7 bg-background">
                   <span className="px-2 text-xs text-neutral-400 font-medium select-none border-r border-neutral-200 dark:border-neutral-700">
@@ -546,7 +482,7 @@ export default function ChamberPage() {
             )}
 
             {/* Spacer: push actions right when no metadata */}
-            {effectivePostType === "qna" && <div className="flex-1" />}
+            {publisherPostType === "qna" && <div className="flex-1" />}
 
             {/* Disappearing posts toggle */}
             <div className="relative">
@@ -591,8 +527,56 @@ export default function ChamberPage() {
         </div>
       ) : null}
 
+      {/* Filters and Sort Row */}
+      <div className="flex items-center gap-2 flex-wrap mb-6">
+        {/* Sort By Dropdown */}
+        <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30">
+          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Sort</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as "time_created" | "votes" | "hot")}
+            className="bg-transparent text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer border-none pr-4"
+          >
+            <option value="hot">Hot</option>
+            <option value="time_created">Recent</option>
+            <option value="votes">Top Posts</option>
+          </select>
+        </div>
+
+        {/* Post Type Filter Dropdown */}
+        <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30">
+          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Type</span>
+          <select
+            value={postTypeFilter}
+            onChange={(e) => setPostTypeFilter(e.target.value as "all" | "qna" | "partner" | "trade" | "taxi")}
+            className="bg-transparent text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer border-none pr-4"
+          >
+            <option value="all">All posts</option>
+            <option value="qna">Discussions</option>
+            <option value="partner">Find Partners</option>
+            <option value="trade">Marketplace</option>
+            <option value="taxi">Taxi / Rides</option>
+          </select>
+        </div>
+
+        {/* Scope Filter */}
+        {user && (
+          <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Scope</span>
+            <select
+              value={postScope}
+              onChange={(e) => setPostScope(e.target.value as "all" | "my-posts")}
+              className="bg-transparent text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer border-none pr-4"
+            >
+              <option value="all">All authors</option>
+              <option value="my-posts">My posts</option>
+            </select>
+          </div>
+        )}
+      </div>
+
       {/* Pinned Posts Carousel */}
-      {pinnedPosts.length > 0 && (
+      {pinnedPosts.length > 0 && !debouncedSearch && (
         <div className="mb-6 space-y-2">
           <div className="flex items-center gap-1.5 px-1 text-[11px] font-bold text-neutral-400 dark:text-neutral-500">
             <HugeiconsIcon icon={Pin02Icon} className="size-3.5 text-[#ff5a1f]" />
@@ -613,7 +597,7 @@ export default function ChamberPage() {
       {/* Post feed block */}
       <div className="space-y-4">
         {isLoading ? (
-          <QuestionListSkeleton count={3} />
+          <QuestionListSkeleton />
         ) : questions.length > 0 ? (
           <div className="space-y-4">
             <QuestionList

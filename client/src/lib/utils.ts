@@ -9,9 +9,11 @@ export function getToken() {
 }
 export function setToken(token: string) {
   localStorage.setItem("token", token);
+  window.dispatchEvent(new Event("auth-token-change"));
 }
 export function removeToken() {
   localStorage.removeItem("token");
+  window.dispatchEvent(new Event("auth-token-change"));
 }
 export function setGoogleOnboardingToken(token: string) {
   localStorage.setItem(GOOGLE_ONBOARDING_TOKEN_KEY, token);

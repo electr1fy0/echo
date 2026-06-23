@@ -25,6 +25,8 @@ import { UpvoteButton } from "@/components/upvote-button";
 import { ReplyItem } from "@/components/questions/reply-item";
 import { ReplyForm } from "@/components/questions/reply-form";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
 
 export default function QuestionDetailPage() {
   const { questionId } = useParams<{ questionId: string }>();
@@ -325,6 +327,21 @@ export default function QuestionDetailPage() {
 
         {question.postType === "partner" && (
           <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200/50 pb-2">
+              <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Partner Requirements</span>
+              <span className={cn(
+                "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5",
+                (question.partnerStatus ?? "open") === "open"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-450"
+                  : "bg-neutral-100 text-neutral-600 dark:bg-neutral-900 dark:text-neutral-450"
+              )}>
+                <span className={cn(
+                  "size-1.5 rounded-full inline-block shrink-0",
+                  (question.partnerStatus ?? "open") === "open" ? "bg-emerald-500" : "bg-neutral-400"
+                )} />
+                {question.partnerStatus ?? "open"}
+              </span>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center p-2 rounded-lg bg-background">
                 <HugeiconsIcon icon={UserMultiple02Icon} className="size-4 text-neutral-400 mx-auto" />
@@ -348,7 +365,7 @@ export default function QuestionDetailPage() {
             </div>
 
             {/* Apply Button */}
-            {user?.username !== question.authorUsername && (
+            {user?.username !== question.authorUsername && (question.partnerStatus ?? "open") === "open" && (
               <div>
                 {!isApplying ? (
                   <Button
@@ -396,6 +413,21 @@ export default function QuestionDetailPage() {
         )}
         {question.postType === "taxi" && (
           <div className="p-4 rounded-xl bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200/50 pb-2">
+              <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Trip Details</span>
+              <span className={cn(
+                "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5",
+                (question.taxiStatus ?? "open") === "open"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-450"
+                  : "bg-neutral-100 text-neutral-600 dark:bg-neutral-900 dark:text-neutral-450"
+              )}>
+                <span className={cn(
+                  "size-1.5 rounded-full inline-block shrink-0",
+                  (question.taxiStatus ?? "open") === "open" ? "bg-emerald-500" : "bg-neutral-400"
+                )} />
+                {question.taxiStatus ?? "open"}
+              </span>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               {question.taxiDeparture && (
                 <div>
@@ -424,7 +456,7 @@ export default function QuestionDetailPage() {
                 </div>
               )}
             </div>
-            {user?.username !== question.authorUsername && (
+            {user?.username !== question.authorUsername && (question.taxiStatus ?? "open") === "open" && (
               <div className="border-t border-neutral-200/50 pt-3">
                 {!showInterestForm ? (
                   <Button

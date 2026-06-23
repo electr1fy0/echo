@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ function normalizeUsername(value: string) {
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +54,8 @@ export default function Onboarding() {
 
       setToken(data.token);
       clearGoogleOnboardingToken();
+      queryClient.refetchQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
       navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to complete onboarding");

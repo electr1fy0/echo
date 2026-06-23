@@ -100,7 +100,7 @@ export default function PublicProfile() {
 
   return (
     <PageTransition className="max-w-[40rem] w-full mt-0 space-y-0 pb-36 md:pb-16 relative">
-      <div className="h-40 w-full mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
+      <div className="h-40 w-auto mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
         <FluidGradientText text={user.username} svgViewBoxHeight={240} />
       </div>
       <div className="px-4">
@@ -183,7 +183,7 @@ export default function PublicProfile() {
           Questions
         </h3>
         {isQnLoading ? (
-          <QuestionListSkeleton count={3} />
+          <QuestionListSkeleton />
         ) : questions.length > 0 ? (
           <div className="space-y-4">
             <QuestionList questions={questions} />

@@ -7,6 +7,7 @@ import {
   FavouriteIcon,
   Message01Icon,
   UserIcon,
+  Add01Icon,
 } from "@hugeicons/core-free-icons";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -15,12 +16,21 @@ import { cn, getInitials } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useCreatePostModal } from "@/hooks/use-create-post-modal";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 interface NavItem {
   icon: typeof Home01Icon;
   path?: string;
   label: string;
   hasBadge?: boolean;
+  shortcut?: string;
 }
 
 function NavButton({
@@ -29,6 +39,7 @@ function NavButton({
   hasBadge,
   isMobile,
   onClick,
+  ...rest
 }: {
   icon: typeof Home01Icon;
   isActive?: boolean;
@@ -47,6 +58,7 @@ function NavButton({
           ? "text-neutral-900 dark:text-neutral-100"
           : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
       )}
+      {...rest}
     >
       <HugeiconsIcon
         icon={icon}
@@ -71,6 +83,7 @@ function ProfileButton({
   isMobile,
   isActive,
   onClick,
+  ...rest
 }: {
   user: User | null | undefined;
   isLoading?: boolean;
@@ -89,6 +102,7 @@ function ProfileButton({
           ? "text-neutral-900 dark:text-white"
           : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300",
       )}
+      {...rest}
     >
       {isLoading ? (
         <div className="size-6 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse" />
@@ -113,23 +127,26 @@ export function AppSidebar() {
   const location = useLocation();
   const { data: user, isLoading } = useAuth();
   const { open: openAuthModal } = useAuthModal();
+  const { open: openCreatePost } = useCreatePostModal();
   const { data: chambersData = [] } = useListChambers();
 
   const joinedChambers = chambersData.filter((c) => c.isJoined);
 
   const navItems: NavItem[] = [
-    { icon: Home01Icon, path: "/", label: "Home" },
-    { icon: Search01Icon, path: "/explore", label: "Explore" },
+    { icon: Home01Icon, path: "/", label: "Home", shortcut: "1" },
+    { icon: Search01Icon, path: "/explore", label: "Explore", shortcut: "2" },
     {
       icon: Message01Icon,
       path: "/dm",
       label: "Messages",
+      shortcut: "3",
     },
     {
       icon: FavouriteIcon,
       path: "/notifications",
       label: "Notifications",
       hasBadge: true,
+      shortcut: "4",
     },
   ];
 
@@ -150,35 +167,69 @@ export function AppSidebar() {
 
   const isActive = (path?: string) => path === location.pathname;
 
+  useKeyboardShortcuts({
+    1: () => navigate("/"),
+    2: () => navigate("/explore"),
+    3: () => {
+      if (!user) { openAuthModal("signin"); return; }
+      navigate("/dm");
+    },
+    4: () => {
+      if (!user) { openAuthModal("signin"); return; }
+      navigate("/notifications");
+    },
+    5: () => {
+      if (!user) { openAuthModal("signin"); return; }
+      navigate("/profile");
+    },
+    c: () => {
+      if (user) openCreatePost();
+      else openAuthModal("signin");
+    },
+  });
+
   if (isMobile) {
     return (
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-8 px-2">
-        <div className="flex items-center justify-around">
-          {navItems.map((item) => (
-            <NavButton
-              key={item.label}
-              icon={item.icon}
-              isActive={isActive(item.path)}
-              hasBadge={item.hasBadge}
+      <>
+        {/* Floating action button for mobile post creation */}
+        {user && (
+          <button
+            onClick={openCreatePost}
+            className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white shadow-[0_4px_14px_rgba(255,90,31,0.4)] transition-all active:scale-95 cursor-pointer"
+            title="Create a Post"
+            aria-label="Create a Post"
+          >
+            <HugeiconsIcon icon={Add01Icon} className="size-6" />
+          </button>
+        )}
+        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-8 px-2">
+          <div className="flex items-center justify-around">
+            {navItems.map((item) => (
+              <NavButton
+                key={item.label}
+                icon={item.icon}
+                isActive={isActive(item.path)}
+                hasBadge={item.hasBadge}
+                isMobile={true}
+                onClick={() => handleNavClick(item)}
+              />
+            ))}
+            <ProfileButton
+              user={user}
+              isLoading={isLoading}
               isMobile={true}
-              onClick={() => handleNavClick(item)}
+              isActive={isActive("/profile")}
+              onClick={() => {
+                if (!user) {
+                  openAuthModal("signin");
+                } else {
+                  navigateTo("/profile");
+                }
+              }}
             />
-          ))}
-          <ProfileButton
-            user={user}
-            isLoading={isLoading}
-            isMobile={true}
-            isActive={isActive("/profile")}
-            onClick={() => {
-              if (!user) {
-                openAuthModal("signin");
-              } else {
-                navigateTo("/profile");
-              }
-            }}
-          />
-        </div>
-      </nav>
+          </div>
+        </nav>
+      </>
     );
   }
 
@@ -195,58 +246,106 @@ export function AppSidebar() {
       <nav className="flex-1 flex flex-col items-center justify-between w-full min-h-0">
         <div className="flex flex-col items-center gap-3.5 w-full shrink-0">
           {navItems.map((item) => (
-            <NavButton
-              key={item.label}
-              icon={item.icon}
-              isActive={isActive(item.path)}
-              hasBadge={item.hasBadge}
-              isMobile={false}
-              onClick={() => handleNavClick(item)}
-            />
+            <Tooltip key={item.label}>
+              <TooltipTrigger
+                render={
+                  <NavButton
+                    icon={item.icon}
+                    isActive={isActive(item.path)}
+                    hasBadge={item.hasBadge}
+                    isMobile={false}
+                    onClick={() => handleNavClick(item)}
+                  />
+                }
+              />
+              <TooltipContent side="right">
+                {item.label}
+                {item.shortcut && (
+                  <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">
+                    {item.shortcut}
+                  </kbd>
+                )}
+              </TooltipContent>
+            </Tooltip>
           ))}
+          {/* Create Post Button */}
+          {user && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    onClick={openCreatePost}
+                    className="flex items-center justify-center size-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_2px_10px_rgba(255,90,31,0.25)] hover:shadow-[0_4px_12px_rgba(255,90,31,0.35)] mt-1.5 shrink-0"
+                    aria-label="Create a Post"
+                  >
+                    <HugeiconsIcon icon={Add01Icon} className="size-5" />
+                  </button>
+                }
+              />
+              <TooltipContent side="right">
+                Create a Post
+                <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">c</kbd>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         {user && joinedChambers.length > 0 && (
-          <div className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-modern">
+          <div className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-none">
             {joinedChambers.map((c) => {
               const color = CHAMBER_COLORS[(c.colorIndex || 0) % CHAMBER_COLORS.length];
               const active = isActive(`/chamber/${c.uid}`);
               const displayInitials = getInitials(c.name);
 
               return (
-                <Link
-                  key={c.uid}
-                  to={`/chamber/${c.uid}`}
-                  title={c.name}
-                  className={cn(
-                    "size-8 rounded-xl flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-all duration-300 hover:rounded-lg select-none shadow-sm cursor-pointer",
-                    color,
-                    active 
-                      ? "ring-2 ring-[#ff5a1f] ring-offset-2 ring-offset-background scale-105" 
-                      : "opacity-85 hover:opacity-100"
-                  )}
-                >
-                  {displayInitials}
-                </Link>
+                <Tooltip key={c.uid}>
+                  <TooltipTrigger
+                    render={
+                      <Link
+                        to={`/chamber/${c.uid}`}
+                        className={cn(
+                          "size-8 rounded-xl flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-all duration-300 hover:rounded-lg select-none shadow-sm cursor-pointer",
+                          color,
+                          active 
+                            ? "ring-2 ring-[#ff5a1f] ring-offset-2 ring-offset-background scale-105" 
+                            : "opacity-85 hover:opacity-100"
+                        )}
+                      >
+                        {displayInitials}
+                      </Link>
+                    }
+                  />
+                  <TooltipContent side="right">{c.name}</TooltipContent>
+                </Tooltip>
               );
             })}
           </div>
         )}
 
         <div className="flex flex-col items-center pt-4 border-t border-neutral-100 dark:border-neutral-800 w-full shrink-0">
-          <ProfileButton
-            user={user}
-            isLoading={isLoading}
-            isMobile={false}
-            isActive={isActive("/profile")}
-            onClick={() => {
-              if (!user) {
-                openAuthModal("signin");
-              } else {
-                navigateTo("/profile");
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <ProfileButton
+                  user={user}
+                  isLoading={isLoading}
+                  isMobile={false}
+                  isActive={isActive("/profile")}
+                  onClick={() => {
+                    if (!user) {
+                      openAuthModal("signin");
+                    } else {
+                      navigateTo("/profile");
+                    }
+                  }}
+                />
               }
-            }}
-          />
+            />
+            <TooltipContent side="right">
+              Profile
+              <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">5</kbd>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </nav>
     </aside>

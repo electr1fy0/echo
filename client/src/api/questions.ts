@@ -16,7 +16,7 @@ export async function fetchQuestion(questionId: string) {
 }
 
 export async function fetchQuestions(
-  sort?: "votes" | "time_created",
+  sort?: "votes" | "time_created" | "hot",
   filter?: "joined",
   chamberId?: string,
   author?: string,
@@ -24,6 +24,7 @@ export async function fetchQuestions(
   offset?: number,
   postType?: string,
   pinned?: boolean,
+  searchQuery?: string,
 ) {
   const params = new URLSearchParams({
     ...(sort ? { sort } : {}),
@@ -34,6 +35,7 @@ export async function fetchQuestions(
     ...(offset !== undefined ? { offset: offset.toString() } : {}),
     ...(postType ? { post_type: postType } : {}),
     ...(pinned !== undefined ? { pinned: pinned.toString() } : {}),
+    ...(searchQuery ? { q: searchQuery } : {}),
   });
   const res = await fetch(`${API_URL}/questions?${params}`, {
     headers: {
@@ -116,12 +118,14 @@ export async function updateQuestion(
     tradeBookIsbn?: string;
     tradeStatus?: string;
     partnerSlotsNeeded?: number;
+    partnerStatus?: string;
     partnerTargetGrade?: string;
     partnerWorkstyle?: string;
     taxiDeparture?: string;
     taxiDestination?: string;
     taxiDatetime?: string;
     taxiSeatsAvailable?: number;
+    taxiStatus?: string;
   }
 ) {
   const res = await fetch(

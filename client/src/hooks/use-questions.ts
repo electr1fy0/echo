@@ -29,7 +29,7 @@ export function useQuestionQuery(questionId: string | undefined) {
 }
 
 export function useQuestionsQuery(
-  sort?: "votes" | "time_created",
+  sort?: "votes" | "time_created" | "hot",
   filter?: "joined",
   chamberId?: string,
   author?: string,
@@ -43,18 +43,19 @@ export function useQuestionsQuery(
 }
 
 export function useInfiniteQuestionsQuery(
-  sort?: "votes" | "time_created",
+  sort?: "votes" | "time_created" | "hot",
   filter?: "joined",
   chamberId?: string,
   author?: string,
   pageSize = 20,
   postType?: string,
-  pinned?: boolean
+  pinned?: boolean,
+  searchQuery?: string
 ) {
   return useInfiniteQuery({
-    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned],
+    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned, searchQuery],
     queryFn: ({ pageParam = 0 }) =>
-      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned),
+      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned, searchQuery),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < pageSize) return undefined;
@@ -194,12 +195,14 @@ export function useUpdateQuestion() {
       tradeBookIsbn?: string;
       tradeStatus?: string;
       partnerSlotsNeeded?: number;
+      partnerStatus?: string;
       partnerTargetGrade?: string;
       partnerWorkstyle?: string;
       taxiDeparture?: string;
       taxiDestination?: string;
       taxiDatetime?: string;
       taxiSeatsAvailable?: number;
+      taxiStatus?: string;
     }) => updateQuestion(questionId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });

@@ -16,6 +16,7 @@ export interface Question {
   partnerTargetGrade?: string;
   partnerWorkstyle?: string;
   partnerSlotsNeeded?: number;
+  partnerStatus?: string;
   tradePrice?: number;
   tradeCondition?: string;
   tradeBookIsbn?: string;
@@ -24,6 +25,7 @@ export interface Question {
   taxiDestination?: string;
   taxiDatetime?: string;
   taxiSeatsAvailable?: number;
+  taxiStatus?: string;
 }
 export interface User {
   username: string;

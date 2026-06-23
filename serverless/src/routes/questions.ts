@@ -28,6 +28,7 @@ questionRoutes.get("/", optionalAuth, async (c) => {
     author: c.req.query("author"),
     postType: c.req.query("post_type"),
     pinned,
+    query: c.req.query("q"),
   }));
 });
 
@@ -66,6 +67,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
     partnerTargetGrade: body.partnerTargetGrade ?? null,
     partnerWorkstyle: body.partnerWorkstyle ?? null,
     partnerSlotsNeeded: body.partnerSlotsNeeded ?? null,
+    partnerStatus: body.postType === "partner" ? "open" : null,
     tradePrice: body.tradePrice ?? null,
     tradeCondition: body.tradeCondition ?? null,
     tradeBookIsbn: body.tradeBookIsbn ?? null,
@@ -74,6 +76,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
     taxiDestination: body.taxiDestination ?? null,
     taxiDatetime: body.taxiDatetime ?? null,
     taxiSeatsAvailable: body.taxiSeatsAvailable ?? null,
+    taxiStatus: body.postType === "taxi" ? "open" : null,
   }).returning({ uid: schema.posts.uid });
 
   if (!created) {
@@ -123,6 +126,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       partnerTargetGrade: schema.posts.partnerTargetGrade,
       partnerWorkstyle: schema.posts.partnerWorkstyle,
       partnerSlotsNeeded: schema.posts.partnerSlotsNeeded,
+      partnerStatus: schema.posts.partnerStatus,
       tradePrice: schema.posts.tradePrice,
       tradeCondition: schema.posts.tradeCondition,
       tradeBookIsbn: schema.posts.tradeBookIsbn,
@@ -131,6 +135,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       taxiDestination: schema.posts.taxiDestination,
       taxiDatetime: schema.posts.taxiDatetime,
       taxiSeatsAvailable: schema.posts.taxiSeatsAvailable,
+      taxiStatus: schema.posts.taxiStatus,
     })
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))
@@ -150,6 +155,7 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
     content?: string;
     tradeStatus?: string;
     partnerSlotsNeeded?: number;
+    partnerStatus?: string;
     tradePrice?: number;
     tradeCondition?: string;
     tradeBookIsbn?: string;
@@ -159,11 +165,13 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
     taxiDestination?: string;
     taxiDatetime?: string;
     taxiSeatsAvailable?: number;
+    taxiStatus?: string;
   };
   const updated = await c.get("db").update(schema.posts).set({
     content: body.content,
     tradeStatus: body.tradeStatus,
     partnerSlotsNeeded: body.partnerSlotsNeeded,
+    partnerStatus: body.partnerStatus,
     tradePrice: body.tradePrice,
     tradeCondition: body.tradeCondition,
     tradeBookIsbn: body.tradeBookIsbn,
@@ -173,6 +181,7 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
     taxiDestination: body.taxiDestination,
     taxiDatetime: body.taxiDatetime,
     taxiSeatsAvailable: body.taxiSeatsAvailable,
+    taxiStatus: body.taxiStatus,
   }).where(
     and(eq(schema.posts.uid, c.req.param("uid")), eq(schema.posts.author, c.get("user"))),
   ).returning({ uid: schema.posts.uid });

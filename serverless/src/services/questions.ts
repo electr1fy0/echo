@@ -21,6 +21,7 @@ export const mapPostItem = (row: {
   partnerTargetGrade: string | null;
   partnerWorkstyle: string | null;
   partnerSlotsNeeded: number | null;
+  partnerStatus: string | null;
   tradePrice: number | null;
   tradeCondition: string | null;
   tradeBookIsbn: string | null;
@@ -29,6 +30,7 @@ export const mapPostItem = (row: {
   taxiDestination: string | null;
   taxiDatetime: string | null;
   taxiSeatsAvailable: number | null;
+  taxiStatus: string | null;
 }) => ({
   question: {
     uid: row.uid,
@@ -46,6 +48,7 @@ export const mapPostItem = (row: {
     partnerTargetGrade: row.partnerTargetGrade,
     partnerWorkstyle: row.partnerWorkstyle,
     partnerSlotsNeeded: row.partnerSlotsNeeded,
+    partnerStatus: row.partnerStatus,
     tradePrice: row.tradePrice,
     tradeCondition: row.tradeCondition,
     tradeBookIsbn: row.tradeBookIsbn,
@@ -54,6 +57,7 @@ export const mapPostItem = (row: {
     taxiDestination: row.taxiDestination,
     taxiDatetime: row.taxiDatetime,
     taxiSeatsAvailable: row.taxiSeatsAvailable,
+    taxiStatus: row.taxiStatus,
   },
   author: {
     username: row.authorUsername,
@@ -206,6 +210,7 @@ export const getPostItems = async (
       partnerTargetGrade: schema.posts.partnerTargetGrade,
       partnerWorkstyle: schema.posts.partnerWorkstyle,
       partnerSlotsNeeded: schema.posts.partnerSlotsNeeded,
+      partnerStatus: schema.posts.partnerStatus,
       tradePrice: schema.posts.tradePrice,
       tradeCondition: schema.posts.tradeCondition,
       tradeBookIsbn: schema.posts.tradeBookIsbn,
@@ -214,6 +219,7 @@ export const getPostItems = async (
       taxiDestination: schema.posts.taxiDestination,
       taxiDatetime: schema.posts.taxiDatetime,
       taxiSeatsAvailable: schema.posts.taxiSeatsAvailable,
+      taxiStatus: schema.posts.taxiStatus,
     })
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))
