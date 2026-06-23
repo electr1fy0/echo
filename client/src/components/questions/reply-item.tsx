@@ -34,9 +34,11 @@ type ReplyItemProps = {
   answerItem: AnswerItem;
   onDelete: () => void;
   canAccept?: boolean;
+  isOp?: boolean;
+  onReply?: () => void;
 };
 
-export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
+export function ReplyItem({ answerItem, onDelete, canAccept, isOp, onReply }: ReplyItemProps) {
   const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
   const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
   const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
@@ -95,6 +97,11 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
         <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
           <span className="flex items-center gap-2">
             <span>{reply.authorUsername || "Anonymous"}</span>
+            {isOp && (
+              <span className="text-[10px] uppercase tracking-wide bg-orange-500/15 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded font-semibold">
+                OP
+              </span>
+            )}
             <span className="text-neutral-400 dark:text-neutral-500">
               {reply.timeCreated &&
                 formatRelativeTime(new Date(reply.timeCreated))}
@@ -149,7 +156,17 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
         </p>
       </div>
       {!isEditing && (
-        <DropdownMenu>
+        <div className="flex items-center gap-1 shrink-0">
+          {onReply && (
+            <button
+              type="button"
+              onClick={onReply}
+              className="text-[11px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer px-1.5 py-0.5"
+            >
+              Reply
+            </button>
+          )}
+          <DropdownMenu>
           <DropdownMenuTrigger className="outline-none">
             <Button
               variant="ghost"
@@ -211,6 +228,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       )}
     </div>
   );

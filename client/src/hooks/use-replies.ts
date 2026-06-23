@@ -27,11 +27,13 @@ export function useCreateReply() {
     mutationFn: ({
       questionId,
       content,
+      parentReplyUid,
     }: {
       questionId: string;
       content: string;
-    }) => createReply(questionId, { content }),
-    onMutate: async ({ questionId, content }) => {
+      parentReplyUid?: string;
+    }) => createReply(questionId, { content, parentReplyUid }),
+    onMutate: async ({ questionId, content, parentReplyUid }) => {
       await queryClient.cancelQueries({ queryKey: ["replies", questionId] });
 
       const previousReplies = queryClient.getQueryData<AnswerItem[]>([
@@ -48,6 +50,7 @@ export function useCreateReply() {
               uid: `temp-${Date.now()}`,
               content,
               questionUid: questionId,
+              parentReplyUid,
               timeCreated: new Date(),
               authorUsername: user.username,
               upvotes: 0,

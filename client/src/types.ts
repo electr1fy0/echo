@@ -10,9 +10,11 @@ export interface Question {
   isUpvoted: boolean;
   chamberUid?: string;
   chamberName?: string;
+  channelUid?: string;
+  customFields?: Record<string, any>;
   acceptedAnswerUid?: string;
   isPinned?: boolean;
-  postType?: "qna" | "partner" | "trade" | "taxi";
+  postType?: "qna" | "partner" | "trade" | "taxi" | "poll";
   partnerTargetGrade?: string;
   partnerWorkstyle?: string;
   partnerSlotsNeeded?: number;
@@ -26,6 +28,13 @@ export interface Question {
   taxiDatetime?: string;
   taxiSeatsAvailable?: number;
   taxiStatus?: string;
+  pollUid?: string;
+  pollQuestion?: string;
+  pollOptions?: string[];
+  pollExpiresAt?: string | null;
+  pollIsClosed?: boolean;
+  pollVotes?: PollOption[];
+  userPollVote?: number | null;
 }
 export interface User {
   username: string;
@@ -56,10 +65,17 @@ export interface SearchResponse {
   replies: AnswerItem[];
   users: UserSummary[];
 }
+export interface PollOption {
+  optionIndex: number;
+  count: number;
+}
+
 export interface QuestionDraft {
   content: string;
   chamberUid?: string;
-  postType?: "qna" | "partner" | "trade" | "taxi";
+  channelUid?: string;
+  customFields?: Record<string, any>;
+  postType?: "qna" | "partner" | "trade" | "taxi" | "poll";
   ttlHours?: number | null;
   partnerTargetGrade?: string;
   partnerWorkstyle?: string;
@@ -71,11 +87,14 @@ export interface QuestionDraft {
   taxiDestination?: string;
   taxiDatetime?: string;
   taxiSeatsAvailable?: number;
+  pollQuestion?: string;
+  pollOptions?: string[];
 }
 export interface Reply {
   uid: ReplyId;
   content: string;
   questionUid: string;
+  parentReplyUid?: string;
   timeCreated?: Date;
   authorUsername: string;
   upvotes: number;
@@ -118,4 +137,13 @@ export interface Chamber {
   colorIndex?: number;
   timeCreated?: string;
   creatorUsername?: string;
+}
+
+export interface Channel {
+  uid: string;
+  chamberUid: string;
+  name: string;
+  icon?: string;
+  schema: any[];
+  createdAt?: string;
 }

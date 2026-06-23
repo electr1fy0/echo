@@ -17,6 +17,7 @@ import {
   applyToPartner,
   fetchPartnerApplications,
   updatePartnerApplicationStatus,
+  votePoll,
 } from "@/api/questions";
 
 export function useQuestionQuery(questionId: string | undefined) {
@@ -50,12 +51,13 @@ export function useInfiniteQuestionsQuery(
   pageSize = 20,
   postType?: string,
   pinned?: boolean,
-  searchQuery?: string
+  searchQuery?: string,
+  channelUid?: string
 ) {
   return useInfiniteQuery({
-    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned, searchQuery],
+    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned, searchQuery, channelUid],
     queryFn: ({ pageParam = 0 }) =>
-      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned, searchQuery),
+      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned, searchQuery, channelUid),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < pageSize) return undefined;
@@ -65,10 +67,10 @@ export function useInfiniteQuestionsQuery(
   });
 }
 
-export function usePinnedQuestionsQuery(chamberId: string | undefined, postType?: string) {
+export function usePinnedQuestionsQuery(chamberId: string | undefined, postType?: string, channelUid?: string) {
   return useQuery({
-    queryKey: ["questions", "pinned", chamberId, postType],
-    queryFn: () => fetchQuestions("time_created", undefined, chamberId, undefined, 10, 0, postType, true),
+    queryKey: ["questions", "pinned", chamberId, postType, channelUid],
+    queryFn: () => fetchQuestions("time_created", undefined, chamberId, undefined, 10, 0, postType, true, undefined, channelUid),
     enabled: !!chamberId,
     staleTime: 30_000,
   });
@@ -304,6 +306,18 @@ export function useUpdatePartnerApplicationStatus() {
     }) => updatePartnerApplicationStatus(questionId, appUid, status),
     onSuccess: (_data, { questionId }) => {
       queryClient.invalidateQueries({ queryKey: ["partner-applications", questionId] });
+    },
+  });
+}
+
+export function useVotePoll() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ questionId, optionIndex }: { questionId: string; optionIndex: number }) =>
+      votePoll(questionId, optionIndex),
+    onSuccess: (_data, { questionId }) => {
+      queryClient.invalidateQueries({ queryKey: ["question", questionId] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
   });
 }

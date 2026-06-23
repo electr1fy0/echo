@@ -34,17 +34,15 @@ import {
   PinOffIcon,
   BookOpen01Icon,
   Share01Icon,
-  UserMultiple02Icon,
-  ShoppingBag01Icon,
-  Car01Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
-import { ReplyItem } from "./reply-item";
+import { ThreadedReplies } from "./threaded-replies";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 import { PostContent } from "@/components/post-content";
+import { PollVoter } from "@/components/poll-voter";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;
@@ -185,7 +183,6 @@ export function QuestionItem({
   const isPinned = !!question.isPinned;
   const isSolved = !!question.acceptedAnswerUid;
   const isExpiring = !!question.expiresAt;
-  const canAccept = user?.username === question.authorUsername;
 
   function handleSave() {
     if (!questionId) return;
@@ -641,212 +638,165 @@ export function QuestionItem({
                   className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
                 />
 
-                          {/* Trade metadata + interest button */}
-                {question.postType === "trade" && (
-                  <div className="mt-3 p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
-                    <div className="flex items-center gap-3 text-xs min-w-0 flex-wrap">
-                      <div className="flex items-center justify-center size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-blue-500 dark:text-blue-400 shrink-0">
-                        <HugeiconsIcon icon={ShoppingBag01Icon} className="size-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">Marketplace</span>
-                        <div className="flex items-center gap-2 flex-wrap text-xs">
-                          <span className="text-neutral-900 dark:text-neutral-100 font-bold text-sm">₹{question.tradePrice ? (question.tradePrice / 100).toFixed(0) : "0"}</span>
-                          <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-                          <span className="font-semibold text-neutral-600 dark:text-neutral-300">{question.tradeCondition}</span>
-                          <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-                          <span className={cn(
-                            "flex items-center gap-1 font-semibold text-[11px]",
-                            question.tradeStatus === "available"
-                              ? "text-emerald-600 dark:text-emerald-450"
-                              : "text-neutral-500 dark:text-neutral-450"
-                          )}>
-                            <span className={cn(
-                              "size-1.5 rounded-full inline-block shrink-0",
-                              question.tradeStatus === "available" ? "bg-emerald-500" : "bg-neutral-400"
-                            )} />
-                            {question.tradeStatus === "available" ? "Available" : "Sold"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    {question.tradeStatus === "available" && user?.username !== question.authorUsername && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!user) { openAuthModal("signin"); return; }
-                          sendInterestDM({
-                            authorUsername: question.authorUsername!,
-                            templateMessage: `Hey! I'm interested in: ${question.content.slice(0, 200)}`,
-                          });
-                          setInterestSent(true);
-                          setTimeout(() => setInterestSent(false), 2000);
-                        }}
-                        disabled={isDMPending || interestSent}
-                        className={cn(
-                          "shrink-0 flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto justify-center",
-                          interestSent
-                            ? "bg-emerald-600 text-white"
-                            : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
-                        )}
-                      >
-                        {interestSent ? (
-                          <>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Sent
-                          </>
-                        ) : (
-                          <>
-                            <HugeiconsIcon icon={ShoppingBag01Icon} className="size-3.5" />
-                            Interested
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
+                {/* Poll voter */}
+                {question.postType === "poll" && question.pollUid && (
+                  <PollVoter
+                    questionId={questionId}
+                    pollUid={question.pollUid}
+                    pollQuestion={question.pollQuestion ?? ""}
+                    pollOptions={question.pollOptions ?? []}
+                    pollVotes={question.pollVotes ?? []}
+                    userPollVote={question.userPollVote ?? null}
+                    isPollClosed={question.pollIsClosed ?? false}
+                  />
                 )}
 
-                {/* Partner metadata + interest button */}
-                {question.postType === "partner" && (
-                  <div className="mt-3 p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
-                    <div className="flex items-center gap-3 text-xs min-w-0">
-                      <div className="flex items-center justify-center size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-orange-500 dark:text-orange-400 shrink-0">
-                        <HugeiconsIcon icon={UserMultiple02Icon} className="size-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider">Partner Finder</span>
-                          <span className={cn(
-                            "flex items-center gap-1 font-semibold text-[10px]",
-                            (question.partnerStatus ?? "open") === "open"
-                              ? "text-emerald-600 dark:text-emerald-450"
-                              : "text-neutral-500 dark:text-neutral-450"
-                          )}>
-                            <span className={cn(
-                              "size-1.5 rounded-full inline-block shrink-0",
-                              (question.partnerStatus ?? "open") === "open" ? "bg-emerald-500" : "bg-neutral-400"
-                            )} />
-                            {(question.partnerStatus ?? "open") === "open" ? "Open" : "Done"}
-                          </span>
+                {/* Dynamic custom fields metadata card */}
+                {question.customFields && Object.keys(question.customFields).length > 0 && (
+                  <div className="mt-3 p-3.5 flex flex-col gap-3.5 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full">
+                    
+                    {/* Metadata fields list (excluding files) */}
+                    {Object.entries(question.customFields).some(([_, val]) => !(val && typeof val === "object" && "url" in val && "name" in val)) && (
+                      <div className="flex items-center gap-3 text-xs min-w-0 flex-wrap w-full">
+                        <div className="flex items-center justify-center size-8 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 shrink-0">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-[#ff5a1f]">
+                            <rect width="8" height="8" x="3" y="3" rx="1" />
+                            <rect width="8" height="8" x="13" y="3" rx="1" />
+                            <rect width="8" height="8" x="3" y="13" rx="1" />
+                            <rect width="8" height="8" x="13" y="13" rx="1" />
+                          </svg>
                         </div>
-                        <span className="text-neutral-700 dark:text-neutral-300 font-medium text-xs">
-                          Looking for <strong className="text-neutral-900 dark:text-neutral-100 font-bold text-sm bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded border border-neutral-200/50 dark:border-neutral-700/60">{question.partnerSlotsNeeded || 0}</strong>
-                          {" "}{question.partnerSlotsNeeded === 1 ? "partner" : "partners"}
-                        </span>
-                      </div>
-                    </div>
-                    {user?.username !== question.authorUsername && (question.partnerStatus ?? "open") === "open" && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!user) { openAuthModal("signin"); return; }
-                          sendInterestDM({
-                            authorUsername: question.authorUsername!,
-                            templateMessage: `Hey! I'd like to join your partner group. Are you still looking for members?`,
-                          });
-                          setInterestSent(true);
-                          setTimeout(() => setInterestSent(false), 2000);
-                        }}
-                        disabled={isDMPending || interestSent}
-                        className={cn(
-                          "shrink-0 flex items-center gap-1.5 h-8 px-3.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto justify-center",
-                          interestSent
-                            ? "bg-emerald-600 text-white"
-                            : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
-                        )}
-                      >
-                        {interestSent ? (
-                          <>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3.5">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                            Sent
-                          </>
-                        ) : (
-                          <>
-                            <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5" />
-                            Interested
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                )}
+                        <div className="flex flex-col gap-1 min-w-0 flex-1">
+                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Details</span>
+                          <div className="flex items-center gap-2 flex-wrap text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+                            {Object.entries(question.customFields).map(([key, val]) => {
+                              if (val === undefined || val === null || val === "" || (val && typeof val === "object" && "url" in val)) return null;
+                              
+                              // Format special keys
+                              if (key === "price" || key === "min_order") {
+                                return (
+                                  <span key={key} className="text-neutral-950 dark:text-neutral-100 font-bold text-sm bg-neutral-200/40 dark:bg-neutral-800/50 px-2.5 py-0.5 rounded-lg border border-neutral-200/30 dark:border-neutral-700/30">
+                                    ₹{Number(val).toFixed(0)}
+                                  </span>
+                                );
+                              }
+                              
+                              if (key === "datetime" || key === "deadline") {
+                                try {
+                                  return (
+                                    <span key={key} className="bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] inline-flex items-center gap-1 font-semibold">
+                                      📅 {new Date(val).toLocaleString("en-IN", {
+                                        day: "2-digit",
+                                        month: "short",
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                        hour12: true
+                                      })}
+                                    </span>
+                                  );
+                                } catch {
+                                  return <span key={key} className="bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] font-semibold">📅 {val}</span>;
+                                }
+                              }
+                              
+                              if (typeof val === "string" && val.startsWith("http")) {
+                                return (
+                                  <a 
+                                    key={key}
+                                    href={val}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#ff5a1f] hover:underline inline-flex items-center gap-1 bg-[#ff5a1f]/10 dark:bg-[#ff5a1f]/5 px-2 py-0.5 rounded-lg text-[11px] font-semibold"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    🔗 Open Link
+                                  </a>
+                                );
+                              }
 
-                {/* Taxi metadata + interest button */}
-                {question.postType === "taxi" && (
-                  <div className="mt-3 p-3 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
-                    <div className="flex items-start sm:items-center gap-3 text-xs min-w-0 flex-1 flex-col sm:flex-row">
-                      <div className="flex items-center justify-center size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-purple-500 dark:text-purple-400 shrink-0">
-                        <HugeiconsIcon icon={Car01Icon} className="size-4" />
-                      </div>
-                      <div className="flex flex-col gap-0.5 min-w-0 w-full">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Taxi Sharing</span>
-                          <span className={cn(
-                            "flex items-center gap-1 font-semibold text-[10px]",
-                            (question.taxiStatus ?? "open") === "open"
-                              ? "text-emerald-600 dark:text-emerald-450"
-                              : "text-neutral-500 dark:text-neutral-450"
-                          )}>
-                            <span className={cn(
-                              "size-1.5 rounded-full inline-block shrink-0",
-                              (question.taxiStatus ?? "open") === "open" ? "bg-emerald-500" : "bg-neutral-400"
-                            )} />
-                            {(question.taxiStatus ?? "open") === "open" ? "Open" : "Done"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-neutral-900 dark:text-neutral-100 text-xs sm:text-sm">
-                            {question.taxiDeparture} <span className="text-purple-500 dark:text-purple-400 font-bold mx-0.5">→</span> {question.taxiDestination}
-                          </span>
-                          {question.taxiDatetime && (
-                            <>
-                              <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700 hidden sm:inline" />
-                              <span className="text-neutral-500 dark:text-neutral-450 flex items-center gap-1">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-3 text-neutral-400 dark:text-neutral-500">
-                                  <circle cx="12" cy="12" r="10" />
-                                  <polyline points="12 6 12 12 16 14" />
-                                </svg>
-                                {new Date(question.taxiDatetime).toLocaleString("en-IN", {
-                                  day: "2-digit",
-                                  month: "short",
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: true,
-                                })}
-                              </span>
-                            </>
-                          )}
-                          {question.taxiSeatsAvailable && (
-                            <>
-                              <span className="size-1 rounded-full bg-neutral-300 dark:bg-neutral-700" />
-                              <span className="flex items-center gap-1 text-neutral-500 dark:text-neutral-450 font-semibold">
-                                <HugeiconsIcon icon={UserMultiple02Icon} className="size-3 text-neutral-400 dark:text-neutral-500" />
-                                {question.taxiSeatsAvailable} {question.taxiSeatsAvailable === 1 ? "seat" : "seats"} left
-                              </span>
-                            </>
-                          )}
+                              const label = key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+                              return (
+                                <span key={key} className="bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] inline-flex items-center gap-1 font-semibold">
+                                  <span className="text-neutral-400 dark:text-neutral-500 font-medium">{label}:</span>
+                                  {String(val)}
+                                </span>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {user?.username !== question.authorUsername && (question.taxiStatus ?? "open") === "open" && (
+                    )}
+
+                    {/* Files List Section */}
+                    {Object.entries(question.customFields).filter(([_, val]) => val && typeof val === "object" && "url" in val && "name" in val).map(([key, val]) => {
+                      const file = val as { url: string; name: string; size: number; type: string };
+                      
+                      // Resolve file icons based on content type or extension
+                      let fileIcon = "📄";
+                      const ext = file.name.split(".").pop()?.toLowerCase();
+                      if (file.type?.includes("pdf") || ext === "pdf") fileIcon = "📕";
+                      else if (file.type?.includes("zip") || file.type?.includes("tar") || ext === "zip" || ext === "rar") fileIcon = "📦";
+                      else if (file.type?.includes("word") || file.type?.includes("document") || ext === "doc" || ext === "docx") fileIcon = "📘";
+                      else if (file.type?.includes("presentation") || file.type?.includes("powerpoint") || ext === "ppt" || ext === "pptx") fileIcon = "📙";
+                      else if (file.type?.includes("sheet") || file.type?.includes("excel") || ext === "xls" || ext === "xlsx") fileIcon = "📗";
+                      else if (file.type?.includes("text") || ext === "txt") fileIcon = "📝";
+
+                      return (
+                        <div 
+                          key={key} 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(file.url, "_blank");
+                          }}
+                          className="flex items-center justify-between p-3.5 border border-neutral-200 dark:border-neutral-800/80 bg-background/50 hover:bg-neutral-100/50 dark:hover:bg-neutral-950/40 rounded-2xl cursor-pointer transition-all duration-150 group"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 max-w-[80%]">
+                            <span className="text-2xl shrink-0 group-hover:scale-105 transition-transform">{fileIcon}</span>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-[#ff5a1f] transition-colors">{file.name}</span>
+                              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
+                                {(file.size / (1024 * 1024)).toFixed(2)} MB
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-900/60 px-2.5 py-1.5 rounded-lg shrink-0">
+                            DOWNLOAD
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Quick action DM button */}
+                    {user?.username !== question.authorUsername && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!user) { openAuthModal("signin"); return; }
+                          
+                          // Custom DM content template based on fields
+                          const customFields = question.customFields || {};
+                          let dmMsg = `Hey! I'm interested in your post: "${question.content.slice(0, 100)}..."`;
+                          if (customFields.departure && customFields.destination) {
+                            dmMsg = `Hey! I'd like to join your carpool from ${customFields.departure} to ${customFields.destination}. Is there still space?`;
+                          } else if (customFields.price) {
+                            dmMsg = `Hey! I'm interested in buying your item for ₹${customFields.price}. Is it still available?`;
+                          } else if (customFields.slots) {
+                            dmMsg = `Hey! I'm interested in joining your group. Let know if you still have space!`;
+                          } else if (customFields.file) {
+                            const fileObj = customFields.file as { name: string };
+                            dmMsg = `Hey! I saw your uploaded resource "${fileObj.name || "file"}" in the chamber. Had a quick question about it!`;
+                          }
+                          
                           sendInterestDM({
                             authorUsername: question.authorUsername!,
-                            templateMessage: `Hey! I'd like to join the trip from ${question.taxiDeparture || "?"} to ${question.taxiDestination || "?"}. Is there still space?`,
+                            templateMessage: dmMsg,
                           });
                           setInterestSent(true);
                           setTimeout(() => setInterestSent(false), 2000);
                         }}
                         disabled={isDMPending || interestSent}
                         className={cn(
-                          "shrink-0 flex items-center gap-1.5 h-8 px-4 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm sm:self-center w-full sm:w-auto justify-center active:scale-95",
+                          "shrink-0 flex items-center gap-1.5 h-8.5 px-4 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto justify-center self-end",
                           interestSent
                             ? "bg-emerald-600 text-white"
                             : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200"
@@ -861,8 +811,8 @@ export function QuestionItem({
                           </>
                         ) : (
                           <>
-                            <HugeiconsIcon icon={Car01Icon} className="size-3.5" />
-                            Join
+                            <HugeiconsIcon icon={Share01Icon} className="size-3.5 rotate-180" />
+                            Interested
                           </>
                         )}
                       </button>
@@ -881,16 +831,16 @@ export function QuestionItem({
           </div>
         ) : replies && replies.length > 0 ? (
           <>
-            {replies.slice(0, 5).map((reply, index) => (
-              <ReplyItem
-                key={reply.answer.uid ?? index}
-                answerItem={reply}
-                canAccept={canAccept}
-                onDelete={() =>
-                  deleteReply({ questionId, replyId: reply.answer.uid ?? "" })
+            <div className="pl-10">
+              <ThreadedReplies
+                replies={replies.slice(0, 5)}
+                questionId={questionId}
+                authorUsername={question.authorUsername}
+                onDelete={(replyId) =>
+                  deleteReply({ questionId, replyId })
                 }
               />
-            ))}
+            </div>
             <Link
               to={`/q/${questionId}`}
               className="ml-10 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors block pt-2 pb-1"

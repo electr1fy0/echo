@@ -25,6 +25,7 @@ export async function fetchQuestions(
   postType?: string,
   pinned?: boolean,
   searchQuery?: string,
+  channelUid?: string,
 ) {
   const params = new URLSearchParams({
     ...(sort ? { sort } : {}),
@@ -36,6 +37,7 @@ export async function fetchQuestions(
     ...(postType ? { post_type: postType } : {}),
     ...(pinned !== undefined ? { pinned: pinned.toString() } : {}),
     ...(searchQuery ? { q: searchQuery } : {}),
+    ...(channelUid ? { channel_uid: channelUid } : {}),
   });
   const res = await fetch(`${API_URL}/questions?${params}`, {
     headers: {
@@ -232,6 +234,21 @@ export async function fetchPartnerApplications(questionId: string) {
   );
   if (!res.ok) throw new Error("Failed to fetch partner applications");
   return res.json() as Promise<any[]>;
+}
+
+export async function votePoll(questionId: string, optionIndex: number) {
+  const res = await fetch(
+    `${API_URL}/questions/${encodeURIComponent(questionId)}/poll/vote`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ optionIndex }),
+    }
+  );
+  if (!res.ok) throw new Error("Failed to vote on poll");
 }
 
 export async function updatePartnerApplicationStatus(

@@ -65,3 +65,27 @@ export async function deleteChamber(name: string): Promise<void> {
   });
   if (!res.ok) throw new Error("failed to delete chamber");
 }
+
+export async function listChannels(chamberUid: string): Promise<any[]> {
+  const res = await fetch(`${API_URL}/chambers/${chamberUid}/channels`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!res.ok) throw new Error("failed to list channels");
+  return res.json();
+}
+
+export async function createChannel(chamberUid: string, channel: { name: string; icon?: string; schema?: any[] }): Promise<any> {
+  const res = await fetch(`${API_URL}/chambers/${chamberUid}/channels`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(channel),
+  });
+  if (!res.ok) throw new Error("failed to create channel");
+  return res.json();
+}

@@ -14,6 +14,8 @@ export const mapPostItem = (row: {
   isUpvoted: boolean;
   chamberUid: string;
   chamberName: string;
+  channelUid: string | null;
+  customFields: Record<string, any> | null;
   acceptedAnswerUid: string | null;
   pinnedAt: Date | null;
   expiresAt: Date | null;
@@ -31,6 +33,13 @@ export const mapPostItem = (row: {
   taxiDatetime: string | null;
   taxiSeatsAvailable: number | null;
   taxiStatus: string | null;
+  pollUid: string | null;
+  pollQuestion: string | null;
+  pollOptions: string[] | null;
+  pollExpiresAt: Date | null;
+  pollIsClosed: boolean | null;
+  pollVotes: { optionIndex: number; count: number }[] | null;
+  userPollVote: number | null;
 }) => ({
   question: {
     uid: row.uid,
@@ -42,6 +51,8 @@ export const mapPostItem = (row: {
     isUpvoted: row.isUpvoted,
     chamberUid: row.chamberUid,
     chamberName: row.chamberName,
+    channelUid: row.channelUid,
+    customFields: row.customFields ?? {},
     acceptedAnswerUid: row.acceptedAnswerUid ?? undefined,
     isPinned: row.pinnedAt !== null,
     postType: row.postType,
@@ -58,6 +69,13 @@ export const mapPostItem = (row: {
     taxiDatetime: row.taxiDatetime,
     taxiSeatsAvailable: row.taxiSeatsAvailable,
     taxiStatus: row.taxiStatus,
+    pollUid: row.pollUid ?? undefined,
+    pollQuestion: row.pollQuestion ?? undefined,
+    pollOptions: row.pollOptions ?? undefined,
+    pollExpiresAt: row.pollExpiresAt?.toISOString() ?? null,
+    pollIsClosed: row.pollIsClosed ?? false,
+    pollVotes: row.pollVotes ?? [],
+    userPollVote: row.userPollVote ?? null,
   },
   author: {
     username: row.authorUsername,
@@ -70,6 +88,7 @@ export const mapReplyItem = (row: {
   content: string;
   timeCreated: Date | null;
   postUid: string;
+  parentReplyUid: string | null;
   authorUsername: string;
   authorAvatar: string;
   upvotes: number | null;
@@ -80,6 +99,7 @@ export const mapReplyItem = (row: {
     uid: row.uid,
     content: row.content,
     questionUid: row.postUid,
+    parentReplyUid: row.parentReplyUid ?? undefined,
     timeCreated: row.timeCreated?.toISOString() ?? null,
     authorUsername: row.authorUsername,
     upvotes: row.upvotes ?? 0,
@@ -149,6 +169,7 @@ export const getPostItems = async (
     sort?: string;
     filter?: string;
     chamberUid?: string;
+    channelUid?: string;
     author?: string;
     query?: string;
     postType?: string;
@@ -159,6 +180,10 @@ export const getPostItems = async (
 
   if (params.chamberUid) {
     conditions.push(eq(schema.posts.chamberUid, params.chamberUid));
+  }
+
+  if (params.channelUid) {
+    conditions.push(eq(schema.posts.channelUid, params.channelUid));
   }
 
   if (params.author) {
@@ -202,6 +227,8 @@ export const getPostItems = async (
       )`,
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
+      channelUid: schema.posts.channelUid,
+      customFields: schema.posts.customFields,
       acceptedAnswerUid: schema.posts.acceptedAnswerUid,
       pinnedAt: schema.posts.pinnedAt,
       expiresAt: schema.posts.expiresAt,
@@ -220,6 +247,30 @@ export const getPostItems = async (
       taxiDatetime: schema.posts.taxiDatetime,
       taxiSeatsAvailable: schema.posts.taxiSeatsAvailable,
       taxiStatus: schema.posts.taxiStatus,
+      pollUid: schema.polls.uid,
+      pollQuestion: schema.polls.question,
+      pollOptions: schema.polls.options,
+      pollExpiresAt: schema.polls.expiresAt,
+      pollIsClosed: schema.polls.isClosed,
+      pollVotes: sql<{ optionIndex: number; count: number }[]>`COALESCE(
+        (
+          SELECT json_agg(json_build_object('optionIndex', pv.option_index, 'count', pv.cnt) ORDER BY pv.option_index)
+          FROM (
+            SELECT pv2.option_index, COUNT(*)::int as cnt
+            FROM poll_votes pv2
+            WHERE pv2.poll_uid = ${schema.polls.uid}
+            GROUP BY pv2.option_index
+          ) pv
+        ),
+        '[]'::json
+      )`,
+      userPollVote: sql<number | null>`(
+        SELECT pv3.option_index
+        FROM poll_votes pv3
+        WHERE pv3.poll_uid = ${schema.polls.uid}
+          AND pv3.username = ${currentUser || ""}
+        LIMIT 1
+      )`,
     })
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))
@@ -231,6 +282,7 @@ export const getPostItems = async (
         eq(schema.chamberMembers.username, currentUser || ""),
       ),
     )
+    .leftJoin(schema.polls, eq(schema.polls.postUid, schema.posts.uid))
     .where(conditions.length ? and(...conditions) : undefined)
     .orderBy(
       desc(sql<number>`case when ${schema.posts.pinnedAt} is not null then 1 else 0 end`),
@@ -253,6 +305,7 @@ export const getReplies = async (db: DB, currentUser: string | undefined | null,
       content: schema.replies.content,
       timeCreated: schema.replies.timeCreated,
       postUid: schema.replies.postUid,
+      parentReplyUid: schema.replies.parentReplyUid,
       authorUsername: schema.replies.author,
       authorAvatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
       upvotes: schema.replies.upvotesCount,
@@ -288,8 +341,20 @@ export const searchUsers = (db: DB, query: string) =>
     .where(ilike(schema.users.username, `%${query}%`))
     .limit(5);
 
-export const listChambers = (db: DB, currentUser: string | undefined | null, query = "") =>
-  db
+export const listChambers = (db: DB, currentUser: string | undefined | null, query = "") => {
+  const isJoinedSql = sql<number>`case when exists(
+    select 1 from chamber_members cm
+    where cm.chamber_uid = ${schema.chambers.uid}
+      and cm.username = ${currentUser || ""}
+  ) then 1 else 0 end`;
+
+  const scoreSql = sql<number>`(
+    (select count(*)::int from chamber_members cm where cm.chamber_uid = ${schema.chambers.uid}) * 5 +
+    (select count(*)::int from posts p where p.chamber_uid = ${schema.chambers.uid} and p.time_created > now() - interval '30 days') * 10 +
+    (select count(*)::int from posts p where p.chamber_uid = ${schema.chambers.uid})
+  )`;
+
+  return db
     .select({
       uid: schema.chambers.uid,
       name: schema.chambers.name,
@@ -315,4 +380,12 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
             ilike(schema.chambers.description, `%${query}%`),
           )
         : undefined,
+    )
+    .orderBy(
+      ...(query
+        ? [desc(scoreSql), desc(schema.chambers.createdAt)]
+        : [asc(isJoinedSql), desc(scoreSql), desc(schema.chambers.createdAt)]
+      )
     );
+};
+

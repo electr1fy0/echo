@@ -5,6 +5,8 @@ import {
   leaveChamber,
   updateChamber,
   deleteChamber,
+  listChannels,
+  createChannel,
 } from "@/api/chambers";
 import type { Chamber } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,6 +136,26 @@ export function useDeleteChamber() {
     mutationFn: (name: string) => deleteChamber(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
+    },
+  });
+}
+
+export function useListChannels(chamberUid: string) {
+  return useQuery({
+    queryFn: () => listChannels(chamberUid),
+    queryKey: ["channels", chamberUid],
+    enabled: !!chamberUid,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreateChannel(chamberUid: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (channel: { name: string; icon?: string; schema?: any[] }) =>
+      createChannel(chamberUid, channel),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["channels", chamberUid] });
     },
   });
 }

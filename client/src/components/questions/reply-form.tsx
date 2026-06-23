@@ -12,13 +12,18 @@ import { uploadImagePresigned } from "@/api/upload";
 
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { cn } from "@/lib/utils";
 
 type ReplyFormProps = {
   questionId: QuestionId;
+  parentReplyUid?: string;
+  replyingToUsername?: string;
   onSubmitSuccess?: () => void;
+  onCancel?: () => void;
+  compact?: boolean;
 };
 
-export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
+export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSubmitSuccess, onCancel, compact }: ReplyFormProps) {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
@@ -56,7 +61,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
         return;
       }
       submitReply(
-        { questionId, content },
+        { questionId, content, parentReplyUid },
         {
           onSuccess: () => {
             setContent("");
@@ -78,8 +83,18 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   };
 
   return (
-    <form className="flex gap-4 mt-4 items-start" onSubmit={handleSubmit}>
+    <form className={cn("flex gap-4 items-start", compact ? "mt-2" : "mt-4")} onSubmit={handleSubmit}>
       <div className="flex-1 space-y-2">
+        {replyingToUsername && (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Replying to <span className="font-medium text-neutral-700 dark:text-neutral-300">@{replyingToUsername}</span>
+            {onCancel && (
+              <button type="button" onClick={onCancel} className="ml-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer">
+                Cancel
+              </button>
+            )}
+          </p>
+        )}
         <MentionField
           value={content}
           placeholder="Write a reply..."
@@ -130,7 +145,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
         variant="outline"
         disabled={!content.trim() || isValidating || isPending}
         type="submit"
-        className=""
+        className={cn(compact && "h-8 text-xs")}
       >
         {isPending ? (
           <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />

@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  json,
   pgTable,
   primaryKey,
   text,
@@ -36,6 +37,17 @@ export const chambers = pgTable("chambers", {
   colorIndex: integer("color_index").default(0),
 }, (table) => [unique("chambers_name_key").on(table.name)]);
 
+export const channels = pgTable("channels", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  chamberUid: uuid("chamber_uid")
+    .notNull()
+    .references(() => chambers.uid, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  icon: text("icon"),
+  schema: json("schema").$type<any[]>().default([]).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+
 export const chamberMembers = pgTable("chamber_members", {
   chamberUid: uuid("chamber_uid")
     .notNull()
@@ -58,13 +70,18 @@ export const posts = pgTable("posts", {
   chamberUid: uuid("chamber_uid")
     .notNull()
     .references(() => chambers.uid, { onDelete: "cascade" }),
+  channelUid: uuid("channel_uid")
+    .references(() => channels.uid, { onDelete: "cascade" }),
   upvotesCount: integer("upvotes_count").default(0),
   redditUpvotes: integer("reddit_upvotes").default(0),
   acceptedAnswerUid: uuid("accepted_answer_uid"), // Will reference replies.uid in relations
   pinnedAt: timestamp("pinned_at", { mode: "date" }),
   expiresAt: timestamp("expires_at", { mode: "date" }),
 
-  // Pivot columns
+  // Custom metadata elements JSON
+  customFields: json("custom_fields").$type<Record<string, any>>().default({}),
+
+  // Pivot columns (deprecated but kept for compatibility)
   postType: text("post_type").default("qna").notNull(), // 'qna' | 'partner' | 'trade' | 'taxi'
   
   // Partner Finder metadata
@@ -93,6 +110,7 @@ export const replies = pgTable("replies", {
   postUid: uuid("post_uid")
     .notNull()
     .references(() => posts.uid, { onDelete: "cascade" }),
+  parentReplyUid: uuid("parent_reply_uid"),
   timeCreated: timestamp("time_created", { mode: "date" }).defaultNow(),
   author: text("author")
     .notNull()
@@ -172,6 +190,32 @@ export const messages = pgTable("messages", {
   content: text("content").notNull(),
   timeCreated: timestamp("time_created", { mode: "date" }).defaultNow(),
 });
+
+export const polls = pgTable("polls", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  postUid: uuid("post_uid")
+    .notNull()
+    .references(() => posts.uid, { onDelete: "cascade" }),
+  question: text("question").notNull(),
+  options: json("options").$type<string[]>().notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  isClosed: boolean("is_closed").default(false),
+});
+
+export const pollVotes = pgTable("poll_votes", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  pollUid: uuid("poll_uid")
+    .notNull()
+    .references(() => polls.uid, { onDelete: "cascade" }),
+  optionIndex: integer("option_index").notNull(),
+  username: text("username")
+    .notNull()
+    .references(() => users.username, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+}, (table) => [
+  unique("poll_votes_poll_user_unique").on(table.pollUid, table.username),
+]);
 
 export const partnerApplications = pgTable("partner_applications", {
   uid: uuid("uid").defaultRandom().primaryKey(),

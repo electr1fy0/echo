@@ -198,7 +198,7 @@ export function AppSidebar() {
         {/* Floating action button for mobile post creation */}
         {user && (
           <button
-            onClick={openCreatePost}
+            onClick={() => openCreatePost()}
             className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white shadow-[0_4px_14px_rgba(255,90,31,0.4)] transition-all active:scale-95 cursor-pointer"
             title="Create a Post"
             aria-label="Create a Post"
@@ -248,54 +248,62 @@ export function AppSidebar() {
       </Link>
       
       <nav className="flex-1 flex flex-col items-center justify-between w-full min-h-0">
-        <div className="flex flex-col items-center gap-3.5 w-full shrink-0">
+        <div data-tour="nav-shortcuts" className="flex flex-col items-center gap-3.5 w-full shrink-0">
           {navItems.map((item) => (
-            <Tooltip key={item.label}>
-              <TooltipTrigger
-                render={
-                  <NavButton
-                    icon={item.icon}
-                    isActive={isActive(item.path)}
-                    hasBadge={item.path ? badgeMap[item.path] : false}
-                    isMobile={false}
-                    onClick={() => handleNavClick(item)}
-                  />
-                }
-              />
-              <TooltipContent side="right">
-                {item.label}
-                {item.shortcut && (
-                  <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">
-                    {item.shortcut}
-                  </kbd>
-                )}
-              </TooltipContent>
-            </Tooltip>
+            <div key={item.label} data-tour={
+              item.path === "/explore" ? "explore" :
+              item.path === "/notifications" ? "activity" :
+              undefined
+            }>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <NavButton
+                      icon={item.icon}
+                      isActive={isActive(item.path)}
+                      hasBadge={item.path ? badgeMap[item.path] : false}
+                      isMobile={false}
+                      onClick={() => handleNavClick(item)}
+                    />
+                  }
+                />
+                <TooltipContent side="right">
+                  {item.label}
+                  {item.shortcut && (
+                    <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">
+                      {item.shortcut}
+                    </kbd>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           ))}
           {/* Create Post Button */}
           {user && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    onClick={openCreatePost}
-                    className="flex items-center justify-center size-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_2px_10px_rgba(255,90,31,0.25)] hover:shadow-[0_4px_12px_rgba(255,90,31,0.35)] mt-1.5 shrink-0"
-                    aria-label="Create a Post"
-                  >
-                    <HugeiconsIcon icon={Add01Icon} className="size-5" />
-                  </button>
-                }
-              />
-              <TooltipContent side="right">
-                Create a Post
-                <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">c</kbd>
-              </TooltipContent>
-            </Tooltip>
+            <div data-tour="create-post">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={() => openCreatePost()}
+                      className="flex items-center justify-center size-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_2px_10px_rgba(255,90,31,0.25)] hover:shadow-[0_4px_12px_rgba(255,90,31,0.35)] mt-1.5 shrink-0"
+                      aria-label="Create a Post"
+                    >
+                      <HugeiconsIcon icon={Add01Icon} className="size-5" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="right">
+                  Create a Post
+                  <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">c</kbd>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           )}
         </div>
 
         {user && joinedChambers.length > 0 && (
-          <div className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-none">
+          <div data-tour="chambers" className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-none">
             {joinedChambers.map((c) => {
               const color = CHAMBER_COLORS[(c.colorIndex || 0) % CHAMBER_COLORS.length];
               const active = isActive(`/chamber/${c.uid}`);

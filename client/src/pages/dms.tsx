@@ -12,102 +12,102 @@ import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 
 export default function DMsPage() {
-  const { data: conversations, isLoading } = useConversations();
-  const { mutate: startConversation, isPending } = useCreateConversation();
-  const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+ const { data: conversations, isLoading } = useConversations();
+ const { mutate: startConversation, isPending } = useCreateConversation();
+ const navigate = useNavigate();
+ const [username, setUsername] = useState("");
 
-  const handleStart = () => {
-    if (!username.trim()) return;
-    startConversation(username.trim(), {
-      onSuccess: (conv) => {
-        navigate(`/dm/${conv.uid}`);
-        setUsername("");
-      },
-      onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to start conversation");
-      },
-    });
-  };
+ const handleStart = () => {
+ if (!username.trim()) return;
+ startConversation(username.trim(), {
+ onSuccess: (conv) => {
+ navigate(`/dm/${conv.uid}`);
+ setUsername("");
+ },
+ onError: (err) => {
+ toast.error(err instanceof Error ? err.message : "Failed to start conversation");
+ },
+ });
+ };
 
-  return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 px-4 pb-24 md:pb-8">
-      <div className="mb-6">
-        <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
-          Messages
-        </h1>
-        <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
-          Chat with other members
-        </h2>
-      </div>
+ return (
+ <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 px-4 pb-24 md:pb-8">
+ <div className="mb-6">
+ <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
+ Messages
+ </h1>
+ <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
+ Chat with other members
+ </h2>
+ </div>
 
-      <div className="flex gap-2 mb-8">
-        <Input
-          placeholder="Enter a username to message..."
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleStart(); }}
-          className="text-sm"
-        />
-        <Button
-          onClick={handleStart}
-          disabled={isPending || !username.trim()}
-          className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white border-none shrink-0"
-        >
-          {isPending ? "..." : "Message"}
-        </Button>
-      </div>
+ <div className="flex gap-2 mb-8">
+ <Input
+ placeholder="Enter a username to message..."
+ value={username}
+ onChange={(e) => setUsername(e.target.value)}
+ onKeyDown={(e) => { if (e.key === "Enter") handleStart(); }}
+ className="text-sm"
+ />
+ <Button
+ onClick={handleStart}
+ disabled={isPending || !username.trim()}
+ className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white border-none shrink-0"
+ >
+ {isPending ? "..." : "Message"}
+ </Button>
+ </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-3">
-              <Skeleton className="size-10 rounded-full shrink-0" />
-              <div className="flex-1 space-y-1.5">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : conversations && conversations.length > 0 ? (
-        <div className="space-y-1">
-          {conversations.map((conv) => (
-            <button
-              key={conv.uid}
-              onClick={() => navigate(`/dm/${conv.uid}`)}
-              className="flex items-center gap-3 w-full text-left p-3 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
-            >
-              <UserAvatar
-                src={conv.otherAvatar}
-                name={conv.otherUsername}
-                className="size-10 shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-                    {conv.otherUsername}
-                  </span>
-                  {conv.lastMessageAt && (
-                    <span className="text-[10px] text-neutral-400 shrink-0 ml-2">
-                      {formatRelativeTime(new Date(conv.lastMessageAt))}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-neutral-500 truncate mt-0.5">
-                  {conv.lastMessagePreview || "No messages yet"}
-                </p>
-              </div>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16 text-neutral-500">
-          <HugeiconsIcon icon={UserGroupIcon} className="size-10 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
-          <p className="text-sm font-medium">No conversations yet</p>
-          <p className="text-xs mt-1">Enter a username above to start messaging</p>
-        </div>
-      )}
-    </PageTransition>
-  );
+ {isLoading ? (
+ <div className="space-y-3">
+ {Array.from({ length: 5 }).map((_, i) => (
+ <div key={i} className="flex items-center gap-3 p-3">
+ <Skeleton className="size-10 rounded-full shrink-0" />
+ <div className="flex-1 space-y-1.5">
+ <Skeleton className="h-4 w-24" />
+ <Skeleton className="h-3 w-48" />
+ </div>
+ </div>
+ ))}
+ </div>
+ ) : conversations && conversations.length > 0 ? (
+ <div className="space-y-1">
+ {conversations.map((conv) => (
+ <button
+ key={conv.uid}
+ onClick={() => navigate(`/dm/${conv.uid}`)}
+ className="flex items-center gap-3 w-full text-left p-3 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
+ >
+ <UserAvatar
+ src={conv.otherAvatar}
+ name={conv.otherUsername}
+ className="size-10 shrink-0"
+ />
+ <div className="flex-1 min-w-0">
+ <div className="flex items-center justify-between">
+ <span className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
+ {conv.otherUsername}
+ </span>
+ {conv.lastMessageAt && (
+ <span className="text-[10px] text-neutral-400 shrink-0 ml-2">
+ {formatRelativeTime(new Date(conv.lastMessageAt))}
+ </span>
+ )}
+ </div>
+ <p className="text-xs text-neutral-500 truncate mt-0.5">
+ {conv.lastMessagePreview || "No messages yet"}
+ </p>
+ </div>
+ </button>
+ ))}
+ </div>
+ ) : (
+ <div className="text-center py-16 text-neutral-500">
+ <HugeiconsIcon icon={UserGroupIcon} className="size-10 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
+ <p className="text-sm font-medium">No conversations yet</p>
+ <p className="text-xs mt-1">Enter a username above to start messaging</p>
+ </div>
+ )}
+ </PageTransition>
+ );
 }

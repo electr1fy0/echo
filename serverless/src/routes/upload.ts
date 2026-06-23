@@ -5,8 +5,16 @@ import { ApiError } from "../lib/errors";
 import { generatePresignedPutUrl } from "../lib/s3";
 import type { AppEnv } from "../types/app";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
-const MAX_SIZE = 6 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  "image/jpeg", "image/png", "image/webp", "image/avif", "image/gif",
+  "application/pdf",
+  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "text/plain",
+  "application/zip", "application/x-zip-compressed", "application/x-tar", "application/x-rar-compressed"
+];
+const MAX_SIZE = 12 * 1024 * 1024; // Increase max size to 12MB for textbooks/ZIPs
 
 const imageUrl = (c: { env: { ECHO_DOMAIN?: string }; req: { url: string } }, key: string) => {
   const origin = new URL(c.req.url).origin;

@@ -12,6 +12,8 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import { AuthDialog } from "@/components/auth-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearGoogleOnboardingToken, setGoogleOnboardingToken, setToken } from "@/lib/utils";
+import { OnboardingTourProvider, useOnboardingTour } from "@/hooks/use-onboarding-tour";
+import { OnboardingTour } from "@/components/onboarding-tour";
 
 const Home = lazy(() => import("@/pages/home"));
 const Profile = lazy(() => import("@/pages/profile"));
@@ -29,6 +31,20 @@ const DMsPage = lazy(() => import("@/pages/dms"));
 const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
 
 import { CreatePostDialog } from "@/components/questions/create-post-dialog";
+
+function AutoStartTour() {
+  const { data: user, isLoading } = useAuth();
+  const { start, hasSeen } = useOnboardingTour();
+
+  useEffect(() => {
+    if (!isLoading && user && !hasSeen) {
+      const timer = setTimeout(() => start(), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [user, isLoading, hasSeen, start]);
+
+  return null;
+}
 
 function AuthenticatedLayout() {
   const { data: user, isLoading } = useAuth();
@@ -57,86 +73,90 @@ function AuthenticatedLayout() {
   }, [searchParams, navigate, queryClient]);
 
   return (
-    <div className="flex min-h-screen overflow-hidden">
-      <AppSidebar />
-      <main className="w-full flex flex-col items-center md:pl-20 min-h-0">
-        <Outlet />
-      </main>
-      <AuthDialog />
-      <CreatePostDialog />
-      {!user && !isLoading && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] animate-in slide-in-from-bottom duration-500">
-          <div>
-            <h4 className="text-sm font-semibold">Don't miss what's happening</h4>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-              People on TurnsOut are finding project partners, trading items, coordinating rides, and sharing ideas in real-time. Sign up to join them!
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="rounded-full px-5 h-9 text-xs font-medium cursor-pointer"
-              onClick={() => openAuthModal("signin")}
-            >
-              Sign in
-            </Button>
-            <Button
-              className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white font-semibold px-5 h-9 text-xs border-none cursor-pointer"
-              onClick={() => openAuthModal("signup")}
-            >
-              Sign up
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+    <OnboardingTourProvider>
+      <AutoStartTour />
+      <div className="flex min-h-screen">
+        <AppSidebar />
+        <main className="w-full flex flex-col items-center md:pl-20 min-h-0">
+          <Outlet />
+        </main>
+        <AuthDialog />
+        <CreatePostDialog />
+        <OnboardingTour />
+        {!user && !isLoading && (
+ <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom duration-500">
+ <div>
+ <h4 className="text-sm ">Don't miss what's happening</h4>
+ <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+ People on TurnsOut are finding project partners, trading items, coordinating rides, and sharing ideas in real-time. Sign up to join them!
+ </p>
+ </div>
+ <div className="flex gap-3">
+ <Button
+ variant="outline"
+ className="rounded-full px-5 h-9 text-xs font-medium cursor-pointer"
+ onClick={() => openAuthModal("signin")}
+ >
+ Sign in
+ </Button>
+ <Button
+ className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white px-5 h-9 text-xs border-none cursor-pointer"
+ onClick={() => openAuthModal("signup")}
+ >
+ Sign up
+ </Button>
+ </div>
+ </div>
+ )}
+  </div>
+  </OnboardingTourProvider>
   );
-}
+ }
 
-export default function App() {
-  return (
-    <ErrorBoundary
-      fallback={
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <p className="text-sm text-muted-foreground">Something went wrong.</p>
-        </div>
-      }
-    >
-      <BrowserRouter>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+ export default function App() {
+ return (
+ <ErrorBoundary
+ fallback={
+ <div className="min-h-screen flex items-center justify-center p-4">
+ <p className="text-sm text-muted-foreground">Something went wrong.</p>
+ </div>
+ }
+ >
+ <BrowserRouter>
+ <Suspense fallback={<LoadingSpinner />}>
+ <Routes>
+ <Route path="/verify-email" element={<VerifyEmail />} />
+ <Route path="/reset-password" element={<ResetPassword />} />
+ <Route path="/onboarding" element={<Onboarding />} />
 
-            {/* Public layout routes */}
-            <Route element={<AuthenticatedLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/home" element={<Navigate to="/" replace />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/chamber/:chamberId" element={<ChamberPage />} />
-              <Route path="/q/:questionId" element={<QuestionDetailPage />} />
-              <Route path="/u/:username" element={<PublicProfile />} />
-            </Route>
+ {/* Public layout routes */}
+ <Route element={<AuthenticatedLayout />}>
+ <Route path="/" element={<Home />} />
+ <Route path="/home" element={<Navigate to="/" replace />} />
+ <Route path="/explore" element={<Explore />} />
+ <Route path="/chamber/:chamberId" element={<ChamberPage />} />
+ <Route path="/q/:questionId" element={<QuestionDetailPage />} />
+ <Route path="/u/:username" element={<PublicProfile />} />
+ </Route>
 
-            {/* Protected layout routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AuthenticatedLayout />}>
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/chambers" element={<AllChambers />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/dm" element={<DMsPage />} />
-                <Route path="/dm/:conversationId" element={<DMConversationPage />} />
-              </Route>
-            </Route>
+ {/* Protected layout routes */}
+ <Route element={<ProtectedRoute />}>
+ <Route element={<AuthenticatedLayout />}>
+ <Route path="/profile" element={<Profile />} />
+ <Route path="/chambers" element={<AllChambers />} />
+ <Route path="/notifications" element={<Notifications />} />
+ <Route path="/dm" element={<DMsPage />} />
+ <Route path="/dm/:conversationId" element={<DMConversationPage />} />
+ </Route>
+ </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-        <Toaster />
-        <ReloadPrompt />
-      </BrowserRouter>
-    </ErrorBoundary>
-  );
+ <Route path="*" element={<NotFound />} />
+ </Routes>
+ </Suspense>
+ <Toaster />
+ <ReloadPrompt />
+ </BrowserRouter>
+ </ErrorBoundary>
+ );
 }
 

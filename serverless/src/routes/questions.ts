@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql, or } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
@@ -25,6 +25,7 @@ questionRoutes.get("/", optionalAuth, async (c) => {
     sort: c.req.query("sort"),
     filter: c.req.query("filter"),
     chamberUid: c.req.query("chamber_uid"),
+    channelUid: c.req.query("channel_uid"),
     author: c.req.query("author"),
     postType: c.req.query("post_type"),
     pinned,
@@ -36,6 +37,8 @@ questionRoutes.post("/", requireAuth, async (c) => {
   const body = (await c.req.json()) as {
     content?: string;
     chamberUid?: string;
+    channelUid?: string;
+    customFields?: Record<string, any>;
     postType?: string;
     ttlHours?: number;
     partnerTargetGrade?: string;
@@ -48,9 +51,31 @@ questionRoutes.post("/", requireAuth, async (c) => {
     taxiDestination?: string;
     taxiDatetime?: string;
     taxiSeatsAvailable?: number;
+    pollQuestion?: string;
+    pollOptions?: string[];
   };
   if (!body.chamberUid) {
     throw new ApiError(400, "chamber uid is required");
+  }
+
+  let channelUid = body.channelUid;
+  if (!channelUid) {
+    const [discChannel] = await c.get("db")
+      .select({ uid: schema.channels.uid })
+      .from(schema.channels)
+      .where(
+        and(
+          eq(schema.channels.chamberUid, body.chamberUid),
+          or(
+            eq(schema.channels.name, "discussion"),
+            eq(schema.channels.name, "discussions")
+          )
+        )
+      )
+      .limit(1);
+    if (discChannel) {
+      channelUid = discChannel.uid;
+    }
   }
 
   const expiresAt = body.ttlHours && body.ttlHours > 0
@@ -61,6 +86,8 @@ questionRoutes.post("/", requireAuth, async (c) => {
     content: body.content ?? "",
     author: c.get("user"),
     chamberUid: body.chamberUid,
+    channelUid: channelUid ?? null,
+    customFields: body.customFields ?? {},
     timeCreated: new Date(),
     expiresAt,
     postType: body.postType ?? "qna",
@@ -81,6 +108,16 @@ questionRoutes.post("/", requireAuth, async (c) => {
 
   if (!created) {
     throw new ApiError(500, "failed to create post");
+  }
+
+  // Create poll if postType is "poll"
+  if (body.postType === "poll" && body.pollQuestion && body.pollOptions && body.pollOptions.length >= 2) {
+    await c.get("db").insert(schema.polls).values({
+      postUid: created.uid,
+      question: body.pollQuestion,
+      options: body.pollOptions,
+      expiresAt,
+    });
   }
 
   await notifyMentions(c.get("db"), body.content ?? "", c.get("user"), created.uid, false);
@@ -119,6 +156,8 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       )`,
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
+      channelUid: schema.posts.channelUid,
+      customFields: schema.posts.customFields,
       acceptedAnswerUid: schema.posts.acceptedAnswerUid,
       pinnedAt: schema.posts.pinnedAt,
       expiresAt: schema.posts.expiresAt,
@@ -136,10 +175,35 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       taxiDatetime: schema.posts.taxiDatetime,
       taxiSeatsAvailable: schema.posts.taxiSeatsAvailable,
       taxiStatus: schema.posts.taxiStatus,
+      pollUid: schema.polls.uid,
+      pollQuestion: schema.polls.question,
+      pollOptions: schema.polls.options,
+      pollExpiresAt: schema.polls.expiresAt,
+      pollIsClosed: schema.polls.isClosed,
+      pollVotes: sql<{ optionIndex: number; count: number }[]>`COALESCE(
+        (
+          SELECT json_agg(json_build_object('optionIndex', pv.option_index, 'count', pv.cnt) ORDER BY pv.option_index)
+          FROM (
+            SELECT pv2.option_index, COUNT(*)::int as cnt
+            FROM poll_votes pv2
+            WHERE pv2.poll_uid = ${schema.polls.uid}
+            GROUP BY pv2.option_index
+          ) pv
+        ),
+        '[]'::json
+      )`,
+      userPollVote: sql<number | null>`(
+        SELECT pv3.option_index
+        FROM poll_votes pv3
+        WHERE pv3.poll_uid = ${schema.polls.uid}
+          AND pv3.username = ${c.get("user") || ""}
+        LIMIT 1
+      )`,
     })
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))
     .leftJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid))
+    .leftJoin(schema.polls, eq(schema.polls.postUid, schema.posts.uid))
     .where(eq(schema.posts.uid, uid))
     .limit(1);
 
@@ -274,7 +338,7 @@ questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
 questionRoutes.get("/:uid/replies", optionalAuth, async (c) => c.json(await getReplies(c.get("db"), c.get("user"), c.req.param("uid"))));
 
 questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
-  const body = (await c.req.json()) as { content?: string };
+  const body = (await c.req.json()) as { content?: string; parentReplyUid?: string };
   const uid = c.req.param("uid");
   const currentUser = c.get("user");
   const db = c.get("db");
@@ -282,6 +346,7 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
   const [created] = await db.insert(schema.replies).values({
     content: body.content ?? "",
     postUid: uid,
+    parentReplyUid: body.parentReplyUid ?? null,
     author: currentUser,
     timeCreated: new Date(),
   }).returning({ uid: schema.replies.uid, timeCreated: schema.replies.timeCreated });
@@ -302,6 +367,7 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
     uid: created.uid,
     content: body.content ?? "",
     questionUid: uid,
+    parentReplyUid: body.parentReplyUid ?? undefined,
     timeCreated: created.timeCreated?.toISOString() ?? null,
     authorUsername: currentUser,
     upvotes: 0,
@@ -412,6 +478,72 @@ questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   }
 
   return c.json({ message: "reply unaccepted" });
+});
+
+// Poll vote route
+questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
+  const uid = c.req.param("uid");
+  const currentUser = c.get("user");
+  const db = c.get("db");
+  const body = (await c.req.json()) as { optionIndex?: number };
+
+  if (body.optionIndex === undefined || body.optionIndex < 0) {
+    throw new ApiError(400, "optionIndex is required");
+  }
+
+  const [poll] = await db.select({
+    uid: schema.polls.uid,
+    options: schema.polls.options,
+    isClosed: schema.polls.isClosed,
+  }).from(schema.polls).where(eq(schema.polls.postUid, uid)).limit(1);
+
+  if (!poll) {
+    throw new ApiError(404, "poll not found");
+  }
+
+  if (poll.isClosed) {
+    throw new ApiError(400, "poll is closed");
+  }
+
+  if (body.optionIndex >= poll.options.length) {
+    throw new ApiError(400, "invalid option");
+  }
+
+  // Check if user already voted
+  const [existingVote] = await db.select().from(schema.pollVotes).where(
+    and(
+      eq(schema.pollVotes.pollUid, poll.uid),
+      eq(schema.pollVotes.username, currentUser),
+    ),
+  ).limit(1);
+
+  if (existingVote) {
+    if (existingVote.optionIndex === body.optionIndex) {
+      // Remove vote
+      await db.delete(schema.pollVotes).where(
+        and(
+          eq(schema.pollVotes.pollUid, poll.uid),
+          eq(schema.pollVotes.username, currentUser),
+        ),
+      );
+    } else {
+      // Change vote
+      await db.update(schema.pollVotes).set({ optionIndex: body.optionIndex }).where(
+        and(
+          eq(schema.pollVotes.pollUid, poll.uid),
+          eq(schema.pollVotes.username, currentUser),
+        ),
+      );
+    }
+  } else {
+    await db.insert(schema.pollVotes).values({
+      pollUid: poll.uid,
+      optionIndex: body.optionIndex,
+      username: currentUser,
+    });
+  }
+
+  return c.json({ message: "vote updated" });
 });
 
 // Express interest route (for trade, taxi, partner posts)
