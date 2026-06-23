@@ -22,10 +22,14 @@ const parseBearerToken = (authorization?: string) => {
 };
 
 export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
-  const token = parseBearerToken(c.req.header("Authorization"));
-  const payload = await verifyAuthToken(c.env.SECRET_KEY, token);
-  c.set("user", payload.sub);
-  await next();
+  try {
+    const token = parseBearerToken(c.req.header("Authorization"));
+    const payload = await verifyAuthToken(c.env.SECRET_KEY, token);
+    c.set("user", payload.sub);
+    await next();
+  } catch (error) {
+    throw error instanceof ApiError ? error : new ApiError(401, "invalid token");
+  }
 });
 
 export const optionalAuth = createMiddleware<AppEnv>(async (c, next) => {

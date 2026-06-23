@@ -15,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn, getInitials } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
+import { useUnreadNotificationCount } from "@/hooks/use-notifications";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -29,7 +30,6 @@ interface NavItem {
   icon: typeof Home01Icon;
   path?: string;
   label: string;
-  hasBadge?: boolean;
   shortcut?: string;
 }
 
@@ -129,8 +129,13 @@ export function AppSidebar() {
   const { open: openAuthModal } = useAuthModal();
   const { open: openCreatePost } = useCreatePostModal();
   const { data: chambersData = [] } = useListChambers();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
 
   const joinedChambers = chambersData.filter((c) => c.isJoined);
+
+  const badgeMap: Record<string, boolean> = {
+    "/notifications": unreadCount > 0,
+  };
 
   const navItems: NavItem[] = [
     { icon: Home01Icon, path: "/", label: "Home", shortcut: "1" },
@@ -145,7 +150,6 @@ export function AppSidebar() {
       icon: FavouriteIcon,
       path: "/notifications",
       label: "Notifications",
-      hasBadge: true,
       shortcut: "4",
     },
   ];
@@ -209,7 +213,7 @@ export function AppSidebar() {
                 key={item.label}
                 icon={item.icon}
                 isActive={isActive(item.path)}
-                hasBadge={item.hasBadge}
+                hasBadge={item.path ? badgeMap[item.path] : false}
                 isMobile={true}
                 onClick={() => handleNavClick(item)}
               />
@@ -252,7 +256,7 @@ export function AppSidebar() {
                   <NavButton
                     icon={item.icon}
                     isActive={isActive(item.path)}
-                    hasBadge={item.hasBadge}
+                    hasBadge={item.path ? badgeMap[item.path] : false}
                     isMobile={false}
                     onClick={() => handleNavClick(item)}
                   />

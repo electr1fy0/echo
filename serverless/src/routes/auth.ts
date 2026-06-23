@@ -9,6 +9,7 @@ import { issueAuthToken, issueGoogleOnboardingToken, verifyGoogleOnboardingToken
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/email";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
+import { rateLimit } from "../middleware/rateLimit";
 import { fetchGoogleProfileEmail } from "../services/google";
 import { getProfileByUsername } from "../services/users";
 import {
@@ -25,6 +26,15 @@ export const authRoutes = new Hono<AppEnv>();
 
 authRoutes.use("/signout", requireAuth);
 authRoutes.use("/verify", requireAuth);
+
+const authLimiter = rateLimit("AUTH_LIMITER", { keyPrefix: "auth" });
+authRoutes.use("/signup", authLimiter);
+authRoutes.use("/signin", authLimiter);
+authRoutes.use("/verify-email", authLimiter);
+authRoutes.use("/resend-verification", authLimiter);
+authRoutes.use("/request-password-reset", authLimiter);
+authRoutes.use("/reset-password", authLimiter);
+authRoutes.use("/google/onboarding", authLimiter);
 
 const handleGoogleCallback = async (c: Context<AppEnv>) => {
   const state = c.req.query("state");

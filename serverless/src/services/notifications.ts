@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray, and, sql } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -57,6 +57,14 @@ export const notifyMentions = async (
         }),
       ),
   );
+};
+
+export const countUnreadNotifications = async (db: DB, currentUser: string): Promise<number> => {
+  const [result] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.notifications)
+    .where(and(eq(schema.notifications.userUsername, currentUser), eq(schema.notifications.isRead, false)));
+  return Number(result?.count ?? 0);
 };
 
 export const listNotifications = async (db: DB, currentUser: string, limit: number, offset: number) => {

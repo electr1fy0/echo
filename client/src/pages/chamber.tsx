@@ -28,8 +28,6 @@ import { cn, getInitials } from "@/lib/utils";
 import {
   useDeleteQuestion,
   useInfiniteQuestionsQuery,
-  useCreateQuestion,
-  useQuestionDraft,
   usePinnedQuestionsQuery,
 } from "@/hooks/use-questions";
 import { PageTransition } from "@/components/page-transition";
@@ -42,9 +40,12 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { MentionField } from "@/components/ui/mention-field";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { toast } from "@/lib/toast";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { haptic } from "@/lib/haptic";
 
 function formatMemberCount(count: number): string {
@@ -58,7 +59,7 @@ export default function ChamberPage() {
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
   const { data: chambersData, isLoading: isChamberLoading } = useListChambers();
-  const { data: user, isLoading: isAuthLoading } = useAuth();
+  const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const chambers = chambersData || [];
   const chamber = chambers.find((c) => c.uid === chamberId);
@@ -72,7 +73,6 @@ export default function ChamberPage() {
   const [sortBy, setSortBy] = useState<"time_created" | "votes" | "hot">("hot");
   const [postScope, setPostScope] = useState<"all" | "my-posts">("all");
   const [postTypeFilter, setPostTypeFilter] = useState<"all" | "qna" | "partner" | "trade" | "taxi">("all");
-  const [publisherPostType, setPublisherPostType] = useState<"qna" | "partner" | "trade" | "taxi">("qna");
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -99,62 +99,6 @@ export default function ChamberPage() {
   );
   const questions = questionsData ? questionsData.pages.flat() : [];
   const { data: pinnedPosts = [] } = usePinnedQuestionsQuery(chamberId, postTypeFilter === "all" ? undefined : postTypeFilter);
-
-  // Publisher State & Hooks
-  const { mutate: submitQuestion, isPending: isCreatePending } = useCreateQuestion();
-  const { draft, updateDraft, resetDraft } = useQuestionDraft();
-  
-  // Pivot draft additions
-  const [partnerSlotsNeeded, setPartnerSlotsNeeded] = useState(1);
-  const [tradePrice, setTradePrice] = useState("");
-  const [tradeCondition, setTradeCondition] = useState("Like New");
-  const [ttlHours, setTtlHours] = useState<number | null>(null);
-
-  // Taxi draft additions
-  const [taxiDeparture, setTaxiDeparture] = useState("");
-  const [taxiDestination, setTaxiDestination] = useState("");
-  const [taxiDatetime, setTaxiDatetime] = useState("");
-
-
-
-  const handlePublish = async () => {
-    if (!draft.content.trim() || !chamberId || isCreatePending) return;
-
-    const payload = {
-      content: draft.content,
-      chamberUid: chamberId,
-      postType: publisherPostType,
-      ...(publisherPostType === "partner" ? {
-        partnerSlotsNeeded: Number(partnerSlotsNeeded),
-      } : {}),
-      ...(publisherPostType === "trade" ? {
-        tradePrice: Math.round(Number(tradePrice) * 100), // Convert to cents
-        tradeCondition,
-      } : {}),
-      ...(publisherPostType === "taxi" ? {
-        taxiDeparture,
-        taxiDestination,
-        taxiDatetime,
-      } : {}),
-      ttlHours,
-    };
-
-    submitQuestion(payload, {
-      onSuccess: () => {
-        resetDraft();
-        setTtlHours(null);
-        setTradePrice("");
-        setPartnerSlotsNeeded(1);
-        setTaxiDeparture("");
-        setTaxiDestination("");
-        setTaxiDatetime("");
-        toast.success("Published successfully!");
-      },
-      onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to publish post");
-      },
-    });
-  };
 
   const fetchNextPageRef = useRef(fetchNextPage);
   const hasNextPageRef = useRef(hasNextPage);
@@ -348,230 +292,80 @@ export default function ChamberPage() {
             ✕
           </button>
         )}
-      </div>      {/* Dynamic Publisher Card */}
-      {isAuthLoading && chamber.isJoined ? (
-        <div className="border border-dashed border-neutral-300 dark:border-neutral-700 bg-background rounded-2xl mb-6 p-4 space-y-3 animate-pulse">
-          <div className="h-10 bg-neutral-100 dark:bg-neutral-800 rounded-xl" />
-          <div className="flex justify-between items-center">
-            <div className="h-7 w-20 bg-neutral-100 dark:bg-neutral-800 rounded-lg" />
-            <div className="h-7 w-16 bg-neutral-100 dark:bg-neutral-800 rounded-lg" />
-          </div>
-        </div>
-      ) : user && chamber.isJoined ? (
-        <div className="border border-dashed border-neutral-300 dark:border-neutral-700 bg-background rounded-2xl mb-6 transition-colors focus-within:border-neutral-400 dark:focus-within:border-neutral-500 overflow-hidden">
-          <MentionField
-              placeholder={
-                publisherPostType === "qna"
-                  ? "Ask a question or share class news..."
-                  : publisherPostType === "partner"
-                    ? "Describe the project and what you're looking for..."
-                    : publisherPostType === "trade"
-                      ? "List what you're selling and any relevant details..."
-                      : "Describe your taxi route and ride details..."
-              }
-            ariaLabel="Post content"
-            className="resize-none min-h-[72px] border-none shadow-none focus-visible:ring-0 bg-transparent px-4 pt-3 pb-2 text-sm"
-            value={draft.content}
-            onValueChange={(value) => updateDraft({ content: value })}
-            multiline
-          />
-
-          {/* Post Type Selector tabs */}
-          <div className="flex items-center gap-1 px-3 py-1.5 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 overflow-x-auto scrollbar-none">
-            {(["qna", "partner", "trade", "taxi"] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setPublisherPostType(type)}
-                className={cn(
-                  "h-6 px-2 rounded-md text-[11px] font-semibold transition-colors cursor-pointer border whitespace-nowrap",
-                  publisherPostType === type
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                    : "bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600",
-                )}
-              >
-                {type === "qna" ? "Discussions" : type === "partner" ? "Partners" : type === "trade" ? "Marketplace" : "Taxi"}
-              </button>
-            ))}
-          </div>
-
-          {/* Single inline toolbar row */}
-          <div className="flex items-center gap-2 px-3 py-2 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40">
-
-            {/* Partners: compact slot stepper */}
-            {publisherPostType === "partner" && (
-              <div className="flex items-center gap-1.5 mr-auto">
-                <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 select-none">
-                  Slots
-                </span>
-                <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setPartnerSlotsNeeded(Math.max(1, partnerSlotsNeeded - 1))}
-                    className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
-                  >
-                    −
-                  </button>
-                  <span className="w-7 h-7 flex items-center justify-center text-xs font-semibold text-neutral-800 dark:text-neutral-200 border-x border-neutral-200 dark:border-neutral-700 select-none">
-                    {partnerSlotsNeeded}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setPartnerSlotsNeeded(Math.min(10, partnerSlotsNeeded + 1))}
-                    className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Taxi: inline departure, destination, datetime, seats */}
-            {publisherPostType === "taxi" && (
-              <div className="flex items-center gap-2 mr-auto flex-wrap">
-                <input
-                  type="text"
-                  placeholder="Departure"
-                  value={taxiDeparture}
-                  onChange={(e) => setTaxiDeparture(e.target.value)}
-                  className="w-24 h-7 text-xs px-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none"
-                />
-                <span className="text-neutral-400 text-xs">→</span>
-                <input
-                  type="text"
-                  placeholder="Destination"
-                  value={taxiDestination}
-                  onChange={(e) => setTaxiDestination(e.target.value)}
-                  className="w-24 h-7 text-xs px-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none"
-                />
-                <DateTimePicker
-                  value={taxiDatetime}
-                  onChange={setTaxiDatetime}
-                  placeholder="Pick date & time"
-                />
-              </div>
-            )}
-
-            {/* Marketplace: inline price + condition */}
-            {publisherPostType === "trade" && (
-              <div className="flex items-center gap-2 mr-auto">
-                <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden h-7 bg-background">
-                  <span className="px-2 text-xs text-neutral-400 font-medium select-none border-r border-neutral-200 dark:border-neutral-700">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    min={0}
-                    placeholder="Price"
-                    value={tradePrice}
-                    onChange={(e) => setTradePrice(e.target.value)}
-                    className="w-20 h-7 text-xs px-2 bg-transparent text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-                  />
-                </div>
-                <select
-                  value={tradeCondition}
-                  onChange={(e) => setTradeCondition(e.target.value)}
-                  className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
-                >
-                  <option value="New">Brand New</option>
-                  <option value="Like New">Like New</option>
-                  <option value="Used">Used</option>
-                  <option value="PDF/Digital">Digital/PDF</option>
-                </select>
-              </div>
-            )}
-
-            {/* Spacer: push actions right when no metadata */}
-            {publisherPostType === "qna" && <div className="flex-1" />}
-
-            {/* Disappearing posts toggle */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  const options: (number | null)[] = [null, 1, 2, 6, 24];
-                  const idx = options.indexOf(ttlHours);
-                  setTtlHours(options[(idx + 1) % options.length]);
-                }}
-                className={cn(
-                  "flex items-center gap-1 h-7 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 border",
-                  ttlHours !== null
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                    : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-600",
-                )}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="size-3.5"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                {ttlHours !== null ? `${ttlHours}h` : "Off"}
-              </button>
-            </div>
-
-            <Button
-              onClick={() => { haptic(); handlePublish(); }}
-              disabled={isCreatePending || !draft.content.trim()}
-              className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white rounded-lg text-xs h-7 px-4 border-none font-semibold cursor-pointer shrink-0"
-            >
-              {isCreatePending ? "Publishing..." : "Publish"}
-            </Button>
-          </div>
-        </div>
-      ) : null}
+      </div>
 
       {/* Filters and Sort Row */}
       <div className="flex items-center gap-2 flex-wrap mb-6">
         {/* Sort By Dropdown */}
-        <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30">
-          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Sort</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as "time_created" | "votes" | "hot")}
-            className="bg-transparent text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer border-none pr-4"
-          >
-            <option value="hot">Hot</option>
-            <option value="time_created">Recent</option>
-            <option value="votes">Top Posts</option>
-          </select>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-xs text-neutral-700 dark:text-neutral-300 font-semibold cursor-pointer focus:outline-none">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Sort:</span>
+            <span>{sortBy === "hot" ? "Hot" : sortBy === "time_created" ? "Recent" : "Top Posts"}</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[120px]">
+            <DropdownMenuItem onClick={() => setSortBy("hot")} className="cursor-pointer">
+              Hot
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("time_created")} className="cursor-pointer">
+              Recent
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("votes")} className="cursor-pointer">
+              Top Posts
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Post Type Filter Dropdown */}
-        <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30">
-          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Type</span>
-          <select
-            value={postTypeFilter}
-            onChange={(e) => setPostTypeFilter(e.target.value as "all" | "qna" | "partner" | "trade" | "taxi")}
-            className="bg-transparent text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer border-none pr-4"
-          >
-            <option value="all">All posts</option>
-            <option value="qna">Discussions</option>
-            <option value="partner">Find Partners</option>
-            <option value="trade">Marketplace</option>
-            <option value="taxi">Taxi / Rides</option>
-          </select>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-xs text-neutral-700 dark:text-neutral-300 font-semibold cursor-pointer focus:outline-none">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Type:</span>
+            <span>
+              {postTypeFilter === "all"
+                ? "All posts"
+                : postTypeFilter === "qna"
+                ? "Discussions"
+                : postTypeFilter === "partner"
+                ? "Find Partners"
+                : postTypeFilter === "trade"
+                ? "Marketplace"
+                : "Taxi / Rides"}
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[140px]">
+            <DropdownMenuItem onClick={() => setPostTypeFilter("all")} className="cursor-pointer">
+              All posts
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPostTypeFilter("qna")} className="cursor-pointer">
+              Discussions
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPostTypeFilter("partner")} className="cursor-pointer">
+              Find Partners
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPostTypeFilter("trade")} className="cursor-pointer">
+              Marketplace
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setPostTypeFilter("taxi")} className="cursor-pointer">
+              Taxi / Rides
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Scope Filter */}
         {user && (
-          <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30">
-            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Scope</span>
-            <select
-              value={postScope}
-              onChange={(e) => setPostScope(e.target.value as "all" | "my-posts")}
-              className="bg-transparent text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer border-none pr-4"
-            >
-              <option value="all">All authors</option>
-              <option value="my-posts">My posts</option>
-            </select>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-xs text-neutral-700 dark:text-neutral-300 font-semibold cursor-pointer focus:outline-none">
+              <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Scope:</span>
+              <span>{postScope === "all" ? "All authors" : "My posts"}</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[120px]">
+              <DropdownMenuItem onClick={() => setPostScope("all")} className="cursor-pointer">
+                All authors
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setPostScope("my-posts")} className="cursor-pointer">
+                My posts
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 

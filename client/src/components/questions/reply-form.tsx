@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { MentionField } from "@/components/ui/mention-field";
 import { useCreateReply } from "@/hooks/use-replies";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Comment01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { Comment01Icon, Image01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
+import { uploadImagePresigned } from "@/api/upload";
 
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -21,6 +22,7 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
+  const [imageUploading, setImageUploading] = useState(false);
   const { mutate: submitReply, isPending } = useCreateReply();
   const [isValidating, setIsValidating] = useState(false);
 
@@ -77,15 +79,53 @@ export function ReplyForm({ questionId, onSubmitSuccess }: ReplyFormProps) {
 
   return (
     <form className="flex gap-4 mt-4 items-start" onSubmit={handleSubmit}>
-      <MentionField
-        value={content}
-        placeholder="Write a reply..."
-        ariaLabel="Reply content"
-        className="text-base"
-        onValueChange={setContent}
-        multiline={true}
-        containerClassName="flex-1"
-      />
+      <div className="flex-1 space-y-2">
+        <MentionField
+          value={content}
+          placeholder="Write a reply..."
+          ariaLabel="Reply content"
+          className="text-base"
+          onValueChange={setContent}
+          multiline={true}
+          containerClassName="w-full"
+        />
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            disabled={imageUploading}
+            onClick={() => document.getElementById("reply-image-input")?.click()}
+            className="flex items-center gap-1.5 h-7 px-2 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer transition-colors disabled:opacity-50"
+          >
+            {imageUploading ? (
+              <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
+            ) : (
+              <HugeiconsIcon icon={Image01Icon} className="size-3.5" />
+            )}
+            {imageUploading ? "Uploading..." : "Image"}
+          </button>
+          <input
+            id="reply-image-input"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={imageUploading}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setImageUploading(true);
+              try {
+                const url = await uploadImagePresigned(file);
+                setContent((prev) => prev + `\n${url}\n`);
+              } catch {
+                toast.error("Image upload failed");
+              } finally {
+                setImageUploading(false);
+                e.target.value = "";
+              }
+            }}
+          />
+        </div>
+      </div>
       <Button
         variant="outline"
         disabled={!content.trim() || isValidating || isPending}

@@ -4,7 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
-import { listNotifications } from "../services/notifications";
+import { listNotifications, countUnreadNotifications } from "../services/notifications";
 import { getPostItems, searchUsers } from "../services/questions";
 import { getProfileByUsername } from "../services/users";
 import { ensureValidUsername } from "../lib/utils";
@@ -73,6 +73,11 @@ userRoutes.get("/me/questions", async (c) => {
 userRoutes.get("/me/notifications", async (c) => {
   const { limit, offset } = parsePagination(c.req.query());
   return c.json(await listNotifications(c.get("db"), c.get("user"), limit, offset));
+});
+
+userRoutes.get("/me/notifications/unread-count", requireAuth, async (c) => {
+  const count = await countUnreadNotifications(c.get("db"), c.get("user"));
+  return c.json({ count });
 });
 
 userRoutes.get("/search", async (c) => {

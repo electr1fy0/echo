@@ -26,3 +26,12 @@ export async function listNotifications(limit?: number, offset?: number): Promis
     if (!res.ok) throw new Error("failed");
     return res.json();
 }
+
+export async function getUnreadNotificationCount(): Promise<number> {
+    const res = await fetch(`${API_URL}/users/me/notifications/unread-count`, {
+        headers: { ...getAuthHeaders() },
+    });
+    if (!res.ok) throw new Error("failed");
+    const { count } = await res.json();
+    return count;
+}

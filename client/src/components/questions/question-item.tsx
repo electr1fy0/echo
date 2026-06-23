@@ -44,7 +44,7 @@ import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
-import { MentionText } from "@/components/mentions/mention-text";
+import { PostContent } from "@/components/post-content";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;
@@ -470,24 +470,44 @@ export function QuestionItem({
                         className="w-20 h-7 text-xs px-2 bg-transparent text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
-                    <select
-                      value={editedTradeCondition}
-                      onChange={(e) => setEditedTradeCondition(e.target.value)}
-                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
-                    >
-                      <option value="New">Brand New</option>
-                      <option value="Like New">Like New</option>
-                      <option value="Used">Used</option>
-                      <option value="PDF/Digital">Digital/PDF</option>
-                    </select>
-                    <select
-                      value={editedTradeStatus}
-                      onChange={(e) => setEditedTradeStatus(e.target.value)}
-                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
-                    >
-                      <option value="available">Available</option>
-                      <option value="sold">Sold</option>
-                    </select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
+                        {editedTradeCondition === "New"
+                          ? "Brand New"
+                          : editedTradeCondition === "Like New"
+                          ? "Like New"
+                          : editedTradeCondition === "Used"
+                          ? "Used"
+                          : "Digital/PDF"}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[120px]">
+                        <DropdownMenuItem onClick={() => setEditedTradeCondition("New")} className="cursor-pointer">
+                          Brand New
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditedTradeCondition("Like New")} className="cursor-pointer">
+                          Like New
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditedTradeCondition("Used")} className="cursor-pointer">
+                          Used
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditedTradeCondition("PDF/Digital")} className="cursor-pointer">
+                          Digital/PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
+                        {editedTradeStatus === "available" ? "Available" : "Sold"}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[100px]">
+                        <DropdownMenuItem onClick={() => setEditedTradeStatus("available")} className="cursor-pointer">
+                          Available
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditedTradeStatus("sold")} className="cursor-pointer">
+                          Sold
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
 
@@ -510,14 +530,19 @@ export function QuestionItem({
                         className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
                       >+</button>
                     </div>
-                    <select
-                      value={editedPartnerStatus}
-                      onChange={(e) => setEditedPartnerStatus(e.target.value)}
-                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
-                    >
-                      <option value="open">Open</option>
-                      <option value="done">Done</option>
-                    </select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
+                        {editedPartnerStatus === "open" ? "Open" : "Done"}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[90px]">
+                        <DropdownMenuItem onClick={() => setEditedPartnerStatus("open")} className="cursor-pointer">
+                          Open
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditedPartnerStatus("done")} className="cursor-pointer">
+                          Done
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
 
@@ -562,14 +587,19 @@ export function QuestionItem({
                         >+</button>
                       </div>
                     </div>
-                    <select
-                      value={editedTaxiStatus}
-                      onChange={(e) => setEditedTaxiStatus(e.target.value)}
-                      className="h-7 text-xs rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background px-2 text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer"
-                    >
-                      <option value="open">Open</option>
-                      <option value="done">Done</option>
-                    </select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
+                        {editedTaxiStatus === "open" ? "Open" : "Done"}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[90px]">
+                        <DropdownMenuItem onClick={() => setEditedTaxiStatus("open")} className="cursor-pointer">
+                          Open
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditedTaxiStatus("done")} className="cursor-pointer">
+                          Done
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
 
@@ -606,7 +636,7 @@ export function QuestionItem({
               </div>
             ) : (
               <>
-                <MentionText
+                <PostContent
                   content={question.content}
                   className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
                 />

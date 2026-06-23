@@ -22,6 +22,14 @@ import { ChamberCard } from "@/components/chambers/chamber-list";
 import { TextFlip } from "@/components/text-flip";
 import { PageTransition } from "@/components/page-transition";
 
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
 export interface FeedColumn {
   id: string;
   title: string;
@@ -250,26 +258,41 @@ function ColumnFeed({
             {/* Chamber Source Selector */}
             <div className="flex flex-col gap-1.5">
               <span className="font-semibold text-neutral-400 uppercase text-[9px] tracking-wider">Source</span>
-              <div className="relative">
-                <select
-                  value={column.chamberSource}
-                  onChange={(e) => onUpdateColumn({ chamberSource: e.target.value })}
-                  className="w-full bg-background rounded-lg border border-neutral-200 dark:border-neutral-800 px-3 py-1.5 text-xs text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none focus:ring-1 focus:ring-neutral-300 dark:focus:ring-neutral-700 appearance-none cursor-pointer pr-8 truncate animate-none"
-                >
-                  {hasToken && <option value="joined">Joined chambers</option>}
-                  <option value="global">All chambers (Global)</option>
-                  <optgroup label="Specific Chamber">
-                    {chambers.map((c) => (
-                      <option key={c.uid} value={c.uid}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-neutral-400 dark:text-neutral-500">
-                  <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5" />
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex items-center justify-between w-full bg-background rounded-lg border border-neutral-200 dark:border-neutral-850 px-3 py-1.5 text-[11px] text-neutral-700 dark:text-neutral-300 font-semibold focus:outline-none cursor-pointer">
+                  <span className="truncate">
+                    {column.chamberSource === "joined"
+                      ? "Joined chambers"
+                      : column.chamberSource === "global"
+                      ? "All chambers (Global)"
+                      : chambers.find((c) => c.uid === column.chamberSource)?.name || "Select Chamber"}
+                  </span>
+                  <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 text-neutral-400 shrink-0 ml-1" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 max-h-[250px] overflow-y-auto scrollbar-thin">
+                  {hasToken && (
+                    <DropdownMenuItem onClick={() => onUpdateColumn({ chamberSource: "joined" })} className="cursor-pointer">
+                      Joined chambers
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => onUpdateColumn({ chamberSource: "global" })} className="cursor-pointer">
+                    All chambers (Global)
+                  </DropdownMenuItem>
+                  {chambers.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-3 py-1 text-[9px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+                        Specific Chambers
+                      </div>
+                      {chambers.map((c) => (
+                        <DropdownMenuItem key={c.uid} onClick={() => onUpdateColumn({ chamberSource: c.uid })} className="cursor-pointer">
+                          {c.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Type Pills */}

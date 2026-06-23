@@ -28,7 +28,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { MentionText } from "@/components/mentions/mention-text";
+import { PostContent } from "@/components/post-content";
 
 type ReplyItemProps = {
   answerItem: AnswerItem;
@@ -141,7 +141,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept }: ReplyItemProps) {
               </div>
             </div>
           ) : (
-            <MentionText
+            <PostContent
               content={reply.content}
               className="block text-sm text-neutral-700 dark:text-neutral-300"
             />

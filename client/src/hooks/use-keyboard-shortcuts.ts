@@ -19,6 +19,7 @@ export function useKeyboardShortcuts(handlers: Record<string, ShortcutHandler>) 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (isInputFocused()) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       const handler = handlersRef.current[e.key];
       if (handler) {
         e.preventDefault();

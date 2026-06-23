@@ -9,7 +9,9 @@ import { questionRoutes } from "./routes/questions";
 import { searchRoutes } from "./routes/search";
 import { userRoutes } from "./routes/users";
 import { dmRoutes } from "./routes/dms";
+import { uploadRoutes, imageRoutes } from "./routes/upload";
 import type { AppEnv } from "./types/app";
+import { rateLimit } from "./middleware/rateLimit";
 
 export const app = new Hono<AppEnv>();
 
@@ -29,6 +31,8 @@ app.use(
   }),
 );
 
+app.use("*", rateLimit("API_LIMITER"));
+
 app.onError(handleAppError);
 
 app.on(["GET", "HEAD", "POST"], "/ping", (c) => {
@@ -44,5 +48,7 @@ app.route("/questions", questionRoutes);
 app.route("/chambers", chamberRoutes);
 app.route("/search", searchRoutes);
 app.route("/dms", dmRoutes);
+app.route("/upload", uploadRoutes);
+app.route("/images", imageRoutes);
 
 export default app;

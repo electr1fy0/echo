@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { UpvoteButton } from "@/components/upvote-button";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuthModal } from "@/hooks/use-auth-modal";
-import { MentionText } from "@/components/mentions/mention-text";
+import { PostContent } from "@/components/post-content";
 import { toast } from "@/lib/toast";
 import { useRepliesQuery } from "@/hooks/use-replies";
 
@@ -111,7 +111,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
       {/* Middle Section: Truncated Content */}
       <div className="flex-1 my-2 overflow-hidden">
         <div className="line-clamp-2 text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-normal">
-          <MentionText content={question.content} />
+          <PostContent content={question.content} />
         </div>
         
         {/* Post Type Specific Tiny Badges */}

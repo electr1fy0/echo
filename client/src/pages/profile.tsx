@@ -50,6 +50,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "@/lib/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "@/hooks/use-theme";
+import { useImageUpload } from "@/hooks/use-image-upload";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/page-transition";
@@ -115,6 +116,7 @@ export default function Profile() {
   const { mutate: deleteAccount } = useDeleteAccount();
   const { mutate: signout } = useSignout();
   const { setTheme } = useTheme();
+  const { upload: uploadImage, uploading: imageUploading } = useImageUpload();
   const [editForm, setEditForm] = useState<User>({
     username: "",
     email: "",
@@ -500,18 +502,32 @@ export default function Profile() {
                 />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="avatar" className="text-sm font-medium">
-                  Avatar URL
-                </label>
-                <Input
-                  id="avatar"
-                  className="select-text"
-                  value={editForm.avatar}
-                  placeholder="URL to fetch your avatar"
-                  onChange={(e) => {
-                    updateDraft({ avatar: e.target.value });
-                  }}
-                />
+                <label className="text-sm font-medium">Avatar</label>
+                <div className="flex items-center gap-3">
+                  {editForm.avatar && (
+                    <img src={editForm.avatar} className="size-10 rounded-full object-cover" />
+                  )}
+                  <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+                    {imageUploading ? (
+                      <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
+                    ) : (
+                      <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+                    )}
+                    {imageUploading ? "Uploading..." : "Upload Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={imageUploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const url = await uploadImage(file);
+                        if (url) updateDraft({ avatar: url });
+                      }}
+                    />
+                  </label>
+                </div>
               </div>
               <div className="flex items-center justify-between py-2 border-t border-neutral-100 dark:border-neutral-800">
                 <div>

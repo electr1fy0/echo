@@ -20,7 +20,7 @@ import { PageTransition } from "@/components/page-transition";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
-import { MentionText } from "@/components/mentions/mention-text";
+import { PostContent } from "@/components/post-content";
 import { UpvoteButton } from "@/components/upvote-button";
 import { ReplyItem } from "@/components/questions/reply-item";
 import { ReplyForm } from "@/components/questions/reply-form";
@@ -224,7 +224,7 @@ export default function QuestionDetailPage() {
             </div>
           </div>
         ) : (
-          <MentionText
+          <PostContent
             content={question.content}
             className="text-base text-neutral-900 dark:text-neutral-100 leading-relaxed font-light"
           />

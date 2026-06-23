@@ -1,5 +1,9 @@
 import type { DB } from "../db";
 
+export interface RateLimit {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 export type Bindings = {
   DATABASE_URL: string;
   SECRET_KEY: string;
@@ -10,6 +14,12 @@ export type Bindings = {
   GOOGLE_CLIENT_SECRET?: string;
   GOOGLE_REDIRECT_URL?: string;
   CLIENT_URL?: string;
+  IMAGES_BUCKET: R2Bucket;
+  R2_ACCOUNT_ID: string;
+  R2_ACCESS_KEY_ID: string;
+  R2_SECRET_ACCESS_KEY: string;
+  API_LIMITER?: RateLimit;
+  AUTH_LIMITER?: RateLimit;
 };
 
 export type Variables = {
