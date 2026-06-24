@@ -10,6 +10,10 @@ export const mapPostItem = (row: {
   timeCreated: Date | null;
   authorUsername: string;
   authorAvatar: string;
+  authorReputation: number;
+  authorBio: string | null;
+  authorPosted: number | null;
+  authorAnswered: number | null;
   upvotes: number | null;
   isUpvoted: boolean;
   chamberUid: string;
@@ -82,6 +86,7 @@ export const mapPostItem = (row: {
   author: {
     username: row.authorUsername,
     avatar: row.authorAvatar,
+    reputation: row.authorReputation,
   },
 });
 
@@ -93,6 +98,10 @@ export const mapReplyItem = (row: {
   parentReplyUid: string | null;
   authorUsername: string;
   authorAvatar: string;
+  authorBio: string | null;
+  authorPosted: number | null;
+  authorAnswered: number | null;
+  authorReputation: number;
   upvotes: number | null;
   isUpvoted: boolean;
   acceptedAnswerUid: string | null;
@@ -111,6 +120,10 @@ export const mapReplyItem = (row: {
   author: {
     username: row.authorUsername,
     avatar: row.authorAvatar,
+    bio: row.authorBio ?? undefined,
+    posted: row.authorPosted ?? 0,
+    answered: row.authorAnswered ?? 0,
+    reputation: row.authorReputation,
   },
 });
 
@@ -228,6 +241,20 @@ export const getPostItems = async (
       timeCreated: schema.posts.timeCreated,
       authorUsername: schema.posts.author,
       authorAvatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
+      authorBio: schema.users.bio,
+      authorPosted: schema.users.posted,
+      authorAnswered: schema.users.answered,
+      authorReputation: sql<number>`(
+        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
+        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
+        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
+        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
+        + coalesce((
+          select count(*)::int from "replies" r4
+          where r4.author = ${schema.users.username}
+            and exists (select 1 from "posts" p4 where p4.accepted_answer_uid = r4.uid)
+        ), 0) * 50
+      )`,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from post_upvotes pv
@@ -319,6 +346,20 @@ export const getReplies = async (db: DB, currentUser: string | undefined | null,
       parentReplyUid: schema.replies.parentReplyUid,
       authorUsername: schema.replies.author,
       authorAvatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
+      authorBio: schema.users.bio,
+      authorPosted: schema.users.posted,
+      authorAnswered: schema.users.answered,
+      authorReputation: sql<number>`(
+        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
+        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
+        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
+        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
+        + coalesce((
+          select count(*)::int from "replies" r4
+          where r4.author = ${schema.users.username}
+            and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
+        ), 0) * 50
+      )`,
       upvotes: schema.replies.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from reply_upvotes rv

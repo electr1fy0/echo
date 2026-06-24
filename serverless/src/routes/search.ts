@@ -31,6 +31,15 @@ searchRoutes.get("/", async (c) => {
       parentReplyUid: schema.replies.parentReplyUid,
       authorUsername: schema.replies.author,
       authorAvatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
+      authorBio: schema.users.bio,
+      authorPosted: schema.users.posted,
+      authorAnswered: schema.users.answered,
+      authorReputation: sql<number>`(
+        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
+        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
+        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
+        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
+      )`,
       upvotes: schema.replies.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from reply_upvotes rv

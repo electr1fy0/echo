@@ -9,6 +9,7 @@ import {
 } from "@/api/replies";
 import type { AnswerItem } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
+import { track } from "@/lib/analytics";
 
 export function useRepliesQuery(questionId: string | undefined) {
   return useQuery({
@@ -74,6 +75,7 @@ export function useCreateReply() {
       }
     },
     onSettled: (_, __, { questionId }) => {
+      track("reply_create");
       queryClient.invalidateQueries({
         queryKey: ["replies", questionId],
       });

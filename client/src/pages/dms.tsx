@@ -71,37 +71,37 @@ export default function DMsPage() {
  </div>
  ))}
  </div>
- ) : conversations && conversations.length > 0 ? (
- <div className="space-y-1">
- {conversations.map((conv) => (
- <button
- key={conv.uid}
- onClick={() => navigate(`/dm/${conv.uid}`)}
- className="flex items-center gap-3 w-full text-left p-3 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer"
- >
- <UserAvatar
- src={conv.otherAvatar}
- name={conv.otherUsername}
- className="size-10 shrink-0"
- />
- <div className="flex-1 min-w-0">
- <div className="flex items-center justify-between">
- <span className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
- {conv.otherUsername}
- </span>
- {conv.lastMessageAt && (
- <span className="text-[10px] text-neutral-400 shrink-0 ml-2">
- {formatRelativeTime(new Date(conv.lastMessageAt))}
- </span>
- )}
- </div>
- <p className="text-xs text-neutral-500 truncate mt-0.5">
- {conv.lastMessagePreview || "No messages yet"}
- </p>
- </div>
- </button>
- ))}
- </div>
+  ) : conversations && conversations.length > 0 ? (
+  <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-transparent rounded-2xl overflow-hidden divide-y divide-neutral-100 dark:divide-neutral-800/60">
+  {conversations.map((conv) => (
+  <button
+  key={conv.uid}
+  onClick={() => navigate(`/dm/${conv.uid}`)}
+  className="group flex items-center gap-3 w-full text-left p-4 hover:bg-[#FAFAFA] dark:hover:bg-[#222] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+  >
+  <UserAvatar
+  src={conv.otherAvatar}
+  name={conv.otherUsername}
+  className="size-10 shrink-0 transition-transform duration-200 group-hover:scale-105"
+  />
+  <div className="flex-1 min-w-0">
+  <div className="flex items-center justify-between">
+  <span className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
+  {conv.otherUsername}
+  </span>
+  {conv.lastMessageAt && (
+  <span className="text-[10px] text-neutral-400 shrink-0 ml-2">
+  {formatRelativeTime(new Date(conv.lastMessageAt))}
+  </span>
+  )}
+  </div>
+  <p className="text-xs text-neutral-500 truncate mt-0.5">
+  {conv.lastMessagePreview || "No messages yet"}
+  </p>
+  </div>
+  </button>
+  ))}
+  </div>
  ) : (
  <EmptyState
  icon={<HugeiconsIcon icon={UserGroupIcon} className="size-8" />}

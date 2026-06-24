@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useFetchPublicProfile } from "@/hooks/use-profile";
 import { useInfiniteQuestionsQuery } from "@/hooks/use-questions";
@@ -10,12 +10,16 @@ import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
 import { FluidGradientText } from "@/components/fluid-gradient-text";
+import { DotGridSpotlight } from "@/components/dot-grid-spotlight";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { track } from "@/lib/analytics";
 import { useCreateConversation } from "@/hooks/use-dms";
 import { toast } from "@/lib/toast";
+import { LevelBadge } from "@/components/ui/level-badge";
+import { BadgeDisplay } from "@/components/ui/badge-display";
 
 export default function PublicProfile() {
  const { username } = useParams<{ username: string }>();
@@ -23,6 +27,22 @@ export default function PublicProfile() {
  const { data: currentUser } = useAuth();
  const { open: openAuthModal } = useAuthModal();
  const { mutate: startConversation, isPending } = useCreateConversation();
+ const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (username) {
+      track("profile_view", { target: username });
+    }
+  }, [username]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const check = () => setIsDark(root.classList.contains("dark"));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
  const {
  data: user,
@@ -101,9 +121,13 @@ export default function PublicProfile() {
 
  return (
  <PageTransition className="max-w-[40rem] w-full mt-0 space-y-0 pb-36 md:pb-16 relative">
- <div className="h-40 w-auto mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
- <FluidGradientText text={user.username} svgViewBoxHeight={240} />
- </div>
+  <div className="relative h-40 w-auto mb-4 mx-4 mt-4 overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800/60">
+    <DotGridSpotlight
+      dotColor={isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.08)"}
+      activeDotColor={isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.16)"}
+    />
+    <FluidGradientText text={user.username} svgViewBoxHeight={240} />
+  </div>
  <div className="px-4">
  <div className="flex flex-col items-start gap-4">
  <div className="flex w-full justify-between items-start">
@@ -135,9 +159,10 @@ export default function PublicProfile() {
  )}
  </div>
  <div className="space-y-1">
- <h1 className="text-2xl text-neutral-900 dark:text-neutral-100">
- {user.username}
- </h1>
+  <h1 className="text-2xl text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+  {user.username}
+  <LevelBadge reputation={user.reputation ?? 0} size="md" />
+  </h1>
  <div className="flex flex-col gap-1 text-neutral-500 text-sm">
  {resolvedLink && (
  <div className="flex items-center gap-2">
@@ -161,28 +186,37 @@ export default function PublicProfile() {
  </p>
  )}
 
- <div className="flex gap-6 pt-2">
- <div className="flex flex-col">
- <span className=" text-neutral-900 dark:text-neutral-100">
- {user.answered}
- </span>
- <span className="text-xs text-neutral-500">Answered</span>
- </div>
- <div className="flex flex-col">
- <span className=" text-neutral-900 dark:text-neutral-100">
- {user.posted}
- </span>
- <span className="text-xs text-neutral-500">Posted</span>
- </div>
- </div>
- </div>
+  <div className="flex gap-6 pt-2">
+  <div className="flex flex-col">
+  <span className="text-neutral-900 dark:text-neutral-100">
+  {user.reputation ?? 0}
+  </span>
+  <span className="text-xs text-neutral-500">Reputation</span>
+  </div>
+  <div className="flex flex-col">
+  <span className=" text-neutral-900 dark:text-neutral-100">
+  {user.answered}
+  </span>
+  <span className="text-xs text-neutral-500">Answered</span>
+  </div>
+  <div className="flex flex-col">
+  <span className=" text-neutral-900 dark:text-neutral-100">
+  {user.posted}
+  </span>
+  <span className="text-xs text-neutral-500">Posted</span>
+  </div>
+  </div>
+  <div className="pt-3">
+    <BadgeDisplay badges={user.badges ?? []} />
+  </div>
+  </div>
 
- <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
+  <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
 
- <div className="space-y-4">
- <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
- Questions
- </h3>
+  <div className="space-y-4">
+  <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
+  Questions
+  </h3>
  {isQnLoading ? (
  <QuestionListSkeleton />
  ) : questions.length > 0 ? (

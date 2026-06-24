@@ -33,7 +33,7 @@ export function FluidGradientText({
   }
 
   const handleMouseLeave = () => {
-    gradientX1Raw.set(svgViewBoxWidth / 2)
+    gradientX1Raw.set(-svgViewBoxWidth)
   }
 
   return (

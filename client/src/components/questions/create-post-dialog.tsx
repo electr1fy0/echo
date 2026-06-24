@@ -171,7 +171,7 @@ export function CreatePostDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => { if (!val) close(); }}>
-      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden bg-background rounded-2xl">
+      <DialogContent className="sm:max-w-xl p-0 overflow-hidden bg-background rounded-2xl">
         <DialogHeader className="px-5 pt-4 pb-2">
           <DialogTitle className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
             Create a Post
@@ -190,7 +190,7 @@ export function CreatePostDialog() {
                 <MentionField
                   placeholder="What's on your mind?"
                   ariaLabel="Post content"
-                  className="resize-none min-h-[90px] border-none shadow-none focus-visible:ring-0 bg-transparent p-0 text-sm focus:outline-none rounded-none"
+                  className="resize-none min-h-[160px] border-none shadow-none focus-visible:ring-2 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-700 bg-transparent px-4 py-3 text-sm focus:outline-none rounded-xl"
                   value={draft.content}
                   onValueChange={(value) => updateDraft({ content: value })}
                   multiline

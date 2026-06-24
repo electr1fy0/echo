@@ -149,6 +149,20 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       timeCreated: schema.posts.timeCreated,
       authorUsername: schema.posts.author,
       authorAvatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
+      authorBio: schema.users.bio,
+      authorPosted: schema.users.posted,
+      authorAnswered: schema.users.answered,
+      authorReputation: sql<number>`(
+        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
+        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
+        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
+        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
+        + coalesce((
+          select count(*)::int from "replies" r4
+          where r4.author = ${schema.users.username}
+            and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
+        ), 0) * 50
+      )`,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from post_upvotes pv

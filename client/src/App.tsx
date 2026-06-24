@@ -3,12 +3,13 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useSearchParams, useNav
 import { ErrorBoundary } from "react-error-boundary";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ProtectedRoute } from "@/components/route-guards";
-import { Toaster } from "@/components/ui/toast";
+import { Toaster } from "@/components/ui/sonner";
 import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+
 import { AuthDialog } from "@/components/auth-dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearGoogleOnboardingToken, setGoogleOnboardingToken, setToken } from "@/lib/utils";
@@ -29,6 +30,7 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 const QuestionDetailPage = lazy(() => import("@/pages/question-detail"));
 const DMsPage = lazy(() => import("@/pages/dms"));
 const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
+
 
 import { CreatePostDialog } from "@/components/questions/create-post-dialog";
 
@@ -146,8 +148,8 @@ function AuthenticatedLayout() {
  <Route path="/profile" element={<Profile />} />
  <Route path="/chambers" element={<AllChambers />} />
  <Route path="/notifications" element={<Notifications />} />
- <Route path="/dm" element={<DMsPage />} />
- <Route path="/dm/:conversationId" element={<DMConversationPage />} />
+          <Route path="/dm" element={<DMsPage />} />
+          <Route path="/dm/:conversationId" element={<DMConversationPage />} />
  </Route>
  </Route>
 

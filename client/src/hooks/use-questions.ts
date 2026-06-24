@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import type { QuestionDraft, QuestionItem } from "@/types";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { track } from "@/lib/analytics";
 import {
   fetchQuestion,
   fetchQuestions,
@@ -112,6 +113,7 @@ export function useCreateQuestion() {
   return useMutation({
     mutationFn: createQuestion,
     onSuccess: () => {
+      track("post_create");
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
     },

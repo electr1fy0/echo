@@ -8,6 +8,7 @@ import {
   Message01Icon,
   UserIcon,
   Edit01Icon,
+
 } from "@hugeicons/core-free-icons";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -182,7 +183,7 @@ export function AppSidebar() {
       if (!user) { openAuthModal("signin"); return; }
       navigate("/notifications");
     },
-    5: () => {
+    p: () => {
       if (!user) { openAuthModal("signin"); return; }
       navigate("/profile");
     },
@@ -199,7 +200,7 @@ export function AppSidebar() {
         {user && (
           <button
             onClick={() => openCreatePost()}
-            className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white shadow-[0_4px_14px_var(--brand-shadow)/0.4] transition-all active:scale-95 cursor-pointer"
+            className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white transition-all cursor-pointer"
             title="Create a Post"
             aria-label="Create a Post"
           >
@@ -286,7 +287,7 @@ export function AppSidebar() {
                   render={
                     <button
                       onClick={() => openCreatePost()}
-                      className="flex items-center justify-center size-10 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_2px_10px_var(--brand-shadow)/0.25] hover:shadow-[0_4px_12px_var(--brand-shadow)/0.35] mt-1.5 shrink-0"
+                      className="flex items-center justify-center size-10 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white transition-all duration-200 cursor-pointer mt-1.5 shrink-0"
                       aria-label="Create a Post"
                     >
                     <HugeiconsIcon icon={Edit01Icon} className="size-5" />

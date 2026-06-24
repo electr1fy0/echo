@@ -10,6 +10,7 @@ import { searchRoutes } from "./routes/search";
 import { userRoutes } from "./routes/users";
 import { dmRoutes } from "./routes/dms";
 import { uploadRoutes, imageRoutes } from "./routes/upload";
+import { analyticsRoutes } from "./routes/analytics";
 import type { AppEnv } from "./types/app";
 import { rateLimit } from "./middleware/rateLimit";
 
@@ -50,5 +51,6 @@ app.route("/search", searchRoutes);
 app.route("/dms", dmRoutes);
 app.route("/upload", uploadRoutes);
 app.route("/images", imageRoutes);
+app.route("/analytics", analyticsRoutes);
 
 export default app;

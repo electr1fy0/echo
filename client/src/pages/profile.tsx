@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useCallback } from "react";
+import React, { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
@@ -20,6 +20,7 @@ import {
   Mail01Icon,
   Link01Icon,
   Add01Icon,
+  ArrowLeft02Icon,
 } from "@hugeicons/core-free-icons";
 import {
   Drawer,
@@ -27,12 +28,18 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
- Dialog,
- DialogContent,
- DialogHeader,
- DialogTitle,
- DialogFooter,
- DialogClose,
+  Dialog as EditDialog,
+  DialogContent as EditDialogContent,
+  DialogClose as EditDialogClose,
+  DialogHeader as EditDialogHeader,
+  DialogTitle as EditDialogTitle,
+  DialogFooter as EditDialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,6 +64,40 @@ import { CropImageDialog } from "@/components/ui/crop-image-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/page-transition";
 import { FluidGradientText } from "@/components/fluid-gradient-text";
+import { DotGridSpotlight } from "@/components/dot-grid-spotlight";
+import { LevelBadge } from "@/components/ui/level-badge";
+import { BadgeDisplay } from "@/components/ui/badge-display";
+
+const DYLAN_SEEDS = ["felix", "aria", "luna", "max", "zoe", "leo", "mia", "kai", "nova", "elsa", "oliver", "stella", "arlo", "ivy", "theo", "rose"];
+
+const HAIR_COLORS = [
+  { hex: "000000", label: "Black" },
+  { hex: "1d5dff", label: "Blue" },
+  { hex: "ff543d", label: "Red" },
+  { hex: "ffffff", label: "White" },
+  { hex: "fff500", label: "Yellow" },
+];
+
+const BG_COLORS = [
+  { hex: "619eff", label: "Blue" },
+  { hex: "29e051", label: "Green" },
+  { hex: "ffa6e6", label: "Pink" },
+];
+
+const SKIN_COLORS = [
+  { hex: "ffd6c0", label: "Light" },
+  { hex: "c26450", label: "Tan" },
+];
+
+function buildDiceBearUrl(seed: string, hair?: string, mood?: string, hairColor?: string, backgroundColor?: string, skinColor?: string) {
+  const params = new URLSearchParams({ seed });
+  if (hair) params.set("hair", hair);
+  if (mood) params.set("mood", mood);
+  if (hairColor) params.set("hairColor", hairColor);
+  if (backgroundColor) params.set("backgroundColor", backgroundColor);
+  if (skinColor) params.set("skinColor", skinColor);
+  return `https://api.dicebear.com/10.x/dylan/svg?${params}`;
+}
 
 export default function Profile() {
  const {
@@ -122,16 +163,34 @@ export default function Profile() {
   const { start: startTour } = useOnboardingTour();
   const { upload: uploadImage, uploading: imageUploading } = useImageUpload();
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
+  const [avatarHair, _setAvatarHair] = useState("bangs");
+  const [avatarMood, _setAvatarMood] = useState("happy");
+  const [avatarHairColor, setAvatarHairColor] = useState("000000");
+  const [avatarBgColor, setAvatarBgColor] = useState("619eff");
+  const [avatarSkinColor, setAvatarSkinColor] = useState("ffd6c0");
+  const [avatarSeed, setAvatarSeed] = useState("aria");
+  const [editPage, setEditPage] = useState<"profile" | "avatar">("profile");
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const check = () => setIsDark(root.classList.contains("dark"));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
   const [editForm, setEditForm] = useState<User>({
- username: "",
- email: "",
- bio: "",
- avatar: "",
- link: "",
- answered: 0,
- posted: 0,
- dmEnabled: true,
- });
+  username: "",
+  email: "",
+  bio: "",
+  avatar: "",
+  link: "",
+  reputation: 0,
+  answered: 0,
+  posted: 0,
+  dmEnabled: true,
+  });
  const { data: chambers = [], isLoading: isChambersLoading } =
  useListChambers();
  const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
@@ -155,15 +214,16 @@ export default function Profile() {
  });
  };
 
- const displayUser = user || {
- username: "",
- email: "",
- bio: "",
- avatar: "",
- link: "",
- answered: 0,
- posted: 0,
- };
+  const displayUser = user || {
+  username: "",
+  email: "",
+  bio: "",
+  avatar: "",
+  link: "",
+  reputation: 0,
+  answered: 0,
+  posted: 0,
+  };
  const resolvedLink = useMemo(() => {
  const raw = (displayUser.link || "").trim();
  if (!raw) return null;
@@ -179,14 +239,18 @@ export default function Profile() {
  );
  }
 
- return (
+  return (
  <PageTransition className="max-w-[40rem] w-full mt-0 space-y-0 pb-36 md:pb-16 relative">
  {isProfileLoading ? (
  <Skeleton className="h-28 w-auto mb-2 mx-4" />
  ) : (
- <div className="h-40 w-auto mb-4 mx-4 mt-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl">
- <FluidGradientText text={displayUser.username} svgViewBoxHeight={240} />
- </div>
+  <div className="relative h-40 w-auto mb-4 mx-4 mt-4 overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800/60">
+    <DotGridSpotlight
+      dotColor={isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.08)"}
+      activeDotColor={isDark ? "rgba(255, 255, 255, 0.12)" : "rgba(0, 0, 0, 0.16)"}
+    />
+    <FluidGradientText text={displayUser.username} svgViewBoxHeight={240} />
+  </div>
  )}
  <div className="px-4">
  <div className="flex flex-col items-start gap-4">
@@ -332,9 +396,10 @@ export default function Profile() {
  </div>
  </div>
  <div className="space-y-1 w-full">
- <h1 className="text-2xl text-neutral-900 dark:text-neutral-100">
- {displayUser.username}
- </h1>
+  <h1 className="text-2xl text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+  {displayUser.username}
+  <LevelBadge reputation={displayUser.reputation} size="md" />
+  </h1>
  <div className="flex flex-col gap-1 text-neutral-500 text-sm">
  {isProfileLoading ? (
  <>
@@ -381,42 +446,55 @@ export default function Profile() {
  </>
  )}
 
- <div className="flex gap-6 pt-2">
- {isProfileLoading ? (
- <>
- <div className="flex flex-col gap-1">
- <Skeleton className="h-5 w-8" />
- <Skeleton className="h-3 w-16" />
- </div>
- <div className="flex flex-col gap-1">
- <Skeleton className="h-5 w-8" />
- <Skeleton className="h-3 w-16" />
- </div>
- </>
- ) : (
- <>
- <div className="flex flex-col">
- <span className=" text-neutral-900 dark:text-neutral-100">
- {displayUser.answered}
- </span>
- <span className="text-xs text-neutral-500">Answered</span>
- </div>
- <div className="flex flex-col">
- <span className=" text-neutral-900 dark:text-neutral-100">
- {questions.length}
- </span>
- <span className="text-xs text-neutral-500">Posted</span>
- </div>
- </>
- )}
- </div>
- </div>
- <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
- <div className="space-y-4">
- <div className="flex items-center justify-between">
- <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
- Chambers I'm in
- </h3>
+  <div className="flex gap-6 pt-2">
+  {isProfileLoading ? (
+  <>
+  <div className="flex flex-col gap-1">
+  <Skeleton className="h-5 w-8" />
+  <Skeleton className="h-3 w-16" />
+  </div>
+  <div className="flex flex-col gap-1">
+  <Skeleton className="h-5 w-8" />
+  <Skeleton className="h-3 w-16" />
+  </div>
+  <div className="flex flex-col gap-1">
+  <Skeleton className="h-5 w-8" />
+  <Skeleton className="h-3 w-16" />
+  </div>
+  </>
+  ) : (
+  <>
+  <div className="flex flex-col">
+  <span className="text-neutral-900 dark:text-neutral-100">
+  {displayUser.reputation}
+  </span>
+  <span className="text-xs text-neutral-500">Reputation</span>
+  </div>
+  <div className="flex flex-col">
+  <span className=" text-neutral-900 dark:text-neutral-100">
+  {displayUser.answered}
+  </span>
+  <span className="text-xs text-neutral-500">Answered</span>
+  </div>
+  <div className="flex flex-col">
+  <span className=" text-neutral-900 dark:text-neutral-100">
+  {questions.length}
+  </span>
+  <span className="text-xs text-neutral-500">Posted</span>
+  </div>
+  </>
+  )}
+  </div>
+  <div className="pt-3">
+    <BadgeDisplay badges={displayUser.badges ?? []} />
+  </div>
+  </div>
+  <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
+  <div className="space-y-4">
+  <div className="flex items-center justify-between">
+  <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
+  Chambers I'm in
+  </h3>
  <Button
  variant="outline"
  size="default"
@@ -498,146 +576,248 @@ export default function Profile() {
  </div>
  )}
  </div>
- <Dialog
- open={isEditOpen}
- onOpenChange={(open) => {
- setIsEditOpen(open);
- }}
- >
- <DialogContent>
- <DialogHeader>
- <DialogTitle>Edit Profile</DialogTitle>
- </DialogHeader>
- <div className="grid gap-4 py-4">
- <form onSubmit={(e) => handleSubmit(e)} className="grid gap-4">
- <div className="grid gap-2">
- <label htmlFor="username" className="text-sm font-medium">
- Username
- </label>
- <Input
- id="username"
- value={editForm.username}
- onChange={(e) => {
- updateDraft({ username: e.target.value });
- }}
- placeholder="username"
- className="select-text"
- />
- </div>
- <div className="grid gap-2">
- <label htmlFor="bio" className="text-sm font-medium">
- Bio
- </label>
- <Textarea
- id="bio"
- value={editForm.bio}
- onChange={(e) => {
- updateDraft({ bio: e.target.value });
- }}
- placeholder="Info about you"
- className="h-24 select-text"
- />
- </div>
- <div className="grid gap-2">
- <label htmlFor="link" className="text-sm font-medium">
- Link
- </label>
- <Input
- id="link"
- placeholder="https://example.com"
- className="select-text"
- value={editForm.link || ""}
- onChange={(e) => {
- updateDraft({ link: e.target.value });
- }}
- />
- </div>
-   <div className="grid gap-2">
-   <label className="text-sm font-medium">Avatar</label>
-   <div className="flex items-center gap-3">
-   {editForm.avatar ? (
-   <>
-   <img src={editForm.avatar} className="size-10 rounded-full object-cover" />
-   <button
-   type="button"
-   onClick={() => updateDraft({ avatar: "" })}
-   className="text-xs text-red-500 hover:text-red-600 cursor-pointer"
-   >
-   Remove
-   </button>
-   </>
-   ) : (
-   <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
-   {imageUploading ? (
-   <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
-   ) : (
-   <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
-   )}
-   {imageUploading ? "Uploading..." : "Upload Image"}
-   <input
-   type="file"
-   accept="image/*"
-   className="hidden"
-   disabled={imageUploading}
-   onChange={async (e) => {
-   const file = e.target.files?.[0];
-   if (!file) return;
-   const reader = new FileReader();
-   reader.onload = () => {
-   setCropImageSrc(reader.result as string);
-   };
-   reader.readAsDataURL(file);
-   e.target.value = "";
+   <EditDialog
+   open={isEditOpen}
+   onOpenChange={(open) => {
+   setIsEditOpen(open);
+   if (!open) setEditPage("profile");
    }}
-   />
-   </label>
-   )}
-   </div>
-   </div>
-  <CropImageDialog
-  open={!!cropImageSrc}
-  onOpenChange={() => setCropImageSrc(null)}
-  imageSrc={cropImageSrc || ""}
-  onCropComplete={async (blob) => {
-  const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
-  const url = await uploadImage(file);
-  if (url) updateDraft({ avatar: url });
-  setCropImageSrc(null);
-  }}
-  />
- <div className="flex items-center justify-between py-2 border-t border-neutral-100 dark:border-neutral-800">
- <div>
- <span className="text-sm font-medium">Allow DMs</span>
- <p className="text-xs text-neutral-500">Let other users message you</p>
- </div>
- <button
- type="button"
- role="switch"
- aria-checked={editForm.dmEnabled ?? true}
- onClick={() => updateDraft({ dmEnabled: !(editForm.dmEnabled ?? true) })}
- className={cn(
- "relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none",
- (editForm.dmEnabled ?? true) ? "bg-[var(--brand)]" : "bg-neutral-300 dark:bg-neutral-700"
- )}
- >
- <span
- className={cn(
- "pointer-events-none inline-block size-4 rounded-full bg-white transform transition-transform",
- (editForm.dmEnabled ?? true) ? "translate-x-4" : "translate-x-0.5"
- )}
- />
- </button>
- </div>
- <DialogFooter>
- <DialogClose render={<Button variant="outline" />}>
- Cancel
- </DialogClose>
- <Button type="submit">Save Changes</Button>
- </DialogFooter>
- </form>
- </div>
- </DialogContent>
- </Dialog>
+   >
+      <EditDialogContent className="min-w-[420px] max-w-[90vw] overflow-hidden p-0" showCloseButton={editPage === "profile"}>
+    <div className="relative overflow-hidden">
+      <div className="flex transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] w-[200%]" style={{ transform: editPage === "avatar" ? "translateX(-50%)" : "translateX(0)" }}>
+
+        {/* ───── Page 1: Profile ───── */}
+        <div className="w-1/2">
+          <EditDialogHeader className="px-6 pt-6 pb-0">
+            <EditDialogTitle>Edit Profile</EditDialogTitle>
+          </EditDialogHeader>
+          <form onSubmit={(e) => handleSubmit(e)} className="px-6 pb-6 space-y-5 pt-5">
+            <div className="space-y-1.5">
+              <label htmlFor="username" className="text-sm text-neutral-700 dark:text-neutral-300">Username</label>
+              <Input
+                id="username"
+                value={editForm.username}
+                onChange={(e) => updateDraft({ username: e.target.value })}
+                placeholder="username"
+                className="select-text"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="bio" className="text-sm text-neutral-700 dark:text-neutral-300">Bio</label>
+              <Textarea
+                id="bio"
+                value={editForm.bio}
+                onChange={(e) => updateDraft({ bio: e.target.value })}
+                placeholder="Info about you"
+                className="h-24 select-text"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label htmlFor="link" className="text-sm text-neutral-700 dark:text-neutral-300">Link</label>
+              <Input
+                id="link"
+                placeholder="https://example.com"
+                className="select-text"
+                value={editForm.link || ""}
+                onChange={(e) => updateDraft({ link: e.target.value })}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!editForm.avatar) setAvatarSeed(DYLAN_SEEDS[Math.floor(Math.random() * DYLAN_SEEDS.length)]);
+                setEditPage("avatar");
+              }}
+              className="flex items-center justify-between w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3">
+                {editForm.avatar ? (
+                  <img src={editForm.avatar} className="size-10 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-800" />
+                ) : (
+                  <div className="size-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center ring-1 ring-neutral-200 dark:ring-neutral-800">
+                    <HugeiconsIcon icon={Add01Icon} className="size-4 text-neutral-400" />
+                  </div>
+                )}
+                <div className="text-left">
+                  <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">Avatar</span>
+                  <p className="text-xs text-neutral-500">Choose or upload an avatar</p>
+                </div>
+              </div>
+              <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4 text-neutral-400 rotate-180 group-hover:-translate-x-0.5 transition-transform" />
+            </button>
+
+            <CropImageDialog
+              open={!!cropImageSrc}
+              onOpenChange={() => setCropImageSrc(null)}
+              imageSrc={cropImageSrc || ""}
+              onCropComplete={async (blob) => {
+                const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+                const url = await uploadImage(file);
+                if (url) updateDraft({ avatar: url });
+                setCropImageSrc(null);
+              }}
+            />
+
+            <EditDialogFooter className="flex-row gap-2 pt-2">
+              <EditDialogClose render={<Button variant="outline" className="flex-1" />}>Cancel</EditDialogClose>
+              <Button type="submit" className="flex-1">Save Changes</Button>
+            </EditDialogFooter>
+          </form>
+        </div>
+
+        {/* ───── Page 2: Avatar Studio ───── */}
+        <div className="w-1/2 flex flex-col max-h-[80vh]">
+          <div className="flex items-center gap-3 px-6 pt-6 pb-3">
+            <button
+              type="button"
+              onClick={() => setEditPage("profile")}
+              className="size-8 rounded-lg flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer -ml-1.5"
+            >
+              <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4 text-neutral-600 dark:text-neutral-400" />
+            </button>
+            <EditDialogTitle>Choose Avatar</EditDialogTitle>
+            {editForm.avatar && (
+              <button
+                type="button"
+                onClick={() => updateDraft({ avatar: "" })}
+                className="ml-auto text-xs text-red-500 hover:text-red-600 cursor-pointer"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 scrollbar-modern">
+            <div className="flex flex-col items-center gap-4">
+              <div className="size-36 rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-900 ring-1 ring-neutral-200 dark:ring-neutral-800">
+                <img
+                  src={buildDiceBearUrl(avatarSeed, avatarHair, avatarMood, avatarHairColor, avatarBgColor, avatarSkinColor)}
+                  alt="Preview"
+                  className="size-full"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setAvatarSeed(DYLAN_SEEDS[Math.floor(Math.random() * DYLAN_SEEDS.length)])}
+                className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors cursor-pointer underline underline-offset-2"
+              >
+                Shuffle face
+              </button>
+            </div>
+
+            <div className="flex items-center justify-center gap-6">
+              <div className="text-center">
+                <span className="text-[10px] text-neutral-400 tracking-wide block mb-1.5">Hair</span>
+                <div className="flex gap-2 justify-center">
+                  {HAIR_COLORS.map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setAvatarHairColor(c.hex)}
+                      className={cn(
+                        "size-6 rounded-full border-2 transition-all cursor-pointer",
+                        avatarHairColor === c.hex
+                          ? "border-neutral-900 dark:border-white scale-110 shadow-sm"
+                          : "border-neutral-200 dark:border-neutral-700 hover:scale-110"
+                      )}
+                      style={{ backgroundColor: `#${c.hex}` }}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="text-[10px] text-neutral-400 tracking-wide block mb-1.5">Skin</span>
+                <div className="flex gap-2 justify-center">
+                  {SKIN_COLORS.map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setAvatarSkinColor(c.hex)}
+                      className={cn(
+                        "size-6 rounded-full border-2 transition-all cursor-pointer",
+                        avatarSkinColor === c.hex
+                          ? "border-neutral-900 dark:border-white scale-110 shadow-sm"
+                          : "border-neutral-200 dark:border-neutral-700 hover:scale-110"
+                      )}
+                      style={{ backgroundColor: `#${c.hex}` }}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="text-[10px] text-neutral-400 tracking-wide block mb-1.5">Bg</span>
+                <div className="flex gap-2 justify-center">
+                  {BG_COLORS.map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setAvatarBgColor(c.hex)}
+                      className={cn(
+                        "size-6 rounded-full border-2 transition-all cursor-pointer",
+                        avatarBgColor === c.hex
+                          ? "border-neutral-900 dark:border-white scale-110 shadow-sm"
+                          : "border-neutral-200 dark:border-neutral-700 hover:scale-110"
+                      )}
+                      style={{ backgroundColor: `#${c.hex}` }}
+                      title={c.label}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-center">
+              <label className="text-xs text-neutral-400">Upload Image</label>
+              <div className="flex justify-center">
+                <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors w-fit">
+                  {imageUploading ? (
+                    <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
+                  ) : (
+                    <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+                  )}
+                  {imageUploading ? "Uploading..." : "Choose from device"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={imageUploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => setCropImageSrc(reader.result as string);
+                      reader.readAsDataURL(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end">
+            <Button
+              type="button"
+              className="min-w-[100px]"
+              onClick={() => {
+                const url = buildDiceBearUrl(avatarSeed, avatarHair, avatarMood, avatarHairColor, avatarBgColor, avatarSkinColor);
+                updateDraft({ avatar: url });
+                setEditPage("profile");
+              }}
+            >
+              Done
+            </Button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    </EditDialogContent>
+   </EditDialog>
  <CreateChamberDialog
  open={createChamberOpen}
  onOpenChange={setCreateChamberOpen}

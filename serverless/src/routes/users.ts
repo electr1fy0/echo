@@ -6,7 +6,7 @@ import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
 import { listNotifications, countUnreadNotifications } from "../services/notifications";
 import { getPostItems, searchUsers } from "../services/questions";
-import { getProfileByUsername } from "../services/users";
+import { getProfileByUsername, computeBadges } from "../services/users";
 import { ensureValidUsername } from "../lib/utils";
 import type { AppEnv } from "../types/app";
 import { parsePagination } from "../lib/utils";
@@ -21,7 +21,8 @@ userRoutes.use("/resolve", requireAuth);
 userRoutes.get("/me", async (c) => {
   const profile = await getProfileByUsername(c.get("db"), c.get("user"), true);
   const [userRow] = await c.get("db").select({ dmEnabled: schema.users.dmEnabled }).from(schema.users).where(eq(schema.users.username, c.get("user"))).limit(1);
-  return c.json({ ...profile, dmEnabled: userRow?.dmEnabled ?? true });
+  const badges = await computeBadges(c.get("db"), c.get("user"));
+  return c.json({ ...profile, dmEnabled: userRow?.dmEnabled ?? true, badges });
 });
 
 userRoutes.patch("/me", async (c) => {
@@ -102,5 +103,7 @@ userRoutes.post("/resolve", async (c) => {
 });
 
 userRoutes.get("/:username", async (c) => {
-  return c.json(await getProfileByUsername(c.get("db"), c.req.param("username"), false));
+  const profile = await getProfileByUsername(c.get("db"), c.req.param("username"), false);
+  const badges = await computeBadges(c.get("db"), c.req.param("username"));
+  return c.json({ ...profile, badges });
 });

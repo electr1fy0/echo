@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
 import { Search01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
@@ -195,18 +194,19 @@ export default function Explore() {
  <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance">
  Discover chambers, search topics, or find people.
  </h2>
- <div className="relative">
- <HugeiconsIcon
- icon={Search01Icon}
- className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 size-5"
- />
- <Input
- placeholder="Search for chambers, questions, or users..."
- className="pl-10 h-10 bg-[#F5F5F5] dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-full"
- value={query}
- onChange={(e) => setQuery(e.target.value)}
- />
- </div>
+  <div className="relative">
+  <HugeiconsIcon
+  icon={Search01Icon}
+  className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 size-5"
+  />
+  <input
+  type="text"
+  placeholder="Search for chambers, questions, or users..."
+  className="w-full h-10 pl-10 pr-4 rounded-full border border-neutral-200 dark:border-neutral-700 bg-[#F5F5F5] dark:bg-neutral-800/50 text-sm text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-all"
+  value={query}
+  onChange={(e) => setQuery(e.target.value)}
+  />
+  </div>
 
  {isSearchMode ? (
  <div className="space-y-8">

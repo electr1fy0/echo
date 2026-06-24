@@ -1,6 +1,4 @@
-import { Toast } from "@base-ui/react/toast";
-
-export const toastManager = Toast.createToastManager();
+import { toast as sonnerToast } from "sonner";
 
 interface ToastOptions {
   action?: {
@@ -10,46 +8,15 @@ interface ToastOptions {
   [key: string]: any;
 }
 
-const transformOptions = (options?: ToastOptions): any => {
-  if (!options) return {};
-  const { action, ...rest } = options;
-  if (action) {
-    return {
-      ...rest,
-      actionProps: {
-        children: action.label,
-        onClick: action.onClick,
-      },
-    };
-  }
-  return options;
-};
-
 export const toast = {
-  success: (description: string, options?: ToastOptions) =>
-    toastManager.add({
-      description,
-      type: "success",
-      ...transformOptions(options),
-    }),
-  error: (description: string, options?: ToastOptions) =>
-    toastManager.add({
-      description,
-      type: "error",
-      ...transformOptions(options),
-    }),
-  info: (description: string, options?: ToastOptions) =>
-    toastManager.add({
-      description,
-      type: "info",
-      ...transformOptions(options),
-    }),
-  warning: (description: string, options?: ToastOptions) =>
-    toastManager.add({
-      description,
-      type: "warning",
-      ...transformOptions(options),
-    }),
-  custom: (options: ToastOptions) =>
-    toastManager.add(transformOptions(options)),
+  success: (message: string, options?: ToastOptions) =>
+    sonnerToast.success(message, options),
+  error: (message: string, options?: ToastOptions) =>
+    sonnerToast.error(message, options),
+  info: (message: string, options?: ToastOptions) =>
+    sonnerToast.info(message, options),
+  warning: (message: string, options?: ToastOptions) =>
+    sonnerToast.warning(message, options),
+  custom: (message: string, options?: ToastOptions) =>
+    sonnerToast(message, options),
 };

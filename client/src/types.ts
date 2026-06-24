@@ -37,15 +37,24 @@ export interface Question {
   pollVotes?: PollOption[];
   userPollVote?: number | null;
 }
+export interface Badge {
+  id: string;
+  label: string;
+  icon: string;
+  earned: boolean;
+}
+
 export interface User {
   username: string;
   email: string;
   bio: string;
   avatar: string;
   link?: string;
+  reputation: number;
   answered: number;
   posted: number;
   dmEnabled?: boolean;
+  badges?: Badge[];
 }
 export interface UserSummary {
   username: string;

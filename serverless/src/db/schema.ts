@@ -2,8 +2,10 @@ import {
   boolean,
   integer,
   json,
+  jsonb,
   pgTable,
   primaryKey,
+  serial,
   text,
   timestamp,
   unique,
@@ -231,4 +233,31 @@ export const partnerApplications = pgTable("partner_applications", {
   pitch: text("pitch").notNull(),
   status: text("status").default("pending").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+
+export const analyticsEvents = pgTable("analytics_events", {
+  id: serial("id").primaryKey(),
+  username: text("username").references(() => users.username, {
+    onUpdate: "cascade",
+    onDelete: "set null",
+  }),
+  event: text("event").notNull(),
+  properties: jsonb("properties").$type<Record<string, unknown>>().default({}),
+  sessionId: text("session_id"),
+  page: text("page"),
+  userAgent: text("user_agent"),
+  ip: text("ip"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const postViews = pgTable("post_views", {
+  id: serial("id").primaryKey(),
+  postUid: uuid("post_uid")
+    .notNull()
+    .references(() => posts.uid, { onDelete: "cascade" }),
+  username: text("username").references(() => users.username, {
+    onUpdate: "cascade",
+    onDelete: "set null",
+  }),
+  viewedAt: timestamp("viewed_at", { mode: "date" }).defaultNow().notNull(),
 });

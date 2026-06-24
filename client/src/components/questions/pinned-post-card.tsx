@@ -6,6 +6,7 @@ import {
   PinOffIcon,
 } from "@hugeicons/core-free-icons";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { UserPreviewCard } from "@/components/ui/user-preview-card";
 import { formatRelativeTime } from "@/lib/format-time";
 import { cn } from "@/lib/utils";
 import type { QuestionItem } from "@/types";
@@ -26,7 +27,7 @@ type PinnedPostCardProps = {
 export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
   const navigate = useNavigate();
   const question = questionItem?.question;
-  const author = questionItem?.author ?? null;
+  const author = (questionItem as QuestionItem | undefined)?.author ?? null;
   const questionId = question?.uid;
 
   const { data: user } = useAuth();
@@ -65,17 +66,26 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
       {/* Top Section: Author info & Unpin/Pin indicator */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Link
-            to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
-            className="shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <UserAvatar
-              src={author?.avatar}
-              name={question.authorUsername || "Anonymous"}
-              className="size-6"
-            />
-          </Link>
+          {(() => {
+            const avatarLink = (
+              <Link
+                to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
+                className="shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <UserAvatar
+                  src={author?.avatar}
+                  name={question.authorUsername || "Anonymous"}
+                  className="size-6"
+                />
+              </Link>
+            );
+            return author ? (
+              <UserPreviewCard user={author}>{avatarLink}</UserPreviewCard>
+            ) : (
+              avatarLink
+            );
+          })()}
           <div className="flex flex-col min-w-0">
             <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 truncate">
               {question.authorUsername || "Anonymous"}

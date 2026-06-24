@@ -25,6 +25,7 @@ import { useAcceptReply, useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { UserPreviewCard } from "@/components/ui/user-preview-card";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -82,17 +83,33 @@ export function ReplyItem({ answerItem, onDelete, canAccept, isOp, onReply }: Re
           className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
         />
       </div>
-      <Link
-        to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
-        className="shrink-0"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <UserAvatar
-          src={answerItem.author?.avatar}
-          name={reply.authorUsername || "Anonymous"}
-          className="size-5"
-        />
-      </Link>
+      {answerItem.author ? (
+        <UserPreviewCard user={answerItem.author}>
+          <Link
+            to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
+            className="shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <UserAvatar
+              src={answerItem.author?.avatar}
+              name={reply.authorUsername || "Anonymous"}
+              className="size-5"
+            />
+          </Link>
+        </UserPreviewCard>
+      ) : (
+        <Link
+          to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
+          className="shrink-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <UserAvatar
+            src={undefined}
+            name={reply.authorUsername || "Anonymous"}
+            className="size-5"
+          />
+        </Link>
+      )}
       <div className="flex-1 min-w-0">
         <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
           <span className="flex items-center gap-2">

@@ -1,10 +1,16 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, HelpCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import type { SchemaField } from "@/types";
 
 interface SchemaEditorProps {
@@ -67,13 +73,23 @@ export function SchemaEditor({ fields, onAdd, onUpdate, onRemove }: SchemaEditor
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <button
-                  type="button"
-                  onClick={() => onRemove(idx)}
-                  className="p-1 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <button
+                        type="button"
+                        onClick={() => onRemove(idx)}
+                        className="p-1 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
+                        aria-label="Delete field"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    }
+                  />
+                  <TooltipContent side="top">
+                    Removes field completely. Warning: breaks rendering for existing posts using this field.
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
               {field.type === "select" && (
@@ -90,23 +106,52 @@ export function SchemaEditor({ fields, onAdd, onUpdate, onRemove }: SchemaEditor
                 />
               )}
 
-              <div className="flex items-center gap-4">
-                <span
-                  onClick={() => onUpdate(idx, { required: !field.required })}
-                  className={`text-xs cursor-pointer select-none ${
-                    field.required ? "text-[var(--brand)]" : "text-neutral-400"
-                  }`}
-                >
-                  {field.required ? "Required" : "Optional"}
-                </span>
-                <span
-                  onClick={() => onUpdate(idx, { disabled: !field.disabled })}
-                  className={`text-xs cursor-pointer select-none ${
-                    field.disabled ? "text-red-500" : "text-neutral-400"
-                  }`}
-                >
-                  {field.disabled ? "Disabled" : "Active"}
-                </span>
+              <div className="flex items-center gap-6 pt-1">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={`required-${field.id}`}
+                    size="sm"
+                    checked={field.required}
+                    onCheckedChange={(checked) => onUpdate(idx, { required: checked })}
+                  />
+                  <label
+                    htmlFor={`required-${field.id}`}
+                    className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400 cursor-pointer select-none"
+                  >
+                    Required
+                  </label>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={`disabled-${field.id}`}
+                    size="sm"
+                    checked={field.disabled === true}
+                    onCheckedChange={(checked) => onUpdate(idx, { disabled: checked })}
+                  />
+                  <label
+                    htmlFor={`disabled-${field.id}`}
+                    className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400 cursor-pointer select-none"
+                  >
+                    Disable Field
+                  </label>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <button
+                          type="button"
+                          className="cursor-help text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 flex items-center"
+                          aria-label="Disable field info"
+                        >
+                          <HelpCircle className="size-3.5" />
+                        </button>
+                      }
+                    />
+                    <TooltipContent side="top">
+                      Hides this field from new posts, but preserves older posts' data.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
             </div>
           ))}

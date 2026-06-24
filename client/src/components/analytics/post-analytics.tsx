@@ -1,0 +1,83 @@
+import { usePostAnalytics } from "@/hooks/use-analytics";
+import { EvilAreaChart, Area, XAxis, Grid } from "@/components/evilcharts/charts/area-chart";
+import { Skeleton } from "@/components/ui/skeleton";
+import NumberFlow from "@number-flow/react";
+import type { ChartConfig } from "@/components/evilcharts/ui/chart";
+
+const viewsConfig = {
+  count: {
+    label: "Views",
+    colors: { light: ["#2563eb"], dark: ["#60a5fa"] },
+  },
+} satisfies ChartConfig;
+
+export function PostAnalytics({ postUid, onClose }: { postUid: string; onClose: () => void }) {
+  const { data: analytics, isLoading } = usePostAnalytics(postUid);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 space-y-4">
+        <Skeleton className="h-6 w-32" />
+        <div className="grid grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-32 rounded-lg" />
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="p-4 text-sm text-neutral-500">Analytics not available.</div>
+    );
+  }
+
+  const viewData = analytics.viewsTrend.length > 0
+    ? analytics.viewsTrend.map((v) => ({ date: v.date, count: v.count }))
+    : [{ date: new Date().toISOString().split("T")[0], count: 0 }];
+
+  return (
+    <div className="p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium">Post Analytics</h3>
+        <button
+          onClick={onClose}
+          className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 cursor-pointer"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
+          <p className="text-[11px] text-neutral-500 mb-1">Views</p>
+          <p className="text-lg font-semibold tabular-nums">
+            <NumberFlow value={analytics.totalViews} />
+          </p>
+        </div>
+        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
+          <p className="text-[11px] text-neutral-500 mb-1">Unique</p>
+          <p className="text-lg font-semibold tabular-nums">
+            <NumberFlow value={analytics.uniqueViewers} />
+          </p>
+        </div>
+        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
+          <p className="text-[11px] text-neutral-500 mb-1">Replies</p>
+          <p className="text-lg font-semibold tabular-nums">
+            <NumberFlow value={analytics.replyCount} />
+          </p>
+        </div>
+      </div>
+
+      <div className="h-32">
+        <EvilAreaChart data={viewData} config={viewsConfig}>
+          <Area dataKey="count" variant="gradient" />
+          <XAxis dataKey="date" tickFormatter={(v: string) => v.slice(5)} />
+          <Grid />
+        </EvilAreaChart>
+      </div>
+    </div>
+  );
+}

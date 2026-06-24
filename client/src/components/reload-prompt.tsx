@@ -1,4 +1,4 @@
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { useEffect } from "react";
 

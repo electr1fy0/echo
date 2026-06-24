@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { PollVoter } from "@/components/poll-voter";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
+import { trackPostView } from "@/api/analytics";
 
 
 export default function QuestionDetailPage() {
@@ -41,11 +42,17 @@ export default function QuestionDetailPage() {
  const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(questionId);
  const { mutate: deleteQuestion } = useDeleteQuestion();
  const { mutate: updateQuestion } = useUpdateQuestion();
- const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
- const { mutate: deleteReply } = useDeleteReply();
+  const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
+  const { mutate: deleteReply } = useDeleteReply();
 
- const [isEditing, setIsEditing] = useState(false);
- const [editedContent, setEditedContent] = useState("");
+  useEffect(() => {
+    if (questionId) {
+      trackPostView(questionId);
+    }
+  }, [questionId]);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState("");
  const [pitchContent, setPitchContent] = useState("");
  const [isApplying, setIsApplying] = useState(false);
  const [interestMessage, setInterestMessage] = useState("");

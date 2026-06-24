@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateVotes } from "@/api/questions";
 import { updateReplyVotes } from "@/api/replies";
+import { track } from "@/lib/analytics";
 import type { QuestionItem, AnswerItem } from "@/types";
 
 export function useUpdateVote() {
@@ -104,7 +105,10 @@ export function useUpdateVote() {
         });
       }
     },
-    onSettled: (_data, _err, qid) => {
+    onSettled: (_data, err, qid) => {
+      if (!err) {
+        track("post_upvote");
+      }
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
       queryClient.invalidateQueries({ queryKey: ["search-questions"] });
@@ -150,7 +154,10 @@ export function useReplyUpdateVote() {
         queryClient.setQueryData(["replies", qid], context.previousReplies);
       }
     },
-    onSettled: (_, __, { qid }) => {
+    onSettled: (_data, err, { qid }) => {
+      if (!err) {
+        track("reply_upvote");
+      }
       queryClient.invalidateQueries({ queryKey: ["replies", qid] });
     },
   });

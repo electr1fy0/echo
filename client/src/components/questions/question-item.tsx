@@ -33,11 +33,13 @@ import {
   PinOffIcon,
   BookOpen01Icon,
   Share01Icon,
+  ChartUpIcon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ThreadedReplies } from "./threaded-replies";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { UserPreviewCard } from "@/components/ui/user-preview-card";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 import { PostContent } from "@/components/post-content";
@@ -52,6 +54,7 @@ type QuestionItemProps = {
 };
 
 import { QuestionListSkeleton } from "./question-skeleton";
+import { PostAnalytics } from "@/components/analytics/post-analytics";
 
 function CountdownRing({ expiresAt, timeCreated, size = 28 }: { expiresAt: string; timeCreated: string; size?: number }) {
   const ringSize = size + 4;
@@ -139,7 +142,7 @@ export function QuestionItem({
   canPin,
 }: QuestionItemProps) {
   const question = questionItem?.question;
-  const author = questionItem?.author ?? null;
+  const author = (questionItem as QuestionItem | undefined)?.author ?? null;
   const questionId = question?.uid;
   const navigate = useNavigate();
 
@@ -173,6 +176,7 @@ export function QuestionItem({
   const [editedTaxiStatus, setEditedTaxiStatus] = useState(question?.taxiStatus ?? "open");
 
   const [interestSent, setInterestSent] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   if (!question || !questionId) return null;
   const isPinned = !!question.isPinned;
@@ -213,29 +217,38 @@ export function QuestionItem({
     <AccordionItem value={questionId} className="w-full border-b border-neutral-100 dark:border-neutral-800 last:border-b-0">
       <TriggerWrapper isEditing={isEditing}>
         <div className="flex items-start gap-3 w-full">
-          <Link
-            to={
-              question.authorUsername
-                ? `/u/${question.authorUsername}`
-                : "#"
-            }
-            className="shrink-0 mt-1 relative"
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <UserAvatar
-              src={author?.avatar}
-              name={question.authorUsername || "Anonymous"}
-              className="size-7"
-            />
-            {question.expiresAt && question.timeCreated && (
-              <CountdownRing
-                expiresAt={question.expiresAt as string}
-                timeCreated={String(question.timeCreated)}
-                size={28}
-              />
-            )}
-          </Link>
+          {(() => {
+            const avatarLink = (
+              <Link
+                to={
+                  question.authorUsername
+                    ? `/u/${question.authorUsername}`
+                    : "#"
+                }
+                className="shrink-0 mt-1 relative"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <UserAvatar
+                  src={author?.avatar}
+                  name={question.authorUsername || "Anonymous"}
+                  className="size-7"
+                />
+                {question.expiresAt && question.timeCreated && (
+                  <CountdownRing
+                    expiresAt={question.expiresAt as string}
+                    timeCreated={String(question.timeCreated)}
+                    size={28}
+                  />
+                )}
+              </Link>
+            );
+            return author ? (
+              <UserPreviewCard user={author}>{avatarLink}</UserPreviewCard>
+            ) : (
+              avatarLink
+            );
+          })()}
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <div className="flex pt-1 items-center gap-2.5 flex-wrap min-w-0">
@@ -394,6 +407,13 @@ export function QuestionItem({
                       </DropdownMenuItem>
                       {user?.username === question.authorUsername && (
                         <>
+                          <DropdownMenuItem onClick={() => setShowAnalytics(true)}>
+                            <HugeiconsIcon
+                              icon={ChartUpIcon}
+                              className="mr-2 size-4"
+                            />
+                            View Analytics
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => setIsEditing(true)}>
                             <HugeiconsIcon
                               icon={PencilEdit02Icon}
@@ -863,6 +883,20 @@ export function QuestionItem({
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
+
+      {showAnalytics && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setShowAnalytics(false)}
+        >
+          <div
+            className="bg-background rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 w-full max-w-sm mx-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <PostAnalytics postUid={questionId} onClose={() => setShowAnalytics(false)} />
+          </div>
+        </div>
+      )}
     </AccordionItem>
   );
 }
