@@ -2,8 +2,18 @@ import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "motion/react";
 import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight01Icon, ArrowLeft01Icon, Cancel01Icon } from "@hugeicons/core-free-icons";
+
+function useMobilePlacement(
+  desktopPlacement: "top" | "bottom" | "left" | "right",
+  isMobile: boolean,
+): "top" | "bottom" | "left" | "right" {
+  if (!isMobile) return desktopPlacement;
+  if (desktopPlacement === "right" || desktopPlacement === "left") return "top";
+  return desktopPlacement;
+}
 
 function useElementPosition(selector: string | null) {
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -93,6 +103,7 @@ function TourTooltip({
   placement: "top" | "bottom" | "left" | "right";
 }) {
   const { step, currentStep, totalSteps, next, prev, skip } = useOnboardingTour();
+  const isMobile = useIsMobile();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -115,11 +126,11 @@ function TourTooltip({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 10001 }}
-      className="w-72 bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-2xl p-5"
+      className={`${isMobile ? "w-[calc(100vw-2rem)] max-w-72" : "w-72"} bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-2xl p-5`}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          {[...Array(totalSteps)].map((_, i) => (
             <span
               key={i}
               className={`block rounded-full transition-all duration-300 ${
@@ -177,6 +188,7 @@ function TourTooltip({
 
 function CenterCard() {
   const { step, currentStep, totalSteps, next, skip } = useOnboardingTour();
+  const isMobile = useIsMobile();
 
   return (
     <motion.div
@@ -190,11 +202,11 @@ function CenterCard() {
         transform: "translate(-50%, -50%)",
         zIndex: 10001,
       }}
-      className="w-80 bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-2xl p-6 text-center"
+      className={`${isMobile ? "w-[calc(100vw-2rem)] max-w-80" : "w-80"} bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-2xl p-6 text-center`}
     >
       <div className="flex justify-center mb-3">
         <div className="flex items-center gap-1.5">
-          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          {[...Array(totalSteps)].map((_, i) => (
             <span
               key={i}
               className={`block rounded-full transition-all duration-300 ${
@@ -246,9 +258,12 @@ function CenterCard() {
 }
 
 export function OnboardingTour() {
-  const { isActive, step } = useOnboardingTour();
+  const { isActive, step, skip } = useOnboardingTour();
+  const isMobile = useIsMobile();
   const { rect, ready } = useElementPosition(isActive ? step.targetSelector : null);
   const [targetHighlight, setTargetHighlight] = useState<DOMRect | null>(null);
+
+  const placement = useMobilePlacement(step.placement, isMobile);
 
   useEffect(() => {
     if (step.targetSelector && rect) {
@@ -277,17 +292,14 @@ export function OnboardingTour() {
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        const ctx = document.body.querySelector("[data-onboarding-portal]");
-        if (ctx) {
-          // handled within the component via skip
-        }
+        skip();
       }
     }
     if (isActive) {
       window.addEventListener("keydown", handleKey);
       return () => window.removeEventListener("keydown", handleKey);
     }
-  }, [isActive]);
+  }, [isActive, skip]);
 
   if (!isActive || !ready) return null;
 
@@ -308,7 +320,7 @@ export function OnboardingTour() {
       {isCenterStep ? (
         <CenterCard />
       ) : targetHighlight ? (
-        <TourTooltip targetRect={targetHighlight} placement={step.placement} />
+        <TourTooltip targetRect={targetHighlight} placement={placement} />
       ) : null}
     </div>,
     document.body

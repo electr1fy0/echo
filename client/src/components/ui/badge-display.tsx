@@ -91,7 +91,7 @@ function BadgePopover({
           <div className="flex items-center gap-3">
             <span
               className={cn(
-                "size-10 rounded-full flex items-center justify-center shrink-0",
+                "relative size-10 rounded-full flex items-center justify-center shrink-0",
                 badge.earned && "border-2 border-white/30",
               )}
               style={

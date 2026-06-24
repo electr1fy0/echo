@@ -55,6 +55,7 @@ import { haptic } from "@/lib/haptic";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/lib/toast";
+import type { SchemaField } from "@/types";
 
 import {
   MessageSquare,
@@ -81,17 +82,17 @@ import {
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
- "message-square": MessageSquare,
- "shopping-bag": ShoppingBag,
- "car": Car,
- "users": Users,
- "search": Search,
- "file-text": FileText,
- "help-circle": HelpCircle,
- "code": Code,
- "book-open": BookOpen,
- "utensils": Utensils,
- "hash": Hash,
+  "message-square": MessageSquare,
+  "shopping-bag": ShoppingBag,
+  "car": Car,
+  "users": Users,
+  "search": Search,
+  "file-text": FileText,
+  "help-circle": HelpCircle,
+  "code": Code,
+  "book-open": BookOpen,
+  "utensils": Utensils,
+  "hash": Hash,
 };
 
 const TEMPLATES = [
@@ -163,14 +164,14 @@ const TEMPLATES = [
  ],
  },
  {
- name: "Food Group-Buy",
- desc: "Order bulk food delivery to hostels to save shipping",
- icon: "utensils",
- schema: [
- { id: "deadline", type: "datetime", label: "Order By", required: true },
- { id: "min_order", type: "currency", label: "Min Order for Free Delivery (₹)", required: false },
- { id: "pickup", type: "text", label: "Hostel Pick-up Point", required: true }
- ],
+  name: "Food Group-Buy",
+  desc: "Order bulk food delivery to hostels to save shipping",
+  icon: "utensils",
+  schema: [
+  { id: "deadline", type: "datetime", label: "Order By", required: true },
+  { id: "min_order", type: "currency", label: "Min Order for Free Delivery (₹)", required: false },
+  { id: "pickup", type: "text", label: "Hostel Pick-up Point", required: true }
+  ],
  }
 ];
 
@@ -222,12 +223,23 @@ export default function ChamberPage() {
    }
  }, [editingChannel]);
 
- const handleAddEditField = () => {
-   setEditChannelSchema((prev) => [
-     ...prev,
-     { id: `field_${Date.now()}`, type: "text", label: "New Field", required: false, disabled: false }
-   ]);
- };
+  const handleAddEditField = (type: SchemaField["type"] = "text") => {
+    const defaultLabels: Record<string, string> = {
+      text: "Text Field",
+      number: "Number Field",
+      currency: "Price",
+      select: "Dropdown Options",
+      datetime: "Deadline Date",
+      url: "Reference Link",
+      file: "Attachment File",
+      image: "Image Photo",
+      poll: "Poll Option"
+    };
+    setEditChannelSchema((prev) => [
+      ...prev,
+      { id: `field_${Date.now()}`, type, label: defaultLabels[type] || "New Field", required: false, disabled: false }
+    ]);
+  };
 
  const handleUpdateEditField = (index: number, updates: any) => {
    setEditChannelSchema((prev) => {
@@ -457,12 +469,23 @@ export default function ChamberPage() {
  setNewChannelSchema([...tpl.schema]);
  };
 
- const handleAddField = () => {
- setNewChannelSchema((prev) => [
- ...prev,
- { id: `field_${Date.now()}`, type: "text", label: "New Field", required: false }
- ]);
- };
+  const handleAddField = (type: SchemaField["type"] = "text") => {
+    const defaultLabels: Record<string, string> = {
+      text: "Text Field",
+      number: "Number Field",
+      currency: "Price",
+      select: "Dropdown Options",
+      datetime: "Deadline Date",
+      url: "Reference Link",
+      file: "Attachment File",
+      image: "Image Photo",
+      poll: "Poll Option"
+    };
+    setNewChannelSchema((prev) => [
+      ...prev,
+      { id: `field_${Date.now()}`, type, label: defaultLabels[type] || "New Field", required: false }
+    ]);
+  };
 
  const handleUpdateField = (index: number, updates: any) => {
  setNewChannelSchema((prev) => {

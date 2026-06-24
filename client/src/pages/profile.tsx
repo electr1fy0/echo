@@ -583,7 +583,7 @@ export default function Profile() {
    if (!open) setEditPage("profile");
    }}
    >
-      <EditDialogContent className="min-w-[420px] max-w-[90vw] overflow-hidden p-0" showCloseButton={editPage === "profile"}>
+      <EditDialogContent className="sm:min-w-[420px] max-w-[90vw] overflow-hidden p-0" showCloseButton={editPage === "profile"}>
     <div className="relative overflow-hidden">
       <div className="flex transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] w-[200%]" style={{ transform: editPage === "avatar" ? "translateX(-50%)" : "translateX(0)" }}>
 
@@ -707,7 +707,7 @@ export default function Profile() {
               </button>
             </div>
 
-            <div className="flex items-center justify-center gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-center gap-3 sm:gap-6">
               <div className="text-center">
                 <span className="text-[10px] text-neutral-400 tracking-wide block mb-1.5">Hair</span>
                 <div className="flex gap-2 justify-center">
@@ -771,7 +771,6 @@ export default function Profile() {
             </div>
 
             <div className="space-y-1.5 text-center">
-              <label className="text-xs text-neutral-400">Upload Image</label>
               <div className="flex justify-center">
                 <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors w-fit">
                   {imageUploading ? (

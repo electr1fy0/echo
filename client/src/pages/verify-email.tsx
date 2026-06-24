@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useVerifyEmail } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,22 +17,45 @@ import {
 } from "@hugeicons/core-free-icons";
 
 export default function VerifyEmail() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const { mutateAsync: verify } = useVerifyEmail();
   const [status, setStatus] = useState<
     "idle" | "pending" | "success" | "error"
   >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
   const hasCalledRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
+
   useEffect(() => {
     if (token && !hasCalledRef.current) {
       hasCalledRef.current = true;
       setStatus("pending");
       verify(token)
-        .then(() => setStatus("success"))
-        .catch(() => setStatus("error"));
+        .then(() => {
+          if (!mountedRef.current) return;
+          setStatus("success");
+        })
+        .catch((err) => {
+          if (!mountedRef.current) return;
+          setStatus("error");
+          setErrorMessage(err instanceof Error ? err.message : "Verification failed");
+        });
     }
   }, [token, verify]);
+
+  useEffect(() => {
+    if (status !== "success") return;
+    const id = setTimeout(() => {
+      if (mountedRef.current) navigate("/", { replace: true });
+    }, 1500);
+    return () => clearTimeout(id);
+  }, [status, navigate]);
   if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
@@ -95,8 +118,8 @@ export default function VerifyEmail() {
             {status === "pending"
               ? "Please wait while we verify your email address."
               : status === "success"
-                ? "Your email has been successfully verified. You can now access your account."
-                : "We couldn't verify your email. The link may be invalid or expired."}
+                ? "Your email has been verified. You're now signed in."
+                : errorMessage || "We couldn't verify your email. The link may be invalid or expired."}
           </CardDescription>
         </CardHeader>
         <CardContent>

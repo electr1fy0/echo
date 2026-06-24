@@ -215,6 +215,10 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
           AND pv3.username = ${c.get("user") || ""}
         LIMIT 1
       )`,
+      repliesCount: sql<number>`(
+        select count(*)::int from replies r
+        where r.post_uid = ${schema.posts.uid}
+      )`,
     })
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))

@@ -82,7 +82,11 @@ export async function verifyEmail(token: string) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.error || "verification failed");
   }
-  return res.json();
+  const data = await res.json();
+  if (data.token) {
+    setToken(data.token);
+  }
+  return data;
 }
 
 export async function requestPasswordReset(email: string) {

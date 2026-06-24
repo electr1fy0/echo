@@ -45,6 +45,7 @@ export const mapPostItem = (row: {
   pollIsClosed: boolean | null;
   pollVotes: { optionIndex: number; count: number }[] | null;
   userPollVote: number | null;
+  repliesCount: number;
 }) => ({
   question: {
     uid: row.uid,
@@ -82,6 +83,7 @@ export const mapPostItem = (row: {
     pollIsClosed: row.pollIsClosed ?? false,
     pollVotes: row.pollVotes ?? [],
     userPollVote: row.userPollVote ?? null,
+    repliesCount: row.repliesCount,
   },
   author: {
     username: row.authorUsername,
@@ -307,6 +309,10 @@ export const getPostItems = async (
         WHERE pv3.poll_uid = ${schema.polls.uid}
           AND pv3.username = ${currentUser || ""}
         LIMIT 1
+      )`,
+      repliesCount: sql<number>`(
+        select count(*)::int from replies r
+        where r.post_uid = ${schema.posts.uid}
       )`,
     })
     .from(schema.posts)

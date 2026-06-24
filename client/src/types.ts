@@ -36,6 +36,7 @@ export interface Question {
   pollIsClosed?: boolean;
   pollVotes?: PollOption[];
   userPollVote?: number | null;
+  repliesCount?: number;
 }
 export interface Badge {
   id: string;
@@ -152,7 +153,7 @@ export interface Chamber {
 
 export interface SchemaField {
   id: string;
-  type: "text" | "number" | "currency" | "select" | "datetime" | "url" | "file";
+  type: "text" | "number" | "currency" | "select" | "datetime" | "url" | "file" | "poll" | "image";
   label: string;
   required: boolean;
   disabled?: boolean;

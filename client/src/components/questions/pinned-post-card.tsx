@@ -161,7 +161,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
           />
           <div className="flex items-center gap-1 text-neutral-400 dark:text-neutral-500 text-[11px] px-1">
             <HugeiconsIcon icon={BubbleChatIcon} className="size-3.5" />
-            <span className="font-medium">{replies.length}</span>
+            <span className="font-medium">{question.repliesCount ?? replies.length}</span>
           </div>
         </div>
 

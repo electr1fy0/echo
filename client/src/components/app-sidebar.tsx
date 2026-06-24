@@ -199,6 +199,7 @@ export function AppSidebar() {
         {/* Floating action button for mobile post creation */}
         {user && (
           <button
+            data-tour="create-post"
             onClick={() => openCreatePost()}
             className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white transition-all cursor-pointer"
             title="Create a Post"
@@ -208,16 +209,24 @@ export function AppSidebar() {
           </button>
         )}
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-8 px-2">
-          <div className="flex items-center justify-around">
+          <div data-tour="nav-shortcuts" className="flex items-center justify-around">
             {navItems.map((item) => (
-              <NavButton
+              <div
                 key={item.label}
-                icon={item.icon}
-                isActive={isActive(item.path)}
-                hasBadge={item.path ? badgeMap[item.path] : false}
-                isMobile={true}
-                onClick={() => handleNavClick(item)}
-              />
+                data-tour={
+                  item.path === "/explore" ? "explore" :
+                  item.path === "/notifications" ? "activity" :
+                  undefined
+                }
+              >
+                <NavButton
+                  icon={item.icon}
+                  isActive={isActive(item.path)}
+                  hasBadge={item.path ? badgeMap[item.path] : false}
+                  isMobile={true}
+                  onClick={() => handleNavClick(item)}
+                />
+              </div>
             ))}
             <ProfileButton
               user={user}

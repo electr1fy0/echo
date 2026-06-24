@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const TOUR_KEY = "turnsout_onboarding_seen";
 
@@ -7,6 +8,7 @@ export interface TourStep {
   targetSelector: string | null;
   title: string;
   description: string;
+  descriptionMobile?: string;
   placement: "top" | "bottom" | "left" | "right";
 }
 
@@ -21,8 +23,9 @@ const STEPS: TourStep[] = [
   {
     id: "nav-shortcuts",
     targetSelector: "[data-tour='nav-shortcuts']",
-    title: "Keyboard Shortcuts",
+    title: "Navigation",
     description: "Navigate instantly: press 1 (Home), 2 (Explore), 3 (Messages), 4 (Activity), 5 (Profile). No clicking needed.",
+    descriptionMobile: "Tap the icons below to navigate between Home, Explore, Messages, Activity, and your Profile.",
     placement: "right",
   },
   {
@@ -30,6 +33,7 @@ const STEPS: TourStep[] = [
     targetSelector: "[data-tour='create-post']",
     title: "Create Posts",
     description: "Hit c or click the + button to create a post. Choose from Q&A, Partner Finder, Market, or Taxi / Rides.",
+    descriptionMobile: "Tap the + button to create a post. Choose from Q&A, Partner Finder, Market, or Taxi / Rides.",
     placement: "right",
   },
   {
@@ -77,10 +81,19 @@ interface OnboardingTourContextValue {
 
 const OnboardingTourContext = createContext<OnboardingTourContextValue | null>(null);
 
+function getSteps(isMobile: boolean): TourStep[] {
+  if (isMobile) {
+    return STEPS.filter((s) => s.id !== "chambers");
+  }
+  return STEPS;
+}
+
 export function OnboardingTourProvider({ children }: { children: ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [hasSeen, setHasSeen] = useState(true);
+  const isMobile = useIsMobile();
+  const steps = getSteps(isMobile);
 
   useEffect(() => {
     const seen = localStorage.getItem(TOUR_KEY) === "true";
@@ -106,14 +119,14 @@ export function OnboardingTourProvider({ children }: { children: ReactNode }) {
 
   const next = useCallback(() => {
     setCurrentStep((prev) => {
-      if (prev >= STEPS.length - 1) {
+      if (prev >= steps.length - 1) {
         setIsActive(false);
         markSeen();
         return prev;
       }
       return prev + 1;
     });
-  }, [markSeen]);
+  }, [markSeen, steps.length]);
 
   const prev = useCallback(() => {
     setCurrentStep((prev) => Math.max(0, prev - 1));
@@ -123,13 +136,19 @@ export function OnboardingTourProvider({ children }: { children: ReactNode }) {
     dismiss();
   }, [dismiss]);
 
+  const rawStep = steps[currentStep] || steps[0];
+  const step: TourStep = {
+    ...rawStep,
+    description: isMobile && rawStep.descriptionMobile ? rawStep.descriptionMobile : rawStep.description,
+  };
+
   return (
     <OnboardingTourContext.Provider
       value={{
         isActive,
         currentStep,
-        totalSteps: STEPS.length,
-        step: STEPS[currentStep] || STEPS[0],
+        totalSteps: steps.length,
+        step,
         next,
         prev,
         skip,

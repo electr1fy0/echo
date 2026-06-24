@@ -810,10 +810,11 @@ export default function QuestionDetailPage() {
  />
  </div>
   ) : (
-  <EmptyState
-    title="No comments yet"
-    description="Write a response above!"
-  />
+   <EmptyState
+     title="No comments yet"
+     description="Write a response above!"
+     className="py-6"
+   />
   )}
  </div>
  </PageTransition>

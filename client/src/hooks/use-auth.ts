@@ -86,8 +86,12 @@ export function useResendVerification() {
 }
 
 export function useVerifyEmail() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: verifyEmail,
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ["auth"] });
+    },
   });
 }
 

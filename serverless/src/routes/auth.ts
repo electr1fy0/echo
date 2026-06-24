@@ -101,6 +101,9 @@ authRoutes.post("/signup", async (c) => {
     });
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
+      if ((error as { constraint?: string }).constraint === "users_email_key") {
+        throw new ApiError(409, "email already in use");
+      }
       throw new ApiError(409, "username already taken");
     }
     throw error;
@@ -160,7 +163,8 @@ authRoutes.post("/verify-email", async (c) => {
     throw new ApiError(400, "invalid or expired token");
   }
 
-  return c.json({ message: "Email verified successfully" });
+  const authToken = await issueAuthToken(c.env.SECRET_KEY, result[0].username);
+  return c.json({ token: authToken, message: "Email verified successfully" });
 });
 
 authRoutes.post("/resend-verification", async (c) => {
