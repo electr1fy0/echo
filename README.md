@@ -1,6 +1,6 @@
 # TurnsOut
 
-![TurnsOut Thumbnail](https://echo.aysh.site/thumb.jpeg)
+![TurnsOut Thumbnail](https://turnsout.xyz/thumb.jpg)
 
 
 An open community platform built for communities. Ask questions, share knowledge, and curate your feed through isolated chambers.
