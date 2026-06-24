@@ -6,6 +6,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PageTransition } from "@/components/page-transition";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
@@ -83,7 +84,7 @@ export default function DMConversationPage() {
  <div
  className={`px-3.5 py-2 text-sm leading-relaxed ${
  isMine
- ? "bg-[#ff5a1f] text-white rounded-2xl rounded-br-sm"
+  ? "bg-[var(--brand)] text-white rounded-2xl rounded-br-sm"
  : "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 rounded-2xl rounded-bl-sm"
  }`}
  >
@@ -98,8 +99,8 @@ export default function DMConversationPage() {
  })}
  </div>
  ) : (
- <div className="flex-1 flex items-center justify-center text-sm text-neutral-500 h-full">
- No messages yet. Say hello!
+ <div className="flex-1 flex items-center justify-center h-full">
+ <EmptyState title="No messages yet" description="Say hello!" />
  </div>
  )}
  <div ref={bottomRef} />
@@ -117,7 +118,7 @@ export default function DMConversationPage() {
  <Button
  onClick={handleSend}
  disabled={isPending || !input.trim()}
- className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white border-none h-[44px] shrink-0"
+ className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-none h-[44px] shrink-0"
  >
  Send
  </Button>

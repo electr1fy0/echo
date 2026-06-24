@@ -37,7 +37,7 @@ export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSu
         Please{" "}
         <button
           onClick={() => openAuthModal("signin")}
-          className="text-[#ff5a1f] hover:underline font-semibold cursor-pointer bg-transparent border-none p-0 inline"
+          className="text-[var(--brand)] hover:underline font-semibold cursor-pointer bg-transparent border-none p-0 inline"
         >
           sign in
         </button>{" "}
@@ -99,7 +99,7 @@ export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSu
           value={content}
           placeholder="Write a reply..."
           ariaLabel="Reply content"
-          className="text-base"
+          className="text-base md:text-sm"
           onValueChange={setContent}
           multiline={true}
           containerClassName="w-full"

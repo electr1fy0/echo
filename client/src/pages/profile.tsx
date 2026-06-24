@@ -8,28 +8,24 @@ import {
 } from "@/hooks/use-questions";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
- Mail01Icon,
- PencilEdit02Icon,
- Add01Icon,
- Link01Icon,
- MoreHorizontalIcon,
- Alert02Icon,
- Sun03Icon,
- Moon02Icon,
- Logout01Icon,
- ComputerIcon,
- Message02Icon,
- HelpCircleIcon,
+  PencilEdit02Icon,
+  MoreHorizontalIcon,
+  Alert02Icon,
+  Sun03Icon,
+  Moon02Icon,
+  Logout01Icon,
+  ComputerIcon,
+  Message02Icon,
+  HelpCircleIcon,
+  Mail01Icon,
+  Link01Icon,
+  Add01Icon,
 } from "@hugeicons/core-free-icons";
 import {
- DropdownMenu,
- DropdownMenuContent,
- DropdownMenuItem,
- DropdownMenuTrigger,
- DropdownMenuSeparator,
- DropdownMenuLabel,
- DropdownMenuGroup,
-} from "@/components/ui/dropdown-menu";
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import {
  Dialog,
  DialogContent,
@@ -51,8 +47,12 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { toast } from "@/lib/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "@/hooks/use-theme";
+import { useAccentTheme } from "@/hooks/use-accent-theme";
+type AccentTheme = "orange" | "blue" | "violet" | "rose" | "green";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
+import { CropImageDialog } from "@/components/ui/crop-image-dialog";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition } from "@/components/page-transition";
@@ -117,10 +117,12 @@ export default function Profile() {
  const { mutate: deleteQuestion } = useDeleteQuestion();
  const { mutate: deleteAccount } = useDeleteAccount();
  const { mutate: signout } = useSignout();
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const { accent, setAccent, themes } = useAccentTheme();
   const { start: startTour } = useOnboardingTour();
   const { upload: uploadImage, uploading: imageUploading } = useImageUpload();
- const [editForm, setEditForm] = useState<User>({
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<User>({
  username: "",
  email: "",
  bio: "",
@@ -214,92 +216,119 @@ export default function Profile() {
  <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
  Edit Profile
  </Button>
- <DropdownMenu>
- <DropdownMenuTrigger
- render={(props) => (
- <Button
- {...props}
- variant="outline"
- size="icon"
- className="size-8 rounded-full"
- >
- <HugeiconsIcon
- icon={MoreHorizontalIcon}
- className="size-5"
- />
- </Button>
- )}
- />
- <DropdownMenuContent align="end" className="w-56">
- <DropdownMenuGroup>
- <DropdownMenuLabel>Theme</DropdownMenuLabel>
- <DropdownMenuItem onClick={() => setTheme("light")}>
- <HugeiconsIcon icon={Sun03Icon} className="mr-2 size-4" />{" "}
- Light
- </DropdownMenuItem>
- <DropdownMenuItem onClick={() => setTheme("dark")}>
- <HugeiconsIcon icon={Moon02Icon} className="mr-2 size-4" />{" "}
- Dark
- </DropdownMenuItem>
- <DropdownMenuItem onClick={() => setTheme("system")}>
- <HugeiconsIcon
- icon={ComputerIcon}
- className="mr-2 size-4"
- />{" "}
- System
- </DropdownMenuItem>
- </DropdownMenuGroup>
- <DropdownMenuSeparator />
- <DropdownMenuGroup>
-    <DropdownMenuItem onClick={() => startTour()}>
-      <HugeiconsIcon icon={HelpCircleIcon} className="mr-2 size-4" />
-      Restart Tour
-    </DropdownMenuItem>
-  </DropdownMenuGroup>
-  <DropdownMenuSeparator />
-  <DropdownMenuGroup>
-  <DropdownMenuLabel>Direct Messages</DropdownMenuLabel>
- <DropdownMenuItem
- onClick={() =>
- updateProfile({ ...displayUser, dmEnabled: !displayUser.dmEnabled })
- }
- >
- <HugeiconsIcon icon={Message02Icon} className="mr-2 size-4" />
- {displayUser.dmEnabled ? "Disable DMs" : "Enable DMs"}
- </DropdownMenuItem>
-  </DropdownMenuGroup>
-  <DropdownMenuSeparator />
-  <DropdownMenuGroup>
-  <DropdownMenuItem onClick={() => startTour()}>
-  <HugeiconsIcon
-  icon={Add01Icon}
-  className="mr-2 size-4 rotate-45"
-  />
-  Restart Tour
-  </DropdownMenuItem>
-  </DropdownMenuGroup>
-  <DropdownMenuSeparator />
-  <DropdownMenuGroup>
-  <DropdownMenuItem
-  onClick={() => signout()}
-  className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
- >
- <HugeiconsIcon
- icon={Logout01Icon}
- className="mr-2 size-4"
- />
- Sign out
- </DropdownMenuItem>
- <DropdownMenuItem
- className="text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/20"
- onClick={() => setIsDeleteOpen(true)}
- >
- <HugeiconsIcon icon={Alert02Icon} className="mr-2 size-4" />
- Delete Account...
- </DropdownMenuItem>
- </DropdownMenuGroup>
- </DropdownMenuContent>
- </DropdownMenu>
+  <Drawer>
+    <DrawerTrigger asChild>
+      <Button variant="outline" size="icon" className="size-8 rounded-full">
+        <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
+      </Button>
+    </DrawerTrigger>
+    <DrawerContent className="sm:!left-1/2 sm:!-translate-x-1/2 sm:!right-auto sm:!min-w-[420px] sm:!w-auto sm:max-w-[90vw]">
+      <div className="px-6 pb-8 pt-2 space-y-5">
+
+        {/* Theme */}
+        <div className="space-y-3">
+          <span className="text-[10px] text-neutral-400 tracking-wide uppercase">Theme</span>
+          <div className="flex gap-1.5">
+            {[
+              { key: "light" as const, icon: Sun03Icon, label: "Light" },
+              { key: "dark" as const, icon: Moon02Icon, label: "Dark" },
+              { key: "system" as const, icon: ComputerIcon, label: "System" },
+            ].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTheme(t.key)}
+                className={cn(
+                  "flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs border transition-all cursor-pointer",
+                  theme === t.key
+                    ? "bg-neutral-900 text-white border-neutral-900 dark:bg-neutral-100 dark:text-neutral-900 dark:border-neutral-100"
+                    : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700"
+                )}
+              >
+                <HugeiconsIcon icon={t.icon} className="size-3.5" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Accent */}
+        <div className="space-y-3">
+          <span className="text-[10px] text-neutral-400 tracking-wide uppercase">Accent</span>
+          <div className="flex gap-3">
+            {(["orange", "blue", "violet", "rose", "green"] as AccentTheme[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setAccent(t)}
+                className={cn(
+                  "size-7 rounded-full transition-all cursor-pointer",
+                  accent === t && "ring-2 ring-offset-2 ring-neutral-400 dark:ring-neutral-600"
+                )}
+                style={{ backgroundColor: themes[t].color }}
+                aria-label={themes[t].label}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
+
+        {/* Preferences */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <HugeiconsIcon icon={Message02Icon} className="size-4 text-neutral-400" />
+            <span className="text-sm text-neutral-700 dark:text-neutral-300">Direct Messages</span>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={displayUser.dmEnabled}
+            onClick={() => updateProfile({ ...displayUser, dmEnabled: !displayUser.dmEnabled })}
+            className={cn(
+              "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none",
+              displayUser.dmEnabled
+                ? "bg-neutral-900 dark:bg-neutral-100"
+                : "bg-neutral-200 dark:bg-neutral-700"
+            )}
+          >
+            <span
+              className={cn(
+                "pointer-events-none block size-4 rounded-full bg-white shadow-sm ring-0 transition-transform",
+                displayUser.dmEnabled ? "translate-x-4" : "translate-x-0"
+              )}
+            />
+          </button>
+        </div>
+
+        <button
+          onClick={() => startTour()}
+          className="flex items-center gap-3 w-full py-1.5 cursor-pointer"
+        >
+          <HugeiconsIcon icon={HelpCircleIcon} className="size-4 text-neutral-400" />
+          <span className="text-sm text-neutral-700 dark:text-neutral-300">Restart Tour</span>
+        </button>
+
+        <div className="h-px bg-neutral-200 dark:bg-neutral-800" />
+
+        {/* Account */}
+        <button
+          onClick={() => signout()}
+          className="flex items-center gap-3 w-full py-1.5 cursor-pointer text-red-500"
+        >
+          <HugeiconsIcon icon={Logout01Icon} className="size-4" />
+          <span className="text-sm">Sign Out</span>
+        </button>
+
+        <button
+          onClick={() => setIsDeleteOpen(true)}
+          className="flex items-center gap-3 w-full py-1.5 cursor-pointer text-red-500"
+        >
+          <HugeiconsIcon icon={Alert02Icon} className="size-4" />
+          <span className="text-sm">Delete Account</span>
+        </button>
+
+      </div>
+    </DrawerContent>
+  </Drawer>
  </div>
  </div>
  <div className="space-y-1 w-full">
@@ -427,7 +456,7 @@ export default function Profile() {
  ))}
  </div>
  ) : (
- <p className="text-sm text-neutral-500">No chambers joined yet.</p>
+ <EmptyState title="No chambers joined yet" />
  )}
  </div>
  <div className="h-px w-full bg-neutral-200 dark:bg-neutral-800 my-6" />
@@ -441,10 +470,12 @@ export default function Profile() {
  <p className="text-red-500 text-sm">Failed to load activity</p>
  ) : (
  <div className="space-y-4">
- <QuestionList
- questions={questions}
- onDelete={(id) => deleteQuestion(id)}
- />
+  <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
+    <QuestionList
+    questions={questions}
+    onDelete={(id) => deleteQuestion(id)}
+    />
+  </div>
  {hasNextPage && (
  <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
  <Button
@@ -521,34 +552,59 @@ export default function Profile() {
  }}
  />
  </div>
- <div className="grid gap-2">
- <label className="text-sm font-medium">Avatar</label>
- <div className="flex items-center gap-3">
- {editForm.avatar && (
- <img src={editForm.avatar} className="size-10 rounded-full object-cover" />
- )}
- <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
- {imageUploading ? (
- <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
- ) : (
- <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
- )}
- {imageUploading ? "Uploading..." : "Upload Image"}
- <input
- type="file"
- accept="image/*"
- className="hidden"
- disabled={imageUploading}
- onChange={async (e) => {
- const file = e.target.files?.[0];
- if (!file) return;
- const url = await uploadImage(file);
- if (url) updateDraft({ avatar: url });
- }}
- />
- </label>
- </div>
- </div>
+   <div className="grid gap-2">
+   <label className="text-sm font-medium">Avatar</label>
+   <div className="flex items-center gap-3">
+   {editForm.avatar ? (
+   <>
+   <img src={editForm.avatar} className="size-10 rounded-full object-cover" />
+   <button
+   type="button"
+   onClick={() => updateDraft({ avatar: "" })}
+   className="text-xs text-red-500 hover:text-red-600 cursor-pointer"
+   >
+   Remove
+   </button>
+   </>
+   ) : (
+   <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
+   {imageUploading ? (
+   <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
+   ) : (
+   <HugeiconsIcon icon={Add01Icon} className="size-3.5" />
+   )}
+   {imageUploading ? "Uploading..." : "Upload Image"}
+   <input
+   type="file"
+   accept="image/*"
+   className="hidden"
+   disabled={imageUploading}
+   onChange={async (e) => {
+   const file = e.target.files?.[0];
+   if (!file) return;
+   const reader = new FileReader();
+   reader.onload = () => {
+   setCropImageSrc(reader.result as string);
+   };
+   reader.readAsDataURL(file);
+   e.target.value = "";
+   }}
+   />
+   </label>
+   )}
+   </div>
+   </div>
+  <CropImageDialog
+  open={!!cropImageSrc}
+  onOpenChange={() => setCropImageSrc(null)}
+  imageSrc={cropImageSrc || ""}
+  onCropComplete={async (blob) => {
+  const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+  const url = await uploadImage(file);
+  if (url) updateDraft({ avatar: url });
+  setCropImageSrc(null);
+  }}
+  />
  <div className="flex items-center justify-between py-2 border-t border-neutral-100 dark:border-neutral-800">
  <div>
  <span className="text-sm font-medium">Allow DMs</span>
@@ -561,7 +617,7 @@ export default function Profile() {
  onClick={() => updateDraft({ dmEnabled: !(editForm.dmEnabled ?? true) })}
  className={cn(
  "relative inline-flex h-6 w-10 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus:outline-none",
- (editForm.dmEnabled ?? true) ? "bg-[#ff5a1f]" : "bg-neutral-300 dark:bg-neutral-700"
+ (editForm.dmEnabled ?? true) ? "bg-[var(--brand)]" : "bg-neutral-300 dark:bg-neutral-700"
  )}
  >
  <span

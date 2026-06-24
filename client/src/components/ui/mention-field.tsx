@@ -67,96 +67,59 @@ export function MentionField({
     });
   };
 
+  const handlers = {
+    onChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      setCursor(e.target.selectionStart);
+      onValueChange(e.target.value);
+    },
+    onClick(e: React.MouseEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      setCursor(e.currentTarget.selectionStart);
+    },
+    onKeyUp(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      setCursor(e.currentTarget.selectionStart);
+    },
+    onKeyDown(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) {
+      if (!isOpen || suggestions.length === 0) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev + 1) % suggestions.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex((prev) =>
+          prev === 0 ? suggestions.length - 1 : prev - 1,
+        );
+      } else if (e.key === "Enter") {
+        const selected = suggestions[activeIndex];
+        if (selected?.username) {
+          e.preventDefault();
+          handleSelect(selected.username);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setIsOpen(false);
+      }
+    },
+    onBlur() {
+      setTimeout(() => setIsOpen(false), 100);
+    },
+  };
+
+  const inputProps = {
+    value,
+    placeholder,
+    "aria-label": ariaLabel,
+    disabled,
+    autoFocus,
+    className,
+    ...handlers,
+  };
+
   return (
     <div className={cn("relative", containerClassName)}>
       {multiline ? (
-        <Textarea
-          ref={textareaRef}
-          value={value}
-          placeholder={placeholder}
-          aria-label={ariaLabel}
-          disabled={disabled}
-          autoFocus={autoFocus}
-          className={className}
-          onChange={(e) => {
-            setCursor(e.target.selectionStart);
-            onValueChange(e.target.value);
-          }}
-          onClick={(e) => {
-            setCursor(e.currentTarget.selectionStart);
-          }}
-          onKeyUp={(e) => {
-            setCursor(e.currentTarget.selectionStart);
-          }}
-          onKeyDown={(e) => {
-            if (!isOpen || suggestions.length === 0) return;
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              setActiveIndex((prev) => (prev + 1) % suggestions.length);
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              setActiveIndex((prev) =>
-                prev === 0 ? suggestions.length - 1 : prev - 1,
-              );
-            } else if (e.key === "Enter") {
-              const selected = suggestions[activeIndex];
-              if (selected?.username) {
-                e.preventDefault();
-                handleSelect(selected.username);
-              }
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              setIsOpen(false);
-            }
-          }}
-          onBlur={() => {
-            setTimeout(() => setIsOpen(false), 100);
-          }}
-        />
+        <Textarea ref={textareaRef as React.Ref<HTMLTextAreaElement>} {...inputProps} />
       ) : (
-        <Input
-          ref={inputRef}
-          value={value}
-          placeholder={placeholder}
-          aria-label={ariaLabel}
-          disabled={disabled}
-          autoFocus={autoFocus}
-          className={className}
-          onChange={(e) => {
-            setCursor(e.target.selectionStart);
-            onValueChange(e.target.value);
-          }}
-          onClick={(e) => {
-            setCursor(e.currentTarget.selectionStart);
-          }}
-          onKeyUp={(e) => {
-            setCursor(e.currentTarget.selectionStart);
-          }}
-          onKeyDown={(e) => {
-            if (!isOpen || suggestions.length === 0) return;
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              setActiveIndex((prev) => (prev + 1) % suggestions.length);
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              setActiveIndex((prev) =>
-                prev === 0 ? suggestions.length - 1 : prev - 1,
-              );
-            } else if (e.key === "Enter") {
-              const selected = suggestions[activeIndex];
-              if (selected?.username) {
-                e.preventDefault();
-                handleSelect(selected.username);
-              }
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              setIsOpen(false);
-            }
-          }}
-          onBlur={() => {
-            setTimeout(() => setIsOpen(false), 100);
-          }}
-        />
+        <Input ref={inputRef as React.Ref<HTMLInputElement>} {...inputProps} />
       )}
       {isOpen && (
         <div className="absolute z-50 mt-2 w-full rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg overflow-hidden max-h-60 overflow-y-auto">

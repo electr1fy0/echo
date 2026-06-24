@@ -7,7 +7,7 @@ import {
   FavouriteIcon,
   Message01Icon,
   UserIcon,
-  Add01Icon,
+  Edit01Icon,
 } from "@hugeicons/core-free-icons";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -199,11 +199,11 @@ export function AppSidebar() {
         {user && (
           <button
             onClick={() => openCreatePost()}
-            className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white shadow-[0_4px_14px_rgba(255,90,31,0.4)] transition-all active:scale-95 cursor-pointer"
+            className="fixed bottom-24 right-4 z-40 flex items-center justify-center size-12 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white shadow-[0_4px_14px_var(--brand-shadow)/0.4] transition-all active:scale-95 cursor-pointer"
             title="Create a Post"
             aria-label="Create a Post"
           >
-            <HugeiconsIcon icon={Add01Icon} className="size-6" />
+            <HugeiconsIcon icon={Edit01Icon} className="size-6" />
           </button>
         )}
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-8 px-2">
@@ -286,15 +286,15 @@ export function AppSidebar() {
                   render={
                     <button
                       onClick={() => openCreatePost()}
-                      className="flex items-center justify-center size-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_2px_10px_rgba(255,90,31,0.25)] hover:shadow-[0_4px_12px_rgba(255,90,31,0.35)] mt-1.5 shrink-0"
+                      className="flex items-center justify-center size-10 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white transition-all duration-200 active:scale-95 cursor-pointer shadow-[0_2px_10px_var(--brand-shadow)/0.25] hover:shadow-[0_4px_12px_var(--brand-shadow)/0.35] mt-1.5 shrink-0"
                       aria-label="Create a Post"
                     >
-                      <HugeiconsIcon icon={Add01Icon} className="size-5" />
-                    </button>
-                  }
-                />
-                <TooltipContent side="right">
-                  Create a Post
+                    <HugeiconsIcon icon={Edit01Icon} className="size-5" />
+                  </button>
+                }
+              />
+              <TooltipContent side="right">
+                Create a Post
                   <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">c</kbd>
                 </TooltipContent>
               </Tooltip>
@@ -319,7 +319,7 @@ export function AppSidebar() {
                           "size-8 rounded-xl flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-all duration-300 hover:rounded-lg select-none shadow-sm cursor-pointer",
                           color,
                           active 
-                            ? "ring-2 ring-[#ff5a1f] ring-offset-2 ring-offset-background scale-105" 
+                            ? "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-background scale-105" 
                             : "opacity-85 hover:opacity-100"
                         )}
                       >

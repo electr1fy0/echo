@@ -11,6 +11,7 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { useNavigate } from "react-router";
 import { ChamberListSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 
 export default function AllChambers() {
   const [query, setQuery] = useState("");
@@ -47,7 +48,7 @@ export default function AllChambers() {
           />
           <Input
             placeholder="Search chambers..."
-            className="pl-10 h-10 bg-neutral-100 dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-2xl"
+            className="pl-10 h-10 bg-[#F5F5F5] dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-full"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -59,9 +60,9 @@ export default function AllChambers() {
           ) : chambers.length > 0 ? (
             <ChamberList chambers={chambers} />
           ) : (
-            <p className="text-sm text-neutral-500 text-center py-10">
-              No chambers found matching "{query}"
-            </p>
+            <EmptyState
+              title={`No chambers found matching "${query}"`}
+            />
           )}
         </div>
       </div>

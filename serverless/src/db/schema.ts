@@ -24,6 +24,8 @@ export const users = pgTable("users", {
   resetToken: text("reset_token"),
   resetExpiry: timestamp("reset_expiry", { mode: "date" }),
   dmEnabled: boolean("dm_enabled").default(true).notNull(),
+  reputation: integer("reputation").default(0).notNull(),
+  badges: json("badges").$type<string[]>().default([]).notNull(),
 }, (table) => [unique("users_email_key").on(table.email)]);
 
 export const chambers = pgTable("chambers", {
@@ -35,6 +37,7 @@ export const chambers = pgTable("chambers", {
   }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   colorIndex: integer("color_index").default(0),
+  picture: text("picture"),
 }, (table) => [unique("chambers_name_key").on(table.name)]);
 
 export const channels = pgTable("channels", {

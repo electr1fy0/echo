@@ -26,6 +26,7 @@ export async function fetchQuestions(
   pinned?: boolean,
   searchQuery?: string,
   channelUid?: string,
+  channelName?: string,
 ) {
   const params = new URLSearchParams({
     ...(sort ? { sort } : {}),
@@ -38,6 +39,7 @@ export async function fetchQuestions(
     ...(pinned !== undefined ? { pinned: pinned.toString() } : {}),
     ...(searchQuery ? { q: searchQuery } : {}),
     ...(channelUid ? { channel_uid: channelUid } : {}),
+    ...(channelName ? { channel_name: channelName } : {}),
   });
   const res = await fetch(`${API_URL}/questions?${params}`, {
     headers: {

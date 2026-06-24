@@ -25,6 +25,7 @@ export function useSignin() {
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
     },
   });
 }
@@ -53,6 +54,7 @@ export function useSignout() {
       queryClient.setQueryData(["auth", token], undefined);
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
       navigate("/", { replace: true });
     },
   });
@@ -71,6 +73,7 @@ export function useDeleteAccount() {
       queryClient.setQueryData(["auth", token], undefined);
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
       navigate("/", { replace: true });
     },
   });

@@ -52,12 +52,13 @@ export function useInfiniteQuestionsQuery(
   postType?: string,
   pinned?: boolean,
   searchQuery?: string,
-  channelUid?: string
+  channelUid?: string,
+  channelName?: string,
 ) {
   return useInfiniteQuery({
-    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned, searchQuery, channelUid],
+    queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned, searchQuery, channelUid, channelName],
     queryFn: ({ pageParam = 0 }) =>
-      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned, searchQuery, channelUid),
+      fetchQuestions(sort, filter, chamberId, author, pageSize, pageParam as number, postType, pinned, searchQuery, channelUid, channelName),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < pageSize) return undefined;
@@ -67,10 +68,10 @@ export function useInfiniteQuestionsQuery(
   });
 }
 
-export function usePinnedQuestionsQuery(chamberId: string | undefined, postType?: string, channelUid?: string) {
+export function usePinnedQuestionsQuery(chamberId: string | undefined, postType?: string, channelUid?: string, channelName?: string) {
   return useQuery({
-    queryKey: ["questions", "pinned", chamberId, postType, channelUid],
-    queryFn: () => fetchQuestions("time_created", undefined, chamberId, undefined, 10, 0, postType, true, undefined, channelUid),
+    queryKey: ["questions", "pinned", chamberId, postType, channelUid, channelName],
+    queryFn: () => fetchQuestions("time_created", undefined, chamberId, undefined, 10, 0, postType, true, undefined, channelUid, channelName),
     enabled: !!chamberId,
     staleTime: 30_000,
   });

@@ -124,7 +124,7 @@ function TourTooltip({
               key={i}
               className={`block rounded-full transition-all duration-300 ${
                 i === currentStep
-                  ? "bg-[#ff5a1f] w-5 h-1.5"
+                  ? "bg-[var(--brand)] w-5 h-1.5"
                   : i < currentStep
                     ? "bg-neutral-300 dark:bg-neutral-600 w-1.5 h-1.5"
                     : "bg-neutral-200 dark:bg-neutral-700 w-1.5 h-1.5"
@@ -159,7 +159,7 @@ function TourTooltip({
         </button>
         <button
           onClick={next}
-          className="flex items-center gap-1 text-xs font-medium bg-[#ff5a1f] text-white px-3.5 py-1.5 rounded-lg hover:bg-[#e94a12] transition-colors cursor-pointer"
+          className="flex items-center gap-1 text-xs font-medium bg-[var(--brand)] text-white px-3.5 py-1.5 rounded-lg hover:bg-[var(--brand-hover)] transition-colors cursor-pointer"
         >
           {currentStep < totalSteps - 1 ? (
             <>
@@ -199,7 +199,7 @@ function CenterCard() {
               key={i}
               className={`block rounded-full transition-all duration-300 ${
                 i === currentStep
-                  ? "bg-[#ff5a1f] w-5 h-1.5"
+                  ? "bg-[var(--brand)] w-5 h-1.5"
                   : i < currentStep
                     ? "bg-neutral-300 dark:bg-neutral-600 w-1.5 h-1.5"
                     : "bg-neutral-200 dark:bg-neutral-700 w-1.5 h-1.5"
@@ -209,7 +209,7 @@ function CenterCard() {
         </div>
       </div>
 
-      <div className="size-12 rounded-xl bg-[#ff5a1f]/10 flex items-center justify-center mx-auto mb-3">
+      <div className="size-12 rounded-xl bg-[var(--brand-10)] flex items-center justify-center mx-auto mb-3">
         <img src="/turnsoutlogo.svg" alt="" className="size-7 invert dark:invert-0 opacity-60" />
       </div>
 
@@ -229,7 +229,7 @@ function CenterCard() {
         </button>
         <button
           onClick={next}
-          className="flex items-center gap-1 text-xs font-medium bg-[#ff5a1f] text-white px-4 py-1.5 rounded-lg hover:bg-[#e94a12] transition-colors cursor-pointer"
+          className="flex items-center gap-1 text-xs font-medium bg-[var(--brand)] text-white px-4 py-1.5 rounded-lg hover:bg-[var(--brand-hover)] transition-colors cursor-pointer"
         >
           {currentStep < totalSteps - 1 ? (
             <>
@@ -262,7 +262,7 @@ export function OnboardingTour() {
     if (!step.targetSelector) return;
     const el = document.querySelector(step.targetSelector) as HTMLElement | null;
     if (el) {
-      el.style.outline = "2px solid #ff5a1f";
+      el.style.outline = `2px solid var(--brand)`;
       el.style.outlineOffset = "3px";
       el.style.borderRadius = "8px";
       el.style.transition = "outline-color 0.2s";

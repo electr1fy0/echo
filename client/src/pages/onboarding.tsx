@@ -56,6 +56,7 @@ export default function Onboarding() {
       clearGoogleOnboardingToken();
       queryClient.refetchQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
       navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to complete onboarding");

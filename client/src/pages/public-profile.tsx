@@ -10,6 +10,7 @@ import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import { ProfileSkeleton } from "@/components/ui/skeletons";
 import { PageTransition } from "@/components/page-transition";
 import { FluidGradientText } from "@/components/fluid-gradient-text";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -186,7 +187,9 @@ export default function PublicProfile() {
  <QuestionListSkeleton />
  ) : questions.length > 0 ? (
  <div className="space-y-4">
- <QuestionList questions={questions} />
+  <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
+    <QuestionList questions={questions} />
+  </div>
  {hasNextPage && (
  <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
  <Button
@@ -208,7 +211,7 @@ export default function PublicProfile() {
  )}
  </div>
  ) : (
- <p className="text-neutral-500 text-sm">No questions posted yet.</p>
+ <EmptyState title="No questions posted yet" />
  )}
  </div>
  </div>

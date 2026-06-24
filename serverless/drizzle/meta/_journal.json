@@ -43,6 +43,13 @@
       "when": 1782249327909,
       "tag": "0005_sparkling_ben_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1782288753466,
+      "tag": "0006_add_chamber_picture",
+      "breakpoints": true
     }
   ]
 }

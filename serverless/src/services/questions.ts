@@ -15,6 +15,7 @@ export const mapPostItem = (row: {
   chamberUid: string;
   chamberName: string;
   channelUid: string | null;
+  channelSchema: any[] | null;
   customFields: Record<string, any> | null;
   acceptedAnswerUid: string | null;
   pinnedAt: Date | null;
@@ -52,6 +53,7 @@ export const mapPostItem = (row: {
     chamberUid: row.chamberUid,
     chamberName: row.chamberName,
     channelUid: row.channelUid,
+    channelSchema: row.channelSchema ?? [],
     customFields: row.customFields ?? {},
     acceptedAnswerUid: row.acceptedAnswerUid ?? undefined,
     isPinned: row.pinnedAt !== null,
@@ -121,6 +123,7 @@ export const mapChamber = (row: {
   timeCreated: Date | null;
   memberCount: number;
   isJoined: boolean;
+  picture: string | null;
 }) => ({
   uid: row.uid,
   name: row.name,
@@ -130,6 +133,7 @@ export const mapChamber = (row: {
   timeCreated: row.timeCreated?.toISOString() ?? null,
   memberCount: row.memberCount,
   isJoined: row.isJoined,
+  picture: row.picture,
 });
 
 export const ensurePostExists = async (db: DB, uid: string) => {
@@ -170,6 +174,7 @@ export const getPostItems = async (
     filter?: string;
     chamberUid?: string;
     channelUid?: string;
+    channelName?: string;
     author?: string;
     query?: string;
     postType?: string;
@@ -184,6 +189,10 @@ export const getPostItems = async (
 
   if (params.channelUid) {
     conditions.push(eq(schema.posts.channelUid, params.channelUid));
+  }
+
+  if (params.channelName) {
+    conditions.push(eq(schema.channels.name, params.channelName));
   }
 
   if (params.author) {
@@ -228,6 +237,7 @@ export const getPostItems = async (
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
       channelUid: schema.posts.channelUid,
+      channelSchema: schema.channels.schema,
       customFields: schema.posts.customFields,
       acceptedAnswerUid: schema.posts.acceptedAnswerUid,
       pinnedAt: schema.posts.pinnedAt,
@@ -275,6 +285,7 @@ export const getPostItems = async (
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))
     .leftJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid))
+    .leftJoin(schema.channels, eq(schema.channels.uid, schema.posts.channelUid))
     .leftJoin(
       schema.chamberMembers,
       and(
@@ -362,6 +373,7 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
       creatorUsername: schema.chambers.creatorUsername,
       colorIndex: schema.chambers.colorIndex,
       timeCreated: schema.chambers.createdAt,
+      picture: schema.chambers.picture,
       memberCount: sql<number>`(
         select count(*)::int from chamber_members cm
         where cm.chamber_uid = ${schema.chambers.uid}

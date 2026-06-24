@@ -15,6 +15,7 @@ import { Link } from "react-router";
 import { PageTransition } from "@/components/page-transition";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 
 function NotificationItem({ notification }: { notification: Notification }) {
  const isUpvote = notification.type === "upvote_question";
@@ -158,7 +159,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
 
  <span className="text-xs text-neutral-400 dark:text-neutral-500 mt-1.5 flex items-center gap-1.5">
  {isInterest ? (
- <HugeiconsIcon icon={UserMultiple02Icon} className="size-3 text-[#ff5a1f]" />
+ <HugeiconsIcon icon={UserMultiple02Icon} className="size-3 text-[var(--brand)]" />
  ) : isUpvote || isUpvoteReply ? (
  <HugeiconsIcon
  icon={CircleArrowUp01Icon}
@@ -333,14 +334,11 @@ export default function Notifications() {
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-neutral-500">
-            <HugeiconsIcon
-              icon={InformationCircleIcon}
-              className="size-10 mb-3 text-neutral-300 dark:text-neutral-600"
-            />
-            <p className="text-sm font-medium">No {activeTab === "all" ? "activity" : activeTab} yet</p>
-            <p className="text-xs mt-1">Interactions with your posts will appear here</p>
-          </div>
+          <EmptyState
+            icon={<HugeiconsIcon icon={InformationCircleIcon} className="size-8" />}
+            title={`No ${activeTab === "all" ? "activity" : activeTab} yet`}
+            description="Interactions with your posts will appear here"
+          />
         )}
       </div>
     </PageTransition>

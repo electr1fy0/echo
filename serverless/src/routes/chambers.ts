@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
@@ -14,6 +14,34 @@ chamberRoutes.get("/", optionalAuth, async (c) => {
   return c.json(rows.map(mapChamber));
 });
 
+chamberRoutes.get("/all-channels", optionalAuth, async (c) => {
+  const db = c.get("db");
+  const user = c.get("user");
+  const joinedOnly = c.req.query("joined_only") === "true";
+
+  let conditions = [];
+  if (joinedOnly && user) {
+    const memberChambers = db
+      .select({ chamberUid: schema.chamberMembers.chamberUid })
+      .from(schema.chamberMembers)
+      .where(eq(schema.chamberMembers.username, user));
+    conditions.push(inArray(schema.channels.chamberUid, memberChambers));
+  }
+
+  const allChans = await db
+    .select({
+      uid: schema.channels.uid,
+      chamberUid: schema.channels.chamberUid,
+      name: schema.channels.name,
+      icon: schema.channels.icon,
+    })
+    .from(schema.channels)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(asc(schema.channels.name));
+
+  return c.json(allChans);
+});
+
 chamberRoutes.use("*", requireAuth);
 
 
@@ -22,12 +50,14 @@ chamberRoutes.post("/", async (c) => {
     name?: string;
     description?: string;
     colorIndex?: number;
+    picture?: string | null;
   };
   const [created] = await c.get("db").insert(schema.chambers).values({
     name: body.name ?? "",
     description: body.description ?? "",
     creatorUsername: c.get("user"),
     colorIndex: body.colorIndex ?? 0,
+    picture: body.picture ?? null,
   }).returning({ uid: schema.chambers.uid, createdAt: schema.chambers.createdAt });
 
   await c.get("db").insert(schema.chamberMembers).values({
@@ -106,6 +136,7 @@ chamberRoutes.post("/", async (c) => {
     memberCount: 1,
     isJoined: true,
     colorIndex: body.colorIndex ?? 0,
+    picture: body.picture ?? null,
     timeCreated: created.createdAt?.toISOString() ?? null,
   }, 201);
 });
@@ -120,7 +151,7 @@ chamberRoutes.delete("/", async (c) => {
 
 chamberRoutes.patch("/:uid", async (c) => {
   const uid = c.req.param("uid");
-  const body = (await c.req.json()) as { name?: string; description?: string; colorIndex?: number };
+  const body = (await c.req.json()) as { name?: string; description?: string; colorIndex?: number; picture?: string | null };
   if (!body.name || !body.description) {
     throw new ApiError(400, "name and description are required");
   }
@@ -136,12 +167,15 @@ chamberRoutes.patch("/:uid", async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
+  const updates: Record<string, unknown> = {
+    name: body.name,
+    description: body.description,
+    colorIndex: body.colorIndex ?? 0,
+  };
+  if (body.picture !== undefined) updates.picture = body.picture;
+
   try {
-    await c.get("db").update(schema.chambers).set({
-      name: body.name,
-      description: body.description,
-      colorIndex: body.colorIndex ?? 0,
-    }).where(eq(schema.chambers.uid, uid));
+    await c.get("db").update(schema.chambers).set(updates).where(eq(schema.chambers.uid, uid));
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
       throw new ApiError(409, "chamber name already exists");
@@ -181,6 +215,21 @@ chamberRoutes.get("/:uid/channels", async (c) => {
 
 chamberRoutes.post("/:uid/channels", async (c) => {
   const uid = c.req.param("uid");
+
+  // Check if user is the creator of the chamber
+  const [chamber] = await c.get("db")
+    .select({ creatorUsername: schema.chambers.creatorUsername })
+    .from(schema.chambers)
+    .where(eq(schema.chambers.uid, uid))
+    .limit(1);
+
+  if (!chamber) {
+    throw new ApiError(404, "chamber not found");
+  }
+  if (chamber.creatorUsername !== c.get("user")) {
+    throw new ApiError(403, "only chamber creator can create channels");
+  }
+
   const body = (await c.req.json()) as {
     name?: string;
     icon?: string;
@@ -198,4 +247,82 @@ chamberRoutes.post("/:uid/channels", async (c) => {
   }).returning();
 
   return c.json(created, 201);
+});
+
+chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
+  const uid = c.req.param("uid");
+  const channelUid = c.req.param("channelUid");
+
+  // Check if user is the creator of the chamber
+  const [chamber] = await c.get("db")
+    .select({ creatorUsername: schema.chambers.creatorUsername })
+    .from(schema.chambers)
+    .where(eq(schema.chambers.uid, uid))
+    .limit(1);
+
+  if (!chamber) {
+    throw new ApiError(404, "chamber not found");
+  }
+  if (chamber.creatorUsername !== c.get("user")) {
+    throw new ApiError(403, "only chamber creator can edit channels");
+  }
+
+  const body = (await c.req.json()) as {
+    name?: string;
+    icon?: string;
+    schema?: any[];
+  };
+
+  const updates: Record<string, any> = {};
+  if (body.name) updates.name = body.name.toLowerCase().replace(/\s+/g, "-");
+  if (body.icon) updates.icon = body.icon;
+  if (body.schema !== undefined) updates.schema = body.schema;
+
+  const [updated] = await c.get("db")
+    .update(schema.channels)
+    .set(updates)
+    .where(and(eq(schema.channels.uid, channelUid), eq(schema.channels.chamberUid, uid)))
+    .returning();
+
+  if (!updated) {
+    throw new ApiError(404, "channel not found");
+  }
+
+  return c.json(updated);
+});
+
+chamberRoutes.delete("/:uid/channels/:channelUid", async (c) => {
+  const uid = c.req.param("uid");
+  const channelUid = c.req.param("channelUid");
+
+  // Check if user is the creator of the chamber
+  const [chamber] = await c.get("db")
+    .select({ creatorUsername: schema.chambers.creatorUsername })
+    .from(schema.chambers)
+    .where(eq(schema.chambers.uid, uid))
+    .limit(1);
+
+  if (!chamber) {
+    throw new ApiError(404, "chamber not found");
+  }
+  if (chamber.creatorUsername !== c.get("user")) {
+    throw new ApiError(403, "only chamber creator can delete channels");
+  }
+
+  // Prevent deleting the default 'discussion' channel
+  const [channel] = await c.get("db")
+    .select()
+    .from(schema.channels)
+    .where(eq(schema.channels.uid, channelUid))
+    .limit(1);
+
+  if (channel && (channel.name === "discussion" || channel.name === "discussions")) {
+    throw new ApiError(400, "cannot delete default discussion channel");
+  }
+
+  await c.get("db")
+    .delete(schema.channels)
+    .where(and(eq(schema.channels.uid, channelUid), eq(schema.channels.chamberUid, uid)));
+
+  return c.json({ message: "channel deleted" });
 });

@@ -68,6 +68,7 @@ function AuthenticatedLayout() {
       setToken(token);
       queryClient.refetchQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
       navigate("/", { replace: true });
     }
   }, [searchParams, navigate, queryClient]);
@@ -100,7 +101,7 @@ function AuthenticatedLayout() {
  Sign in
  </Button>
  <Button
- className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white px-5 h-9 text-xs border-none cursor-pointer"
+ className="rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white px-5 h-9 text-xs border-none cursor-pointer"
  onClick={() => openAuthModal("signup")}
  >
  Sign up

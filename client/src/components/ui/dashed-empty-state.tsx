@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-interface DashedEmptyStateProps {
+interface EmptyStateProps {
   icon?: React.ReactNode;
   title: string;
   description?: string;
@@ -9,32 +9,34 @@ interface DashedEmptyStateProps {
   children?: React.ReactNode;
 }
 
-export function DashedEmptyState({
+export function EmptyState({
   icon,
   title,
   description,
   action,
   className,
   children,
-}: DashedEmptyStateProps) {
+}: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "border border-dashed border-neutral-300 dark:border-neutral-700 rounded-2xl p-8 flex flex-col items-center justify-center text-center bg-neutral-50/50 dark:bg-neutral-900/50",
+        "flex flex-col items-center justify-center text-center py-12 px-6",
         className,
       )}
     >
-      {icon && <div className="mb-4 text-neutral-400">{icon}</div>}
-      <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-1">
+      {icon && <div className="mb-3 text-neutral-300 dark:text-neutral-600">{icon}</div>}
+      <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-[200px]">
         {title}
-      </h3>
+      </p>
       {description && (
-        <p className="text-xs text-neutral-500 max-w-xs mx-auto mb-4">
+        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 max-w-[240px]">
           {description}
         </p>
       )}
       {children}
-      {action && <div className="mt-2">{action}</div>}
+      {action && <div className="mt-3">{action}</div>}
     </div>
   );
 }
+
+export { EmptyState as DashedEmptyState };

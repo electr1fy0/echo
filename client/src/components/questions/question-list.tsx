@@ -14,7 +14,7 @@ type QuestionListProps = {
 
 export function QuestionList({ questions, onDelete, showChamberName, canPin }: QuestionListProps) {
   return questions.length > 0 ? (
-    <Accordion className="dark:bg-[#1D1D1D] rounded-2xl overflow-hidden">
+    <Accordion className="bg-white dark:bg-[#1D1D1D] rounded-2xl overflow-hidden">
       {questions.map((questionItem, index) => (
         <QuestionItemComponent
           key={questionItem.question.uid ?? index}

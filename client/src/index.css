@@ -8,7 +8,7 @@
 
 :root {
     color-scheme: light dark;
-    --background: oklch(1 0 0);
+    --background: #FAFAFA;
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -40,6 +40,13 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    /* Brand accent (orange default) */
+    --brand: #ff5a1f;
+    --brand-hover: #e94a12;
+    --brand-10: rgb(255 90 31 / 0.1);
+    --brand-5: rgb(255 90 31 / 0.05);
+    --brand-15: rgb(255 90 31 / 0.15);
+    --brand-shadow: rgb(255 90 31);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -75,6 +82,12 @@
         --sidebar-accent-foreground: oklch(0.985 0 0);
         --sidebar-border: oklch(1 0 0 / 10%);
         --sidebar-ring: oklch(0.556 0 0);
+        --brand: #ff5a1f;
+        --brand-hover: #e94a12;
+        --brand-10: rgb(255 90 31 / 0.1);
+        --brand-5: rgb(255 90 31 / 0.05);
+        --brand-15: rgb(255 90 31 / 0.15);
+        --brand-shadow: rgb(255 90 31);
     }
 }
 
@@ -110,10 +123,16 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --brand: #ff5a1f;
+    --brand-hover: #e94a12;
+    --brand-10: rgb(255 90 31 / 0.1);
+    --brand-5: rgb(255 90 31 / 0.05);
+    --brand-15: rgb(255 90 31 / 0.15);
+    --brand-shadow: rgb(255 90 31);
 }
 
 .light {
-    --background: oklch(1 0 0);
+    --background: #FAFAFA;
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -144,6 +163,46 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --brand: #ff5a1f;
+    --brand-hover: #e94a12;
+    --brand-10: rgb(255 90 31 / 0.1);
+    --brand-5: rgb(255 90 31 / 0.05);
+    --brand-15: rgb(255 90 31 / 0.15);
+    --brand-shadow: rgb(255 90 31);
+}
+
+/* Accent theme overrides */
+[data-accent="blue"] {
+    --brand: #3b82f6;
+    --brand-hover: #2563eb;
+    --brand-10: rgb(59 130 246 / 0.1);
+    --brand-5: rgb(59 130 246 / 0.05);
+    --brand-15: rgb(59 130 246 / 0.15);
+    --brand-shadow: rgb(59 130 246);
+}
+[data-accent="violet"] {
+    --brand: #8b5cf6;
+    --brand-hover: #7c3aed;
+    --brand-10: rgb(139 92 246 / 0.1);
+    --brand-5: rgb(139 92 246 / 0.05);
+    --brand-15: rgb(139 92 246 / 0.15);
+    --brand-shadow: rgb(139 92 246);
+}
+[data-accent="rose"] {
+    --brand: #f43f5e;
+    --brand-hover: #e11d48;
+    --brand-10: rgb(244 63 94 / 0.1);
+    --brand-5: rgb(244 63 94 / 0.05);
+    --brand-15: rgb(244 63 94 / 0.15);
+    --brand-shadow: rgb(244 63 94);
+}
+[data-accent="green"] {
+    --brand: #22c55e;
+    --brand-hover: #16a34a;
+    --brand-10: rgb(34 197 94 / 0.1);
+    --brand-5: rgb(34 197 94 / 0.05);
+    --brand-15: rgb(34 197 94 / 0.15);
+    --brand-shadow: rgb(34 197 94);
 }
 
 @theme inline {
@@ -235,6 +294,25 @@
 
 .scrollbar-modern:hover::-webkit-scrollbar-thumb {
     background: oklch(0.65 0 0 / 0.4);
+}
+
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.65 0 0 / 0.3) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: oklch(0.65 0 0 / 0.3);
+    border-radius: 999px;
 }
 
 .scrollbar-none {

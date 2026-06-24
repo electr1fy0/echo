@@ -18,7 +18,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Button } from "@/components/ui/button";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Add01Icon, ArrowDown01Icon, Image01Icon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { Edit01Icon, ArrowDown01Icon, Image01Icon, Delete02Icon, HourglassIcon } from "@hugeicons/core-free-icons";
 import { uploadImagePresigned } from "@/api/upload";
 import {
   DropdownMenu,
@@ -129,7 +129,9 @@ export function CreatePostDialog() {
       const activeChannel = channelsData.find((c: any) => c.uid === selectedChannelUid) || channelsData[0];
       if (activeChannel && activeChannel.schema) {
         for (const field of activeChannel.schema) {
-          if (field.required && !customFields[field.id]) {
+          const val = customFields[field.id];
+          const isEmpty = val === undefined || val === null || val === "";
+          if (field.required && field.disabled !== true && isEmpty) {
             toast.error(`"${field.label}" is required`);
             setIsValidating(false);
             return;
@@ -216,10 +218,10 @@ export function CreatePostDialog() {
                 {selectedChannelData && selectedChannelData.schema && selectedChannelData.schema.length > 0 && (
                   <div className="space-y-3 py-3 border-t border-neutral-100 dark:border-neutral-900 mt-2 bg-neutral-50/30 dark:bg-neutral-950/20 p-3 rounded-2xl">
                     <div className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-2">
-                      Required Details for #{selectedChannelData.name}
+                      Details for #{selectedChannelData.name}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      {selectedChannelData.schema.map((field: any) => {
+                      {selectedChannelData.schema.filter((field: any) => field.disabled !== true).map((field: any) => {
                         const val = customFields[field.id] || "";
                         const setVal = (value: any) => setCustomFields((prev) => ({ ...prev, [field.id]: value }));
 
@@ -349,7 +351,7 @@ export function CreatePostDialog() {
                                   <button
                                     type="button"
                                     onClick={() => setVal(undefined)}
-                                    className="text-xs text-[#ff5a1f] hover:text-[#e94a12] cursor-pointer font-bold select-none border-none bg-transparent"
+                                    className="text-xs text-[var(--brand)] hover:text-[var(--brand-hover)] cursor-pointer font-bold select-none border-none bg-transparent"
                                   >
                                     Remove
                                   </button>
@@ -364,7 +366,7 @@ export function CreatePostDialog() {
                                   />
                                   {isUploading ? (
                                     <>
-                                      <span className="inline-block size-5 rounded-full border-2 border-neutral-300 border-t-[#ff5a1f] animate-spin" />
+                                      <span className="inline-block size-5 rounded-full border-2 border-neutral-300 border-t-[var(--brand)] animate-spin" />
                                       <span className="text-[11px] text-neutral-500">Uploading attachment...</span>
                                     </>
                                   ) : (
@@ -404,11 +406,11 @@ export function CreatePostDialog() {
                   <div className="flex items-center gap-1.5 min-w-0">
                     {/* Chamber Selector */}
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-8 px-2.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer border border-neutral-200 dark:border-neutral-700 max-w-[130px] truncate">
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-8 px-2.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer border border-neutral-200 dark:border-neutral-700 max-w-[180px] truncate">
                         {selectedChamberData ? (
                           <>
                             <div className={cn("size-2 rounded-full", CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length])} />
-                            {selectedChamberData.name}
+                            <span className="truncate">{selectedChamberData.name}</span>
                           </>
                         ) : (
                           <>
@@ -432,9 +434,9 @@ export function CreatePostDialog() {
                     {/* Channel Selector */}
                     {selectedChamber && (
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-8 px-2.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer border border-neutral-200 dark:border-neutral-700 max-w-[130px] truncate">
-                          <Hash className="size-3 text-neutral-500" />
-                          #{selectedChannelData?.name || "Channel"}
+                        <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-8 px-2.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer border border-neutral-200 dark:border-neutral-700 max-w-[180px] truncate">
+                          <Hash className="size-3 text-neutral-500 shrink-0" />
+                          <span className="truncate">#{selectedChannelData?.name || "Channel"}</span>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-48 max-h-[200px] overflow-y-auto scrollbar-thin">
                           {channelsData.length > 0 ? channelsData.map((ch: any) => (
@@ -489,21 +491,18 @@ export function CreatePostDialog() {
                           : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
                       )}
                     >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="size-3.5">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                      </svg>
+                      <HugeiconsIcon icon={HourglassIcon} className="size-3.5" />
                       {ttlHours !== null ? `${ttlHours}h` : "Timer"}
                     </button>
 
                     <Button
                       size="sm"
-                      className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white rounded-lg text-xs h-8 px-4 border-none font-semibold cursor-pointer shrink-0"
+                      className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-lg text-xs h-8 px-4 border-none font-semibold cursor-pointer shrink-0"
                       onClick={handleSubmit}
                       disabled={!selectedChamber || !draft.content.trim() || isValidating || isCreatePending || Object.values(fileUploadPending).some(Boolean)}
                     >
                       {isCreatePending ? "Posting..." : "Post"}
-                      <HugeiconsIcon icon={Add01Icon} strokeWidth={2} className="ml-1.5 size-3.5" />
+                      <HugeiconsIcon icon={Edit01Icon} className="ml-1.5 size-3.5" />
                     </Button>
                   </div>
                 </div>

@@ -6,11 +6,9 @@ import {
  UserMultiple02Icon,
  ArrowLeft02Icon,
  Calendar03Icon,
- PencilEdit02Icon,
  Pin02Icon,
- Delete02Icon,
  Search01Icon,
- ArrowDown01Icon,
+  PencilEdit02Icon,
 } from "@hugeicons/core-free-icons";
 import { useNavigate, useParams } from "react-router";
 import { QuestionList } from "@/components/questions/question-list";
@@ -23,6 +21,8 @@ import {
  useDeleteChamber,
  useListChannels,
  useCreateChannel,
+ useUpdateChannel,
+ useDeleteChannel,
 } from "@/hooks/use-chamber";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -34,7 +34,9 @@ import {
  usePinnedQuestionsQuery,
 } from "@/hooks/use-questions";
 import { PageTransition } from "@/components/page-transition";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { EditChamberDialog } from "@/components/chambers/edit-chamber-dialog";
+import { SchemaEditor } from "@/components/chambers/schema-editor";
 import {
  Dialog,
  DialogContent,
@@ -67,13 +69,15 @@ import {
   Code,
   BookOpen,
   Utensils,
-  PlusCircle,
   Trash2,
   Flame,
   Clock,
   Star,
   Globe,
   User,
+  Pencil,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 
 const ICON_MAP: Record<string, any> = {
@@ -200,6 +204,94 @@ export default function ChamberPage() {
  const [newChannelIcon, setNewChannelIcon] = useState("message-square");
  const [newChannelSchema, setNewChannelSchema] = useState<any[]>([]);
  const { mutate: createChan, isPending: isCreateChanPending } = useCreateChannel(chamberId || "");
+
+ // Edit Channel Form State
+ const [editingChannel, setEditingChannel] = useState<any | null>(null);
+ const [isEditChannelOpen, setIsEditChannelOpen] = useState(false);
+ const [editChannelName, setEditChannelName] = useState("");
+ const [editChannelIcon, setEditChannelIcon] = useState("message-square");
+ const [editChannelSchema, setEditChannelSchema] = useState<any[]>([]);
+ const updateChannelMutation = useUpdateChannel(chamberId || "");
+ const deleteChannelMutation = useDeleteChannel(chamberId || "");
+
+ useEffect(() => {
+   if (editingChannel) {
+     setEditChannelName(editingChannel.name);
+     setEditChannelIcon(editingChannel.icon || "message-square");
+     setEditChannelSchema(editingChannel.schema || []);
+   }
+ }, [editingChannel]);
+
+ const handleAddEditField = () => {
+   setEditChannelSchema((prev) => [
+     ...prev,
+     { id: `field_${Date.now()}`, type: "text", label: "New Field", required: false, disabled: false }
+   ]);
+ };
+
+ const handleUpdateEditField = (index: number, updates: any) => {
+   setEditChannelSchema((prev) => {
+     const copy = [...prev];
+     copy[index] = { ...copy[index], ...updates };
+     return copy;
+   });
+ };
+
+ const handleRemoveEditField = (index: number) => {
+   setEditChannelSchema((prev) => prev.filter((_, i) => i !== index));
+ };
+
+ const handleEditChannelSubmit = (e: React.FormEvent) => {
+   e.preventDefault();
+   if (!editChannelName.trim()) {
+     toast.error("Channel name is required");
+     return;
+   }
+   if (!editingChannel?.uid) return;
+
+   updateChannelMutation.mutate(
+     {
+       channelUid: editingChannel.uid,
+       channel: {
+         name: editChannelName,
+         icon: editChannelIcon,
+         schema: editChannelSchema,
+       },
+     },
+     {
+       onSuccess: () => {
+         setIsEditChannelOpen(false);
+         setEditingChannel(null);
+         toast.success("Channel updated!");
+       },
+       onError: () => {
+         toast.error("Failed to update channel");
+       },
+     }
+   );
+ };
+
+ const handleDeleteChannel = () => {
+   if (!editingChannel?.uid) return;
+   if (editingChannel.name === "discussion" || editingChannel.name === "discussions") {
+     toast.error("Cannot delete default discussion channel");
+     return;
+   }
+
+   if (confirm(`Are you sure you want to delete #${editingChannel.name}? This will delete all posts in this channel.`)) {
+     deleteChannelMutation.mutate(editingChannel.uid, {
+       onSuccess: () => {
+         setIsEditChannelOpen(false);
+         setEditingChannel(null);
+         setSelectedChannelUid("all");
+         toast.success("Channel deleted!");
+       },
+       onError: () => {
+         toast.error("Failed to delete channel");
+       },
+     });
+   }
+ };
 
  // Search, Sort, Filter state
  const [searchVal, setSearchVal] = useState("");
@@ -422,15 +514,23 @@ export default function ChamberPage() {
  </button>
 
  {/* Header Info */}
- <div className="flex items-start gap-4 mb-8 pb-6 border-b border-neutral-100 dark:border-neutral-900">
- <div
- className={cn(
- "size-16 rounded-2xl flex items-center justify-center text-white text-xl shrink-0 ",
- colorClass,
- )}
- >
- {getInitials(chamber.name)}
- </div>
+  <div className="flex items-start gap-4 mb-8 pb-6 border-b border-neutral-100 dark:border-neutral-900">
+  {chamber.picture ? (
+    <img
+      src={chamber.picture}
+      alt={chamber.name}
+      className="size-16 rounded-2xl object-cover shrink-0"
+    />
+  ) : (
+    <div
+    className={cn(
+    "size-16 rounded-2xl flex items-center justify-center text-white text-xl shrink-0 ",
+    colorClass,
+    )}
+    >
+    {getInitials(chamber.name)}
+    </div>
+  )}
  <div className="flex-1 min-w-0">
  <div className="flex items-center gap-2 flex-wrap">
  <h1 className="text-xl text-neutral-900 dark:text-neutral-100">
@@ -438,8 +538,8 @@ export default function ChamberPage() {
  </h1>
  </div>
  <p className="text-sm text-neutral-500 mt-1.5 leading-relaxed">{chamber.description}</p>
- <div className="flex items-center gap-4 mt-3 text-xs text-neutral-400 dark:text-neutral-500">
- <span className="flex items-center gap-1">
+  <div className="flex items-center gap-x-4 gap-y-1 flex-wrap mt-3 text-xs text-neutral-400 dark:text-neutral-500">
+  <span className="flex items-center gap-1">
  <HugeiconsIcon icon={UserMultiple02Icon} className="size-3.5" />
  {formatMemberCount(chamber.memberCount || 0)} members
  </span>
@@ -460,34 +560,42 @@ export default function ChamberPage() {
  <>
  <Button
  variant="outline"
- className="rounded-full h-8 px-4 text-xs cursor-pointer border-neutral-200 dark:border-neutral-800"
+ size="icon-sm"
+ className="rounded-full cursor-pointer border-neutral-200 dark:border-neutral-800"
  onClick={() => setIsEditOpen(true)}
+ title="Edit Chamber"
  >
- <HugeiconsIcon icon={PencilEdit02Icon} className="mr-1 size-4 text-neutral-500" />
- Edit
+ <Pencil className="size-4 text-neutral-500" />
  </Button>
  <Button
  variant="outline"
- className="rounded-full h-8 px-4 text-xs cursor-pointer border-neutral-200 dark:border-neutral-800 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+ size="icon-sm"
+ className="rounded-full cursor-pointer border-neutral-200 dark:border-neutral-800 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
  onClick={() => setIsDeleteOpen(true)}
+ title="Delete Chamber"
  >
- <HugeiconsIcon icon={Delete02Icon} className="mr-1 size-4" />
- Delete
+ <Trash2 className="size-4" />
  </Button>
  </>
  )}
  <Button
  variant={chamber.isJoined ? "outline" : "default"}
+ size="icon-sm"
  className={cn(
- "rounded-full h-8 px-4 text-xs cursor-pointer border-none ",
+ "rounded-full cursor-pointer border-none ",
  chamber.isJoined 
- ? "border border-neutral-200 hover:bg-neutral-50 text-neutral-600 dark:border-neutral-800 dark:hover:bg-neutral-900 dark:text-neutral-400"
- : "bg-[#ff5a1f] hover:bg-[#e94a12] text-white"
+  ? "border border-neutral-200 hover:bg-neutral-50 text-[var(--brand)] dark:border-neutral-800 dark:hover:bg-neutral-900"
+  : "bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white"
  )}
  disabled={isPending}
  onClick={() => { haptic(); handleToggleJoin(); }}
+ title={chamber.isJoined ? "Joined (Click to leave)" : "Join Chamber"}
  >
- {chamber.isJoined ? "Joined" : "Join"}
+ {chamber.isJoined ? (
+ <UserCheck className="size-4" />
+ ) : (
+ <UserPlus className="size-4" />
+ )}
  </Button>
  </div>
  </div>
@@ -501,7 +609,7 @@ export default function ChamberPage() {
  {canPin && (
  <button
  onClick={() => setIsCreateChannelOpen(true)}
- className="hover:text-[#ff5a1f] transition-colors cursor-pointer"
+ className="hover:text-[var(--brand)] transition-colors cursor-pointer"
  title="Create Channel"
  >
  <Plus className="size-3.5" />
@@ -519,19 +627,34 @@ export default function ChamberPage() {
  {channels.map((ch) => {
  const isSelected = selectedChannel?.uid === ch.uid;
  return (
- <button
+ <div
  key={ch.uid}
- onClick={() => { haptic(); setSelectedChannelUid(ch.uid); }}
  className={cn(
- "flex items-center px-3.5 py-2 rounded-xl text-sm font-medium transition-all cursor-pointer whitespace-nowrap md:w-full text-left",
+ "group/chan flex items-center justify-between px-3.5 py-2 rounded-xl text-sm transition-all whitespace-nowrap md:w-full text-left cursor-pointer",
  isSelected
  ? "bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 "
  : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-50/50 dark:hover:bg-neutral-950/30"
  )}
+ onClick={() => { haptic(); setSelectedChannelUid(ch.uid); }}
  >
- <span className="text-[#ff5a1f] font-semibold select-none mr-0.5">#</span>
- <span>{ch.name}</span>
+ <div className="flex items-center min-w-0">
+ <span className="text-[var(--brand)] select-none mr-0.5">#</span>
+ <span className="truncate">{ch.name}</span>
+ </div>
+ {canPin && ch.uid !== "all" && (
+ <button
+ onClick={(e) => {
+ e.stopPropagation();
+ haptic();
+ setEditingChannel(ch);
+ setIsEditChannelOpen(true);
+ }}
+ className="opacity-0 group-hover/chan:opacity-100 p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-all cursor-pointer size-5 flex items-center justify-center shrink-0"
+ >
+ <HugeiconsIcon icon={PencilEdit02Icon} className="size-3" />
  </button>
+ )}
+ </div>
  );
  })}
  </div>
@@ -559,7 +682,7 @@ export default function ChamberPage() {
  placeholder={`Search in #${selectedChannel?.name || "channel"}...`}
  value={searchVal}
  onChange={(e) => setSearchVal(e.target.value)}
- className="w-full h-10 pl-10 pr-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background/50 dark:bg-background/20 text-sm text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-all "
+ className="w-full h-10 pl-10 pr-8 rounded-full border border-neutral-200 dark:border-neutral-800 bg-[#F5F5F5] dark:bg-neutral-800/50 text-sm text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400 focus:border-neutral-400 transition-all "
  />
  {searchVal && (
  <button
@@ -574,21 +697,22 @@ export default function ChamberPage() {
 
 
  {/* Filters and Sort Row */}
- <div className="flex items-center gap-2 flex-wrap">
+  <div className="flex items-center gap-2 flex-wrap">
   {/* Sort By Dropdown */}
   <DropdownMenu>
-  <DropdownMenuTrigger className="flex items-center justify-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background size-8.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-700 dark:text-neutral-300 cursor-pointer focus:outline-none" title={`Sort: ${sortBy === "hot" ? "Hot" : sortBy === "time_created" ? "Recent" : "Top Posts"}`}>
+  <DropdownMenuTrigger className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer focus:outline-none">
     {sortBy === "hot" ? (
-      <Flame className="size-4 text-[#ff5a1f]" />
+      <Flame className="size-4 text-[var(--brand)]" />
     ) : sortBy === "time_created" ? (
       <Clock className="size-4" />
     ) : (
       <Star className="size-4" />
     )}
+    <span>{sortBy === "hot" ? "Hot" : sortBy === "time_created" ? "Recent" : "Top Posts"}</span>
   </DropdownMenuTrigger>
   <DropdownMenuContent align="start" className="min-w-[130px]">
   <DropdownMenuItem onClick={() => setSortBy("hot")} className="cursor-pointer flex items-center gap-2 text-xs">
-    <Flame className="size-3.5 text-[#ff5a1f]" />
+    <Flame className="size-3.5 text-[var(--brand)]" />
     Hot
   </DropdownMenuItem>
   <DropdownMenuItem onClick={() => setSortBy("time_created")} className="cursor-pointer flex items-center gap-2 text-xs">
@@ -605,12 +729,13 @@ export default function ChamberPage() {
   {/* Scope Filter */}
   {user && (
   <DropdownMenu>
-  <DropdownMenuTrigger className="flex items-center justify-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background size-8.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-neutral-700 dark:text-neutral-300 cursor-pointer focus:outline-none" title={`Scope: ${postScope === "all" ? "All authors" : "My posts"}`}>
+  <DropdownMenuTrigger className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background px-3 h-8.5 gap-1.5 bg-neutral-50/50 dark:bg-neutral-900/30 text-xs text-neutral-700 dark:text-neutral-300 cursor-pointer focus:outline-none">
     {postScope === "all" ? (
       <Globe className="size-4" />
     ) : (
-      <User className="size-4 text-[#ff5a1f]" />
+      <User className="size-4 text-[var(--brand)]" />
     )}
+    <span>{postScope === "all" ? "All authors" : "My posts"}</span>
   </DropdownMenuTrigger>
   <DropdownMenuContent align="start" className="min-w-[130px]">
   <DropdownMenuItem onClick={() => setPostScope("all")} className="cursor-pointer flex items-center gap-2 text-xs">
@@ -618,7 +743,7 @@ export default function ChamberPage() {
     All authors
   </DropdownMenuItem>
   <DropdownMenuItem onClick={() => setPostScope("my-posts")} className="cursor-pointer flex items-center gap-2 text-xs">
-    <User className="size-3.5 text-[#ff5a1f]" />
+    <User className="size-3.5 text-[var(--brand)]" />
     My posts
   </DropdownMenuItem>
   </DropdownMenuContent>
@@ -630,7 +755,7 @@ export default function ChamberPage() {
  {pinnedPosts.length > 0 && !debouncedSearch && (
  <div className="space-y-2">
  <div className="flex items-center gap-1.5 px-1 text-[11px] text-neutral-400 dark:text-neutral-500">
- <HugeiconsIcon icon={Pin02Icon} className="size-3.5 text-[#ff5a1f]" />
+ <HugeiconsIcon icon={Pin02Icon} className="size-3.5 text-[var(--brand)]" />
  <span>Pinned Posts</span>
  </div>
  <div className="flex overflow-x-auto gap-4 pb-3 pt-1 px-1 scrollbar-none snap-x snap-mandatory -mx-4 md:mx-0 px-4 md:px-0">
@@ -651,11 +776,13 @@ export default function ChamberPage() {
  <QuestionListSkeleton />
  ) : questions.length > 0 ? (
  <div className="space-y-4">
- <QuestionList
- questions={questions}
- onDelete={(id) => deleteQn(id)}
- canPin={canPin}
- />
+  <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
+    <QuestionList
+    questions={questions}
+    onDelete={(id) => deleteQn(id)}
+    canPin={canPin}
+    />
+  </div>
  {hasNextPage && (
  <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
  <Button
@@ -677,12 +804,10 @@ export default function ChamberPage() {
  )}
  </div>
  ) : (
- <div className="text-center py-12 text-neutral-500 bg-neutral-50/10 border border-dashed border-neutral-200 dark:border-neutral-850 rounded-2xl p-6">
- <p className="text-sm font-medium">No posts in this channel yet.</p>
- <p className="text-xs text-neutral-400 mt-1">
- {chamber.isJoined ? "Be the first to share your thoughts in this channel!" : "Join this chamber to share your first post!"}
- </p>
- </div>
+ <EmptyState
+ title="No posts in this channel yet"
+ description={chamber.isJoined ? "Be the first to share your thoughts in this channel!" : "Join this chamber to share your first post!"}
+ />
  )}
  </div>
  </div>
@@ -730,7 +855,7 @@ export default function ChamberPage() {
 
  {/* Create Channel Dialog */}
  <Dialog open={isCreateChannelOpen} onOpenChange={setIsCreateChannelOpen}>
- <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto scrollbar-modern">
+ <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto scrollbar-modern">
  <DialogHeader>
  <DialogTitle className="text-sm ">Create a Channel</DialogTitle>
  </DialogHeader>
@@ -751,7 +876,7 @@ export default function ChamberPage() {
  className="flex flex-col items-start p-3 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700 bg-background/50 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 rounded-xl text-left transition-all cursor-pointer"
  >
  <div className="flex items-center gap-1.5 text-xs text-neutral-900 dark:text-neutral-200">
- <IconComp className="size-3.5 text-[#ff5a1f]" />
+ <IconComp className="size-3.5 text-[var(--brand)]" />
  {tpl.name}
  </div>
  <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 leading-normal">
@@ -805,115 +930,112 @@ export default function ChamberPage() {
  </div>
  </div>
 
- {/* Schema Custom Fields Editor */}
- <div className="space-y-3 pt-3 border-t border-neutral-100 dark:border-neutral-900">
- <div className="flex items-center justify-between">
- <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
- Custom Data Fields
- </label>
- <button
- type="button"
- onClick={handleAddField}
- className="text-xs text-[#ff5a1f] hover:text-[#e94a12] flex items-center gap-1 cursor-pointer"
- >
- <PlusCircle className="size-3.5" />
- Add Field
- </button>
- </div>
+  <SchemaEditor
+    fields={newChannelSchema}
+    onAdd={handleAddField}
+    onUpdate={handleUpdateField}
+    onRemove={handleRemoveField}
+  />
 
- {newChannelSchema.length === 0 ? (
- <p className="text-[11px] text-neutral-400">
- No custom fields. This channel will use standard text discussions.
- </p>
- ) : (
- <div className="space-y-3 max-h-[180px] overflow-y-auto pr-1 scrollbar-modern">
- {newChannelSchema.map((field, idx) => (
- <div
- key={field.id}
- className="flex items-center gap-2 p-2 border border-neutral-200/70 dark:border-neutral-800/70 bg-neutral-50/20 dark:bg-neutral-900/10 rounded-xl"
- >
- <input
- type="text"
- placeholder="Label"
- value={field.label}
- onChange={(e) => handleUpdateField(idx, { label: e.target.value })}
- className="flex-1 h-7 text-[11px] px-2 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background text-neutral-800 dark:text-neutral-200 focus:outline-none"
- />
- <DropdownMenu>
- <DropdownMenuTrigger className="h-7 text-[10px] px-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-background text-neutral-800 dark:text-neutral-200 focus:outline-none cursor-pointer inline-flex items-center gap-1.5 min-w-[70px] justify-between">
- <span>{field.type === "currency" ? "Currency" : field.type === "datetime" ? "Date-Time" : field.type === "file" ? "File Upload" : field.type.charAt(0).toUpperCase() + field.type.slice(1)}</span>
- <HugeiconsIcon icon={ArrowDown01Icon} className="size-2 text-neutral-400" />
- </DropdownMenuTrigger>
- <DropdownMenuContent align="end" className="min-w-[100px]">
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "text" })} className="text-[11px] cursor-pointer">Text</DropdownMenuItem>
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "number" })} className="text-[11px] cursor-pointer">Number</DropdownMenuItem>
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "currency" })} className="text-[11px] cursor-pointer">Currency</DropdownMenuItem>
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "select" })} className="text-[11px] cursor-pointer">Dropdown</DropdownMenuItem>
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "datetime" })} className="text-[11px] cursor-pointer">Date-Time</DropdownMenuItem>
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "url" })} className="text-[11px] cursor-pointer">Link</DropdownMenuItem>
- <DropdownMenuItem onClick={() => handleUpdateField(idx, { type: "file" })} className="text-[11px] cursor-pointer">File Upload</DropdownMenuItem>
- </DropdownMenuContent>
- </DropdownMenu>
-
- {field.type === "select" && (
- <input
- type="text"
- placeholder="Options (comma separated)"
- value={field.options?.join(",") || ""}
- onChange={(e) =>
- handleUpdateField(idx, {
- options: e.target.value.split(",").map((o) => o.trim()),
- })
- }
- className="w-24 h-7 text-[10px] px-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-background text-neutral-800 dark:text-neutral-200 focus:outline-none"
- />
- )}
-
- <div 
- onClick={() => handleUpdateField(idx, { required: !field.required })}
- className="flex items-center gap-1.5 text-[10px] text-neutral-400 select-none cursor-pointer"
- >
- <div
- className={cn(
- "size-4 rounded-md border flex items-center justify-center transition-all",
- field.required
- ? "bg-[#ff5a1f] border-[#ff5a1f] text-white"
- : "border-neutral-300 dark:border-neutral-700 bg-transparent hover:border-neutral-400"
- )}
- >
- {field.required && (
- <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" className="size-2.5">
- <polyline points="20 6 9 17 4 12" />
- </svg>
- )}
- </div>
- <span>Req</span>
- </div>
-
- <button
- type="button"
- onClick={() => handleRemoveField(idx)}
- className="p-1 text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
- >
- <Trash2 className="size-3.5" />
- </button>
- </div>
- ))}
- </div>
- )}
- </div>
-
- <DialogFooter className="pt-2">
+  <DialogFooter className="pt-2">
  <DialogClose render={<Button variant="outline" type="button" className="rounded-xl h-9 text-xs" />}>
  Cancel
  </DialogClose>
  <Button
  type="submit"
  disabled={isCreateChanPending || !newChannelName.trim()}
- className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white rounded-xl h-9 text-xs border-none cursor-pointer"
+ className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl h-9 text-xs border-none cursor-pointer"
  >
  {isCreateChanPending ? "Creating..." : "Create Channel"}
  </Button>
+ </DialogFooter>
+ </form>
+ </DialogContent>
+ </Dialog>
+
+ {/* Edit Channel Dialog */}
+ <Dialog open={isEditChannelOpen} onOpenChange={setIsEditChannelOpen}>
+ <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto scrollbar-modern">
+ <DialogHeader>
+ <DialogTitle className="text-sm ">Edit Channel: #{editingChannel?.name}</DialogTitle>
+ </DialogHeader>
+ <form onSubmit={handleEditChannelSubmit} className="space-y-5 py-2">
+ 
+ {/* General Properties */}
+ <div className="space-y-3">
+ <div>
+ <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
+ Channel Name
+ </label>
+ <Input
+ placeholder="e.g. textbook-swap"
+ value={editChannelName}
+ onChange={(e) => setEditChannelName(e.target.value)}
+ className="rounded-xl mt-1 h-9 text-xs"
+ />
+ </div>
+
+ <div>
+ <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
+ Channel Icon
+ </label>
+ <div className="flex gap-2 flex-wrap mt-1">
+ {Object.keys(ICON_MAP).map((iconName) => {
+ const IconComp = ICON_MAP[iconName];
+ const isSelected = editChannelIcon === iconName;
+ return (
+ <button
+ key={iconName}
+ type="button"
+ onClick={() => setEditChannelIcon(iconName)}
+ className={cn(
+ "size-8 rounded-lg flex items-center justify-center border border-neutral-200 dark:border-neutral-800 transition-all cursor-pointer",
+ isSelected
+ ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+ : "bg-transparent text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+ )}
+ >
+ <IconComp className="size-4" />
+ </button>
+ );
+ })}
+ </div>
+ </div>
+ </div>
+
+  <SchemaEditor
+    fields={editChannelSchema}
+    onAdd={handleAddEditField}
+    onUpdate={handleUpdateEditField}
+    onRemove={handleRemoveEditField}
+  />
+
+ <DialogFooter className="pt-2 flex justify-between items-center sm:justify-between w-full">
+ {editingChannel?.name !== "discussion" && editingChannel?.name !== "discussions" ? (
+ <Button
+ type="button"
+ variant="destructive"
+ onClick={handleDeleteChannel}
+ disabled={deleteChannelMutation.isPending}
+ className="rounded-xl h-9 text-xs cursor-pointer mr-auto"
+ >
+ {deleteChannelMutation.isPending ? "Deleting..." : "Delete Channel"}
+ </Button>
+ ) : (
+ <div className="w-0" />
+ )}
+ <div className="flex gap-2">
+ <DialogClose render={<Button variant="outline" type="button" className="rounded-xl h-9 text-xs" />}>
+ Cancel
+ </DialogClose>
+ <Button
+ type="submit"
+ disabled={updateChannelMutation.isPending || !editChannelName.trim()}
+ className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl h-9 text-xs border-none cursor-pointer"
+ >
+ {updateChannelMutation.isPending ? "Saving..." : "Save Changes"}
+ </Button>
+ </div>
  </DialogFooter>
  </form>
  </DialogContent>

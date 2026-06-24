@@ -26,6 +26,7 @@ questionRoutes.get("/", optionalAuth, async (c) => {
     filter: c.req.query("filter"),
     chamberUid: c.req.query("chamber_uid"),
     channelUid: c.req.query("channel_uid"),
+    channelName: c.req.query("channel_name"),
     author: c.req.query("author"),
     postType: c.req.query("post_type"),
     pinned,
@@ -157,6 +158,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
       channelUid: schema.posts.channelUid,
+      channelSchema: schema.channels.schema,
       customFields: schema.posts.customFields,
       acceptedAnswerUid: schema.posts.acceptedAnswerUid,
       pinnedAt: schema.posts.pinnedAt,
@@ -203,6 +205,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
     .from(schema.posts)
     .leftJoin(schema.users, eq(schema.users.username, schema.posts.author))
     .leftJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid))
+    .leftJoin(schema.channels, eq(schema.channels.uid, schema.posts.channelUid))
     .leftJoin(schema.polls, eq(schema.polls.postUid, schema.posts.uid))
     .where(eq(schema.posts.uid, uid))
     .limit(1);

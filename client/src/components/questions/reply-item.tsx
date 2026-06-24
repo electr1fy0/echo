@@ -98,7 +98,7 @@ export function ReplyItem({ answerItem, onDelete, canAccept, isOp, onReply }: Re
           <span className="flex items-center gap-2">
             <span>{reply.authorUsername || "Anonymous"}</span>
             {isOp && (
-              <span className="text-[10px] uppercase tracking-wide bg-orange-500/15 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded font-semibold">
+              <span className="text-[10px] uppercase tracking-wide bg-[var(--brand-15)] text-[var(--brand)] px-1.5 py-0.5 rounded font-semibold">
                 OP
               </span>
             )}

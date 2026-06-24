@@ -17,10 +17,12 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
-import { useListChambers } from "@/hooks/use-chamber";
+import { useListChambers, useListChannels, useListAllChannels } from "@/hooks/use-chamber";
 import { ChamberCard } from "@/components/chambers/chamber-list";
 import { TextFlip } from "@/components/text-flip";
 import { PageTransition } from "@/components/page-transition";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
  DropdownMenu,
@@ -30,13 +32,22 @@ import {
  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+const CHANNEL_LABELS: Record<string, string> = {
+  "discussion": "Discussions",
+  "marketplace": "Market",
+  "carpools": "Carpools",
+  "study-partners": "Partners",
+  "lost-and-found": "Lost & Found",
+  "resources": "Resources"
+};
+
 export interface FeedColumn {
- id: string;
- title: string;
- sortBy: "time_created" | "votes" | "hot";
- postTypeFilter: "all" | "qna" | "partner" | "trade" | "taxi";
- chamberSource: "joined" | "global" | string;
- postScope: "all" | "my-posts";
+  id: string;
+  title: string;
+  sortBy: "time_created" | "votes" | "hot";
+  postTypeFilter: string;
+  chamberSource: "joined" | "global" | string;
+  postScope: "all" | "my-posts";
 }
 
 interface ColumnFeedProps {
@@ -62,7 +73,6 @@ function ColumnFeed({
  deleteQuestion,
  canDelete,
 }: ColumnFeedProps) {
- const [showSettings, setShowSettings] = useState(false);
  const feedRef = useRef<HTMLDivElement>(null);
  const [scrollProgress, setScrollProgress] = useState(0);
  const [scrollThumbVisible, setScrollThumbVisible] = useState(false);
@@ -84,6 +94,21 @@ function ColumnFeed({
  ? chambers.find((c) => c.uid === column.chamberSource)
  : undefined;
 
+ const { data: specificChannels = [] } = useListChannels(
+    isSpecificChamber ? column.chamberSource : ""
+  );
+
+ const { data: globalChannels = [] } = useListAllChannels(
+    !isSpecificChamber ? (column.chamberSource === "joined") : undefined
+  );
+
+ const channelsList = isSpecificChamber ? specificChannels : globalChannels;
+
+ // Get unique channels by name to avoid duplicate pills
+ const uniqueChannels = Array.from(
+   new Map(channelsList.map((ch: any) => [ch.name, ch])).values()
+ );
+
  const {
  data: questionsData,
  fetchNextPage,
@@ -96,9 +121,11 @@ function ColumnFeed({
  isSpecificChamber ? column.chamberSource : undefined,
  column.postScope === "my-posts" && user ? user.username : undefined,
  20,
- column.postTypeFilter === "all" ? undefined : column.postTypeFilter,
+ undefined,
  false,
- undefined
+ undefined,
+ undefined,
+ column.postTypeFilter === "all" ? undefined : column.postTypeFilter
  );
 
  const questions = questionsData ? questionsData.pages.flat() : [];
@@ -138,29 +165,189 @@ function ColumnFeed({
  {/* Column Header */}
  <div className="flex flex-col gap-2 mb-3">
  <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/80 pb-2">
- <div className="flex-1 min-w-0 mr-2">
- <button
- onClick={() => setShowSettings(!showSettings)}
- className={cn(
- "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all cursor-pointer border shrink-0",
- showSettings
- ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
- : "bg-neutral-50/50 dark:bg-neutral-900/40 border-neutral-200/80 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-neutral-50 hover:bg-neutral-100/80 dark:hover:bg-neutral-800/80"
- )}
- title="Configure feed"
- >
- <HugeiconsIcon icon={FilterIcon} className="size-3.5" />
- <span>
- {column.chamberSource === "joined" 
- ? "Joined Feed" 
- : column.chamberSource === "global" 
- ? "Global Feed" 
- : (selectedChamberObj?.name || "Chamber")}
- {column.postTypeFilter !== "all" && ` • ${column.postTypeFilter === "qna" ? "Discussions" : column.postTypeFilter === "partner" ? "Partners" : column.postTypeFilter === "trade" ? "Market" : "Taxi"}`}
- {` • ${column.sortBy === "time_created" ? "Recent" : column.sortBy === "votes" ? "Top Posts" : "Hot"}`}
- </span>
- </button>
- </div>
+  <div className="flex-1 min-w-0 mr-2">
+  <Popover>
+  <PopoverTrigger
+  render={
+  <button
+  className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-all cursor-pointer border shrink-0 bg-neutral-50/50 dark:bg-neutral-900/40 border-neutral-200/80 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-neutral-50 hover:bg-neutral-100/80 dark:hover:bg-neutral-800/80"
+  title="Configure feed"
+  >
+  <HugeiconsIcon icon={FilterIcon} className="size-3.5" />
+  <span>
+  {column.chamberSource === "joined" 
+  ? "Joined Feed" 
+  : column.chamberSource === "global" 
+  ? "Global Feed" 
+  : (selectedChamberObj?.name || "Chamber")}
+  {column.postTypeFilter !== "all" && ` • ${CHANNEL_LABELS[column.postTypeFilter] || column.postTypeFilter.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())}`}
+  {` • ${column.sortBy === "time_created" ? "Recent" : column.sortBy === "votes" ? "Top Posts" : "Hot"}`}
+  </span>
+  </button>
+  }
+  />
+  <PopoverContent className="w-80 p-4 bg-background/95 backdrop-blur-md rounded-2xl shadow-xl space-y-4 text-xs">
+  
+  {/* Sort & Scope Row */}
+  <div className={cn("grid gap-3", user ? "grid-cols-2" : "grid-cols-1")}>
+  {/* Sort Segment */}
+  <div className="flex flex-col gap-1.5">
+  <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Sort by</span>
+  <div className="flex bg-neutral-100/80 dark:bg-neutral-900/60 p-0.5 rounded-lg border border-neutral-200/40 dark:border-neutral-800/40">
+  <button
+  type="button"
+  onClick={() => onUpdateColumn({ sortBy: "time_created" })}
+  className={cn(
+  "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
+  column.sortBy === "time_created"
+  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
+  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+  )}
+  >
+  Recent
+  </button>
+  <button
+  type="button"
+  onClick={() => onUpdateColumn({ sortBy: "hot" })}
+  className={cn(
+  "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
+  column.sortBy === "hot"
+  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
+  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+  )}
+  >
+  Hot
+  </button>
+  <button
+  type="button"
+  onClick={() => onUpdateColumn({ sortBy: "votes" })}
+  className={cn(
+  "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
+  column.sortBy === "votes"
+  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
+  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+  )}
+  >
+  Top
+  </button>
+  </div>
+  </div>
+
+  {/* Scope Segment */}
+  {user && (
+  <div className="flex flex-col gap-1.5">
+  <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Scope</span>
+  <div className="flex bg-neutral-100/80 dark:bg-neutral-900/60 p-0.5 rounded-lg border border-neutral-200/40 dark:border-neutral-800/40">
+  <button
+  type="button"
+  onClick={() => onUpdateColumn({ postScope: "all" })}
+  className={cn(
+  "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
+  column.postScope === "all"
+  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
+  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+  )}
+  >
+  All
+  </button>
+  <button
+  type="button"
+  onClick={() => onUpdateColumn({ postScope: "my-posts" })}
+  className={cn(
+  "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
+  column.postScope === "my-posts"
+  ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
+  : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
+  )}
+  >
+  Mine
+  </button>
+  </div>
+  </div>
+  )}
+  </div>
+
+  {/* Chamber Source Selector */}
+  <div className="flex flex-col gap-1.5">
+  <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Source</span>
+  <DropdownMenu>
+  <DropdownMenuTrigger className="flex items-center justify-between w-full bg-background rounded-lg border border-neutral-250 dark:border-neutral-800 px-3 py-1.5 text-[11px] text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer">
+  <span className="truncate">
+  {column.chamberSource === "joined"
+  ? "Joined chambers"
+  : column.chamberSource === "global"
+  ? "All chambers"
+  : chambers.find((c) => c.uid === column.chamberSource)?.name || "Select Chamber"}
+  </span>
+  <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 text-neutral-400 shrink-0 ml-1" />
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="start" className="w-56 max-h-[250px] overflow-y-auto scrollbar-thin">
+  {hasToken && (
+  <DropdownMenuItem onClick={() => onUpdateColumn({ chamberSource: "joined" })} className="cursor-pointer">
+  Joined chambers
+  </DropdownMenuItem>
+  )}
+  <DropdownMenuItem onClick={() => onUpdateColumn({ chamberSource: "global" })} className="cursor-pointer">
+  All chambers
+  </DropdownMenuItem>
+  {chambers.length > 0 && (
+  <>
+  <DropdownMenuSeparator />
+  <div className="px-3 py-1 text-[9px] text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
+  Specific Chambers
+  </div>
+  {chambers.map((c) => (
+  <DropdownMenuItem key={c.uid} onClick={() => onUpdateColumn({ chamberSource: c.uid })} className="cursor-pointer">
+  {c.name}
+  </DropdownMenuItem>
+  ))}
+  </>
+  )}
+  </DropdownMenuContent>
+  </DropdownMenu>
+  </div>
+
+  {/* Type Pills */}
+  <div className="flex flex-col gap-1.5">
+  <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Channel</span>
+  <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto pr-1 scrollbar-thin">
+  <button
+  type="button"
+  onClick={() => onUpdateColumn({ postTypeFilter: "all" })}
+  className={cn(
+  "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
+  column.postTypeFilter === "all"
+  ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
+  : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200"
+  )}
+  >
+  All Channels
+  </button>
+
+  {uniqueChannels.map((channel: any) => {
+  const label = CHANNEL_LABELS[channel.name] || channel.name.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  return (
+  <button
+  key={channel.uid}
+  type="button"
+  onClick={() => onUpdateColumn({ postTypeFilter: channel.name })}
+  className={cn(
+  "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
+  column.postTypeFilter === channel.name
+  ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
+  : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200"
+  )}
+  >
+  {label}
+  </button>
+  );
+  })}
+  </div>
+  </div>
+
+  </PopoverContent>
+  </Popover>
+  </div>
  {canDelete && (
  <button
  onClick={onDeleteColumn}
@@ -171,161 +358,6 @@ function ColumnFeed({
  </button>
  )}
  </div>
-
- {/* Configurations Drawer */}
- {showSettings && (
- <div className="bg-neutral-50/90 dark:bg-neutral-900/60 p-4 rounded-2xl border border-neutral-200/60 dark:border-neutral-800/80 space-y-4 text-xs transition-all ">
- 
- {/* Sort & Scope Row */}
- <div className={cn("grid gap-3", user ? "grid-cols-2" : "grid-cols-1")}>
- {/* Sort Segment */}
- <div className="flex flex-col gap-1.5">
- <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Sort by</span>
- <div className="flex bg-neutral-100/80 dark:bg-neutral-900/60 p-0.5 rounded-lg border border-neutral-200/40 dark:border-neutral-800/40">
- <button
- type="button"
- onClick={() => onUpdateColumn({ sortBy: "time_created" })}
- className={cn(
- "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
- column.sortBy === "time_created"
- ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
- : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
- )}
- >
- Recent
- </button>
- <button
- type="button"
- onClick={() => onUpdateColumn({ sortBy: "hot" })}
- className={cn(
- "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
- column.sortBy === "hot"
- ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
- : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
- )}
- >
- Hot
- </button>
- <button
- type="button"
- onClick={() => onUpdateColumn({ sortBy: "votes" })}
- className={cn(
- "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
- column.sortBy === "votes"
- ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
- : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
- )}
- >
- Top Posts
- </button>
- </div>
- </div>
-
- {/* Scope Segment */}
- {user && (
- <div className="flex flex-col gap-1.5">
- <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Scope</span>
- <div className="flex bg-neutral-100/80 dark:bg-neutral-900/60 p-0.5 rounded-lg border border-neutral-200/40 dark:border-neutral-800/40">
- <button
- type="button"
- onClick={() => onUpdateColumn({ postScope: "all" })}
- className={cn(
- "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
- column.postScope === "all"
- ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
- : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
- )}
- >
- All
- </button>
- <button
- type="button"
- onClick={() => onUpdateColumn({ postScope: "my-posts" })}
- className={cn(
- "flex-1 text-center py-1 rounded-md text-[10px] transition-all cursor-pointer",
- column.postScope === "my-posts"
- ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 "
- : "text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
- )}
- >
- Mine
- </button>
- </div>
- </div>
- )}
- </div>
-
- {/* Chamber Source Selector */}
- <div className="flex flex-col gap-1.5">
- <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Source</span>
- <DropdownMenu>
- <DropdownMenuTrigger className="flex items-center justify-between w-full bg-background rounded-lg border border-neutral-200 dark:border-neutral-850 px-3 py-1.5 text-[11px] text-neutral-700 dark:text-neutral-300 focus:outline-none cursor-pointer">
- <span className="truncate">
- {column.chamberSource === "joined"
- ? "Joined chambers"
- : column.chamberSource === "global"
- ? "All chambers (Global)"
- : chambers.find((c) => c.uid === column.chamberSource)?.name || "Select Chamber"}
- </span>
- <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 text-neutral-400 shrink-0 ml-1" />
- </DropdownMenuTrigger>
- <DropdownMenuContent align="start" className="w-56 max-h-[250px] overflow-y-auto scrollbar-thin">
- {hasToken && (
- <DropdownMenuItem onClick={() => onUpdateColumn({ chamberSource: "joined" })} className="cursor-pointer">
- Joined chambers
- </DropdownMenuItem>
- )}
- <DropdownMenuItem onClick={() => onUpdateColumn({ chamberSource: "global" })} className="cursor-pointer">
- All chambers (Global)
- </DropdownMenuItem>
- {chambers.length > 0 && (
- <>
- <DropdownMenuSeparator />
- <div className="px-3 py-1 text-[9px] text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">
- Specific Chambers
- </div>
- {chambers.map((c) => (
- <DropdownMenuItem key={c.uid} onClick={() => onUpdateColumn({ chamberSource: c.uid })} className="cursor-pointer">
- {c.name}
- </DropdownMenuItem>
- ))}
- </>
- )}
- </DropdownMenuContent>
- </DropdownMenu>
- </div>
-
- {/* Type Pills */}
- <div className="flex flex-col gap-1.5">
- <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">Post Type</span>
- <div className="flex flex-wrap gap-1.5">
- {[
- { key: "all", label: "All Posts" },
- { key: "qna", label: "Discussions" },
- { key: "partner", label: "Partners" },
- { key: "trade", label: "Market" },
- { key: "taxi", label: "Taxi / Rides" }
- ].map((type) => (
- <button
- key={type.key}
- type="button"
- onClick={() => onUpdateColumn({ postTypeFilter: type.key as any })}
- className={cn(
- "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
- column.postTypeFilter === type.key
- ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
- : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200"
- )}
- >
- {type.label}
- </button>
- ))}
- </div>
- </div>
-
- </div>
- )}
-
  </div>
 
  {/* Feed Content Block */}
@@ -333,14 +365,10 @@ function ColumnFeed({
  <div ref={feedRef} onScroll={handleScroll} className="absolute inset-0 overflow-y-auto space-y-4 scrollbar-none">
  {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 ? (
  <div className="space-y-6 px-4 py-4">
- <div className="relative overflow-hidden rounded-2xl border border-dashed border-neutral-300 dark:border-neutral-850 bg-neutral-50/30 dark:bg-neutral-900/10 p-5 text-center">
- <p className="text-xs text-neutral-700 dark:text-neutral-300">
- You haven't joined any chambers yet
- </p>
- <p className="text-[11px] text-neutral-500 mt-1 max-w-[18rem] mx-auto leading-relaxed">
- Join some chambers to populate your feed, or change this column's source to Global Feed.
- </p>
- </div>
+ <EmptyState
+ title="No joined chambers yet"
+ description="Join some chambers to populate your feed, or change this column's source to Global Feed."
+ />
 
  {chambers.filter((c) => !c.isJoined).length > 0 && (
  <div className="space-y-3">
@@ -363,7 +391,7 @@ function ColumnFeed({
  </div>
  <Link
  to="/chambers"
- className="block text-center text-xs text-neutral-600 dark:text-neutral-400 hover:text-[#ff5a1f] transition-colors pt-2"
+ className="block text-center text-xs text-neutral-600 dark:text-neutral-400 hover:text-[var(--brand)] transition-colors pt-2"
  >
  Explore all chambers →
  </Link>
@@ -400,12 +428,10 @@ function ColumnFeed({
  )}
  </div>
  ) : (
- <div className="text-center py-12 text-neutral-500 px-4">
- <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-neutral-850 bg-neutral-50/30 dark:bg-neutral-900/10 p-5">
- <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">No posts matching filters.</p>
- <p className="text-[10px] text-neutral-400 mt-1">Try selecting different topics or check back later.</p>
- </div>
- </div>
+ <EmptyState
+ title="No posts matching filters"
+ description="Try selecting different topics or check back later."
+ />
  )}
  </div>
  <div
@@ -432,12 +458,20 @@ export default function Home() {
  if (saved) {
  try {
  const parsed: FeedColumn[] = JSON.parse(saved);
- if (!hasToken) {
- return parsed.map((c) =>
- c.chamberSource === "joined" ? { ...c, chamberSource: "global" } : c
- );
- }
- return parsed;
+ const migrated = parsed.map((c) => {
+   let postTypeFilter = c.postTypeFilter as any;
+   if (postTypeFilter === "qna") postTypeFilter = "discussion";
+   else if (postTypeFilter === "partner") postTypeFilter = "study-partners";
+   else if (postTypeFilter === "trade") postTypeFilter = "marketplace";
+   else if (postTypeFilter === "taxi") postTypeFilter = "carpools";
+
+   return {
+     ...c,
+     postTypeFilter: postTypeFilter as any,
+     chamberSource: !hasToken && c.chamberSource === "joined" ? "global" : c.chamberSource
+   };
+ });
+ return migrated;
  } catch {
  // Fallback
  }
@@ -526,7 +560,7 @@ export default function Home() {
  </Button>
  <Button
  size="sm"
- className="rounded-full bg-[#ff5a1f] hover:bg-[#e94a12] text-white px-4 h-9 border-none cursor-pointer"
+ className="rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white px-4 h-9 border-none cursor-pointer"
  onClick={() => openAuthModal("signup")}
  >
  Sign up

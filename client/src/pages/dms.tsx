@@ -8,6 +8,7 @@ import { PageTransition } from "@/components/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserGroupIcon } from "@hugeicons/core-free-icons";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { formatRelativeTime } from "@/lib/format-time";
 import { toast } from "@/lib/toast";
 
@@ -52,7 +53,7 @@ export default function DMsPage() {
  <Button
  onClick={handleStart}
  disabled={isPending || !username.trim()}
- className="bg-[#ff5a1f] hover:bg-[#e94a12] text-white border-none shrink-0"
+ className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-none shrink-0"
  >
  {isPending ? "..." : "Message"}
  </Button>
@@ -102,11 +103,11 @@ export default function DMsPage() {
  ))}
  </div>
  ) : (
- <div className="text-center py-16 text-neutral-500">
- <HugeiconsIcon icon={UserGroupIcon} className="size-10 mx-auto mb-3 text-neutral-300 dark:text-neutral-600" />
- <p className="text-sm font-medium">No conversations yet</p>
- <p className="text-xs mt-1">Enter a username above to start messaging</p>
- </div>
+ <EmptyState
+ icon={<HugeiconsIcon icon={UserGroupIcon} className="size-8" />}
+ title="No conversations yet"
+ description="Enter a username above to start messaging"
+ />
  )}
  </PageTransition>
  );

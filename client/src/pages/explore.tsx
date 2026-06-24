@@ -23,6 +23,7 @@ import { formatRelativeTime } from "@/lib/format-time";
 import { MentionText } from "@/components/mentions/mention-text";
 import { cn, getInitials } from "@/lib/utils";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
+import { EmptyState } from "@/components/ui/dashed-empty-state";
 
 function ReplyResult({ item }: { item: AnswerItem }) {
  return (
@@ -59,7 +60,7 @@ function DirectoryChamberCard({ chamber, onJoinClick }: { chamber: Chamber; onJo
  const navigate = useNavigate();
  const colorClass = CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length];
  return (
- <div className="p-3 border border-neutral-200 dark:border-neutral-800 bg-background rounded-xl flex items-center justify-between gap-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-950">
+  <div className="p-3 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] rounded-xl flex items-center justify-between gap-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-950">
  <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onClick={() => navigate(`/chamber/${chamber.uid}`)}>
  <div
  className={cn(
@@ -86,7 +87,7 @@ function DirectoryChamberCard({ chamber, onJoinClick }: { chamber: Chamber; onJo
  "rounded-md h-7 px-3 text-xs shrink-0 cursor-pointer transition-all active:scale-95",
  chamber.isJoined 
  ? "border border-neutral-200 hover:bg-neutral-50 text-neutral-600 dark:border-neutral-800 dark:hover:bg-neutral-900 dark:text-neutral-400"
- : "bg-[#ff5a1f] hover:bg-[#e94a12] text-white border-none "
+ : "bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-none "
  )}
  >
  {chamber.isJoined ? "Joined" : "Join"}
@@ -201,7 +202,7 @@ export default function Explore() {
  />
  <Input
  placeholder="Search for chambers, questions, or users..."
- className="pl-10 h-10 bg-neutral-100 dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-2xl"
+ className="pl-10 h-10 bg-[#F5F5F5] dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-full"
  value={query}
  onChange={(e) => setQuery(e.target.value)}
  />
@@ -266,11 +267,13 @@ export default function Explore() {
  <h3 className="font-medium text-neutral-900 dark:text-neutral-100 px-1">
  Posts
  </h3>
+ <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
  <QuestionList
  questions={searchQuestions}
  onDelete={deleteQuestion}
  showChamberName
  />
+ </div>
  </div>
  )}
  {replies.length > 0 && (
@@ -286,10 +289,10 @@ export default function Explore() {
  </div>
  )}
  {!hasSearchResults && (
- <p className="text-sm text-neutral-500 text-center py-10">
- No results found for "{query}"
- </p>
- )}
+  <EmptyState
+    title={`No results found for "${query}"`}
+  />
+  )}
  </>
  )}
  </div>
@@ -349,10 +352,12 @@ export default function Explore() {
  </p>
  ) : (
  <div className="space-y-4">
+ <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
  <QuestionList
  questions={trendingQuestions}
  onDelete={(id) => deleteQuestion(id)}
  />
+ </div>
  {hasNextPage && (
  <div ref={loadMoreCallbackRef} className="flex justify-center pt-4">
  <Button

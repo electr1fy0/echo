@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  UserMultiple02Icon,
   Add01Icon,
   PencilEdit02Icon,
   Delete02Icon,
@@ -69,23 +68,28 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
         to={`/chamber/${chamber.uid}`}
         className="flex items-center gap-3 flex-1 min-w-0 group"
       >
-        <div
-          className={cn(
-            "size-10 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0 transition-opacity group-hover:opacity-90",
-            colorClass,
-          )}
-        >
-          {getInitials(chamber.name)}
-        </div>
+        {chamber.picture ? (
+          <img
+            src={chamber.picture}
+            alt={chamber.name}
+            className="size-10 rounded-xl object-cover shrink-0"
+          />
+        ) : (
+          <div
+            className={cn(
+              "size-10 rounded-xl flex items-center justify-center text-white text-sm shrink-0 transition-opacity group-hover:opacity-90",
+              colorClass,
+            )}
+          >
+            {getInitials(chamber.name)}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">
+          <h3 className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
             {chamber.name}
           </h3>
-          <div className="flex items-center gap-1.5 text-neutral-500 mt-0.5">
-            <HugeiconsIcon icon={UserMultiple02Icon} className="size-3" />
-            <span className="text-xs font-medium">
-              {formatMemberCount(chamber.memberCount || 0)} members
-            </span>
+          <div className="text-xs text-neutral-500 mt-0.5">
+            {formatMemberCount(chamber.memberCount || 0)} members
           </div>
         </div>
       </Link>
@@ -122,9 +126,9 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
           variant={chamber.isJoined ? "secondary" : "default"}
           size="sm"
           className={cn(
-            "rounded-full h-7 px-3 text-xs font-medium transition-all shadow-none",
+            "rounded-full h-7 px-3 text-xs transition-all shadow-none",
             !chamber.isJoined &&
-            "bg-orange-600 hover:bg-orange-700 text-white border-transparent",
+            "bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-transparent",
             chamber.isJoined &&
             "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
           )}
@@ -174,7 +178,6 @@ interface ChamberListProps {
   limit?: number;
 }
 import { DashedEmptyState } from "@/components/ui/dashed-empty-state";
-import { Search01Icon } from "@hugeicons/core-free-icons";
 
 export function ChamberList({ chambers, limit }: ChamberListProps) {
   const displayChambers = limit ? chambers.slice(0, limit) : chambers;
@@ -183,7 +186,6 @@ export function ChamberList({ chambers, limit }: ChamberListProps) {
       <DashedEmptyState
         title="No chambers found"
         description="Try searching for something else or create a new one."
-        icon={<HugeiconsIcon icon={Search01Icon} className="size-8 opacity-50" />}
       />
     );
   }
@@ -217,7 +219,7 @@ export function CreateChamberButton({
       <div className="size-10 rounded-xl flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-neutral-500 group-hover:text-neutral-900 dark:text-neutral-400 dark:group-hover:text-neutral-100">
         <HugeiconsIcon icon={Add01Icon} className="size-5" />
       </div>
-      <span className="text-sm font-medium">Create a new Chamber</span>
+      <span className="text-sm">Create a new Chamber</span>
     </button>
   );
 }

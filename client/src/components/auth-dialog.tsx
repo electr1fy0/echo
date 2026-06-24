@@ -152,7 +152,7 @@ export function AuthDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) close(); }}>
-      <DialogContent className="sm:max-w-md bg-background text-neutral-900 dark:text-neutral-100 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800">
+      <DialogContent className="sm:max-w-md bg-background text-neutral-900 dark:text-neutral-100 p-6 border border-neutral-200 dark:border-neutral-800">
         {mode === "forgot-success" ? (
           <div className="text-center space-y-4 py-4">
             <div className="mx-auto size-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
@@ -241,7 +241,7 @@ export function AuthDialog() {
                     placeholder="Username"
                     autoComplete="username"
                     required
-                    className="text-base md:text-sm pl-3 h-10 rounded-xl"
+                    className="text-base md:text-sm pl-3 h-10"
                     value={form.username}
                     onChange={(e) => updateForm({ username: e.target.value })}
                   />
@@ -255,7 +255,7 @@ export function AuthDialog() {
                       placeholder="Email"
                       autoComplete="email"
                       required
-                      className="text-base md:text-sm pl-3 h-10 rounded-xl"
+                      className="text-base md:text-sm pl-3 h-10"
                       value={form.email}
                       onChange={(e) => updateForm({ email: e.target.value })}
                     />
@@ -301,7 +301,7 @@ export function AuthDialog() {
                       formMode === "signup" ? "new-password" : "current-password"
                     }
                     required
-                    className="text-base md:text-sm pl-3 h-10 rounded-xl"
+                    className="text-base md:text-sm pl-3 h-10"
                     value={form.password}
                     onChange={(e) => updateForm({ password: e.target.value })}
                   />
@@ -330,11 +330,11 @@ export function AuthDialog() {
                           />
                         )}
                       </SlideToUnlockText>
-                      <SlideToUnlockHandle className="bg-[#ff5a1f] text-white" />
+                      <SlideToUnlockHandle className="bg-[var(--brand)] text-white" />
                     </SlideToUnlockTrack>
                   </SlideToUnlock>
                 ) : (
-                  <Button className="w-full h-10 rounded-xl bg-[#ff5a1f] hover:bg-[#e94a12] text-white cursor-pointer" type="submit" disabled={isLoading}>
+                  <Button className="w-full h-10 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white cursor-pointer" type="submit" disabled={isLoading}>
                     {isLoading ? (
                       <HugeiconsIcon
                         icon={Loading03Icon}

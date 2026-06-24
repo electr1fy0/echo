@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
 import { cn, getInitials } from "@/lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 const AVATAR_COLORS = [
   "bg-red-500",
   "bg-orange-500",
@@ -17,6 +18,9 @@ const AVATAR_COLORS = [
   "bg-pink-500",
   "bg-rose-500",
 ];
+
+const DICEBEAR_URL = "https://api.dicebear.com/10.x/dylan/svg";
+
 export function UserAvatar({
   src,
   name,
@@ -26,34 +30,20 @@ export function UserAvatar({
   name: string;
   className?: string;
 }) {
-  const [imgError, setImgError] = useState(false);
-  const effectiveSrc = src || `https://github.com/${name}.png?size=256`;
-  useEffect(() => {
-    setImgError(false);
-  }, [effectiveSrc]);
-  if (!imgError) {
-    return (
-      <img
-        src={effectiveSrc}
-        alt={name}
-        className={cn("rounded-full object-cover", className)}
-        onError={() => setImgError(true)}
-      />
-    );
-  }
+  const seed = encodeURIComponent(name);
+  const isCustomAvatar = src && !src.startsWith("https://github.com/");
+  const effectiveSrc = isCustomAvatar ? src : `${DICEBEAR_URL}?seed=${seed}`;
+
   const charCode = name.charCodeAt(0) || 0;
   const colorIndex = charCode % AVATAR_COLORS.length;
   const colorClass = AVATAR_COLORS[colorIndex];
-  const initials = getInitials(name);
+
   return (
-    <div
-      className={cn(
-        "rounded-full flex items-center justify-center text-white font-medium text-xs select-none",
-        colorClass,
-        className,
-      )}
-    >
-      {initials}
-    </div>
+    <Avatar className={className}>
+      <AvatarImage src={effectiveSrc} alt={name} />
+      <AvatarFallback className={cn(colorClass, "text-white font-medium")}>
+        {getInitials(name)}
+      </AvatarFallback>
+    </Avatar>
   );
 }

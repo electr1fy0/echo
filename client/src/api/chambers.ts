@@ -89,3 +89,44 @@ export async function createChannel(chamberUid: string, channel: { name: string;
   if (!res.ok) throw new Error("failed to create channel");
   return res.json();
 }
+
+export async function updateChannel(
+  chamberUid: string,
+  channelUid: string,
+  channel: { name?: string; icon?: string; schema?: any[] }
+): Promise<any> {
+  const res = await fetch(`${API_URL}/chambers/${chamberUid}/channels/${channelUid}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(channel),
+  });
+  if (!res.ok) throw new Error("failed to update channel");
+  return res.json();
+}
+
+export async function deleteChannel(chamberUid: string, channelUid: string): Promise<void> {
+  const res = await fetch(`${API_URL}/chambers/${chamberUid}/channels/${channelUid}`, {
+    method: "DELETE",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!res.ok) throw new Error("failed to delete channel");
+}
+
+export async function listAllChannels(joinedOnly?: boolean): Promise<any[]> {
+  const url = joinedOnly
+    ? `${API_URL}/chambers/all-channels?joined_only=true`
+    : `${API_URL}/chambers/all-channels`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!res.ok) throw new Error("failed to list all channels");
+  return res.json();
+}

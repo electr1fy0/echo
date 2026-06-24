@@ -11,6 +11,7 @@ export interface Question {
   chamberUid?: string;
   chamberName?: string;
   channelUid?: string;
+  channelSchema?: SchemaField[];
   customFields?: Record<string, any>;
   acceptedAnswerUid?: string;
   isPinned?: boolean;
@@ -137,6 +138,16 @@ export interface Chamber {
   colorIndex?: number;
   timeCreated?: string;
   creatorUsername?: string;
+  picture?: string | null;
+}
+
+export interface SchemaField {
+  id: string;
+  type: "text" | "number" | "currency" | "select" | "datetime" | "url" | "file";
+  label: string;
+  required: boolean;
+  disabled?: boolean;
+  options?: string[];
 }
 
 export interface Channel {
@@ -144,6 +155,6 @@ export interface Channel {
   chamberUid: string;
   name: string;
   icon?: string;
-  schema: any[];
+  schema: SchemaField[];
   createdAt?: string;
 }

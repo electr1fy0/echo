@@ -101,7 +101,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
               <HugeiconsIcon icon={PinOffIcon} className="size-3.5" />
             </button>
           ) : (
-            <span className="p-1 rounded-md text-[#ff5a1f] bg-orange-500/10 dark:bg-orange-500/5">
+            <span className="p-1 rounded-md text-[var(--brand)] bg-[var(--brand-10)] dark:bg-[var(--brand-5)]">
               <HugeiconsIcon icon={Pin02Icon} className="size-3.5" />
             </span>
           )}
@@ -116,7 +116,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
         
         {/* Post Type Specific Tiny Badges */}
         {question.postType === "partner" && (
-          <span className="inline-block mt-1 text-[8px] font-bold uppercase tracking-wider text-[#ff5a1f] bg-[#ff5a1f]/5 px-1.5 py-0.5 rounded border border-[#ff5a1f]/10">
+          <span className="inline-block mt-1 text-[8px] font-bold uppercase tracking-wider text-[var(--brand)] bg-[var(--brand-5)] px-1.5 py-0.5 rounded border border-[var(--brand-10)]">
             Partner Finder
           </span>
         )}
@@ -157,7 +157,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
 
         {/* Trade Price (if applicable) */}
         {question.postType === "trade" && question.tradePrice && (
-          <span className="text-[11px] font-bold text-[#ff5a1f]">
+          <span className="text-[11px] font-bold text-[var(--brand)]">
             ₹{(question.tradePrice / 100).toFixed(0)}
           </span>
         )}
