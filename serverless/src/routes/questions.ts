@@ -5,6 +5,7 @@ import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { createNotification, notifyMentions } from "../services/notifications";
+import { trackEvent } from "../services/analytics";
 import {
   ensurePostExists,
   getPostItems,
@@ -75,6 +76,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
     timeCreated: new Date(),
     expiresAt,
     postType: body.postType ?? "qna",
+    isAnonymous: body.isAnonymous ?? false,
     partnerTargetGrade: body.partnerTargetGrade ?? null,
     partnerWorkstyle: body.partnerWorkstyle ?? null,
     partnerSlotsNeeded: body.partnerSlotsNeeded ?? null,
@@ -146,6 +148,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
             and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
         ), 0) * 50
       )`,
+      isAnonymous: schema.posts.isAnonymous,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from post_upvotes pv
@@ -301,6 +304,11 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
         type: "upvote_post",
         referenceUid: uid,
       });
+      await trackEvent(db, {
+        username: post.author,
+        event: "upvote_received",
+        properties: { postUid: uid, by: currentUser },
+      });
     }
   }
 
@@ -353,6 +361,7 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
     parentReplyUid: body.parentReplyUid ?? null,
     author: currentUser,
     timeCreated: new Date(),
+    isAnonymous: body.isAnonymous ?? false,
   }).returning({ uid: schema.replies.uid, timeCreated: schema.replies.timeCreated });
 
   const [post] = await db.select({ author: schema.posts.author }).from(schema.posts).where(eq(schema.posts.uid, uid)).limit(1);
@@ -377,6 +386,7 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
     upvotes: 0,
     isUpvoted: false,
     isAccepted: false,
+    isAnonymous: body.isAnonymous ?? false,
   }, 201);
 });
 
@@ -433,6 +443,11 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
         actorUsername: currentUser,
         type: "upvote_reply",
         referenceUid: ruid,
+      });
+      await trackEvent(db, {
+        username: reply.author,
+        event: "upvote_received",
+        properties: { replyUid: ruid, by: currentUser },
       });
     }
   }

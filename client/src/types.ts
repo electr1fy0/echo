@@ -6,6 +6,7 @@ export interface Question {
   timeCreated?: Date;
   expiresAt?: string | null;
   authorUsername: string;
+  isAnonymous?: boolean;
   upvotes: number;
   isUpvoted: boolean;
   chamberUid?: string;
@@ -91,6 +92,7 @@ export interface QuestionDraft {
   customFields?: Record<string, any>;
   postType?: "qna" | "partner" | "trade" | "taxi" | "poll";
   ttlHours?: number | null;
+  isAnonymous?: boolean;
   partnerTargetGrade?: string;
   partnerWorkstyle?: string;
   partnerSlotsNeeded?: number;
@@ -111,12 +113,14 @@ export interface Reply {
   parentReplyUid?: string;
   timeCreated?: Date;
   authorUsername: string;
+  isAnonymous?: boolean;
   upvotes: number;
   isUpvoted: boolean;
   isAccepted?: boolean;
 }
 export interface ReplyDraft {
   content: string;
+  isAnonymous?: boolean;
 }
 export interface UpvoteState {
   isUpvoted: boolean;

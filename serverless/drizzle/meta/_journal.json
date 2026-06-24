@@ -71,6 +71,20 @@
       "when": 1782400000000,
       "tag": "0009_yellow_watto",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785000000000,
+      "tag": "0010_flowery_blade",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787000000000,
+      "tag": "0011_anonymous_posts",
+      "breakpoints": true
     }
   ]
 }

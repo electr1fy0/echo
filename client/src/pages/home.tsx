@@ -20,8 +20,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@/lib/utils";
 import {
   useListChambers,
-  useListChannels,
-  useListAllChannels,
 } from "@/hooks/use-chamber";
 import { ChamberCard } from "@/components/chambers/chamber-list";
 import { TextFlip } from "@/components/text-flip";
@@ -86,21 +84,6 @@ function ColumnFeed({
   const selectedChamberObj = isSpecificChamber
     ? chambers.find((c) => c.uid === column.chamberSource)
     : undefined;
-
-  const { data: specificChannels = [] } = useListChannels(
-    isSpecificChamber ? column.chamberSource : "",
-  );
-
-  const { data: globalChannels = [] } = useListAllChannels(
-    !isSpecificChamber ? column.chamberSource === "joined" : undefined,
-  );
-
-  const channelsList = isSpecificChamber ? specificChannels : globalChannels;
-
-  // Get unique channels by name to avoid duplicate pills
-  const uniqueChannels = Array.from(
-    new Map(channelsList.map((ch: any) => [ch.name, ch])).values(),
-  );
 
   const {
     data: questionsData,
@@ -423,51 +406,6 @@ function ColumnFeed({
                   </DropdownMenu>
                 </div>
 
-                {/* Type Pills */}
-                <div className="flex flex-col gap-1.5">
-                  <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">
-                    Channel
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto pr-1 scrollbar-thin">
-                    <button
-                      type="button"
-                      onClick={() => onUpdateColumn({ postTypeFilter: "all" })}
-                      className={cn(
-                        "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
-                        column.postTypeFilter === "all"
-                          ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
-                          : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200",
-                      )}
-                    >
-                      All Channels
-                    </button>
-
-                    {uniqueChannels.map((channel: any) => {
-                      const label =
-                        CHANNEL_LABELS[channel.name] ||
-                        channel.name
-                          .replace(/-/g, " ")
-                          .replace(/\b\w/g, (c: string) => c.toUpperCase());
-                      return (
-                        <button
-                          key={channel.uid}
-                          type="button"
-                          onClick={() =>
-                            onUpdateColumn({ postTypeFilter: channel.name })
-                          }
-                          className={cn(
-                            "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
-                            column.postTypeFilter === channel.name
-                              ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
-                              : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200",
-                          )}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
               </PopoverPopup>
             </Popover>
           </div>
@@ -684,52 +622,6 @@ function ColumnFeed({
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
-
-                {/* Type Pills */}
-                <div className="flex flex-col gap-1.5">
-                  <span className=" text-neutral-400 uppercase text-[9px] tracking-wider">
-                    Channel
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto pr-1 scrollbar-thin">
-                    <button
-                      type="button"
-                      onClick={() => onUpdateColumn({ postTypeFilter: "all" })}
-                      className={cn(
-                        "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
-                        column.postTypeFilter === "all"
-                          ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
-                          : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200",
-                      )}
-                    >
-                      All Channels
-                    </button>
-
-                    {uniqueChannels.map((channel: any) => {
-                      const label =
-                        CHANNEL_LABELS[channel.name] ||
-                        channel.name
-                          .replace(/-/g, " ")
-                          .replace(/\b\w/g, (c: string) => c.toUpperCase());
-                      return (
-                        <button
-                          key={channel.uid}
-                          type="button"
-                          onClick={() =>
-                            onUpdateColumn({ postTypeFilter: channel.name })
-                          }
-                          className={cn(
-                            "px-2.5 py-1 text-[10px] font-medium rounded-full border transition-all cursor-pointer",
-                            column.postTypeFilter === channel.name
-                              ? "bg-neutral-900 border-neutral-900 text-white dark:bg-neutral-100 dark:border-neutral-100 dark:text-neutral-900 "
-                              : "bg-background border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-300 dark:hover:border-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-200",
-                          )}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
               </PopoverPopup>
             </Popover>

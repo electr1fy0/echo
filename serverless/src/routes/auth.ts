@@ -2,11 +2,11 @@ import type { Context } from "hono";
 import bcrypt from "bcryptjs";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 
 import { schema } from "../db";
 import { issueAuthToken, issueGoogleOnboardingToken, verifyGoogleOnboardingToken } from "../lib/auth";
-import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/email";
+import { sendOtpEmail, sendPasswordResetEmail, sendVerificationEmail } from "../lib/email";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
 import { rateLimit } from "../middleware/rateLimit";
@@ -18,7 +18,7 @@ import {
   randomToken,
   requireEnv,
 } from "../lib/utils";
-import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, googleOnboardingSchema } from "../lib/validation";
+import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, sendOtpSchema, verifyOtpSchema, googleOnboardingSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const authRoutes = new Hono<AppEnv>();
@@ -33,7 +33,10 @@ authRoutes.use("/verify-email", authLimiter);
 authRoutes.use("/resend-verification", authLimiter);
 authRoutes.use("/request-password-reset", authLimiter);
 authRoutes.use("/reset-password", authLimiter);
+authRoutes.use("/send-otp", authLimiter);
+authRoutes.use("/verify-otp", authLimiter);
 authRoutes.use("/google/onboarding", authLimiter);
+authRoutes.use("/magic-link", authLimiter);
 
 const handleGoogleCallback = async (c: Context<AppEnv>) => {
   const state = c.req.query("state");
@@ -303,6 +306,147 @@ authRoutes.post("/google/onboarding", async (c) => {
 
   await c.get("db").insert(schema.users).values({ username, email, isVerified: true });
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, username) });
+});
+
+authRoutes.post("/send-otp", async (c) => {
+  const body = safeParse(sendOtpSchema, await c.req.json());
+  const email = body.email;
+
+  const [user] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.email, email))
+    .limit(1);
+
+  const username = user?.username ?? email.split("@")[0];
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const magicLinkToken = randomToken(32);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  await c.get("db").insert(schema.otpCodes).values({
+    email,
+    otp,
+    magicLinkToken,
+    expiresAt,
+  });
+
+  c.executionCtx.waitUntil(
+    sendOtpEmail(c.env, email, username, otp, magicLinkToken).catch((error) => {
+      console.error("failed to send OTP email", error);
+    }),
+  );
+
+  return c.json({ message: "Check your email for the sign-in code" });
+});
+
+authRoutes.post("/verify-otp", async (c) => {
+  const body = safeParse(verifyOtpSchema, await c.req.json());
+  const { email, otp } = body;
+
+  const [otpRecord] = await c
+    .get("db")
+    .select()
+    .from(schema.otpCodes)
+    .where(
+      and(
+        eq(schema.otpCodes.email, email),
+        eq(schema.otpCodes.otp, otp),
+        eq(schema.otpCodes.used, false),
+        gt(schema.otpCodes.expiresAt, new Date()),
+      ),
+    )
+    .orderBy(schema.otpCodes.createdAt)
+    .limit(1);
+
+  if (!otpRecord) {
+    throw new ApiError(401, "invalid or expired code");
+  }
+
+  await c.get("db").update(schema.otpCodes).set({ used: true }).where(eq(schema.otpCodes.id, otpRecord.id));
+
+  let [user] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.email, email))
+    .limit(1);
+
+  if (!user) {
+    let newUsername = email.split("@")[0];
+    const baseUsername = newUsername;
+    let counter = 1;
+    while (true) {
+      const [existing] = await c.get("db").select({ username: schema.users.username }).from(schema.users).where(eq(schema.users.username, newUsername)).limit(1);
+      if (!existing) break;
+      newUsername = `${baseUsername}${counter}`;
+      counter++;
+    }
+    await c.get("db").insert(schema.users).values({
+      username: newUsername,
+      email,
+      isVerified: true,
+    });
+    user = { username: newUsername };
+  }
+
+  return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, user.username) });
+});
+
+authRoutes.get("/magic-link", async (c) => {
+  const token = c.req.query("token");
+  if (!token) {
+    throw new ApiError(400, "missing token");
+  }
+
+  const [otpRecord] = await c
+    .get("db")
+    .select()
+    .from(schema.otpCodes)
+    .where(
+      and(
+        eq(schema.otpCodes.magicLinkToken, token),
+        eq(schema.otpCodes.used, false),
+        gt(schema.otpCodes.expiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+
+  if (!otpRecord) {
+    throw new ApiError(401, "invalid or expired link");
+  }
+
+  await c.get("db").update(schema.otpCodes).set({ used: true }).where(eq(schema.otpCodes.id, otpRecord.id));
+
+  let [user] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.email, otpRecord.email))
+    .limit(1);
+
+  if (!user) {
+    let newUsername = otpRecord.email.split("@")[0];
+    const baseUsername = newUsername;
+    let counter = 1;
+    while (true) {
+      const [existing] = await c.get("db").select({ username: schema.users.username }).from(schema.users).where(eq(schema.users.username, newUsername)).limit(1);
+      if (!existing) break;
+      newUsername = `${baseUsername}${counter}`;
+      counter++;
+    }
+    await c.get("db").insert(schema.users).values({
+      username: newUsername,
+      email: otpRecord.email,
+      isVerified: true,
+    });
+    user = { username: newUsername };
+  }
+
+  const jwt = await issueAuthToken(c.env.SECRET_KEY, user.username);
+  const frontendUrl = getClientUrl(c.env);
+  return c.redirect(`${frontendUrl}/auth?token=${encodeURIComponent(jwt)}`, 302);
 });
 
 authRoutes.post("/signout", (c) => c.body(null, 200));

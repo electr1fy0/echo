@@ -26,6 +26,7 @@ const getTemplate = (
   content: string,
   actionText: string,
   actionUrl: string,
+  extraContent?: string,
 ) => `<!DOCTYPE html>
 <html>
 <head>
@@ -52,6 +53,7 @@ const getTemplate = (
       <h1 class="h1">${title}</h1>
       <p class="text">Hi ${username},</p>
       <p class="text">${content}</p>
+      ${extraContent || ""}
       <div class="btn-container">
         <a href="${actionUrl}" class="btn">${actionText}</a>
       </div>
@@ -114,6 +116,34 @@ export const sendVerificationEmail = async (
       "Thanks for joining TurnsOut. To get started, please verify your email address.",
       "Verify Email",
       verifyLink,
+    ),
+  );
+};
+
+export const sendOtpEmail = async (
+  env: EmailEnv,
+  to: string,
+  username: string,
+  otp: string,
+  magicLinkToken: string,
+) => {
+  const magicLink = `${toAppBaseUrl(env.ECHO_DOMAIN)}/auth/magic-link?token=${encodeURIComponent(magicLinkToken)}`;
+
+  const otpTtl = Math.floor((Date.now() + 10 * 60 * 1000 - Date.now()) / 60);
+
+  await sendEmail(
+    env,
+    to,
+    "Your sign-in code",
+    getTemplate(
+      "Your sign-in code",
+      username,
+      `Use the code below to sign in to TurnsOut. This code expires in ${otpTtl} minutes.`,
+      "Sign in with code",
+      magicLink,
+      `<div style="letter-spacing: 0.25em; font-size: 32px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', monospace;">${otp}</div>
+
+<p class="text">Alternatively, click the button above to sign in automatically.</p>`,
     ),
   );
 };

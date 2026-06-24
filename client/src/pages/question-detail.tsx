@@ -179,17 +179,25 @@ export default function QuestionDetailPage() {
         {/* Author details */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to={`/u/${question.authorUsername}`}>
+            {question.isAnonymous ? (
               <UserAvatar
-                src={author?.avatar}
-                name={question.authorUsername}
+                src={undefined}
+                name="Anonymous"
                 className="size-9"
               />
-            </Link>
+            ) : (
+              <Link to={`/u/${question.authorUsername}`}>
+                <UserAvatar
+                  src={author?.avatar}
+                  name={question.authorUsername}
+                  className="size-9"
+                />
+              </Link>
+            )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-neutral-800 dark:text-neutral-200">
-                  {question.authorUsername}
+                  {question.isAnonymous ? "Anonymous" : question.authorUsername}
                 </span>
                 {isPinned && (
                   <span className="text-[9px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">
@@ -324,7 +332,7 @@ export default function QuestionDetailPage() {
               ([key, val]) => getFieldInfo(key, val).isFile,
             );
 
-            const showInterested = user?.username !== question.authorUsername;
+            const showInterested = !question.isAnonymous && user?.username !== question.authorUsername;
             if (!hasMetadata && !hasImages && !hasFiles && !showInterested)
               return null;
 
@@ -745,7 +753,7 @@ export default function QuestionDetailPage() {
                 )}
 
                 {/* Quick action DM button */}
-                {user?.username !== question.authorUsername && (
+                {!question.isAnonymous && user?.username !== question.authorUsername && (
                   <Button
                     onClick={() => {
                       if (!user) {
@@ -840,7 +848,7 @@ export default function QuestionDetailPage() {
                 </span>
               </div>
             </div>
-            {user?.username !== question.authorUsername &&
+            {!question.isAnonymous && user?.username !== question.authorUsername &&
               question.tradeStatus === "available" && (
                 <div className="border-t border-neutral-200/50 pt-3">
                   {!showInterestForm ? (
@@ -961,7 +969,7 @@ export default function QuestionDetailPage() {
             </div>
 
             {/* Apply Button */}
-            {user?.username !== question.authorUsername &&
+            {!question.isAnonymous && user?.username !== question.authorUsername &&
               (question.partnerStatus ?? "open") === "open" && (
                 <div>
                   {!isApplying ? (
@@ -1090,7 +1098,7 @@ export default function QuestionDetailPage() {
                 </div>
               )}
             </div>
-            {user?.username !== question.authorUsername &&
+            {!question.isAnonymous && user?.username !== question.authorUsername &&
               (question.taxiStatus ?? "open") === "open" && (
                 <div className="border-t border-neutral-200/50 pt-3">
                   {!showInterestForm ? (
@@ -1281,6 +1289,7 @@ export default function QuestionDetailPage() {
               replies={replies}
               questionId={questionId!}
               authorUsername={question.authorUsername}
+              isAnonymousPost={!!question.isAnonymous}
               onDelete={(replyId) =>
                 deleteReply({ questionId: questionId!, replyId })
               }

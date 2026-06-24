@@ -129,6 +129,36 @@ export async function deleteAccount() {
   return res.json();
 }
 
+export async function sendOtp(email: string) {
+  const res = await fetch(`${API_URL}/auth/send-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Failed to send code");
+  }
+  return res.json();
+}
+
+export async function verifyOtp(email: string, otp: string) {
+  const res = await fetch(`${API_URL}/auth/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, otp }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || "Invalid code");
+  }
+  const data = await res.json();
+  if (data.token) {
+    setToken(data.token);
+  }
+  return data;
+}
+
 export async function resendVerification(email: string) {
   const res = await fetch(`${API_URL}/auth/resend-verification`, {
     method: "POST",

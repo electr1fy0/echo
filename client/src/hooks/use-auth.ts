@@ -61,7 +61,7 @@ export function useSignout() {
 }
 
 
-import { verifyEmail, requestPasswordReset, resetPassword, resendVerification, deleteAccount } from "@/api/auth";
+import { verifyEmail, requestPasswordReset, resetPassword, resendVerification, deleteAccount, sendOtp, verifyOtp } from "@/api/auth";
 
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
@@ -75,6 +75,25 @@ export function useDeleteAccount() {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
       navigate("/", { replace: true });
+    },
+  });
+}
+
+export function useSendOtp() {
+  return useMutation({
+    mutationFn: (email: string) => sendOtp(email),
+  });
+}
+
+export function useVerifyOtp() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ email, otp }: { email: string; otp: string }) =>
+      verifyOtp(email, otp),
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: ["auth"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["chambers"] });
     },
   });
 }

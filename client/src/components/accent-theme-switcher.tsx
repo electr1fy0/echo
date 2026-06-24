@@ -1,7 +1,17 @@
 import { useAccentTheme, type AccentTheme } from "@/hooks/use-accent-theme";
 import { Popover, PopoverTrigger, PopoverPopup } from "@/components/ui/popover";
 
-const THEME_LIST: AccentTheme[] = ["orange", "blue", "violet", "rose", "green"];
+const THEME_LIST: AccentTheme[] = [
+  "orange",
+  "blue",
+  "violet",
+  "rose",
+  "green",
+  "cyan",
+  "pink",
+  "red",
+  "lime",
+];
 
 export function AccentThemeSwitcher() {
   const { accent, setAccent, themes } = useAccentTheme();

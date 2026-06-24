@@ -14,6 +14,7 @@ export const mapPostItem = (row: {
   authorBio: string | null;
   authorPosted: number | null;
   authorAnswered: number | null;
+  isAnonymous: boolean;
   upvotes: number | null;
   isUpvoted: boolean;
   chamberUid: string;
@@ -53,6 +54,7 @@ export const mapPostItem = (row: {
     timeCreated: row.timeCreated?.toISOString() ?? null,
     expiresAt: row.expiresAt?.toISOString() ?? null,
     authorUsername: row.authorUsername,
+    isAnonymous: row.isAnonymous,
     upvotes: row.upvotes ?? 0,
     isUpvoted: row.isUpvoted,
     chamberUid: row.chamberUid,
@@ -98,6 +100,7 @@ export const mapReplyItem = (row: {
   timeCreated: Date | null;
   postUid: string;
   parentReplyUid: string | null;
+  isAnonymous: boolean;
   authorUsername: string;
   authorAvatar: string;
   authorBio: string | null;
@@ -115,6 +118,7 @@ export const mapReplyItem = (row: {
     parentReplyUid: row.parentReplyUid ?? undefined,
     timeCreated: row.timeCreated?.toISOString() ?? null,
     authorUsername: row.authorUsername,
+    isAnonymous: row.isAnonymous,
     upvotes: row.upvotes ?? 0,
     isUpvoted: row.isUpvoted,
     isAccepted: row.acceptedAnswerUid === row.uid,
@@ -263,9 +267,10 @@ export const getPostItems = async (
         + coalesce((
           select count(*)::int from "replies" r4
           where r4.author = ${schema.users.username}
-            and exists (select 1 from "posts" p4 where p4.accepted_answer_uid = r4.uid)
+            and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
         ), 0) * 50
       )`,
+      isAnonymous: schema.posts.isAnonymous,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from post_upvotes pv
@@ -371,6 +376,7 @@ export const getReplies = async (db: DB, currentUser: string | undefined | null,
       authorBio: schema.users.bio,
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
+      isAnonymous: schema.replies.isAnonymous,
       authorReputation: sql<number>`(
         coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
         + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15

@@ -29,12 +29,14 @@ export function useCreateReply() {
       questionId,
       content,
       parentReplyUid,
+      isAnonymous,
     }: {
       questionId: string;
       content: string;
       parentReplyUid?: string;
-    }) => createReply(questionId, { content, parentReplyUid }),
-    onMutate: async ({ questionId, content, parentReplyUid }) => {
+      isAnonymous?: boolean;
+    }) => createReply(questionId, { content, parentReplyUid, isAnonymous }),
+    onMutate: async ({ questionId, content, parentReplyUid, isAnonymous }) => {
       await queryClient.cancelQueries({ queryKey: ["replies", questionId] });
 
       const previousReplies = queryClient.getQueryData<AnswerItem[]>([
@@ -54,6 +56,7 @@ export function useCreateReply() {
               parentReplyUid,
               timeCreated: new Date(),
               authorUsername: user.username,
+              isAnonymous,
               upvotes: 0,
               isUpvoted: false,
               isAccepted: false,

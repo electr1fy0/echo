@@ -57,7 +57,16 @@ import { toastManager } from "@/components/ui/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "next-themes";
 import { useAccentTheme } from "@/hooks/use-accent-theme";
-type AccentTheme = "orange" | "blue" | "violet" | "rose" | "green";
+type AccentTheme =
+  | "orange"
+  | "blue"
+  | "violet"
+  | "rose"
+  | "green"
+  | "cyan"
+  | "pink"
+  | "red"
+  | "lime";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { useOnboardingTour } from "@/hooks/use-onboarding-tour";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
@@ -130,6 +139,7 @@ export default function Profile() {
     data: user,
     isLoading: isProfileLoading,
     error: profileError,
+    refetch: refetchProfile,
   } = useFetchProfile();
   const { mutate: updateProfile } = useUpdateProfile();
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -142,6 +152,7 @@ export default function Profile() {
     isFetchingNextPage,
     isLoading: isQnLoading,
     error: qnError,
+    refetch: refetchQn,
   } = useInfiniteUserQuestionsQuery();
   const questions = qnData ? qnData.pages.flat() : [];
 
@@ -260,7 +271,17 @@ export default function Profile() {
 
   if (profileError) {
     return (
-      <div className="mt-20 text-sm text-red-500">Failed to load profile</div>
+      <EmptyState
+        icon={<HugeiconsIcon icon={Alert02Icon} className="size-8" />}
+        title="Failed to load profile"
+        description="Something went wrong while loading your profile."
+        action={
+          <Button variant="outline" size="sm" onClick={() => refetchProfile()}>
+            Try again
+          </Button>
+        }
+        className="mt-20"
+      />
     );
   }
 
@@ -376,6 +397,10 @@ export default function Profile() {
                             "violet",
                             "rose",
                             "green",
+                            "cyan",
+                            "pink",
+                            "red",
+                            "lime",
                           ] as AccentTheme[]
                         ).map((t) => (
                           <button
@@ -425,10 +450,10 @@ export default function Profile() {
                       >
                         <span
                           className={cn(
-                            "pointer-events-none block size-4 rounded-full bg-white shadow-sm ring-0 transition-transform",
+                            "pointer-events-none block size-4 rounded-full shadow-sm ring-0 transition-transform",
                             displayUser.dmEnabled
-                              ? "translate-x-4"
-                              : "translate-x-0",
+                              ? "translate-x-4 bg-white dark:bg-neutral-900"
+                              : "translate-x-0 bg-white dark:bg-neutral-300",
                           )}
                         />
                       </button>
@@ -624,13 +649,22 @@ export default function Profile() {
           {isQnLoading ? (
             <QuestionListSkeleton />
           ) : qnError ? (
-            <p className="text-red-500 text-sm">Failed to load activity</p>
+            <EmptyState
+              icon={<HugeiconsIcon icon={Alert02Icon} className="size-6" />}
+              title="Failed to load activity"
+              action={
+                <Button variant="outline" size="sm" onClick={() => refetchQn()}>
+                  Try again
+                </Button>
+              }
+            />
           ) : (
             <div className="space-y-4">
               <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
                 <QuestionList
                   questions={questions}
                   onDelete={(id) => deleteQuestion(id)}
+                  showChamberName
                 />
               </div>
               {hasNextPage && (

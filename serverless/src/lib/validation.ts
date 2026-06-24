@@ -73,6 +73,7 @@ export const createPostSchema = z.object({
   channelUid: z.string().optional(),
   customFields: z.record(z.string(), z.any()).optional(),
   postType: z.union([z.literal("qna"), z.literal("partner"), z.literal("trade"), z.literal("taxi"), z.literal("poll")]).optional().default("qna"),
+  isAnonymous: z.boolean().optional().default(false),
   ttlHours: z.number().positive().optional(),
   partnerTargetGrade: z.string().optional(),
   partnerWorkstyle: z.string().optional(),
@@ -109,6 +110,7 @@ export const updatePostSchema = z.object({
 export const createReplySchema = z.object({
   content: z.string().min(1, "content is required").max(100000),
   parentReplyUid: z.string().optional(),
+  isAnonymous: z.boolean().optional().default(false),
 });
 
 export const updateReplySchema = z.object({
@@ -133,6 +135,15 @@ export const createConversationSchema = z.object({
 
 export const updateMessageSchema = z.object({
   content: z.string().min(1, "content is required").max(10000),
+});
+
+export const sendOtpSchema = z.object({
+  email: emailSchema,
+});
+
+export const verifyOtpSchema = z.object({
+  email: emailSchema,
+  otp: z.string().length(6, "otp must be 6 digits"),
 });
 
 export const googleOnboardingSchema = z.object({

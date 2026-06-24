@@ -192,6 +192,7 @@ export function QuestionItem({
   const isPinned = !!question.isPinned;
   const isSolved = !!question.acceptedAnswerUid;
   const isExpiring = !!question.expiresAt;
+  const isAnonymous = !!question.isAnonymous;
 
   return (
     <AccordionItem
@@ -200,7 +201,22 @@ export function QuestionItem({
     >
       <TriggerWrapper>
         <div className="flex items-start gap-3 w-full">
-          {(() => {
+          {isAnonymous ? (
+            <div className="shrink-0 mt-1 relative">
+              <UserAvatar
+                src={undefined}
+                name="Anonymous"
+                className="size-7"
+              />
+              {question.expiresAt && question.timeCreated && (
+                <CountdownRing
+                  expiresAt={question.expiresAt as string}
+                  timeCreated={String(question.timeCreated)}
+                  size={28}
+                />
+              )}
+            </div>
+          ) : (() => {
             const avatarLink = (
               <Link
                 to={
@@ -235,13 +251,25 @@ export function QuestionItem({
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <div className="flex pt-1 items-center gap-2.5 flex-wrap min-w-0">
-                <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {question.authorUsername || "Anonymous"}
-                </span>
-                {showChamberName && question.chamberName && (
-                  <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                    in {question.chamberName}
+                {isAnonymous ? (
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Anonymous
                   </span>
+                ) : (
+                  <Link
+                    to={`/u/${question.authorUsername}`}
+                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                  >
+                    {question.authorUsername || "Anonymous"}
+                  </Link>
+                )}
+                {showChamberName && question.chamberName && (
+                  <Link
+                    to={`/chamber/${question.chamberUid}`}
+                    className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                  >
+                    in {question.chamberName}
+                  </Link>
                 )}
                 <span className="text-xs text-neutral-400 dark:text-neutral-500">
                   {question.timeCreated &&
@@ -982,7 +1010,7 @@ export function QuestionItem({
                   })()}
 
                 {/* Quick action DM button */}
-                {user?.username !== question.authorUsername && (
+                {!isAnonymous && user?.username !== question.authorUsername && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1069,6 +1097,7 @@ export function QuestionItem({
                 replies={replies.slice(0, 5)}
                 questionId={questionId}
                 authorUsername={question.authorUsername}
+                isAnonymousPost={isAnonymous}
                 onDelete={(replyId) => deleteReply({ questionId, replyId })}
               />
             </div>

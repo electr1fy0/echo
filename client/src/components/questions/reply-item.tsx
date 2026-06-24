@@ -103,7 +103,15 @@ export function ReplyItem({
             className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
           />
         </div>
-        {answerItem.author ? (
+        {reply.isAnonymous ? (
+          <div className="shrink-0">
+            <UserAvatar
+              src={undefined}
+              name="Anonymous"
+              className="size-5"
+            />
+          </div>
+        ) : answerItem.author ? (
           <UserPreviewCard user={answerItem.author}>
             <Link
               to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
@@ -133,7 +141,11 @@ export function ReplyItem({
         <div className="flex-1 min-w-0">
           <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
             <span className="flex items-center gap-2">
-              <span>{reply.authorUsername || "Anonymous"}</span>
+              {reply.isAnonymous ? (
+                <span>Anonymous</span>
+              ) : (
+                <span>{reply.authorUsername || "Anonymous"}</span>
+              )}
               {isOp && (
                 <span className="text-[10px] uppercase tracking-wide bg-[var(--brand-15)] text-[var(--brand)] px-1.5 py-0.5 rounded font-semibold">
                   OP

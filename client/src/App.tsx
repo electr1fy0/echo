@@ -15,6 +15,7 @@ import { ToastProvider, AnchoredToastProvider } from "@/components/ui/toast";
 import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
+import { useAnalytics } from "@/hooks/use-analytics";
 import { useAccentTheme } from "@/hooks/use-accent-theme";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -45,6 +46,7 @@ const NotFound = lazy(() => import("@/pages/not-found"));
 const QuestionDetailPage = lazy(() => import("@/pages/question-detail"));
 const DMsPage = lazy(() => import("@/pages/dms"));
 const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
+const AnalyticsPage = lazy(() => import("@/pages/analytics"));
 
 import { CreatePostDialog } from "@/components/questions/create-post-dialog";
 import { EditPostDialog } from "@/components/questions/edit-post-dialog";
@@ -69,6 +71,8 @@ function AuthenticatedLayout() {
   const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  useAnalytics();
 
   useEffect(() => {
     const onboarding = searchParams.get("onboarding") === "1";
@@ -165,6 +169,7 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/chambers" element={<AllChambers />} />
                 <Route path="/notifications" element={<Notifications />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/dm" element={<DMsPage />} />
                 <Route
                   path="/dm/:conversationId"

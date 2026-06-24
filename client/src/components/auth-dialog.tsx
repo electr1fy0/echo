@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { AuthPayload } from "@/api/auth";
@@ -14,9 +14,11 @@ import {
   useSignup,
   useRequestPasswordReset,
   useResendVerification,
+  useSendOtp,
+  useVerifyOtp,
 } from "@/hooks/use-auth";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Loading03Icon, Mail01Icon } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/config";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { ShimmeringText } from "@/components/shimmering-text";
@@ -36,13 +38,20 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import {
+  OTPField,
+  OTPFieldInput,
+  OTPFieldSeparator,
+} from "@/components/ui/otp-field";
 
 type FormMode =
   | "signin"
   | "signup"
   | "forgot"
   | "forgot-success"
-  | "signup-success";
+  | "signup-success"
+  | "otp-email"
+  | "otp-code";
 
 const MODE_COPY: Record<
   "signin" | "signup" | "forgot",
@@ -70,21 +79,25 @@ export function AuthDialog() {
   const { isOpen, close, defaultTab } = useAuthModal();
   const [mode, setMode] = useState<FormMode>("signin");
   const isMobile = useIsMobile();
+  const otpValues = useRef<string[]>([]);
 
   // Keep state sync with defaultTab when modal opens
-  const [lastOpen, setLastOpen] = useState(false);
-  if (isOpen !== lastOpen) {
-    setLastOpen(isOpen);
-    if (isOpen) {
-      setMode(defaultTab);
-    }
-  }
-
   const [form, setForm] = useState<AuthPayload>({
     email: "",
     username: "",
     password: "",
   });
+  const [otpEmail, setOtpEmail] = useState("");
+
+  const [lastOpen, setLastOpen] = useState(false);
+  if (isOpen !== lastOpen) {
+    setLastOpen(isOpen);
+    if (isOpen) {
+      setMode(defaultTab);
+      setOtpEmail("");
+      otpValues.current = [];
+    }
+  }
 
   const formMode =
     mode === "signin" || mode === "signup" || mode === "forgot"
@@ -112,6 +125,16 @@ export function AuthDialog() {
   } = useRequestPasswordReset();
   const { mutateAsync: resendVerification, isPending: isResendPending } =
     useResendVerification();
+  const {
+    mutateAsync: sendOtp,
+    isPending: isOtpSending,
+    error: otpSendError,
+  } = useSendOtp();
+  const {
+    mutateAsync: verifyOtp,
+    isPending: isOtpVerifying,
+    error: otpVerifyError,
+  } = useVerifyOtp();
 
   const [play] = useSound("https://assets.chanhdai.com/sounds/ios/unlock.mp3", {
     volume: 0.5,
@@ -148,14 +171,32 @@ export function AuthDialog() {
     window.location.href = `${API_URL}/auth/signin-with-google`;
   }
 
+  async function handleSendOtp(e?: { preventDefault?: () => void }) {
+    e?.preventDefault?.();
+    if (!otpEmail) return;
+    await sendOtp(otpEmail);
+    setMode("otp-code");
+  }
+
+  async function handleVerifyOtp() {
+    const code = otpValues.current.join("");
+    if (code.length !== 6) return;
+    await verifyOtp({ email: otpEmail, otp: code });
+    close();
+  }
+
   const error =
-    formMode === "forgot"
+    mode === "forgot"
       ? resetError
-      : formMode === "signup"
+      : mode === "signup"
         ? signUpError
-        : formMode === "signin"
+        : mode === "signin"
           ? signInError
-          : null;
+          : mode === "otp-email"
+            ? (otpSendError ?? null)
+            : mode === "otp-code"
+              ? (otpVerifyError ?? null)
+              : null;
   const isLoading = isInPending || isUpPending || isResetPending;
   const copy = MODE_COPY[formMode];
 
@@ -217,6 +258,125 @@ export function AuthDialog() {
             >
               {isResendPending ? "Sending..." : "Resend Validation Email"}
             </Button>
+          </div>
+        </div>
+      ) : mode === "otp-email" || mode === "otp-code" ? (
+        <div className="space-y-4 mt-2">
+          <DialogHeader className="text-left pb-2">
+            <div className="my-2 flex justify-between items-center">
+              <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                <img
+                  src="/turnsoutlogo.svg"
+                  alt="TurnsOut"
+                  className="size-7 invert dark:invert-0 opacity-80"
+                />
+              </div>
+            </div>
+            <DialogTitle className="text-lg text-left font-semibold">
+              {mode === "otp-email" ? "Sign in with email" : "Check your email"}
+            </DialogTitle>
+            <DialogDescription className="text-left text-xs">
+              {mode === "otp-email"
+                ? "We'll send you a code to sign in instantly."
+                : `We sent a code to ${otpEmail}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {mode === "otp-email" ? (
+            <form className="space-y-3" onSubmit={handleSendOtp}>
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} size={20} />
+                  <span>{error.message}</span>
+                </div>
+              )}
+              <Input
+                name="email"
+                type="email"
+                placeholder="Email"
+                autoComplete="email"
+                required
+                className="text-base md:text-sm"
+                value={otpEmail}
+                onChange={(e) => setOtpEmail(e.target.value)}
+              />
+              <Button
+                variant="default"
+                size="lg"
+                className="w-full"
+                type="submit"
+                disabled={!otpEmail || isOtpSending}
+              >
+                {isOtpSending ? (
+                  <HugeiconsIcon
+                    icon={Loading03Icon}
+                    className="size-5 animate-spin"
+                  />
+                ) : (
+                  "Send code"
+                )}
+              </Button>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} size={20} />
+                  <span>{error.message}</span>
+                </div>
+              )}
+              <div className="flex justify-center py-2">
+                <OTPField
+                  length={6}
+                  validationType="numeric"
+                  onValueChange={(value: string) => {
+                    otpValues.current = value.split("");
+                    if (value.length === 6) {
+                      handleVerifyOtp();
+                    }
+                  }}
+                >
+                  <OTPFieldInput aria-label="Character 1 of 6" />
+                  <OTPFieldInput aria-label="Character 2 of 6" />
+                  <OTPFieldInput aria-label="Character 3 of 6" />
+                  <OTPFieldSeparator />
+                  <OTPFieldInput aria-label="Character 4 of 6" />
+                  <OTPFieldInput aria-label="Character 5 of 6" />
+                  <OTPFieldInput aria-label="Character 6 of 6" />
+                </OTPField>
+              </div>
+              <p className="text-center text-xs text-muted-foreground">
+                {isOtpVerifying ? "Verifying..." : "Enter the 6-digit code sent to your email"}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMode("otp-email")}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Change email
+                </button>
+                <span className="text-muted-foreground/30">·</span>
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  disabled={isOtpSending}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {isOtpSending ? "Sending..." : "Resend code"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={() => setMode("signin")}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              Back to sign in
+            </button>
           </div>
         </div>
       ) : (
@@ -384,27 +544,55 @@ export function AuthDialog() {
 
             <div className="space-y-4 text-center">
               {formMode === "signin" && (
-                <button
-                  type="button"
-                  onClick={() => setMode("forgot")}
-                  className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  Forgot your password?
-                </button>
-              )}
-
-              {formMode !== "forgot" && (
-                <div className="space-y-4 pt-1">
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setMode("forgot")}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    Forgot your password?
+                  </button>
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
                     </div>
                     <div className="relative flex justify-center">
                       <span className="bg-background px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        or continue with
+                        or sign in with
                       </span>
                     </div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setOtpEmail("");
+                      setMode("otp-email");
+                    }}
+                  >
+                    <HugeiconsIcon icon={Mail01Icon} size={16} />
+                    Email a sign-in code
+                  </Button>
+                </>
+              )}
+
+              {formMode !== "forgot" && (
+                <div className="space-y-4 pt-1">
+                  {formMode === "signup" && (
+                    <>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-background px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                            or continue with
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <Button
                     type="button"
                     variant="outline"

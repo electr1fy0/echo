@@ -39,6 +39,7 @@ export function ReplyForm({
   const { open: openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
   const [imageUploading, setImageUploading] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const { mutate: submitReply, isPending } = useCreateReply();
   const [isValidating, setIsValidating] = useState(false);
   const { trigger } = useWebHaptics();
@@ -71,10 +72,11 @@ export function ReplyForm({
         return;
       }
       submitReply(
-        { questionId, content, parentReplyUid },
+        { questionId, content, parentReplyUid, isAnonymous },
         {
           onSuccess: () => {
             setContent("");
+            setIsAnonymous(false);
             toastManager.add({ title: "Reply posted", type: "success" });
             onSubmitSuccess?.();
           },
@@ -127,6 +129,32 @@ export function ReplyForm({
           style={{ resize: "none" }}
         />
         <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => setIsAnonymous((p) => !p)}
+            className={cn(
+              "size-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors",
+              isAnonymous
+                ? "text-neutral-900 dark:text-neutral-100"
+                : "text-neutral-400 dark:text-neutral-500",
+            )}
+            title={isAnonymous ? "Anonymous (on)" : "Anonymous (off)"}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="size-4"
+            >
+              <path d="M17 8a5 5 0 0 1-10 0" />
+              <path d="M3 21v-1a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v1" />
+              <path d="M12 14v7" />
+              <path d="M9 21h6" />
+            </svg>
+          </button>
           <button
             type="button"
             disabled={imageUploading}

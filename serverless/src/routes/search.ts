@@ -29,6 +29,7 @@ searchRoutes.get("/", async (c) => {
       timeCreated: schema.replies.timeCreated,
       postUid: schema.replies.postUid,
       parentReplyUid: schema.replies.parentReplyUid,
+      isAnonymous: schema.replies.isAnonymous,
       authorUsername: schema.replies.author,
       authorAvatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
       authorBio: schema.users.bio,

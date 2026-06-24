@@ -65,9 +65,15 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
       )}
     >
       {/* Top Section: Author info & Unpin/Pin indicator */}
-      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          {(() => {
+          {question.isAnonymous ? (
+            <UserAvatar
+              src={undefined}
+              name="Anonymous"
+              className="size-6"
+            />
+          ) : (() => {
             const avatarLink = (
               <Link
                 to={
@@ -93,7 +99,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
           })()}
           <div className="flex flex-col min-w-0">
             <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-300 truncate">
-              {question.authorUsername || "Anonymous"}
+              {question.isAnonymous ? "Anonymous" : (question.authorUsername || "Anonymous")}
             </span>
             <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
               {question.timeCreated &&

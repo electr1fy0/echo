@@ -11,6 +11,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   username: text("username").primaryKey(),
@@ -79,6 +80,7 @@ export const posts = pgTable("posts", {
     .references(() => channels.uid, { onDelete: "cascade" }),
   upvotesCount: integer("upvotes_count").default(0),
   redditUpvotes: integer("reddit_upvotes").default(0),
+  isAnonymous: boolean("is_anonymous").default(false).notNull(),
   acceptedAnswerUid: uuid("accepted_answer_uid"), // Will reference replies.uid in relations
   pinnedAt: timestamp("pinned_at", { mode: "date" }),
   expiresAt: timestamp("expires_at", { mode: "date" }),
@@ -122,6 +124,7 @@ export const replies = pgTable("replies", {
     .references(() => users.username, { onUpdate: "cascade" }),
   upvotesCount: integer("upvotes_count").default(0),
   redditUpvotes: integer("reddit_upvotes").default(0),
+  isAnonymous: boolean("is_anonymous").default(false).notNull(),
 });
 
 export const postUpvotes = pgTable("post_upvotes", {
@@ -274,4 +277,14 @@ export const postViews = pgTable("post_views", {
     onDelete: "set null",
   }),
   viewedAt: timestamp("viewed_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const otpCodes = pgTable("otp_codes", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  otp: text("otp").notNull(),
+  magicLinkToken: text("magic_link_token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+  used: boolean("used").default(false).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).default(sql`now()`).notNull(),
 });

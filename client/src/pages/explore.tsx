@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
-import { Search01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, ArrowRight01Icon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   useDeleteQuestion,
@@ -124,6 +124,7 @@ export default function Explore() {
     isFetchingNextPage,
     isLoading: isTrendingLoading,
     error: trendingError,
+    refetch: refetchTrending,
   } = useInfiniteQuestionsQuery("hot");
   const trendingQuestions = trendingData ? trendingData.pages.flat() : [];
 
@@ -368,15 +369,22 @@ export default function Explore() {
             {isTrendingLoading ? (
               <QuestionListSkeleton />
             ) : trendingError ? (
-              <p className="text-red-500 text-sm px-1">
-                Failed to load questions
-              </p>
+              <EmptyState
+                icon={<HugeiconsIcon icon={Alert02Icon} className="size-6" />}
+                title="Failed to load questions"
+                action={
+                  <Button variant="outline" size="sm" onClick={() => refetchTrending()}>
+                    Try again
+                  </Button>
+                }
+              />
             ) : (
               <div className="space-y-4">
                 <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
                   <QuestionList
                     questions={trendingQuestions}
                     onDelete={(id) => deleteQuestion(id)}
+                    showChamberName
                   />
                 </div>
                 {hasNextPage && (

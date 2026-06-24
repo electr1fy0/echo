@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PageTransition } from "@/components/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { EvilAreaChart, Area, XAxis, Grid, Tooltip } from "@/components/evilcharts/charts/area-chart";
+import { EvilBarChart, Bar, XAxis, YAxis, Grid, Tooltip } from "@/components/evilcharts/charts/bar-chart";
 import NumberFlow from "@number-flow/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Message01Icon, Edit01Icon, ThumbsUpIcon, EyeIcon } from "@hugeicons/core-free-icons";
@@ -190,18 +190,19 @@ export default function AnalyticsPage() {
         <Card className="p-4 mb-6">
           <h2 className="text-sm font-medium mb-4">Activity (Last 30 Days)</h2>
           <div className="h-64">
-            <EvilAreaChart
+            <EvilBarChart
               data={chartData}
               config={activityConfig}
               stackType="stacked"
             >
-              <Area dataKey="posts" variant="gradient" />
-              <Area dataKey="replies" variant="gradient" />
-              <Area dataKey="upvotesReceived" variant="gradient" />
+              <Bar dataKey="posts" />
+              <Bar dataKey="replies" />
+              <Bar dataKey="upvotesReceived" />
               <XAxis dataKey="date" tickFormatter={(v: string) => v.slice(5)} />
+              <YAxis />
               <Grid />
               <Tooltip />
-            </EvilAreaChart>
+            </EvilBarChart>
           </div>
         </Card>
 

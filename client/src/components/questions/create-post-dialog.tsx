@@ -104,6 +104,7 @@ export function CreatePostDialog() {
   const [images, setImages] = useState<string[]>([]);
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const [ttlHours, setTtlHours] = useState<number | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const { data: chambersData } = useListChambers();
   const chambers = chambersData || [];
@@ -126,6 +127,7 @@ export function CreatePostDialog() {
       setCustomFields({});
       setActiveFields([]);
       setTtlHours(null);
+      setIsAnonymous(false);
       return;
     }
     const chamberToSelect = defaultChamberId || activeChamberId;
@@ -359,6 +361,7 @@ export function CreatePostDialog() {
         customFields: finalCustomFields,
         postType,
         ...(ttlHours != null ? { ttlHours } : {}),
+        isAnonymous,
       };
 
       if (postType === "poll") {
@@ -1041,6 +1044,32 @@ export function CreatePostDialog() {
                 onChange={(e) => handleUploadImages(e.target.files)}
               />
 
+              <button
+                type="button"
+                onClick={() => setIsAnonymous((p) => !p)}
+                className={cn(
+                  "flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 border",
+                  isAnonymous
+                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                    : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                )}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="size-3.5"
+                >
+                  <path d="M17 8a5 5 0 0 1-10 0" />
+                  <path d="M3 21v-1a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v1" />
+                  <path d="M12 14v7" />
+                  <path d="M9 21h6" />
+                </svg>
+                {isAnonymous ? "Anonymous" : "Anonymous"}
+              </button>
               <button
                 type="button"
                 onClick={() => {

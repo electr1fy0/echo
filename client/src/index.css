@@ -218,6 +218,38 @@
     --brand-15: rgb(34 197 94 / 0.15);
     --brand-shadow: rgb(34 197 94);
 }
+[data-accent="cyan"] {
+    --brand: #06b6d4;
+    --brand-hover: #0891b2;
+    --brand-10: rgb(6 182 212 / 0.1);
+    --brand-5: rgb(6 182 212 / 0.05);
+    --brand-15: rgb(6 182 212 / 0.15);
+    --brand-shadow: rgb(6 182 212);
+}
+[data-accent="pink"] {
+    --brand: #ec4899;
+    --brand-hover: #db2777;
+    --brand-10: rgb(236 72 153 / 0.1);
+    --brand-5: rgb(236 72 153 / 0.05);
+    --brand-15: rgb(236 72 153 / 0.15);
+    --brand-shadow: rgb(236 72 153);
+}
+[data-accent="red"] {
+    --brand: #ef4444;
+    --brand-hover: #dc2626;
+    --brand-10: rgb(239 68 68 / 0.1);
+    --brand-5: rgb(239 68 68 / 0.05);
+    --brand-15: rgb(239 68 68 / 0.15);
+    --brand-shadow: rgb(239 68 68);
+}
+[data-accent="lime"] {
+    --brand: #84cc16;
+    --brand-hover: #65a30d;
+    --brand-10: rgb(132 204 22 / 0.1);
+    --brand-5: rgb(132 204 22 / 0.05);
+    --brand-15: rgb(132 204 22 / 0.15);
+    --brand-shadow: rgb(132 204 22);
+}
 
 @theme inline {
     --font-sans: "Inter Variable", sans-serif;

@@ -291,7 +291,7 @@ export default function PublicProfile() {
           ) : questions.length > 0 ? (
             <div className="space-y-4">
               <div className="border border-neutral-200 dark:border-neutral-800/80 rounded-2xl overflow-hidden">
-                <QuestionList questions={questions} />
+                <QuestionList questions={questions} showChamberName />
               </div>
               {hasNextPage && (
                 <div
