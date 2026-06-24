@@ -1,6 +1,18 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router";
+import { 
+  Calendar, 
+  Link as LinkIcon, 
+  FileText, 
+  FileSpreadsheet, 
+  FileArchive, 
+  File as FileIcon,
+  MapPin,
+  IndianRupee,
+  Route,
+  Tag
+} from "lucide-react";
 import {
   AccordionContent,
   AccordionItem,
@@ -683,76 +695,158 @@ export function QuestionItem({
 
                   const hasMetadata = entries.some(([key, val]) => {
                     const info = getFieldInfo(key, val);
-                    return !info.isImage && !info.isFile;
+                    return !info.isImage && !info.isFile && info.type !== "poll" && !key.startsWith("poll");
                   });
                   const hasImages = entries.some(([key, val]) => getFieldInfo(key, val).isImage);
                   const hasFiles = entries.some(([key, val]) => getFieldInfo(key, val).isFile);
+
+                  if (!hasMetadata && !hasImages && !hasFiles) return null;
 
                   return (
                     <div className="mt-3 p-3.5 flex flex-col gap-3.5 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full">
                       
                       {/* Metadata fields list (excluding files/images) */}
                       {hasMetadata && (
-                        <div className="flex flex-col gap-1 min-w-0 w-full">
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Details</span>
-                          <div className="flex items-center gap-2 flex-wrap text-xs font-semibold text-neutral-600 dark:text-neutral-300">
+                        <div className="flex flex-col gap-1.5 min-w-0 w-full">
+                          <div className="flex items-center gap-2.5 flex-wrap">
                             {entries.map(([key, val]) => {
                               if (val === undefined || val === null || val === "") return null;
-                              
                               const info = getFieldInfo(key, val);
-                              if (info.isImage || info.isFile) return null;
+                              if (info.isImage || info.isFile || info.type === "poll" || key.startsWith("poll")) return null;
 
-                              // Format currency type
+                              // Format currency type (Price)
                               if (info.type === "currency" || key === "price" || key === "min_order") {
+                                const showLabel = !["price", "cost", "rate", "amount"].includes(info.label.toLowerCase().trim());
                                 return (
-                                  <span key={key} className={cn("text-neutral-950 dark:text-neutral-100 font-bold text-xs bg-neutral-200/40 dark:bg-neutral-800/50 px-2.5 py-0.5 rounded-lg border border-neutral-200/30 dark:border-neutral-700/30", info.disabled && "opacity-50 line-through")}>
-                                    {info.label}: ₹{Number(val).toFixed(0)} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
-                                  </span>
+                                  <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                                    <IndianRupee className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                    <span>
+                                      {showLabel && <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{info.label}:</span>}
+                                      {Number(val).toLocaleString("en-IN")}
+                                    </span>
+                                  </div>
                                 );
                               }
                               
                               // Format date-time type
                               if (info.type === "datetime" || key === "datetime" || key === "deadline") {
+                                let displayDate = val;
                                 try {
-                                  return (
-                                    <span key={key} className={cn("bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] inline-flex items-center gap-1 font-semibold", info.disabled && "opacity-50 line-through")}>
-                                      📅 {info.label}: {new Date(val).toLocaleString("en-IN", {
-                                        day: "2-digit",
-                                        month: "short",
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true
-                                      })}
-                                      {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
+                                  displayDate = new Date(val).toLocaleString("en-IN", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: true
+                                  });
+                                } catch {}
+                                const showLabel = !["date-time", "datetime", "date", "time", "deadline", "departure time"].includes(info.label.toLowerCase().trim());
+                                return (
+                                  <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                                    <Calendar className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                    <span>
+                                      {showLabel && <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{info.label}:</span>}
+                                      {displayDate}
                                     </span>
-                                  );
-                                } catch {
-                                  return <span key={key} className={cn("bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] font-semibold", info.disabled && "opacity-50 line-through")}>📅 {info.label}: {val} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}</span>;
-                                }
+                                  </div>
+                                );
+                              }
+
+                              // Format location type
+                              if (info.type === "location" || key === "location") {
+                                const showLabel = !["location"].includes(info.label.toLowerCase().trim());
+                                return (
+                                  <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                                    <MapPin className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                    <span>
+                                      {showLabel && <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{info.label}:</span>}
+                                      {String(val)}
+                                    </span>
+                                  </div>
+                                );
+                              }
+                              
+                              // Format Route type
+                              if (info.type === "source_destination" || key === "route") {
+                                const routeVal = val as { source: string; destination: string } | undefined;
+                                if (!routeVal?.source && !routeVal?.destination) return null;
+                                return (
+                                  <div key={key} className={cn("inline-flex items-center gap-2 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                                    <Route className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                    <span className="truncate">{routeVal.source || "Anywhere"}</span>
+                                    <span className="text-neutral-400 dark:text-neutral-600 font-medium font-sans">→</span>
+                                    <span className="truncate">{routeVal.destination || "Anywhere"}</span>
+                                  </div>
+                                );
+                              }
+
+                              // Format key_value type
+                              if (info.type === "key_value" || (val && typeof val === "object" && "key" in val && "value" in val)) {
+                                const kvVal = val as { key: string; value: string } | undefined;
+                                if (!kvVal?.key && !kvVal?.value) return null;
+                                return (
+                                  <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                                    <Tag className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                    <span>
+                                      <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{kvVal.key || "Property"}:</span>
+                                      {kvVal.value || "Any"}
+                                    </span>
+                                  </div>
+                                );
+                              }
+
+                              // Format button type
+                              if (info.type === "button" || (val && typeof val === "object" && "label" in val && "template" in val)) {
+                                const btnVal = val as { label: string; template: string } | undefined;
+                                if (!btnVal?.label) return null;
+                                
+                                const isSelf = user?.username === question.authorUsername;
+                                return (
+                                  <Button
+                                    key={key}
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    disabled={isSelf || isDMPending}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!user) { openAuthModal("signin"); return; }
+                                      sendInterestDM({
+                                        authorUsername: question.authorUsername!,
+                                        templateMessage: btnVal.template || `Hey, I'm interested in your post!`,
+                                      });
+                                      toast.success("Interest sent via DM!");
+                                    }}
+                                    className="cursor-pointer text-xs font-semibold"
+                                  >
+                                    {btnVal.label}
+                                  </Button>
+                                );
                               }
                               
                               // Format url type
                               if (info.type === "url" || (typeof val === "string" && val.startsWith("http"))) {
+                                const showLabel = !["link", "url", "website"].includes(info.label.toLowerCase().trim());
                                 return (
                                   <a 
                                     key={key}
                                     href={val}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className={cn("text-[var(--brand)] hover:underline inline-flex items-center gap-1 bg-[var(--brand-10)] dark:bg-[var(--brand-5)] px-2 py-0.5 rounded-lg text-[11px] font-semibold", info.disabled && "opacity-50 line-through")}
+                                    className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white hover:bg-neutral-50 dark:bg-neutral-900/50 dark:hover:bg-neutral-900 shadow-sm text-xs text-[var(--brand)] font-bold transition-all", info.disabled && "opacity-50 line-through")}
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    🔗 {info.label} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
+                                    <LinkIcon className="size-3.5 text-[var(--brand)] shrink-0" />
+                                    <span className="hover:underline">{showLabel ? info.label : "Link"}</span>
                                   </a>
                                 );
                               }
 
                               return (
-                                <span key={key} className={cn("bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] inline-flex items-center gap-1 font-semibold", info.disabled && "opacity-50")}>
-                                  <span className={cn("text-neutral-400 dark:text-neutral-500 font-medium", info.disabled && "line-through")}>{info.label}:</span>
-                                  <span className={cn(info.disabled && "line-through text-neutral-400")}>{String(val)}</span>
-                                  {info.disabled && <span className="text-[9px] font-normal opacity-70 ml-1">(disabled)</span>}
-                                </span>
+                                <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50")}>
+                                  <FileText className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                  <span>{info.label}: {String(val)}</span>
+                                </div>
                               );
                             })}
                           </div>
@@ -800,7 +894,6 @@ export function QuestionItem({
                       {/* Files List Section */}
                       {hasFiles && (
                         <div className="flex flex-col gap-1.5 w-full">
-                          <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Attachments</span>
                           <div className="space-y-2">
                             {entries.map(([key, val]) => {
                               if (val === undefined || val === null || val === "") return null;
@@ -810,14 +903,11 @@ export function QuestionItem({
 
                               const file = val as { url: string; name: string; size: number; type: string };
                               
-                              let fileIcon = "📄";
+                              let FileIconComp = FileText;
                               const ext = file.name?.split(".").pop()?.toLowerCase();
-                              if (file.type?.includes("pdf") || ext === "pdf") fileIcon = "📕";
-                              else if (file.type?.includes("zip") || file.type?.includes("tar") || ext === "zip" || ext === "rar") fileIcon = "📦";
-                              else if (file.type?.includes("word") || file.type?.includes("document") || ext === "doc" || ext === "docx") fileIcon = "📘";
-                              else if (file.type?.includes("presentation") || file.type?.includes("powerpoint") || ext === "ppt" || ext === "pptx") fileIcon = "📙";
-                              else if (file.type?.includes("sheet") || file.type?.includes("excel") || ext === "xls" || ext === "xlsx") fileIcon = "📗";
-                              else if (file.type?.includes("text") || ext === "txt") fileIcon = "📝";
+                              if (file.type?.includes("zip") || file.type?.includes("tar") || ext === "zip" || ext === "rar") FileIconComp = FileArchive;
+                              else if (file.type?.includes("sheet") || file.type?.includes("excel") || ext === "xls" || ext === "xlsx") FileIconComp = FileSpreadsheet;
+                              else FileIconComp = FileIcon;
 
                               return (
                                 <div 
@@ -829,7 +919,7 @@ export function QuestionItem({
                                   className={cn("flex items-center justify-between p-3 border border-neutral-200 dark:border-neutral-800/80 bg-background/50 hover:bg-neutral-100/50 dark:hover:bg-neutral-950/40 rounded-2xl cursor-pointer transition-all duration-150 group", info.disabled && "opacity-75")}
                                 >
                                   <div className="flex items-center gap-3 min-w-0 max-w-[80%]">
-                                    <span className="text-xl shrink-0 group-hover:scale-105 transition-transform">{fileIcon}</span>
+                                    <FileIconComp className="size-5 shrink-0 text-neutral-500 group-hover:text-[var(--brand)] transition-colors group-hover:scale-105 transition-transform" />
                                     <div className="flex flex-col min-w-0">
                                       <span className={cn("text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-[var(--brand)] transition-colors", info.disabled && "line-through text-neutral-500")}>
                                         {info.label}: {file.name} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}

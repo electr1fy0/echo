@@ -11,7 +11,7 @@ import {
   getReplies,
   mapPostItem,
 } from "../services/questions";
-import { parsePagination } from "../lib/utils";
+import { parsePagination, countWords, MAX_POST_WORDS } from "../lib/utils";
 import type { AppEnv } from "../types/app";
 
 export const questionRoutes = new Hono<AppEnv>();
@@ -57,6 +57,10 @@ questionRoutes.post("/", requireAuth, async (c) => {
   };
   if (!body.chamberUid) {
     throw new ApiError(400, "chamber uid is required");
+  }
+
+  if (body.content && countWords(body.content) > MAX_POST_WORDS) {
+    throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
   }
 
   let channelUid = body.channelUid;
@@ -252,6 +256,9 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
     taxiSeatsAvailable?: number;
     taxiStatus?: string;
   };
+  if (body.content !== undefined && countWords(body.content) > MAX_POST_WORDS) {
+    throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
+  }
   const updated = await c.get("db").update(schema.posts).set({
     content: body.content,
     tradeStatus: body.tradeStatus,

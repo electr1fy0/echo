@@ -55,7 +55,6 @@ import { haptic } from "@/lib/haptic";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/lib/toast";
-import type { SchemaField } from "@/types";
 
 import {
   MessageSquare,
@@ -140,7 +139,7 @@ const TEMPLATES = [
  schema: [
  { id: "type", type: "select", label: "Status", options: ["Lost", "Found"], required: true },
  { id: "item", type: "text", label: "Item Name", required: true },
- { id: "location", type: "text", label: "Location", required: false }
+ { id: "location", type: "location", label: "Location", required: false }
  ],
  },
  {
@@ -222,36 +221,6 @@ export default function ChamberPage() {
      setEditChannelSchema(editingChannel.schema || []);
    }
  }, [editingChannel]);
-
-  const handleAddEditField = (type: SchemaField["type"] = "text") => {
-    const defaultLabels: Record<string, string> = {
-      text: "Text Field",
-      number: "Number Field",
-      currency: "Price",
-      select: "Dropdown Options",
-      datetime: "Deadline Date",
-      url: "Reference Link",
-      file: "Attachment File",
-      image: "Image Photo",
-      poll: "Poll Option"
-    };
-    setEditChannelSchema((prev) => [
-      ...prev,
-      { id: `field_${Date.now()}`, type, label: defaultLabels[type] || "New Field", required: false, disabled: false }
-    ]);
-  };
-
- const handleUpdateEditField = (index: number, updates: any) => {
-   setEditChannelSchema((prev) => {
-     const copy = [...prev];
-     copy[index] = { ...copy[index], ...updates };
-     return copy;
-   });
- };
-
- const handleRemoveEditField = (index: number) => {
-   setEditChannelSchema((prev) => prev.filter((_, i) => i !== index));
- };
 
  const handleEditChannelSubmit = (e: React.FormEvent) => {
    e.preventDefault();
@@ -467,36 +436,6 @@ export default function ChamberPage() {
  setNewChannelName(tpl.name.toLowerCase().replace(/\s+/g, "-"));
  setNewChannelIcon(tpl.icon);
  setNewChannelSchema([...tpl.schema]);
- };
-
-  const handleAddField = (type: SchemaField["type"] = "text") => {
-    const defaultLabels: Record<string, string> = {
-      text: "Text Field",
-      number: "Number Field",
-      currency: "Price",
-      select: "Dropdown Options",
-      datetime: "Deadline Date",
-      url: "Reference Link",
-      file: "Attachment File",
-      image: "Image Photo",
-      poll: "Poll Option"
-    };
-    setNewChannelSchema((prev) => [
-      ...prev,
-      { id: `field_${Date.now()}`, type, label: defaultLabels[type] || "New Field", required: false }
-    ]);
-  };
-
- const handleUpdateField = (index: number, updates: any) => {
- setNewChannelSchema((prev) => {
- const copy = [...prev];
- copy[index] = { ...copy[index], ...updates };
- return copy;
- });
- };
-
- const handleRemoveField = (index: number) => {
- setNewChannelSchema((prev) => prev.filter((_, i) => i !== index));
  };
 
  const handleCreateChannelSubmit = (e: React.FormEvent) => {
@@ -955,9 +894,7 @@ export default function ChamberPage() {
 
   <SchemaEditor
     fields={newChannelSchema}
-    onAdd={handleAddField}
-    onUpdate={handleUpdateField}
-    onRemove={handleRemoveField}
+    onChange={setNewChannelSchema}
   />
 
   <DialogFooter className="pt-2">
@@ -1028,9 +965,7 @@ export default function ChamberPage() {
 
   <SchemaEditor
     fields={editChannelSchema}
-    onAdd={handleAddEditField}
-    onUpdate={handleUpdateEditField}
-    onRemove={handleRemoveEditField}
+    onChange={setEditChannelSchema}
   />
 
  <DialogFooter className="pt-2 flex justify-between items-center sm:justify-between w-full">

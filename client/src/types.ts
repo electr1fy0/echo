@@ -153,7 +153,7 @@ export interface Chamber {
 
 export interface SchemaField {
   id: string;
-  type: "text" | "number" | "currency" | "select" | "datetime" | "url" | "file" | "poll" | "image";
+  type: "text" | "number" | "currency" | "select" | "datetime" | "url" | "file" | "poll" | "image" | "location" | "source_destination" | "key_value" | "button";
   label: string;
   required: boolean;
   disabled?: boolean;

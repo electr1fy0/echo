@@ -44,7 +44,10 @@ export function PollVoter({
   };
 
   return (
-    <div className="mt-3 p-3 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full">
+    <div 
+      className="mt-3 p-3 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-xl w-full"
+      onClick={(e) => e.stopPropagation()}
+    >
       <div className="flex items-center gap-2 mb-3">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-neutral-400 shrink-0">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
@@ -67,7 +70,10 @@ export function PollVoter({
               key={i}
               type="button"
               disabled={isPending || isPollClosed}
-              onClick={() => handleVote(i)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleVote(i);
+              }}
               className={cn(
                 "relative w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-all cursor-pointer overflow-hidden",
                 isUserVote

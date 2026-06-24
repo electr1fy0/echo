@@ -12,13 +12,16 @@ import { validateMentions } from "@/lib/mention-validation";
 import { toast } from "@/lib/toast";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
+
+const MAX_POST_WORDS = 5000;
+const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { MentionField } from "@/components/ui/mention-field";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Button } from "@/components/ui/button";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Edit01Icon, ArrowDown01Icon, Image01Icon, Delete02Icon, HourglassIcon } from "@hugeicons/core-free-icons";
+import { Edit01Icon, Image01Icon, Delete02Icon, HourglassIcon } from "@hugeicons/core-free-icons";
 import { uploadImagePresigned } from "@/api/upload";
 import {
   DropdownMenu,
@@ -26,29 +29,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Hash, Layers } from "lucide-react";
 import { 
-  Type, 
-  DollarSign, 
-  List, 
+  Hash, 
+  Layers,
+  IndianRupee, 
   Calendar, 
-  Link as LinkIcon, 
   FileUp, 
   Image as ImageIcon, 
-  BarChart3 
+  BarChart3,
+  File as FileIcon,
+  MapPin,
+  Route,
+  Tag,
+  MessageSquare
 } from "lucide-react";
 import type { SchemaField } from "@/types";
 
 const FIELD_TYPES = [
   { value: "image", label: "Image", icon: ImageIcon },
   { value: "poll", label: "Poll", icon: BarChart3 },
-  { value: "url", label: "Link", icon: LinkIcon },
-  { value: "currency", label: "Price", icon: DollarSign },
+  { value: "currency", label: "Price", icon: IndianRupee },
   { value: "datetime", label: "Date-Time", icon: Calendar },
-  { value: "file", label: "File", icon: FileUp },
-  { value: "text", label: "Text", icon: Type },
-  { value: "number", label: "Number", icon: Hash },
-  { value: "select", label: "Dropdown", icon: List },
+  { type: "file" as const, value: "file", label: "File", icon: FileUp },
+  { value: "location", label: "Location", icon: MapPin },
+  { value: "source_destination", label: "Source → Destination", icon: Route },
+  { value: "key_value", label: "Key:Value", icon: Tag },
+  { value: "button", label: "DM Button", icon: MessageSquare },
 ] as const;
 
 export function CreatePostDialog() {
@@ -101,7 +107,8 @@ export function CreatePostDialog() {
   useEffect(() => {
     setCustomFields({});
     if (selectedChannelData) {
-      const schemaFields = (selectedChannelData.schema || []).filter((f: any) => f.disabled !== true);
+      const schemaFields = (selectedChannelData.schema || [])
+        .filter((f: any) => f.disabled !== true && ["image", "poll", "currency", "datetime", "file", "location", "source_destination", "key_value", "button"].includes(f.type));
       setActiveFields(schemaFields);
     } else {
       setActiveFields([]);
@@ -131,11 +138,15 @@ export function CreatePostDialog() {
       number: "Count",
       currency: "Price",
       select: "Options",
-      datetime: "Deadline",
+      datetime: "Date-Time",
       url: "Link",
       file: "File Attachment",
       image: "Image Photo",
-      poll: "Poll"
+      poll: "Poll",
+      location: "Location",
+      source_destination: "Source → Destination",
+      key_value: "Key:Value",
+      button: "DM Button"
     };
 
     const id = `user_${type}_${Date.now()}`;
@@ -152,16 +163,17 @@ export function CreatePostDialog() {
     // Set default value in customFields
     if (type === "poll") {
       setCustomFields((p) => ({ ...p, [id]: { question: "", options: ["", ""] } }));
+    } else if (type === "source_destination") {
+      setCustomFields((p) => ({ ...p, [id]: { source: "", destination: "" } }));
+    } else if (type === "key_value") {
+      setCustomFields((p) => ({ ...p, [id]: { key: "", value: "" } }));
+    } else if (type === "button") {
+      setCustomFields((p) => ({ ...p, [id]: { label: "", template: "" } }));
     } else {
       setCustomFields((p) => ({ ...p, [id]: "" }));
     }
   };
 
-  const updateFieldLabel = (id: string, label: string) => {
-    setActiveFields((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, label } : f))
-    );
-  };
 
   const removeField = (id: string) => {
     setActiveFields((prev) => prev.filter((f) => f.id !== id));
@@ -180,6 +192,12 @@ export function CreatePostDialog() {
       const result = await validateMentions(draft.content);
       if (result.missing.length > 0) {
         toast.error(`User not found: ${result.missing.join(", ")}`);
+        setIsValidating(false);
+        return;
+      }
+
+      if (countWords(draft.content) > MAX_POST_WORDS) {
+        toast.error(`Post exceeds ${MAX_POST_WORDS} word limit`);
         setIsValidating(false);
         return;
       }
@@ -205,10 +223,11 @@ export function CreatePostDialog() {
         }
       }
 
-      // Compile custom fields and store type/label metadata
+      // Compile custom fields and store type/label/options metadata
       const finalCustomFields: Record<string, any> = {};
       const _fieldTypes: Record<string, string> = {};
       const _fieldLabels: Record<string, string> = {};
+      const _fieldOptions: Record<string, string[]> = {};
 
       for (const field of activeFields) {
         const val = customFields[field.id];
@@ -216,12 +235,16 @@ export function CreatePostDialog() {
           finalCustomFields[field.id] = val;
           _fieldTypes[field.id] = field.type;
           _fieldLabels[field.id] = field.label;
+          if (field.options) {
+            _fieldOptions[field.id] = field.options;
+          }
         }
       }
 
       if (Object.keys(_fieldTypes).length > 0) {
         finalCustomFields._fieldTypes = _fieldTypes;
         finalCustomFields._fieldLabels = _fieldLabels;
+        finalCustomFields._fieldOptions = _fieldOptions;
       }
 
       // Detect if any poll field was filled → post as poll type
@@ -328,9 +351,6 @@ export function CreatePostDialog() {
                 <div className="space-y-4 pt-3 border-t border-neutral-100 dark:border-neutral-900/60 mt-2">
                   {/* Field Selector UI */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block">
-                      Add details / custom fields
-                    </span>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {FIELD_TYPES.map((ft) => {
                         const Icon = ft.icon;
@@ -359,37 +379,32 @@ export function CreatePostDialog() {
                       </div>
                       <div className="grid grid-cols-2 gap-3.5">
                         {activeFields.map((field) => {
-                          const val = customFields[field.id] || (field.type === "poll" ? { question: "", options: ["", ""] } : "");
+                          const val = customFields[field.id] || (
+                            field.type === "poll" ? { question: "", options: ["", ""] } :
+                            field.type === "source_destination" ? { source: "", destination: "" } :
+                            field.type === "key_value" ? { key: "", value: "" } :
+                            field.type === "button" ? { label: "", template: "" } :
+                            ""
+                          );
                           const setVal = (v: any) => setCustomFields((p) => ({ ...p, [field.id]: v }));
-                          
                           const ft = FIELD_TYPES.find((f) => f.value === field.type);
-                          const Icon = ft?.icon || Type;
+                          const Icon = ft?.icon || FileIcon;
 
                           return (
                             <div 
                               key={field.id} 
                               className={cn(
                                 "p-3 border border-neutral-200 dark:border-neutral-800 rounded-2xl bg-white dark:bg-neutral-900/50 space-y-2.5 relative group/field shadow-sm",
-                                field.type === "file" || field.type === "image" || field.type === "poll" || field.type === "url" ? "col-span-2" : "col-span-2 sm:col-span-1"
+                                field.type === "file" || field.type === "image" || field.type === "poll" || field.type === "source_destination" || field.type === "key_value" || field.type === "button" ? "col-span-2" : "col-span-2 sm:col-span-1"
                               )}
                             >
-                              {/* Header: Label (Static or Editable) and Delete button */}
+                              {/* Header: Label and Delete button */}
                               <div className="flex items-center justify-between gap-2 pl-0.5">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                                  <Icon className="size-3.5 text-neutral-400 shrink-0" />
-                                  {field.isUserAdded ? (
-                                    <input
-                                      type="text"
-                                      value={field.label}
-                                      onChange={(e) => updateFieldLabel(field.id, e.target.value)}
-                                      className="text-xs font-semibold text-neutral-850 dark:text-neutral-200 bg-transparent border-b border-dashed border-neutral-300 dark:border-neutral-700 focus:border-neutral-500 focus:outline-none w-full max-w-[150px] px-0.5 py-0"
-                                      placeholder="Field Name"
-                                    />
-                                  ) : (
-                                    <span className="text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 truncate">
-                                      {field.label} {field.required && <span className="text-red-500">*</span>}
-                                    </span>
-                                  )}
+                                  <Icon className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                                  <span className="text-xs font-bold text-neutral-850 dark:text-neutral-100 truncate">
+                                    {field.label} {field.required && <span className="text-red-500">*</span>}
+                                  </span>
                                 </div>
 
                                 {/* Remove field button */}
@@ -406,30 +421,6 @@ export function CreatePostDialog() {
                               </div>
 
                               {/* Input renderers */}
-                              {field.type === "select" && (
-                                <div className="w-full">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger className="inline-flex items-center justify-between rounded-xl h-9 px-3 w-full text-xs text-neutral-700 dark:text-neutral-300 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200 dark:border-neutral-800 focus:outline-none cursor-pointer">
-                                      <span>{val || "Select..."}</span>
-                                      <HugeiconsIcon icon={ArrowDown01Icon} className="size-3.5 text-neutral-400" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="min-w-[160px]">
-                                      {field.options?.map((opt: string) => (
-                                        <DropdownMenuItem key={opt} onClick={() => setVal(opt)} className="cursor-pointer text-xs">{opt}</DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              )}
-
-                              {field.type === "number" && (
-                                <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-neutral-50/20 dark:bg-neutral-900/10 h-9">
-                                  <button type="button" onClick={() => setVal(Math.max(0, Number(val) - 1))} className="w-8 h-full flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs cursor-pointer select-none">−</button>
-                                  <span className="flex-1 text-center text-xs font-bold text-neutral-800 dark:text-neutral-200 select-none">{val || 0}</span>
-                                  <button type="button" onClick={() => setVal(Number(val) + 1)} className="w-8 h-full flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-xs cursor-pointer select-none">+</button>
-                                </div>
-                              )}
-
                               {field.type === "currency" && (
                                 <div className="flex items-center rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden bg-neutral-50/20 dark:bg-neutral-900/10 h-9 px-3">
                                   <span className="text-xs text-neutral-400 font-bold mr-1">₹</span>
@@ -461,10 +452,10 @@ export function CreatePostDialog() {
                                     {fileVal ? (
                                       <div className="flex items-center justify-between p-3 border border-neutral-200 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/10 rounded-2xl text-xs font-semibold">
                                         <div className="flex items-center gap-2.5 truncate max-w-[80%] text-neutral-800 dark:text-neutral-200">
-                                          <span className="text-lg">📁</span>
+                                          <FileIcon className="size-4 text-neutral-450 dark:text-neutral-400 shrink-0" />
                                           <div className="flex flex-col min-w-0">
                                             <span className="font-semibold truncate">{fileVal.name}</span>
-                                            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">{(fileVal.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                            <span className="text-[10px] text-neutral-450 dark:text-neutral-500 font-medium">{(fileVal.size / (1024 * 1024)).toFixed(2)} MB</span>
                                           </div>
                                         </div>
                                         <button type="button" onClick={() => setVal(undefined)} className="text-xs text-[var(--brand)] hover:text-[var(--brand-hover)] cursor-pointer font-bold border-none bg-transparent">Remove</button>
@@ -475,7 +466,7 @@ export function CreatePostDialog() {
                                         {isUploading ? (
                                           <><span className="inline-block size-5 rounded-full border-2 border-neutral-300 border-t-[var(--brand)] animate-spin" /><span className="text-[11px] text-neutral-500">Uploading...</span></>
                                         ) : (
-                                          <><span className="text-lg text-neutral-400">📄</span><span className="text-xs text-neutral-500 font-medium">Click to Upload (Max 12MB)</span></>
+                                          <><FileUp className="size-5 text-neutral-400 shrink-0" /><span className="text-xs text-neutral-500 font-medium">Click to Upload (max 12MB)</span></>
                                         )}
                                       </div>
                                     )}
@@ -529,7 +520,7 @@ export function CreatePostDialog() {
                                           </>
                                         ) : (
                                           <>
-                                            <span className="text-lg text-neutral-400">🖼️</span>
+                                            <ImageIcon className="size-5 text-neutral-400 shrink-0" />
                                             <span className="text-xs text-neutral-550 font-medium">Click to Upload Image</span>
                                           </>
                                         )}
@@ -571,11 +562,55 @@ export function CreatePostDialog() {
                                 );
                               })()}
 
-                              {field.type !== "select" && field.type !== "number" && field.type !== "currency" && field.type !== "datetime" && field.type !== "file" && field.type !== "image" && field.type !== "poll" && (
-                                <input type={field.type === "url" ? "url" : "text"} placeholder={field.type === "url" ? "https://..." : `Enter ${field.label.toLowerCase()}`}
-                                  value={val} onChange={(e) => setVal(e.target.value)}
-                                  className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                              {field.type === "location" && (
+                                <input type="text" placeholder="Location..." value={val} onChange={(e) => setVal(e.target.value)}
+                                  className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
                               )}
+
+                              {field.type === "source_destination" && (() => {
+                                const routeVal = (val as { source: string; destination: string } | undefined) || { source: "", destination: "" };
+                                const setRoute = (update: { source?: string; destination?: string }) => setVal({ ...routeVal, ...update });
+                                return (
+                                  <div className="grid grid-cols-2 gap-2 w-full">
+                                    <input type="text" placeholder="From..." value={routeVal.source}
+                                      onChange={(e) => setRoute({ source: e.target.value })}
+                                      className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                                    <input type="text" placeholder="To..." value={routeVal.destination}
+                                      onChange={(e) => setRoute({ destination: e.target.value })}
+                                      className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                                  </div>
+                                );
+                              })()}
+
+                              {field.type === "key_value" && (() => {
+                                const kvVal = (val as { key: string; value: string } | undefined) || { key: "", value: "" };
+                                const setKv = (update: { key?: string; value?: string }) => setVal({ ...kvVal, ...update });
+                                return (
+                                  <div className="grid grid-cols-2 gap-2 w-full">
+                                    <input type="text" placeholder="Property..." value={kvVal.key}
+                                      onChange={(e) => setKv({ key: e.target.value })}
+                                      className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                                    <input type="text" placeholder="Value..." value={kvVal.value}
+                                      onChange={(e) => setKv({ value: e.target.value })}
+                                      className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                                  </div>
+                                );
+                              })()}
+
+                              {field.type === "button" && (() => {
+                                const btnVal = (val as { label: string; template: string } | undefined) || { label: "", template: "" };
+                                const setBtn = (update: { label?: string; template?: string }) => setVal({ ...btnVal, ...update });
+                                return (
+                                  <div className="grid grid-cols-2 gap-2 w-full">
+                                    <input type="text" placeholder="Label..." value={btnVal.label}
+                                      onChange={(e) => setBtn({ label: e.target.value })}
+                                      className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                                    <input type="text" placeholder="Template..." value={btnVal.template}
+                                      onChange={(e) => setBtn({ template: e.target.value })}
+                                      className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35" />
+                                  </div>
+                                );
+                              })()}
                             </div>
                           );
                         })}

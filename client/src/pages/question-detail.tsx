@@ -1,5 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
+import { 
+  Calendar, 
+  Link as LinkIcon, 
+  FileText, 
+  FileSpreadsheet,
+  FileArchive,
+  File as FileIcon,
+  MapPin, 
+  IndianRupee, 
+  Route,
+  Tag
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -254,167 +266,309 @@ export default function QuestionDetailPage() {
  )}
 
   {/* Dynamic custom fields metadata card */}
-  {question.customFields && Object.keys(question.customFields).length > 0 && (
-    <div className="mt-4 p-4 flex flex-col gap-4 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full">
-      
-      {/* Metadata fields list (excluding files) */}
-      {Object.entries(question.customFields).some(([_, val]) => !(val && typeof val === "object" && "url" in val && "name" in val)) && (
-        <div className="flex items-center gap-3 text-xs min-w-0 flex-wrap w-full">
-          <div className="flex items-center justify-center size-8 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 shrink-0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="size-4 text-[var(--brand)]">
-              <rect width="8" height="8" x="3" y="3" rx="1" />
-              <rect width="8" height="8" x="13" y="3" rx="1" />
-              <rect width="8" height="8" x="3" y="13" rx="1" />
-              <rect width="8" height="8" x="13" y="13" rx="1" />
-            </svg>
+  {question.customFields && Object.keys(question.customFields).filter(k => !k.startsWith("_")).length > 0 && (() => {
+    const customFields = question.customFields || {};
+    const entries = Object.entries(customFields).filter(([k]) => !k.startsWith("_"));
+    
+    // Helper to resolve field label, type, disabled state, and whether it's an image or file
+    const getFieldInfo = (key: string, val: any) => {
+      const fieldDef = question.channelSchema?.find((f: any) => f.id === key);
+      const label = customFields._fieldLabels?.[key] || fieldDef?.label || key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const type = customFields._fieldTypes?.[key] || fieldDef?.type;
+      const isImage = type === "image" || (val && typeof val === "object" && "url" in val && (val.type?.startsWith("image/") || ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(val.name?.split(".").pop()?.toLowerCase() || "")));
+      const isFile = !isImage && val && typeof val === "object" && "url" in val && "name" in val;
+      return { label, type, isImage, isFile, disabled: fieldDef?.disabled === true };
+    };
+
+    const hasMetadata = entries.some(([key, val]) => {
+      const info = getFieldInfo(key, val);
+      return !info.isImage && !info.isFile && info.type !== "poll" && !key.startsWith("poll");
+    });
+    const hasImages = entries.some(([key, val]) => getFieldInfo(key, val).isImage);
+    const hasFiles = entries.some(([key, val]) => getFieldInfo(key, val).isFile);
+
+    const showInterested = user?.username !== question.authorUsername;
+    if (!hasMetadata && !hasImages && !hasFiles && !showInterested) return null;
+
+    return (
+      <div className="mt-4 p-4 flex flex-col gap-4 bg-neutral-50/50 dark:bg-neutral-900/30 border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full">
+        
+        {/* Metadata fields list (excluding files/images) */}
+        {hasMetadata && (
+          <div className="flex flex-col gap-1.5 min-w-0 w-full">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {entries.map(([key, val]) => {
+                if (val === undefined || val === null || val === "") return null;
+                const info = getFieldInfo(key, val);
+                if (info.isImage || info.isFile || info.type === "poll" || key.startsWith("poll")) return null;
+
+                // Format currency type (Price)
+                if (info.type === "currency" || key === "price" || key === "min_order") {
+                  const showLabel = !["price", "cost", "rate", "amount"].includes(info.label.toLowerCase().trim());
+                  return (
+                    <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                      <IndianRupee className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                      <span>
+                        {showLabel && <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{info.label}:</span>}
+                        {Number(val).toLocaleString("en-IN")}
+                      </span>
+                    </div>
+                  );
+                }
+                
+                // Format date-time type
+                if (info.type === "datetime" || key === "datetime" || key === "deadline") {
+                  let displayDate = val;
+                  try {
+                    displayDate = new Date(val).toLocaleString("en-IN", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true
+                    });
+                  } catch {}
+                  const showLabel = !["date-time", "datetime", "date", "time", "deadline", "departure time"].includes(info.label.toLowerCase().trim());
+                  return (
+                    <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                      <Calendar className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                      <span>
+                        {showLabel && <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{info.label}:</span>}
+                        {displayDate}
+                      </span>
+                    </div>
+                  );
+                }
+
+                // Format location type
+                if (info.type === "location" || key === "location") {
+                  const showLabel = !["location"].includes(info.label.toLowerCase().trim());
+                  return (
+                    <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                      <MapPin className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                      <span>
+                        {showLabel && <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{info.label}:</span>}
+                        {String(val)}
+                      </span>
+                    </div>
+                  );
+                }
+                
+                // Format Route type
+                if (info.type === "source_destination" || key === "route") {
+                  const routeVal = val as { source: string; destination: string } | undefined;
+                  if (!routeVal?.source && !routeVal?.destination) return null;
+                  return (
+                    <div key={key} className={cn("inline-flex items-center gap-2 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                      <Route className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                      <span className="truncate">{routeVal.source || "Anywhere"}</span>
+                      <span className="text-neutral-400 dark:text-neutral-600 font-medium font-sans">→</span>
+                      <span className="truncate">{routeVal.destination || "Anywhere"}</span>
+                    </div>
+                  );
+                }
+
+                // Format key_value type
+                if (info.type === "key_value" || (val && typeof val === "object" && "key" in val && "value" in val)) {
+                  const kvVal = val as { key: string; value: string } | undefined;
+                  if (!kvVal?.key && !kvVal?.value) return null;
+                  return (
+                    <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50 line-through")}>
+                      <Tag className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                      <span>
+                        <span className="text-neutral-500 dark:text-neutral-400 font-medium mr-1">{kvVal.key || "Property"}:</span>
+                        {kvVal.value || "Any"}
+                      </span>
+                    </div>
+                  );
+                }
+
+                // Format button type
+                if (info.type === "button" || (val && typeof val === "object" && "label" in val && "template" in val)) {
+                  const btnVal = val as { label: string; template: string } | undefined;
+                  if (!btnVal?.label) return null;
+                  
+                  const isSelf = user?.username === question.authorUsername;
+                  return (
+                    <Button
+                      key={key}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isSelf || isDMPending}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!user) { openAuthModal("signin"); return; }
+                        sendInterestDM({
+                          authorUsername: question.authorUsername!,
+                          templateMessage: btnVal.template || `Hey, I'm interested in your post!`,
+                        });
+                        toast.success("Interest sent via DM!");
+                      }}
+                      className="cursor-pointer text-xs font-semibold"
+                    >
+                      {btnVal.label}
+                    </Button>
+                  );
+                }
+                
+                // Format url type
+                if (info.type === "url" || (typeof val === "string" && val.startsWith("http"))) {
+                  const showLabel = !["link", "url", "website"].includes(info.label.toLowerCase().trim());
+                  return (
+                    <a 
+                      key={key}
+                      href={val}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white hover:bg-neutral-50 dark:bg-neutral-900/50 dark:hover:bg-neutral-900 shadow-sm text-xs text-[var(--brand)] font-bold transition-all", info.disabled && "opacity-50 line-through")}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <LinkIcon className="size-3.5 text-[var(--brand)] shrink-0" />
+                      <span className="hover:underline">{showLabel ? info.label : "Link"}</span>
+                    </a>
+                  );
+                }
+
+                return (
+                  <div key={key} className={cn("inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 shadow-sm text-xs font-bold text-neutral-850 dark:text-neutral-100", info.disabled && "opacity-50")}>
+                    <FileText className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
+                    <span>{info.label}: {String(val)}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="flex flex-col gap-1 min-w-0 flex-1">
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Details</span>
-            <div className="flex items-center gap-2 flex-wrap text-xs font-semibold text-neutral-600 dark:text-neutral-300">
-                            {Object.entries(question.customFields).map(([key, val]) => {
-                              if (val === undefined || val === null || val === "" || (val && typeof val === "object" && "url" in val)) return null;
-                              
-                              const fieldDef = question.channelSchema?.find((f: any) => f.id === key);
-                              const isDisabled = fieldDef?.disabled === true;
+        )}
 
-                              // Format special keys
-                              if (key === "price" || key === "min_order") {
-                                return (
-                                  <span key={key} className={cn("text-neutral-950 dark:text-neutral-100 font-bold text-sm bg-neutral-200/40 dark:bg-neutral-800/50 px-2.5 py-0.5 rounded-lg border border-neutral-200/30 dark:border-neutral-700/30", isDisabled && "opacity-50 line-through")}>
-                                    ₹{Number(val).toFixed(0)} {isDisabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
-                                  </span>
-                                );
-                              }
-                              
-                              if (key === "datetime" || key === "deadline") {
-                                try {
-                                  return (
-                                    <span key={key} className={cn("bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] inline-flex items-center gap-1 font-semibold", isDisabled && "opacity-50 line-through")}>
-                                      📅 {new Date(val).toLocaleString("en-IN", {
-                                        day: "2-digit",
-                                        month: "short",
-                                        hour: "numeric",
-                                        minute: "2-digit",
-                                        hour12: true
-                                      })}
-                                      {isDisabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
-                                    </span>
-                                  );
-                                } catch {
-                                  return <span key={key} className={cn("bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] font-semibold", isDisabled && "opacity-50 line-through")}>📅 {val} {isDisabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}</span>;
-                                }
-                              }
-                              
-                              if (typeof val === "string" && val.startsWith("http")) {
-                                return (
-                                  <a 
-                                    key={key}
-                                    href={val}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={cn("text-[var(--brand)] hover:underline inline-flex items-center gap-1 bg-[var(--brand-10)] dark:bg-[var(--brand-5)] px-2 py-0.5 rounded-lg text-[11px] font-semibold", isDisabled && "opacity-50 line-through")}
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    🔗 Open Link {isDisabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
-                                  </a>
-                                );
-                              }
+        {/* Images Section */}
+        {hasImages && (
+          <div className="flex flex-col gap-1.5 w-full">
+            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Photos</span>
+            <div className="flex gap-3 overflow-x-auto scrollbar-none py-0.5">
+              {entries.map(([key, val]) => {
+                if (val === undefined || val === null || val === "") return null;
+                
+                const info = getFieldInfo(key, val);
+                if (!info.isImage) return null;
 
-                              const label = fieldDef?.label || key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-                              return (
-                                <span key={key} className={cn("bg-neutral-25/50 dark:bg-neutral-900/40 border border-neutral-200/50 dark:border-neutral-800 px-2 py-0.5 rounded-lg text-[11px] inline-flex items-center gap-1 font-semibold", isDisabled && "opacity-50")}>
-                                  <span className={cn("text-neutral-400 dark:text-neutral-500 font-medium", isDisabled && "line-through")}>{label}:</span>
-                                  <span className={cn(isDisabled && "line-through text-neutral-400")}>{String(val)}</span>
-                                  {isDisabled && <span className="text-[9px] font-normal opacity-70 ml-1">(disabled)</span>}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
+                const file = val as { url: string; name: string } | string;
+                const imageUrl = typeof file === "string" ? file : file.url;
+                const imageName = typeof file === "string" ? info.label : file.name;
+
+                return (
+                  <div 
+                    key={key} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(imageUrl, "_blank");
+                    }}
+                    className={cn(
+                      "relative group cursor-zoom-in shrink-0 overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-805 shadow-sm bg-neutral-100 dark:bg-neutral-900 hover:scale-[1.02] active:scale-[0.98] transition-all",
+                      info.disabled && "opacity-60"
                     )}
+                  >
+                    <img src={imageUrl} alt={imageName} className="size-20 sm:size-24 object-cover rounded-2xl" />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-[9px] font-semibold text-white/95 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                      {info.label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                    {/* Files List Section */}
-                    {Object.entries(question.customFields).filter(([_, val]) => val && typeof val === "object" && "url" in val && "name" in val).map(([key, val]) => {
-                      const file = val as { url: string; name: string; size: number; type: string };
-                      const fieldDef = question.channelSchema?.find((f: any) => f.id === key);
-                      const isDisabled = fieldDef?.disabled === true;
-                      let fileIcon = "📄";
-                      const ext = file.name.split(".").pop()?.toLowerCase();
-                      if (file.type?.includes("pdf") || ext === "pdf") fileIcon = "📕";
-                      else if (file.type?.includes("zip") || file.type?.includes("tar") || ext === "zip" || ext === "rar") fileIcon = "📦";
-                      else if (file.type?.includes("word") || file.type?.includes("document") || ext === "doc" || ext === "docx") fileIcon = "📘";
-                      else if (file.type?.includes("presentation") || file.type?.includes("powerpoint") || ext === "ppt" || ext === "pptx") fileIcon = "📙";
-                      else if (file.type?.includes("sheet") || file.type?.includes("excel") || ext === "xls" || ext === "xlsx") fileIcon = "📗";
-                      else if (file.type?.includes("text") || ext === "txt") fileIcon = "📝";
+        {/* Files List Section */}
+        {hasFiles && (
+          <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex flex-col gap-2">
+              {entries.map(([key, val]) => {
+                if (val === undefined || val === null || val === "") return null;
+                
+                const info = getFieldInfo(key, val);
+                if (!info.isFile) return null;
 
-                      return (
-                        <div 
-                          key={key} 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(file.url, "_blank");
-                          }}
-                          className={cn("flex items-center justify-between p-3.5 border border-neutral-200 dark:border-neutral-800/80 bg-background/50 hover:bg-neutral-100/50 dark:hover:bg-neutral-950/40 rounded-2xl cursor-pointer transition-all duration-150 group", isDisabled && "opacity-75")}
-                        >
-                          <div className="flex items-center gap-3 min-w-0 max-w-[80%]">
-                            <span className="text-2xl shrink-0 group-hover:scale-105 transition-transform">{fileIcon}</span>
-                            <div className="flex flex-col min-w-0">
-                              <span className={cn("text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-[var(--brand)] transition-colors", isDisabled && "line-through text-neutral-500")}>
-                                {file.name} {isDisabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
-                              </span>
-                              <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
-                                {(file.size / (1024 * 1024)).toFixed(2)} MB
-                              </span>
-                            </div>
-                          </div>
-                          <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-900/60 px-2.5 py-1.5 rounded-lg shrink-0">
-                            DOWNLOAD
-                          </div>
-                        </div>
-                      );
-                    })}
+                const file = val as { url: string; name: string; size: number; type: string };
+                let fileIcon = <FileIcon className="size-5 text-neutral-500 shrink-0" />;
+                const ext = file.name.split(".").pop()?.toLowerCase();
+                if (file.type?.includes("pdf") || ext === "pdf") fileIcon = <FileText className="size-5 text-red-500 shrink-0" />;
+                else if (file.type?.includes("zip") || file.type?.includes("tar") || ext === "zip" || ext === "rar") fileIcon = <FileArchive className="size-5 text-amber-500 shrink-0" />;
+                else if (file.type?.includes("sheet") || file.type?.includes("excel") || ext === "xls" || ext === "xlsx") fileIcon = <FileSpreadsheet className="size-5 text-emerald-500 shrink-0" />;
 
-      {/* Quick action DM button */}
-      {user?.username !== question.authorUsername && (
-        <Button
-          onClick={() => {
-            if (!user) { openAuthModal("signin"); return; }
-            
-            const customFields = question.customFields || {};
-            let dmMsg = `Hey! I'm interested in your post: "${question.content.slice(0, 100)}..."`;
-            if (customFields.departure && customFields.destination) {
-              dmMsg = `Hey! I'd like to join your carpool from ${customFields.departure} to ${customFields.destination}. Is there still space?`;
-            } else if (customFields.price) {
-              dmMsg = `Hey! I'm interested in buying your item for ₹${customFields.price}. Is it still available?`;
-            } else if (customFields.slots) {
-              dmMsg = `Hey! I'm interested in joining your group. Let me know if you still have space!`;
-            } else if (customFields.item) {
-              const itemType = customFields.type === "Found" ? "found" : "lost";
-              dmMsg = `Hey! I saw your post about the ${itemType} item: "${customFields.item}". I have some info / would like to connect!`;
-            } else if (customFields.file) {
-              const fileObj = customFields.file as { name: string };
-              dmMsg = `Hey! I saw your uploaded resource "${fileObj.name || "file"}" in the chamber. Had a quick question about it!`;
-            } else if (customFields.difficulty) {
-              dmMsg = `Hey! I'm interested in joining your ${customFields.difficulty} LeetCode prep group.`;
-            } else if (customFields.pickup) {
-              dmMsg = `Hey! I'm interested in joining the food group-buy for ${customFields.pickup}.`;
-            }
-            
-            sendInterestDM({
-              authorUsername: question.authorUsername!,
-              templateMessage: dmMsg,
-            });
-          }}
-          disabled={isDMPending}
-          className="w-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl text-xs h-9 cursor-pointer border-none flex items-center justify-center gap-1.5"
-        >
-          <HugeiconsIcon icon={Share01Icon} className="size-3.5 rotate-180" />
-          Interested
-        </Button>
-      )}
-    </div>
-  )}
+                return (
+                  <div 
+                    key={key} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(file.url, "_blank");
+                    }}
+                    className={cn("flex items-center justify-between p-3 border border-neutral-200/60 dark:border-neutral-800/80 bg-white hover:bg-neutral-50 dark:bg-neutral-900/40 dark:hover:bg-neutral-900/80 rounded-2xl cursor-pointer transition-all duration-150 group", info.disabled && "opacity-75")}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 max-w-[80%]">
+                      <div className="group-hover:scale-105 transition-transform shrink-0">
+                        {fileIcon}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className={cn("text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-[var(--brand)] transition-colors", info.disabled && "line-through text-neutral-500")}>
+                          {file.name} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
+                        </span>
+                        <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
+                          {(file.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-850 px-2.5 py-1.5 rounded-lg shrink-0">
+                      DOWNLOAD
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Quick action DM button */}
+        {user?.username !== question.authorUsername && (
+          <Button
+            onClick={() => {
+              if (!user) { openAuthModal("signin"); return; }
+              
+              const customFields = question.customFields || {};
+              let dmMsg = `Hey! I'm interested in your post: "${question.content.slice(0, 100)}..."`;
+              if (customFields.departure && customFields.destination) {
+                dmMsg = `Hey! I'd like to join your carpool from ${customFields.departure} to ${customFields.destination}. Is there still space?`;
+              } else if (customFields.price) {
+                dmMsg = `Hey! I'm interested in buying your item for ₹${customFields.price}. Is it still available?`;
+              } else if (customFields.slots) {
+                dmMsg = `Hey! I'm interested in joining your group. Let me know if you still have space!`;
+              } else if (customFields.item) {
+                const itemType = customFields.type === "Found" ? "found" : "lost";
+                dmMsg = `Hey! I saw your post about the ${itemType} item: "${customFields.item}". I have some info / would like to connect!`;
+              } else if (customFields.file) {
+                const fileObj = customFields.file as { name: string };
+                dmMsg = `Hey! I saw your uploaded resource "${fileObj.name || "file"}" in the chamber. Had a quick question about it!`;
+              } else if (customFields.difficulty) {
+                dmMsg = `Hey! I'm interested in joining your ${customFields.difficulty} LeetCode prep group.`;
+              } else if (customFields.pickup) {
+                dmMsg = `Hey! I'm interested in joining the food group-buy for ${customFields.pickup}.`;
+              }
+              
+              sendInterestDM({
+                authorUsername: question.authorUsername!,
+                templateMessage: dmMsg,
+              });
+            }}
+            disabled={isDMPending}
+            className="w-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl text-xs h-9 cursor-pointer border-none flex items-center justify-center gap-1.5 font-semibold"
+          >
+            <HugeiconsIcon icon={Share01Icon} className="size-3.5 rotate-180" />
+            Interested
+          </Button>
+        )}
+      </div>
+    );
+  })()}
 
  {/* METADATA INTERFACE FOR TRADE OR PARTNERS */}
  {question.postType === "trade" && (

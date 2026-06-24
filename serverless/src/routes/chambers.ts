@@ -78,9 +78,7 @@ chamberRoutes.post("/", async (c) => {
       name: "marketplace",
       icon: "shopping-bag",
       schema: [
-        { id: "price", type: "currency", label: "Price (₹)", required: true },
-        { id: "condition", type: "select", label: "Condition", options: ["Brand New", "Like New", "Used", "Digital/PDF"], required: true },
-        { id: "category", type: "select", label: "Category", options: ["Textbooks", "Electronics", "Lab Coats / Gear", "Hostel Essentials", "Other"], required: false }
+        { id: "price", type: "currency", label: "Price", required: true }
       ],
     },
     {
@@ -88,30 +86,23 @@ chamberRoutes.post("/", async (c) => {
       name: "carpools",
       icon: "car",
       schema: [
-        { id: "departure", type: "text", label: "From", required: true },
-        { id: "destination", type: "text", label: "To", required: true },
         { id: "datetime", type: "datetime", label: "Departure Time", required: true },
-        { id: "seats", type: "number", label: "Seats Available", required: true }
+        { id: "pickup", type: "location", label: "Pickup From", required: true },
+        { id: "dropoff", type: "location", label: "Dropoff To", required: true }
       ],
     },
     {
       chamberUid: created.uid,
       name: "study-partners",
       icon: "users",
-      schema: [
-        { id: "slots", type: "number", label: "Slots Needed", required: true },
-        { id: "grade_target", type: "select", label: "Target Grade", options: ["A+ / Perfect Score", "Pass", "Just for Fun"], required: false },
-        { id: "workstyle", type: "select", label: "Workstyle", options: ["In-person", "Online", "Hybrid"], required: false }
-      ],
+      schema: [],
     },
     {
       chamberUid: created.uid,
       name: "lost-and-found",
       icon: "search",
       schema: [
-        { id: "type", type: "select", label: "Status", options: ["Lost", "Found"], required: true },
-        { id: "item", type: "text", label: "Item Description", required: true },
-        { id: "location", type: "text", label: "Location Lost/Found", required: false }
+        { id: "location", type: "location", label: "Location", required: false }
       ],
     },
     {
@@ -119,9 +110,7 @@ chamberRoutes.post("/", async (c) => {
       name: "resources",
       icon: "book-open",
       schema: [
-        { id: "file", type: "file", label: "Resource File", required: true },
-        { id: "course", type: "text", label: "Course Code", required: false },
-        { id: "notes", type: "text", label: "Description / Notes", required: false }
+        { id: "file", type: "file", label: "Resource File", required: true }
       ],
     }
   ];

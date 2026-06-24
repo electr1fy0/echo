@@ -1,6 +1,11 @@
 import { ApiError } from "./errors";
 import type { Bindings } from "../types/app";
 
+export const MAX_POST_WORDS = 5000;
+
+export const countWords = (text: string) =>
+  text.trim().split(/\s+/).filter(Boolean).length;
+
 export const mentionPattern = /@([a-zA-Z0-9_]+)/g;
 
 export const parsePagination = (query: Record<string, string | undefined>) => {
