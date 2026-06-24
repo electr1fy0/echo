@@ -140,7 +140,7 @@ export function CreatePostDialog() {
       select: "Options",
       datetime: "Date-Time",
       url: "Link",
-      file: "File Attachment",
+      file: "File",
       image: "Image Photo",
       poll: "Poll",
       location: "Location",
@@ -320,9 +320,9 @@ export function CreatePostDialog() {
         </DialogHeader>
 
         <div className="px-5 pb-5 space-y-4 max-h-[80vh] overflow-y-auto pr-3">
-          <div className="flex items-start gap-3">
+          <div className="flex flex-col sm:flex-row items-start gap-3">
             <UserAvatar src={user.avatar} name={user.username} className="size-9 mt-0.5 shrink-0" />
-            <div className="flex-1 space-y-3">
+            <div className="flex-1 w-full space-y-3">
               <div className="bg-transparent space-y-3">
                 <MentionField
                   placeholder="What's on your mind?"

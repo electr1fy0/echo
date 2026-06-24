@@ -42,7 +42,7 @@ export function SchemaEditor({ fields, onChange }: SchemaEditorProps) {
     const defaultLabels: Record<string, string> = {
       currency: "Price",
       datetime: "Date-Time",
-      file: "File Attachment",
+      file: "File",
       image: "Image Photo",
       poll: "Poll",
       location: "Location",

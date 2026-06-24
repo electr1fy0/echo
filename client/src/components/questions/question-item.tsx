@@ -11,7 +11,8 @@ import {
   MapPin,
   IndianRupee,
   Route,
-  Tag
+  Tag,
+  Download
 } from "lucide-react";
 import {
   AccordionContent,
@@ -922,16 +923,16 @@ export function QuestionItem({
                                     <FileIconComp className="size-5 shrink-0 text-neutral-500 group-hover:text-[var(--brand)] transition-colors group-hover:scale-105 transition-transform" />
                                     <div className="flex flex-col min-w-0">
                                       <span className={cn("text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-[var(--brand)] transition-colors", info.disabled && "line-through text-neutral-500")}>
-                                        {info.label}: {file.name} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
+                                        {file.name} {info.disabled && <span className="text-[9px] font-normal no-underline opacity-70 ml-1">(disabled)</span>}
                                       </span>
                                       <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium">
                                         {file.size ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` : "Unknown Size"}
                                       </span>
                                     </div>
                                   </div>
-                                  <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-900/60 px-2.5 py-1.5 rounded-lg shrink-0">
-                                    DOWNLOAD
-                                  </div>
+                                   <div className="flex items-center justify-center size-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-background hover:bg-neutral-100 dark:hover:bg-neutral-900/60 text-neutral-500 dark:text-neutral-400 shrink-0">
+                                    <Download className="size-4" />
+                                   </div>
                                 </div>
                               );
                             })}

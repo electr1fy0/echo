@@ -14,9 +14,9 @@ function Calendar({ className, classNames, ...props }: CalendarProps) {
         month: "space-y-3",
         nav: "flex items-center justify-between",
         button_previous:
-          "flex items-center justify-center size-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer [&_svg]:size-4 [&_svg]:text-current",
+          "flex items-center justify-center size-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer [&_svg]:size-4 [&_svg]:fill-current",
         button_next:
-          "flex items-center justify-center size-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer [&_svg]:size-4 [&_svg]:text-current",
+          "flex items-center justify-center size-7 rounded-lg text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer [&_svg]:size-4 [&_svg]:fill-current",
         weekday: "text-[11px] font-semibold text-neutral-400 dark:text-neutral-500 w-9 text-center",
         day: "size-9 text-sm rounded-lg text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer",
         day_button: "size-full flex items-center justify-center",

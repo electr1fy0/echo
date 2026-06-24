@@ -10,7 +10,8 @@ import {
   MapPin, 
   IndianRupee, 
   Route,
-  Tag
+  Tag,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -518,8 +519,8 @@ export default function QuestionDetailPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-850 px-2.5 py-1.5 rounded-lg shrink-0">
-                      DOWNLOAD
+                    <div className="flex items-center justify-center size-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-850 text-neutral-500 dark:text-neutral-400 shrink-0">
+                      <Download className="size-4" />
                     </div>
                   </div>
                 );
