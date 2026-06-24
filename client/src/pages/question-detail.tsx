@@ -26,10 +26,10 @@ import {
 } from "@hugeicons/core-free-icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useEditPostModal } from "@/hooks/use-edit-post-modal";
 import {
   useQuestionQuery,
   useDeleteQuestion,
-  useUpdateQuestion,
 } from "@/hooks/use-questions";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
@@ -73,7 +73,6 @@ export default function QuestionDetailPage() {
   const { data: replies = [], isLoading: isRepliesLoading } =
     useRepliesQuery(questionId);
   const { mutate: deleteQuestion } = useDeleteQuestion();
-  const { mutate: updateQuestion } = useUpdateQuestion();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { mutate: deleteReply } = useDeleteReply();
 
@@ -83,9 +82,8 @@ export default function QuestionDetailPage() {
     }
   }, [questionId]);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const { open: openEditModal } = useEditPostModal();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-  const [editedContent, setEditedContent] = useState("");
   const [pitchContent, setPitchContent] = useState("");
   const [isApplying, setIsApplying] = useState(false);
   const [interestMessage, setInterestMessage] = useState("");
@@ -136,16 +134,6 @@ export default function QuestionDetailPage() {
   const isPinned = !!question.isPinned;
   const isSolved = !!question.acceptedAnswerUid;
 
-  const handleEditSave = () => {
-    if (!questionId || !editedContent.trim()) return;
-    updateQuestion(
-      { questionId, content: editedContent },
-      {
-        onSuccess: () => setIsEditing(false),
-      },
-    );
-  };
-
   const handlePartnerApply = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -160,6 +148,9 @@ export default function QuestionDetailPage() {
           toast.success("Application submitted!");
           setPitchContent("");
           setIsApplying(false);
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to submit application");
         },
       },
     );
@@ -235,10 +226,7 @@ export default function QuestionDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  onClick={() => {
-                    setIsEditing(!isEditing);
-                    setEditedContent(question.content);
-                  }}
+                  onClick={() => openEditModal(question)}
                 >
                   <HugeiconsIcon
                     icon={PencilEdit02Icon}
@@ -258,36 +246,10 @@ export default function QuestionDetailPage() {
         </div>
 
         {/* Content body */}
-        {isEditing ? (
-          <div className="space-y-3">
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              className="min-h-[100px] text-sm rounded-xl"
-            />
-            <div className="flex gap-2 justify-end">
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsEditing(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleEditSave}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <PostContent
-            content={question.content}
-            className="text-base text-neutral-900 dark:text-neutral-100 leading-relaxed font-light"
-          />
-        )}
+        <PostContent
+          content={question.content}
+          className="text-base text-neutral-900 dark:text-neutral-100 leading-relaxed font-light"
+        />
 
         {/* Poll voter */}
         {question.postType === "poll" && question.pollUid && (
@@ -1292,9 +1254,7 @@ export default function QuestionDetailPage() {
 
         {/* Reply Publisher Card */}
         {user ? (
-          <div className="p-4 border border-neutral-200 dark:border-neutral-800 bg-background rounded-2xl">
-            <ReplyForm questionId={questionId!} />
-          </div>
+          <ReplyForm questionId={questionId!} />
         ) : (
           <div className="p-5 border border-neutral-200 dark:border-neutral-800 bg-background rounded-2xl text-center">
             <p className="text-xs text-neutral-500 mb-2">
@@ -1351,7 +1311,7 @@ export default function QuestionDetailPage() {
             <AlertDialogClose
               render={<Button variant="destructive" />}
               onClick={() =>
-                deleteQuestion(questionId!, { onSuccess: () => navigate(-1) })
+                deleteQuestion(questionId!, { onSuccess: () => navigate(-1), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete post") })
               }
             >
               Delete

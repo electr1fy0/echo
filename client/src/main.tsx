@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import { ThemeProvider } from "next-themes";
 import { AuthModalProvider } from "./hooks/use-auth-modal.tsx";
 import { CreatePostModalProvider } from "./hooks/use-create-post-modal.tsx";
+import { EditPostModalProvider } from "./hooks/use-edit-post-modal.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 const queryClient = new QueryClient();
@@ -22,7 +23,9 @@ createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
           <AuthModalProvider>
             <CreatePostModalProvider>
-              <App />
+              <EditPostModalProvider>
+                <App />
+              </EditPostModalProvider>
             </CreatePostModalProvider>
           </AuthModalProvider>
         </QueryClientProvider>

@@ -1,5 +1,6 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
+import { parseApiError } from "@/lib/api-error";
 export interface Notification {
     uid: string;
     user_username: string;
@@ -24,7 +25,7 @@ export async function listNotifications(limit?: number, offset?: number): Promis
             ...getAuthHeaders(),
         },
     });
-    if (!res.ok) throw new Error("failed");
+    if (!res.ok) await parseApiError(res);
     return res.json();
 }
 
@@ -39,7 +40,7 @@ export async function getUnreadNotificationCount(): Promise<number> {
     const res = await fetch(`${API_URL}/users/me/notifications/unread-count`, {
         headers: { ...getAuthHeaders() },
     });
-    if (!res.ok) throw new Error("failed");
+    if (!res.ok) await parseApiError(res);
     const { count } = await res.json();
     return count;
 }

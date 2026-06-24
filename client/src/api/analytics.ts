@@ -1,5 +1,6 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
+import { parseApiError } from "@/lib/api-error";
 
 export interface UserAnalytics {
   activity: { date: string; posts: number; replies: number; upvotesReceived: number }[];
@@ -27,7 +28,7 @@ export async function fetchUserAnalytics(): Promise<UserAnalytics> {
   const res = await fetch(`${API_URL}/analytics/me`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to fetch analytics");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 
@@ -35,7 +36,7 @@ export async function fetchPostAnalytics(postUid: string): Promise<PostAnalytics
   const res = await fetch(`${API_URL}/analytics/questions/${postUid}`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to fetch post analytics");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 

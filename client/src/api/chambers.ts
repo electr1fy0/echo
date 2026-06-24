@@ -1,6 +1,7 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
 import type { Chamber } from "@/types";
+import { parseApiError } from "@/lib/api-error";
 export async function createChamber(chamber: Chamber): Promise<Chamber> {
   const res = await fetch(`${API_URL}/chambers`, {
     method: "POST",
@@ -9,7 +10,7 @@ export async function createChamber(chamber: Chamber): Promise<Chamber> {
     },
     body: JSON.stringify(chamber),
   });
-  if (!res.ok) throw new Error("failed to create chamber");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 export async function listChambers(query?: string): Promise<Chamber[]> {
@@ -22,7 +23,7 @@ export async function listChambers(query?: string): Promise<Chamber[]> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to list chambers");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 export async function joinChamber(uid: string): Promise<void> {
@@ -32,7 +33,7 @@ export async function joinChamber(uid: string): Promise<void> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to join chamber");
+  if (!res.ok) await parseApiError(res);
 }
 export async function leaveChamber(uid: string): Promise<void> {
   const res = await fetch(`${API_URL}/chambers/${uid}/leave`, {
@@ -41,7 +42,7 @@ export async function leaveChamber(uid: string): Promise<void> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to leave chamber");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function updateChamber(uid: string, chamber: Chamber): Promise<void> {
@@ -52,7 +53,7 @@ export async function updateChamber(uid: string, chamber: Chamber): Promise<void
     },
     body: JSON.stringify(chamber),
   });
-  if (!res.ok) throw new Error("failed to update chamber");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function deleteChamber(name: string): Promise<void> {
@@ -63,7 +64,7 @@ export async function deleteChamber(name: string): Promise<void> {
     },
     body: JSON.stringify({ name }),
   });
-  if (!res.ok) throw new Error("failed to delete chamber");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function listChannels(chamberUid: string): Promise<any[]> {
@@ -73,7 +74,7 @@ export async function listChannels(chamberUid: string): Promise<any[]> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to list channels");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 
@@ -86,7 +87,7 @@ export async function createChannel(chamberUid: string, channel: { name: string;
     },
     body: JSON.stringify(channel),
   });
-  if (!res.ok) throw new Error("failed to create channel");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 
@@ -103,7 +104,7 @@ export async function updateChannel(
     },
     body: JSON.stringify(channel),
   });
-  if (!res.ok) throw new Error("failed to update channel");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 
@@ -114,7 +115,7 @@ export async function deleteChannel(chamberUid: string, channelUid: string): Pro
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to delete channel");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function listAllChannels(joinedOnly?: boolean): Promise<any[]> {
@@ -127,6 +128,6 @@ export async function listAllChannels(joinedOnly?: boolean): Promise<any[]> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to list all channels");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }

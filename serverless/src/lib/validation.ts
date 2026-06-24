@@ -90,6 +90,7 @@ export const createPostSchema = z.object({
 
 export const updatePostSchema = z.object({
   content: z.string().max(100000).optional(),
+  customFields: z.record(z.string(), z.any()).optional(),
   tradeStatus: z.string().optional(),
   partnerSlotsNeeded: z.number().int().optional(),
   partnerStatus: z.string().optional(),

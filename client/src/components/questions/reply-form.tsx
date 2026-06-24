@@ -78,8 +78,8 @@ export function ReplyForm({
             toast.success("Reply posted");
             onSubmitSuccess?.();
           },
-          onError: () => {
-            toast.error("Failed to submit reply. Please try again.");
+          onError: (err) => {
+            toast.error(err instanceof Error ? err.message : "Failed to submit reply. Please try again.");
           },
           onSettled: () => {
             setIsValidating(false);
@@ -94,91 +94,87 @@ export function ReplyForm({
 
   return (
     <form
-      className={cn("flex gap-4 items-start", compact ? "mt-2" : "mt-4")}
+      className={cn(compact ? "mt-2" : "mt-4")}
       onSubmit={handleSubmit}
     >
-      <div className="flex-1 space-y-2">
-        {replyingToUsername && (
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Replying to{" "}
-            <span className="font-medium text-neutral-700 dark:text-neutral-300">
-              @{replyingToUsername}
-            </span>
-            {onCancel && (
-              <button
-                type="button"
-                onClick={onCancel}
-                className="ml-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer"
-              >
-                Cancel
-              </button>
-            )}
-          </p>
-        )}
+      {replyingToUsername && (
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
+          Replying to{" "}
+          <span className="font-medium text-neutral-700 dark:text-neutral-300">
+            @{replyingToUsername}
+          </span>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="ml-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
+        </p>
+      )}
+      <div className="relative flex items-end rounded-xl border border-input bg-background p-1.5">
         <MentionField
           value={content}
           placeholder="Write a reply..."
           ariaLabel="Reply content"
-          className="text-base md:text-sm"
+          className="min-h-10 pr-20"
           onValueChange={setContent}
           multiline={true}
-          containerClassName="w-full"
+          containerClassName="flex-1"
+          unstyled
+          style={{ resize: "none" }}
         />
-        <div className="flex items-center justify-between">
+        <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5">
           <button
             type="button"
             disabled={imageUploading}
             onClick={() =>
               document.getElementById("reply-image-input")?.click()
             }
-            className="flex items-center gap-1.5 h-7 px-2 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer transition-colors disabled:opacity-50"
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer transition-colors disabled:opacity-50"
           >
             {imageUploading ? (
               <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
             ) : (
-              <HugeiconsIcon icon={Image01Icon} className="size-3.5" />
+              <HugeiconsIcon icon={Image01Icon} className="size-4" />
             )}
-            {imageUploading ? "Uploading..." : "Image"}
           </button>
-          <input
-            id="reply-image-input"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={imageUploading}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setImageUploading(true);
-              try {
-                const url = await uploadImagePresigned(file);
-                setContent((prev) => prev + `\n${url}\n`);
-              } catch {
-                toast.error("Image upload failed");
-              } finally {
-                setImageUploading(false);
-                e.target.value = "";
-              }
-            }}
-          />
+          <Button
+            type="submit"
+            disabled={!content.trim() || isValidating || isPending}
+            className="size-8 p-0 rounded-lg cursor-pointer"
+          >
+            {isPending ? (
+              <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
+            ) : (
+              <HugeiconsIcon icon={Comment01Icon} className="size-4" />
+            )}
+          </Button>
         </div>
       </div>
-      <Button
-        variant="outline"
-        disabled={!content.trim() || isValidating || isPending}
-        type="submit"
-      >
-        {isPending ? (
-          <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />
-        ) : (
-          <>
-            <HugeiconsIcon icon={Comment01Icon} className="mr-1 size-4" />
-            <span className="text-sm text-neutral-800 dark:text-neutral-200">
-              Reply
-            </span>
-          </>
-        )}
-      </Button>
+      <input
+        id="reply-image-input"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        disabled={imageUploading}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setImageUploading(true);
+          try {
+            const url = await uploadImagePresigned(file);
+            setContent((prev) => prev + `\n${url}\n`);
+          } catch {
+            toast.error("Image upload failed");
+          } finally {
+            setImageUploading(false);
+            e.target.value = "";
+          }
+        }}
+      />
     </form>
   );
 }

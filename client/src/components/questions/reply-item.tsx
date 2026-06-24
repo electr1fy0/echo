@@ -73,6 +73,9 @@ export function ReplyItem({
       { qid: reply.questionUid, rid: reply.uid, content: editedContent },
       {
         onSuccess: () => setIsEditing(false),
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to update reply");
+        },
       },
     );
   }
@@ -150,7 +153,7 @@ export function ReplyItem({
             </span>
             {isEditing ? (
               <div
-                className="mt-2"
+                className="mt-2 relative flex items-end rounded-xl border border-input bg-background p-1.5"
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
                 onKeyUp={(e) => e.stopPropagation()}
@@ -158,8 +161,11 @@ export function ReplyItem({
                 <Textarea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
+                  unstyled
+                  className="min-h-10 pr-24"
+                  style={{ resize: "none" }}
                 />
-                <div className="flex gap-2 justify-end">
+                <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1">
                   <Button
                     variant="ghost"
                     size="xs"
@@ -168,6 +174,7 @@ export function ReplyItem({
                       setEditedContent(reply.content);
                     }}
                     disabled={isUpdatePending}
+                    className="h-7 text-xs cursor-pointer"
                   >
                     Cancel
                   </Button>
@@ -176,6 +183,7 @@ export function ReplyItem({
                     size="xs"
                     onClick={handleSave}
                     disabled={isUpdatePending}
+                    className="h-7 text-xs cursor-pointer"
                   >
                     Save
                   </Button>

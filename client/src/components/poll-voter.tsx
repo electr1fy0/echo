@@ -129,22 +129,11 @@ export function PollVoter({
                   {option}
                 </span>
                 {hasVoted && (
-                  <span className="font-semibold text-neutral-500 text-[10px] shrink-0 flex items-center gap-1">
+                  <span className="font-semibold text-neutral-500 text-[10px] shrink-0 tabular-nums">
                     {snapshot && increment > 0 ? (
-                      <>
-                        <span>{baseCount}+{increment}</span>
-                        <span className="tabular-nums">
-                          ({Math.round(basePct)}%&rarr;{Math.round(pct)}%)
-                        </span>
-                      </>
-                    ) : snapshot && increment < 0 ? (
-                      <>
-                        <span className="text-neutral-400 line-through">{baseCount}</span>
-                        <span>{count}</span>
-                        <span className="tabular-nums">({Math.round(pct)}%)</span>
-                      </>
+                      <>{Math.round(basePct)}%&rarr;{Math.round(pct)}%</>
                     ) : (
-                      <>{count} ({Math.round(pct)}%)</>
+                      <>{Math.round(pct)}%</>
                     )}
                   </span>
                 )}

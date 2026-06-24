@@ -15,6 +15,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
+import { useAccentTheme } from "@/hooks/use-accent-theme";
 import { Button } from "@/components/ui/button";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 
@@ -46,6 +47,7 @@ const DMsPage = lazy(() => import("@/pages/dms"));
 const DMConversationPage = lazy(() => import("@/pages/dm-conversation"));
 
 import { CreatePostDialog } from "@/components/questions/create-post-dialog";
+import { EditPostDialog } from "@/components/questions/edit-post-dialog";
 
 function AutoStartTour() {
   const { data: user, isLoading } = useAuth();
@@ -98,6 +100,7 @@ function AuthenticatedLayout() {
         </main>
         <AuthDialog />
         <CreatePostDialog />
+        <EditPostDialog />
 
         {!user && !isLoading && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-100 py-4 px-6 md:px-12 md:flex hidden flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom duration-500">
@@ -124,6 +127,11 @@ function AuthenticatedLayout() {
   );
 }
 
+function AccentThemeInitializer() {
+  useAccentTheme();
+  return null;
+}
+
 export default function App() {
   return (
     <ErrorBoundary
@@ -134,6 +142,7 @@ export default function App() {
       }
     >
       <BrowserRouter>
+        <AccentThemeInitializer />
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/verify-email" element={<VerifyEmail />} />

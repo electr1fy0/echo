@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -56,9 +57,13 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
     }
     if (!chamber.uid || isPending) return;
     if (chamber.isJoined) {
-      leaveMutation.mutate(chamber.uid);
+      leaveMutation.mutate(chamber.uid, {
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to leave chamber"),
+      });
     } else {
-      joinMutation.mutate(chamber.uid);
+      joinMutation.mutate(chamber.uid, {
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to join chamber"),
+      });
     }
   };
   return (
@@ -161,7 +166,9 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
               className="rounded-full"
               disabled={deleteMutation.isPending}
               onClick={() => {
-                deleteMutation.mutate(chamber.name);
+                deleteMutation.mutate(chamber.name, {
+                  onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete chamber"),
+                });
               }}
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete Chamber"}

@@ -16,6 +16,8 @@ type MentionFieldProps = {
   disabled?: boolean;
   ariaLabel?: string;
   autoFocus?: boolean;
+  unstyled?: boolean;
+  style?: React.CSSProperties;
 };
 
 export function MentionField({
@@ -28,6 +30,8 @@ export function MentionField({
   disabled,
   ariaLabel,
   autoFocus,
+  unstyled,
+  style,
 }: MentionFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -111,6 +115,8 @@ export function MentionField({
     disabled,
     autoFocus,
     className,
+    unstyled,
+    style,
     ...handlers,
   };
 

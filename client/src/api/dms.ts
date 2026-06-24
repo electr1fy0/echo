@@ -1,12 +1,13 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
 import type { Conversation, Message } from "@/types";
+import { parseApiError } from "@/lib/api-error";
 
 export async function fetchConversations() {
   const res = await fetch(`${API_URL}/dms/conversations`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to fetch conversations");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<Conversation[]>;
 }
 
@@ -16,10 +17,7 @@ export async function createConversation(username: string) {
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ username }),
   });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || data.message || "Failed to create conversation");
-  }
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<Conversation>;
 }
 
@@ -31,7 +29,7 @@ export async function fetchMessages(conversationUid: string, limit = 50, offset 
   const res = await fetch(`${API_URL}/dms/conversations/${conversationUid}/messages?${params}`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to fetch messages");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<Message[]>;
 }
 
@@ -46,7 +44,7 @@ export async function getUnreadMessageCount(): Promise<number> {
   const res = await fetch(`${API_URL}/dms/unread-count`, {
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to fetch unread count");
+  if (!res.ok) await parseApiError(res);
   const { count } = await res.json();
   return count;
 }
@@ -57,7 +55,7 @@ export async function editMessage(conversationUid: string, messageUid: string, c
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ content }),
   });
-  if (!res.ok) throw new Error("Failed to edit message");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<Message>;
 }
 
@@ -66,7 +64,7 @@ export async function deleteMessage(conversationUid: string, messageUid: string)
     method: "DELETE",
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to delete message");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function sendMessage(conversationUid: string, content: string) {
@@ -75,6 +73,6 @@ export async function sendMessage(conversationUid: string, content: string) {
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ content }),
   });
-  if (!res.ok) throw new Error("Failed to send message");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<Message>;
 }

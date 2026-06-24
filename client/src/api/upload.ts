@@ -1,5 +1,6 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
+import { parseApiError } from "@/lib/api-error";
 
 export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
@@ -9,7 +10,7 @@ export async function uploadImage(file: File): Promise<string> {
     headers: { ...getAuthHeaders() },
     body: form,
   });
-  if (!res.ok) throw new Error("upload failed");
+  if (!res.ok) await parseApiError(res);
   const { url } = await res.json();
   return url;
 }
@@ -20,7 +21,7 @@ export async function uploadImagePresigned(file: File): Promise<string> {
     headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ filename: file.name, contentType: file.type }),
   });
-  if (!presignRes.ok) throw new Error("failed to get presigned URL");
+  if (!presignRes.ok) await parseApiError(presignRes);
   const { url: presignedUrl, publicUrl } = await presignRes.json();
 
   try {

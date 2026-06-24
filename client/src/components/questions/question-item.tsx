@@ -27,18 +27,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/menu";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useEditPostModal } from "@/hooks/use-edit-post-modal";
 import {
   usePinQuestion,
   useUnpinQuestion,
-  useUpdateQuestion,
   useExpressInterestViaDM,
 } from "@/hooks/use-questions";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -151,18 +149,9 @@ function CountdownRing({
 
 const TriggerWrapper = ({
   children,
-  isEditing,
 }: {
   children: React.ReactNode;
-  isEditing: boolean;
 }) => {
-  if (isEditing) {
-    return (
-      <div className="flex flex-1 items-start justify-between gap-3 p-4 text-left text-sm font-normal border border-transparent relative outline-none cursor-default">
-        {children}
-      </div>
-    );
-  }
   return (
     <AccordionTrigger className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left">
       {children}
@@ -188,49 +177,12 @@ export function QuestionItem({
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
-  const { mutate: updateQuestion, isPending: isUpdatePending } =
-    useUpdateQuestion();
+  const { open: openEditModal } = useEditPostModal();
   const { mutate: pinQuestion, isPending: isPinPending } = usePinQuestion();
   const { mutate: unpinQuestion, isPending: isUnpinPending } =
     useUnpinQuestion();
   const { mutate: sendInterestDM, isPending: isDMPending } =
     useExpressInterestViaDM();
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(question?.content ?? "");
-
-  const [editedTradePrice, setEditedTradePrice] = useState(
-    question?.tradePrice ? (question.tradePrice / 100).toString() : "",
-  );
-  const [editedTradeCondition, setEditedTradeCondition] = useState(
-    question?.tradeCondition ?? "Like New",
-  );
-  const [editedTradeStatus, setEditedTradeStatus] = useState(
-    question?.tradeStatus ?? "available",
-  );
-
-  const [editedPartnerSlotsNeeded, setEditedPartnerSlotsNeeded] = useState(
-    question?.partnerSlotsNeeded ?? 1,
-  );
-  const [editedPartnerStatus, setEditedPartnerStatus] = useState(
-    question?.partnerStatus ?? "open",
-  );
-
-  const [editedTaxiDeparture, setEditedTaxiDeparture] = useState(
-    question?.taxiDeparture ?? "",
-  );
-  const [editedTaxiDestination, setEditedTaxiDestination] = useState(
-    question?.taxiDestination ?? "",
-  );
-  const [editedTaxiDatetime, setEditedTaxiDatetime] = useState(
-    question?.taxiDatetime ?? "",
-  );
-  const [editedTaxiSeatsAvailable, setEditedTaxiSeatsAvailable] = useState(
-    question?.taxiSeatsAvailable ?? 1,
-  );
-  const [editedTaxiStatus, setEditedTaxiStatus] = useState(
-    question?.taxiStatus ?? "open",
-  );
 
   const [interestSent, setInterestSent] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -241,50 +193,12 @@ export function QuestionItem({
   const isSolved = !!question.acceptedAnswerUid;
   const isExpiring = !!question.expiresAt;
 
-  function handleSave() {
-    if (!questionId) return;
-    if (!editedContent.trim()) return;
-    updateQuestion(
-      {
-        questionId,
-        content: editedContent,
-        ...(question.postType === "trade"
-          ? {
-              tradePrice: editedTradePrice
-                ? Math.round(Number(editedTradePrice) * 100)
-                : undefined,
-              tradeCondition: editedTradeCondition,
-              tradeStatus: editedTradeStatus,
-            }
-          : {}),
-        ...(question.postType === "partner"
-          ? {
-              partnerSlotsNeeded: Number(editedPartnerSlotsNeeded),
-              partnerStatus: editedPartnerStatus,
-            }
-          : {}),
-        ...(question.postType === "taxi"
-          ? {
-              taxiDeparture: editedTaxiDeparture,
-              taxiDestination: editedTaxiDestination,
-              taxiDatetime: editedTaxiDatetime,
-              taxiSeatsAvailable: Number(editedTaxiSeatsAvailable),
-              taxiStatus: editedTaxiStatus,
-            }
-          : {}),
-      },
-      {
-        onSuccess: () => setIsEditing(false),
-      },
-    );
-  }
-
   return (
     <AccordionItem
       value={questionId}
       className="w-full border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
     >
-      <TriggerWrapper isEditing={isEditing}>
+      <TriggerWrapper>
         <div className="flex items-start gap-3 w-full">
           {(() => {
             const avatarLink = (
@@ -402,418 +316,138 @@ export function QuestionItem({
                   </div>
                 )}
               </div>
-              {!isEditing && (
-                <div
-                  onClick={(e) => e.stopPropagation()}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className="flex items-center gap-2 shrink-0"
-                >
-                  <UpvoteButton
-                    count={question.upvotes}
-                    isUpvoted={question.isUpvoted}
-                    onToggle={() => {
-                      if (!user) {
-                        openAuthModal("signin");
-                      } else {
-                        handleVote(questionId);
-                      }
-                    }}
-                    isPending={isVotePending}
-                    className="w-14 text-right h-7 px-2.5 transition-colors"
-                  />
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={(props) => (
-                        <Button
-                          {...props}
-                          variant="ghost"
-                          size="icon-xs"
-                          aria-label="More options"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            props.onClick?.(e);
-                          }}
-                        >
-                          <HugeiconsIcon
-                            icon={MoreHorizontalIcon}
-                            className="size-5"
-                          />
-                        </Button>
-                      )}
-                    />
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => navigate(`/q/${questionId}`)}
-                      >
-                        <HugeiconsIcon
-                          icon={BookOpen01Icon}
-                          className="mr-2 size-4"
-                        />
-                        View Thread
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          navigator.clipboard.writeText(question.content);
-                          toast.success("Copied to clipboard");
-                        }}
-                      >
-                        <HugeiconsIcon
-                          icon={Copy01Icon}
-                          className="mr-2 size-4"
-                        />
-                        Copy Text
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          const url = `${window.location.origin}/q/${questionId}`;
-                          navigator.clipboard.writeText(url);
-                          toast.success("Link copied to clipboard");
-                        }}
-                      >
-                        <HugeiconsIcon
-                          icon={Share01Icon}
-                          className="mr-2 size-4"
-                        />
-                        Share
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => alert("Reported content")}
-                      >
-                        <HugeiconsIcon
-                          icon={Alert01Icon}
-                          className="mr-2 size-4"
-                        />
-                        Report
-                      </DropdownMenuItem>
-                      {user?.username === question.authorUsername && (
-                        <>
-                          <DropdownMenuItem
-                            onClick={() => setShowAnalytics(true)}
-                          >
-                            <HugeiconsIcon
-                              icon={ChartUpIcon}
-                              className="mr-2 size-4"
-                            />
-                            View Analytics
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                            <HugeiconsIcon
-                              icon={PencilEdit02Icon}
-                              className="mr-2 size-4"
-                            />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setShowDeleteAlert(true)}
-                          >
-                            <HugeiconsIcon
-                              icon={Delete02Icon}
-                              className="mr-2 size-4"
-                            />
-                            Delete
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      {canPin && (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            isPinned
-                              ? unpinQuestion(questionId)
-                              : pinQuestion(questionId)
-                          }
-                          disabled={isPinPending || isUnpinPending}
-                        >
-                          <HugeiconsIcon
-                            icon={isPinned ? PinOffIcon : Pin02Icon}
-                            className="mr-2 size-4"
-                          />
-                          {isPinned ? "Unpin" : "Pin"}
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
-            </div>
-            {isEditing ? (
               <div
                 onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                className="space-y-3"
+                onPointerDown={(e) => e.stopPropagation()}
+                className="flex items-center gap-2 shrink-0"
               >
-                <Textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onKeyUp={(e) => e.stopPropagation()}
-                  className="min-h-[80px] bg-background"
+                <UpvoteButton
+                  count={question.upvotes}
+                  isUpvoted={question.isUpvoted}
+                  onToggle={() => {
+                    if (!user) {
+                      openAuthModal("signin");
+                    } else {
+                      handleVote(questionId);
+                    }
+                  }}
+                  isPending={isVotePending}
+                  className="w-14 text-right h-7 px-2.5 transition-colors"
                 />
-
-                {/* Marketplace edit sub-panel */}
-                {question.postType === "trade" && (
-                  <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                    <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden h-7 bg-background">
-                      <span className="px-2 text-xs text-neutral-400 font-medium select-none border-r border-neutral-200 dark:border-neutral-700">
-                        ₹
-                      </span>
-                      <input
-                        type="number"
-                        min={0}
-                        placeholder="Price"
-                        value={editedTradePrice}
-                        onChange={(e) => setEditedTradePrice(e.target.value)}
-                        className="w-20 h-7 text-xs px-2 bg-transparent text-neutral-800 dark:text-neutral-200 placeholder:text-neutral-400 focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={(props) => (
+                      <Button
+                        {...props}
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="More options"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          props.onClick?.(e);
+                        }}
+                      >
+                        <HugeiconsIcon
+                          icon={MoreHorizontalIcon}
+                          className="size-5"
+                        />
+                      </Button>
+                    )}
+                  />
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => navigate(`/q/${questionId}`)}
+                    >
+                      <HugeiconsIcon
+                        icon={BookOpen01Icon}
+                        className="mr-2 size-4"
                       />
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
-                        {editedTradeCondition === "New"
-                          ? "Brand New"
-                          : editedTradeCondition === "Like New"
-                            ? "Like New"
-                            : editedTradeCondition === "Used"
-                              ? "Used"
-                              : "Digital/PDF"}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        className="min-w-[120px]"
-                      >
+                      View Thread
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        navigator.clipboard.writeText(question.content);
+                        toast.success("Copied to clipboard");
+                      }}
+                    >
+                      <HugeiconsIcon
+                        icon={Copy01Icon}
+                        className="mr-2 size-4"
+                      />
+                      Copy Text
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const url = `${window.location.origin}/q/${questionId}`;
+                        navigator.clipboard.writeText(url);
+                        toast.success("Link copied to clipboard");
+                      }}
+                    >
+                      <HugeiconsIcon
+                        icon={Share01Icon}
+                        className="mr-2 size-4"
+                      />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => alert("Reported content")}
+                    >
+                      <HugeiconsIcon
+                        icon={Alert01Icon}
+                        className="mr-2 size-4"
+                      />
+                      Report
+                    </DropdownMenuItem>
+                    {user?.username === question.authorUsername && (
+                      <>
                         <DropdownMenuItem
-                          onClick={() => setEditedTradeCondition("New")}
-                          className="cursor-pointer"
+                          onClick={() => setShowAnalytics(true)}
                         >
-                          Brand New
+                          <HugeiconsIcon
+                            icon={ChartUpIcon}
+                            className="mr-2 size-4"
+                          />
+                          View Analytics
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openEditModal(question)}>
+                          <HugeiconsIcon
+                            icon={PencilEdit02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setEditedTradeCondition("Like New")}
-                          className="cursor-pointer"
+                          variant="destructive"
+                          onClick={() => setShowDeleteAlert(true)}
                         >
-                          Like New
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Delete
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setEditedTradeCondition("Used")}
-                          className="cursor-pointer"
-                        >
-                          Used
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setEditedTradeCondition("PDF/Digital")}
-                          className="cursor-pointer"
-                        >
-                          Digital/PDF
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
-                        {editedTradeStatus === "available"
-                          ? "Available"
-                          : "Sold"}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        className="min-w-[100px]"
-                      >
-                        <DropdownMenuItem
-                          onClick={() => setEditedTradeStatus("available")}
-                          className="cursor-pointer"
-                        >
-                          Available
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setEditedTradeStatus("sold")}
-                          className="cursor-pointer"
-                        >
-                          Sold
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-
-                {/* Partners edit sub-panel */}
-                {question.postType === "partner" && (
-                  <div className="flex items-center gap-1.5 pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                    <span className="text-[11px] font-semibold text-neutral-500 dark:text-neutral-400 select-none">
-                      Slots
-                    </span>
-                    <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden mr-2">
-                      <button
-                        type="button"
+                      </>
+                    )}
+                    {canPin && (
+                      <DropdownMenuItem
                         onClick={() =>
-                          setEditedPartnerSlotsNeeded(
-                            Math.max(1, editedPartnerSlotsNeeded - 1),
-                          )
+                          isPinned
+                            ? unpinQuestion(questionId)
+                            : pinQuestion(questionId)
                         }
-                        className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
+                        disabled={isPinPending || isUnpinPending}
                       >
-                        −
-                      </button>
-                      <span className="w-7 h-7 flex items-center justify-center text-xs font-semibold text-neutral-800 dark:text-neutral-200 border-x border-neutral-200 dark:border-neutral-700 select-none">
-                        {editedPartnerSlotsNeeded}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setEditedPartnerSlotsNeeded(
-                            Math.min(10, editedPartnerSlotsNeeded + 1),
-                          )
-                        }
-                        className="w-7 h-7 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-sm font-medium cursor-pointer select-none"
-                      >
-                        +
-                      </button>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
-                        {editedPartnerStatus === "open" ? "Open" : "Done"}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        className="min-w-[90px]"
-                      >
-                        <DropdownMenuItem
-                          onClick={() => setEditedPartnerStatus("open")}
-                          className="cursor-pointer"
-                        >
-                          Open
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setEditedPartnerStatus("done")}
-                          className="cursor-pointer"
-                        >
-                          Done
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-
-                {/* Taxi edit sub-panel */}
-                {question.postType === "taxi" && (
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-100 dark:border-neutral-800">
-                    <input
-                      type="text"
-                      placeholder="Departure"
-                      value={editedTaxiDeparture}
-                      onChange={(e) => setEditedTaxiDeparture(e.target.value)}
-                      className="w-24 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
-                    />
-                    <span className="text-neutral-400 text-xs">→</span>
-                    <input
-                      type="text"
-                      placeholder="Destination"
-                      value={editedTaxiDestination}
-                      onChange={(e) => setEditedTaxiDestination(e.target.value)}
-                      className="w-24 text-xs h-7 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-transparent px-2 text-neutral-700 dark:text-neutral-300"
-                    />
-                    <DateTimePicker
-                      value={editedTaxiDatetime}
-                      onChange={setEditedTaxiDatetime}
-                      placeholder="Pick date & time"
-                    />
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] font-semibold text-neutral-400 select-none">
-                        Seats
-                      </span>
-                      <div className="flex items-center rounded-lg border border-neutral-200 dark:border-neutral-700 overflow-hidden mr-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditedTaxiSeatsAvailable(
-                              Math.max(1, editedTaxiSeatsAvailable - 1),
-                            )
-                          }
-                          className="w-6 h-6 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-xs font-medium cursor-pointer select-none"
-                        >
-                          −
-                        </button>
-                        <span className="w-6 h-6 flex items-center justify-center text-xs font-semibold text-neutral-800 dark:text-neutral-200 border-x border-neutral-200 dark:border-neutral-700 select-none">
-                          {editedTaxiSeatsAvailable}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditedTaxiSeatsAvailable(
-                              Math.min(6, editedTaxiSeatsAvailable + 1),
-                            )
-                          }
-                          className="w-6 h-6 flex items-center justify-center text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-xs font-medium cursor-pointer select-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-7 px-2.5 bg-background text-xs text-neutral-705 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none select-none">
-                        {editedTaxiStatus === "open" ? "Open" : "Done"}
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="start"
-                        className="min-w-[90px]"
-                      >
-                        <DropdownMenuItem
-                          onClick={() => setEditedTaxiStatus("open")}
-                          className="cursor-pointer"
-                        >
-                          Open
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setEditedTaxiStatus("done")}
-                          className="cursor-pointer"
-                        >
-                          Done
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditedContent(question.content);
-                      setEditedTradePrice(
-                        question.tradePrice
-                          ? (question.tradePrice / 100).toString()
-                          : "",
-                      );
-                      setEditedTradeCondition(
-                        question.tradeCondition ?? "Like New",
-                      );
-                      setEditedTradeStatus(question.tradeStatus ?? "available");
-                      setEditedPartnerSlotsNeeded(
-                        question.partnerSlotsNeeded ?? 1,
-                      );
-                      setEditedPartnerStatus(question.partnerStatus ?? "open");
-                      setEditedTaxiDeparture(question.taxiDeparture ?? "");
-                      setEditedTaxiDestination(question.taxiDestination ?? "");
-                      setEditedTaxiDatetime(question.taxiDatetime ?? "");
-                      setEditedTaxiSeatsAvailable(
-                        question.taxiSeatsAvailable ?? 1,
-                      );
-                      setEditedTaxiStatus(question.taxiStatus ?? "open");
-                    }}
-                    disabled={isUpdatePending}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isUpdatePending}
-                  >
-                    Save
-                  </Button>
-                </div>
+                        <HugeiconsIcon
+                          icon={isPinned ? PinOffIcon : Pin02Icon}
+                          className="mr-2 size-4"
+                        />
+                        {isPinned ? "Unpin" : "Pin"}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            ) : (
-              <>
+            </div>
                 <PostContent
                   content={question.content}
                   className="block text-sm text-neutral-900 dark:text-neutral-100 leading-relaxed"
@@ -1420,8 +1054,6 @@ export function QuestionItem({
                     )}
                   </button>
                 )}
-              </>
-            )}
           </div>
         </div>
       </TriggerWrapper>

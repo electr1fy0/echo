@@ -116,7 +116,7 @@ export function AlertDialogFooter({
     <div
       className={cn(
         "flex flex-col-reverse gap-2 px-6 pb-6 sm:flex-row sm:justify-end",
-        variant === "default" && "border-t border-border pt-4 rounded-b-2xl bg-neutral-50 dark:bg-neutral-900/50",
+        variant === "default" && "border-t border-border pt-4 rounded-b-2xl bg-muted",
         className,
       )}
       data-slot="alert-dialog-footer"
@@ -155,7 +155,6 @@ export function AlertDialogDescription({
 }
 
 export {
-  AlertDialogPrimitive,
   AlertDialogBackdrop as AlertDialogOverlay,
   AlertDialogPopup as AlertDialogContent,
 };

@@ -283,7 +283,7 @@ export function AppSidebar() {
                 <TooltipContent side="right">
                   {item.label}
                   {item.shortcut && (
-                    <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">
+                    <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[10px] leading-none text-foreground">
                       {item.shortcut}
                     </kbd>
                   )}
@@ -308,7 +308,7 @@ export function AppSidebar() {
               />
               <TooltipContent side="right">
                 Create a Post
-                  <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">c</kbd>
+                  <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[10px] leading-none text-foreground">c</kbd>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -368,7 +368,7 @@ export function AppSidebar() {
             />
             <TooltipContent side="right">
               Profile
-              <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-background/15 px-1.5 py-0.5 font-mono text-[10px] leading-none text-background">5</kbd>
+              <kbd className="ml-1.5 inline-flex items-center justify-center rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-[10px] leading-none text-foreground">P</kbd>
             </TooltipContent>
           </Tooltip>
         </div>

@@ -360,7 +360,7 @@ export function CreatePostDialog() {
         channelUid: selectedChannelUid || activeChannel?.uid || undefined,
         customFields: finalCustomFields,
         postType,
-        ttlHours,
+        ...(ttlHours != null ? { ttlHours } : {}),
       };
 
       if (postType === "poll") {
@@ -379,6 +379,9 @@ export function CreatePostDialog() {
           setTtlHours(null);
           toast.success("Posted successfully!");
           close();
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to create post");
         },
         onSettled: () => setIsValidating(false),
       });

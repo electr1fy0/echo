@@ -1,6 +1,7 @@
 import type { AnswerItem, Reply } from "@/types";
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
+import { parseApiError } from "@/lib/api-error";
 export async function fetchReplies(questionId: string): Promise<AnswerItem[]> {
   const res = await fetch(
     `${API_URL}/questions/${encodeURIComponent(questionId)}/replies`,
@@ -10,7 +11,7 @@ export async function fetchReplies(questionId: string): Promise<AnswerItem[]> {
       },
     },
   );
-  if (!res.ok) throw new Error("Failed to fetch replies");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }
 export async function createReply(questionId: string, reply: Partial<Reply>) {
@@ -25,7 +26,7 @@ export async function createReply(questionId: string, reply: Partial<Reply>) {
       body: JSON.stringify(reply),
     },
   );
-  if (!res.ok) throw new Error("Failed to create reply");
+  if (!res.ok) await parseApiError(res);
 }
 export async function deleteReply(
   questionID: string,
@@ -40,7 +41,7 @@ export async function deleteReply(
       },
     },
   );
-  if (!res.ok) throw new Error("failed to delete reply");
+  if (!res.ok) await parseApiError(res);
 }
 export async function updateReplyVotes(qid: string, rid: string) {
   const res = await fetch(
@@ -52,7 +53,7 @@ export async function updateReplyVotes(qid: string, rid: string) {
       },
     },
   );
-  if (!res.ok) throw new Error("Failed to update votes");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function updateReply(
@@ -71,7 +72,7 @@ export async function updateReply(
       body: JSON.stringify({ content }),
     },
   );
-  if (!res.ok) throw new Error("failed to update reply");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function acceptReply(qid: string, rid: string) {
@@ -84,7 +85,7 @@ export async function acceptReply(qid: string, rid: string) {
       },
     },
   );
-  if (!res.ok) throw new Error("failed to accept reply");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function unacceptReply(qid: string, rid: string) {
@@ -97,5 +98,5 @@ export async function unacceptReply(qid: string, rid: string) {
       },
     },
   );
-  if (!res.ok) throw new Error("failed to unaccept reply");
+  if (!res.ok) await parseApiError(res);
 }

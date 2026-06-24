@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,6 +42,7 @@ export default function ResetPassword() {
  { token, newPassword },
  {
  onSuccess: () => setSuccess(true),
+ onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to reset password"),
  },
  );
  }

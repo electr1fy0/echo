@@ -27,6 +27,26 @@
                 }
             })();
         </script>
+        <script>
+            (function () {
+                try {
+                    var accent = localStorage.getItem("turnsout_accent");
+                    if (
+                        accent &&
+                        ["orange", "blue", "violet", "rose", "green"].indexOf(
+                            accent,
+                        ) !== -1
+                    ) {
+                        document.documentElement.setAttribute(
+                            "data-accent",
+                            accent,
+                        );
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            })();
+        </script>
 
         <!-- Primary Meta Tags -->
         <title>TurnsOut</title>

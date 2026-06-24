@@ -223,22 +223,24 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
   if (body.content !== undefined && countWords(body.content) > MAX_POST_WORDS) {
     throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
   }
-  const updated = await c.get("db").update(schema.posts).set({
-    content: body.content,
-    tradeStatus: body.tradeStatus,
-    partnerSlotsNeeded: body.partnerSlotsNeeded,
-    partnerStatus: body.partnerStatus,
-    tradePrice: body.tradePrice,
-    tradeCondition: body.tradeCondition,
-    tradeBookIsbn: body.tradeBookIsbn,
-    partnerTargetGrade: body.partnerTargetGrade,
-    partnerWorkstyle: body.partnerWorkstyle,
-    taxiDeparture: body.taxiDeparture,
-    taxiDestination: body.taxiDestination,
-    taxiDatetime: body.taxiDatetime,
-    taxiSeatsAvailable: body.taxiSeatsAvailable,
-    taxiStatus: body.taxiStatus,
-  }).where(
+  const updateData: Record<string, any> = {};
+  if (body.content !== undefined) updateData.content = body.content;
+  if (body.customFields !== undefined) updateData.customFields = body.customFields;
+  if (body.tradeStatus !== undefined) updateData.tradeStatus = body.tradeStatus;
+  if (body.partnerSlotsNeeded !== undefined) updateData.partnerSlotsNeeded = body.partnerSlotsNeeded;
+  if (body.partnerStatus !== undefined) updateData.partnerStatus = body.partnerStatus;
+  if (body.tradePrice !== undefined) updateData.tradePrice = body.tradePrice;
+  if (body.tradeCondition !== undefined) updateData.tradeCondition = body.tradeCondition;
+  if (body.tradeBookIsbn !== undefined) updateData.tradeBookIsbn = body.tradeBookIsbn;
+  if (body.partnerTargetGrade !== undefined) updateData.partnerTargetGrade = body.partnerTargetGrade;
+  if (body.partnerWorkstyle !== undefined) updateData.partnerWorkstyle = body.partnerWorkstyle;
+  if (body.taxiDeparture !== undefined) updateData.taxiDeparture = body.taxiDeparture;
+  if (body.taxiDestination !== undefined) updateData.taxiDestination = body.taxiDestination;
+  if (body.taxiDatetime !== undefined) updateData.taxiDatetime = body.taxiDatetime;
+  if (body.taxiSeatsAvailable !== undefined) updateData.taxiSeatsAvailable = body.taxiSeatsAvailable;
+  if (body.taxiStatus !== undefined) updateData.taxiStatus = body.taxiStatus;
+
+  const updated = await c.get("db").update(schema.posts).set(updateData).where(
     and(eq(schema.posts.uid, c.req.param("uid")), eq(schema.posts.author, c.get("user"))),
   ).returning({ uid: schema.posts.uid });
 

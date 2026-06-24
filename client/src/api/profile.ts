@@ -1,13 +1,14 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders, setToken } from "@/lib/utils";
 import type { User } from "@/types";
+import { parseApiError } from "@/lib/api-error";
 export async function fetchProfile(): Promise<User> {
   const res = await fetch(`${API_URL}/users/me`, {
     headers: {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch profile");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<User>;
 }
 export async function updateProfile(user: User): Promise<void> {
@@ -18,7 +19,7 @@ export async function updateProfile(user: User): Promise<void> {
     method: "PATCH",
     body: JSON.stringify(user),
   });
-  if (!res.ok) throw new Error("Failed to update profile");
+  if (!res.ok) await parseApiError(res);
   
   const text = await res.text();
   if (text) {
@@ -39,16 +40,15 @@ export async function fetchPublicProfile(username: string): Promise<User> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch profile");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<User>;
 }
-
 export async function followUser(username: string): Promise<void> {
   const res = await fetch(`${API_URL}/users/${username}/follow`, {
     method: "POST",
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to follow user");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function unfollowUser(username: string): Promise<void> {
@@ -56,5 +56,5 @@ export async function unfollowUser(username: string): Promise<void> {
     method: "DELETE",
     headers: { ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error("Failed to unfollow user");
+  if (!res.ok) await parseApiError(res);
 }

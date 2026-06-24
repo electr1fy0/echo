@@ -36,6 +36,15 @@ function buildTree(replies: AnswerItem[]): TreeNode[] {
   return roots;
 }
 
+const depthColors = [
+  "border-sky-300 dark:border-sky-600",
+  "border-emerald-300 dark:border-emerald-600",
+  "border-amber-300 dark:border-amber-600",
+  "border-violet-300 dark:border-violet-600",
+  "border-rose-300 dark:border-rose-600",
+  "border-cyan-300 dark:border-cyan-600",
+];
+
 function TreeNodeComponent({
   node,
   depth,
@@ -50,30 +59,35 @@ function TreeNodeComponent({
   onDelete: (replyId: string) => void;
 }) {
   const [isReplying, setIsReplying] = useState(false);
+  const indentLevel = Math.min(depth, 6);
+  const indent = indentLevel * 1.25;
+  const lineColor = depth > 0 ? depthColors[(depth - 1) % depthColors.length] : "";
 
   return (
-    <div>
-      <div className={depth > 0 ? "ml-6 pl-3 border-l-2 border-neutral-100 dark:border-neutral-800" : ""}>
-        <ReplyItem
-          answerItem={node.item}
-          onDelete={() => onDelete(node.item.answer.uid)}
-          canAccept={false}
-          isOp={node.item.author?.username === authorUsername}
-          onReply={() => setIsReplying(true)}
-        />
-        {isReplying && (
-          <div className="ml-8 mb-2">
-            <ReplyForm
-              questionId={questionId}
-              parentReplyUid={node.item.answer.uid}
-              replyingToUsername={node.item.author?.username}
-              compact
-              onSubmitSuccess={() => setIsReplying(false)}
-              onCancel={() => setIsReplying(false)}
-            />
-          </div>
-        )}
+    <div style={{ marginLeft: depth > 0 ? `${indent}rem` : undefined }}>
+      <div className={depth > 0 ? `border-l-2 ${lineColor}` : ""}>
+        <div style={{ paddingLeft: depth > 0 ? "0.75rem" : undefined }}>
+          <ReplyItem
+            answerItem={node.item}
+            onDelete={() => onDelete(node.item.answer.uid)}
+            canAccept={false}
+            isOp={node.item.author?.username === authorUsername}
+            onReply={() => setIsReplying(true)}
+          />
+        </div>
       </div>
+      {isReplying && (
+        <div className="mb-2" style={{ paddingLeft: depth > 0 ? "1rem" : undefined, marginTop: "0.5rem" }}>
+          <ReplyForm
+            questionId={questionId}
+            parentReplyUid={node.item.answer.uid}
+            replyingToUsername={node.item.author?.username}
+            compact
+            onSubmitSuccess={() => setIsReplying(false)}
+            onCancel={() => setIsReplying(false)}
+          />
+        </div>
+      )}
       {node.children.length > 0 && (
         <div>
           {node.children.map((child) => (

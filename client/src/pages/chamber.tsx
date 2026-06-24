@@ -324,8 +324,8 @@ export default function ChamberPage() {
           setEditingChannel(null);
           toast.success("Channel updated!");
         },
-        onError: () => {
-          toast.error("Failed to update channel");
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to update channel");
         },
       },
     );
@@ -353,8 +353,8 @@ export default function ChamberPage() {
           setSelectedChannelUid("all");
           toast.success("Channel deleted!");
         },
-        onError: () => {
-          toast.error("Failed to delete channel");
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to delete channel");
         },
       });
     }
@@ -519,9 +519,13 @@ export default function ChamberPage() {
     }
     if (!chamber?.uid) return;
     if (chamber.isJoined) {
-      leaveMutation.mutate(chamber.uid);
+      leaveMutation.mutate(chamber.uid, {
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to leave chamber"),
+      });
     } else {
-      joinMutation.mutate(chamber.uid);
+      joinMutation.mutate(chamber.uid, {
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to join chamber"),
+      });
     }
   };
 
@@ -553,8 +557,8 @@ export default function ChamberPage() {
           setSelectedChannelUid(newChan.uid);
           toast.success("Channel created!");
         },
-        onError: () => {
-          toast.error("Failed to create channel");
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to create channel");
         },
       },
     );
@@ -940,6 +944,9 @@ export default function ChamberPage() {
                 deleteChamberMutation.mutate(chamber.name, {
                   onSuccess: () => {
                     navigate("/");
+                  },
+                  onError: (err) => {
+                    toast.error(err instanceof Error ? err.message : "Failed to delete chamber");
                   },
                 });
               }}

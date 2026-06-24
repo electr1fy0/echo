@@ -1,6 +1,7 @@
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
 import type { SearchResponse } from "@/types";
+import { parseApiError } from "@/lib/api-error";
 export async function globalSearch(query: string): Promise<SearchResponse> {
   const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
     method: "GET",
@@ -8,6 +9,6 @@ export async function globalSearch(query: string): Promise<SearchResponse> {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("failed to search");
+  if (!res.ok) await parseApiError(res);
   return res.json();
 }

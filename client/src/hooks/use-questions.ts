@@ -195,6 +195,7 @@ export function useUpdateQuestion() {
     }: {
       questionId: string;
       content?: string;
+      customFields?: Record<string, any>;
       tradePrice?: number;
       tradeCondition?: string;
       tradeBookIsbn?: string;

@@ -1,6 +1,7 @@
 import type { Conversation, QuestionDraft, QuestionItem } from "@/types";
 import { API_URL } from "@/config";
 import { getAuthHeaders } from "@/lib/utils";
+import { parseApiError } from "@/lib/api-error";
 
 export async function fetchQuestion(questionId: string) {
   const res = await fetch(
@@ -11,7 +12,7 @@ export async function fetchQuestion(questionId: string) {
       },
     },
   );
-  if (!res.ok) throw new Error("Failed to fetch question");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<QuestionItem>;
 }
 
@@ -46,7 +47,7 @@ export async function fetchQuestions(
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch questions");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<QuestionItem[]>;
 }
 
@@ -60,7 +61,7 @@ export async function fetchUserQuestions(limit?: number, offset?: number) {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("Failed to fetch user questions");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<QuestionItem[]>;
 }
 
@@ -73,7 +74,7 @@ export async function createQuestion(draft: QuestionDraft) {
     },
     body: JSON.stringify(draft),
   });
-  if (!res.ok) throw new Error("Failed to create question");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function deleteQuestion(questionId: string) {
@@ -86,7 +87,7 @@ export async function deleteQuestion(questionId: string) {
       },
     },
   );
-  if (!res.ok) throw new Error("Failed to delete question");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function searchQuestions(query: string) {
@@ -96,7 +97,7 @@ export async function searchQuestions(query: string) {
       ...getAuthHeaders(),
     },
   });
-  if (!res.ok) throw new Error("Failed to search questions");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<QuestionItem[]>;
 }
 
@@ -110,13 +111,14 @@ export async function updateVotes(qid: string) {
       },
     },
   );
-  if (!res.ok) throw new Error("Failed to update votes");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function updateQuestion(
   questionId: string,
   payload: {
     content?: string;
+    customFields?: Record<string, any>;
     tradePrice?: number;
     tradeCondition?: string;
     tradeBookIsbn?: string;
@@ -143,7 +145,7 @@ export async function updateQuestion(
       body: JSON.stringify(payload),
     }
   );
-  if (!res.ok) throw new Error("Failed to update question");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function pinQuestion(questionId: string) {
@@ -156,7 +158,7 @@ export async function pinQuestion(questionId: string) {
       },
     }
   );
-  if (!res.ok) throw new Error("Failed to pin question");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function unpinQuestion(questionId: string) {
@@ -169,7 +171,7 @@ export async function unpinQuestion(questionId: string) {
       },
     }
   );
-  if (!res.ok) throw new Error("Failed to unpin question");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function expressInterest(questionId: string, message?: string) {
@@ -184,7 +186,7 @@ export async function expressInterest(questionId: string, message?: string) {
       body: JSON.stringify({ message }),
     }
   );
-  if (!res.ok) throw new Error("Failed to express interest");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function expressInterestViaDM(authorUsername: string, templateMessage: string) {
@@ -193,10 +195,7 @@ export async function expressInterestViaDM(authorUsername: string, templateMessa
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ username: authorUsername }),
   });
-  if (!convRes.ok) {
-    const data = await convRes.json().catch(() => ({}));
-    throw new Error(data.error || data.message || "Failed to create conversation");
-  }
+  if (!convRes.ok) await parseApiError(convRes);
   const conv = await convRes.json() as Conversation;
 
   const msgRes = await fetch(`${API_URL}/dms/conversations/${conv.uid}/messages`, {
@@ -204,7 +203,7 @@ export async function expressInterestViaDM(authorUsername: string, templateMessa
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ content: templateMessage }),
   });
-  if (!msgRes.ok) throw new Error("Failed to send message");
+  if (!msgRes.ok) await parseApiError(msgRes);
 
   return conv;
 }
@@ -221,7 +220,7 @@ export async function applyToPartner(questionId: string, pitch: string) {
       body: JSON.stringify({ pitch }),
     }
   );
-  if (!res.ok) throw new Error("Failed to apply to partner project");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<{ uid: string }>;
 }
 
@@ -234,7 +233,7 @@ export async function fetchPartnerApplications(questionId: string) {
       },
     }
   );
-  if (!res.ok) throw new Error("Failed to fetch partner applications");
+  if (!res.ok) await parseApiError(res);
   return res.json() as Promise<any[]>;
 }
 
@@ -250,7 +249,7 @@ export async function votePoll(questionId: string, optionIndex: number) {
       body: JSON.stringify({ optionIndex }),
     }
   );
-  if (!res.ok) throw new Error("Failed to vote on poll");
+  if (!res.ok) await parseApiError(res);
 }
 
 export async function updatePartnerApplicationStatus(
@@ -269,5 +268,5 @@ export async function updatePartnerApplicationStatus(
       body: JSON.stringify({ status }),
     }
   );
-  if (!res.ok) throw new Error(`Failed to update application status to ${status}`);
+  if (!res.ok) await parseApiError(res);
 }

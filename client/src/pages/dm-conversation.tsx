@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageTransition } from "@/components/page-transition";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon, Edit01Icon, Delete01Icon } from "@hugeicons/core-free-icons";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -154,7 +155,7 @@ export default function DMConversationPage() {
 
   const handleSend = () => {
     if (!input.trim() || isPending) return;
-    send(input.trim(), { onSuccess: () => setInput(""), onError: () => {} });
+    send(input.trim(), { onSuccess: () => setInput(""), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to send message") });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -172,7 +173,7 @@ export default function DMConversationPage() {
 
   const saveEdit = () => {
     if (!editingId || !editInput.trim() || isEditing) return;
-    editMsg({ messageUid: editingId, content: editInput.trim() }, { onSuccess: () => cancelEdit() });
+    editMsg({ messageUid: editingId, content: editInput.trim() }, { onSuccess: () => cancelEdit(), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to edit message") });
   };
 
   const handleEditKeyDown = (e: React.KeyboardEvent) => {
@@ -183,7 +184,7 @@ export default function DMConversationPage() {
   if (!conversationId) return null;
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 px-4 pb-4 flex flex-col h-[calc(100vh-8rem)]">
+    <PageTransition className="max-w-[40rem] w-full md:mt-16 mt-0 px-4 pb-4 flex flex-col md:h-[calc(100vh-4rem)] h-[calc(100vh-6rem)]">
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -197,7 +198,7 @@ export default function DMConversationPage() {
             <Button
               variant="default"
               size="sm"
-              onClick={() => { if (deleteTarget) deleteMsg(deleteTarget, { onSuccess: () => setDeleteTarget(null) }); }}
+              onClick={() => { if (deleteTarget) deleteMsg(deleteTarget, { onSuccess: () => setDeleteTarget(null), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete message") }); }}
               className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
             >
               Delete
@@ -206,7 +207,7 @@ export default function DMConversationPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-2 -mt-0">
         <button
           onClick={() => navigate("/dm")}
           className="p-1.5 -ml-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
@@ -281,22 +282,26 @@ export default function DMConversationPage() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="flex gap-2 items-end shrink-0">
+      <div className="relative flex items-end rounded-xl border border-input bg-background p-1.5 shrink-0">
         <Textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          className="resize-none"
+          className="min-h-10 flex-1 pr-14"
           rows={1}
+          unstyled
+          style={{ resize: "none" }}
         />
         <Button
           variant="default"
           onClick={handleSend}
           disabled={isPending || !input.trim()}
-          className="shrink-0 cursor-pointer"
+          className="absolute bottom-1.5 right-1.5 size-9 p-0 rounded-lg cursor-pointer"
         >
-          Send
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4 -rotate-90">
+            <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+          </svg>
         </Button>
       </div>
     </PageTransition>
