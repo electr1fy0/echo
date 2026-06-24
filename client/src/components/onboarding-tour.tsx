@@ -63,6 +63,7 @@ function getTooltipPosition(
   targetRect: DOMRect,
   tooltipWidth: number,
   tooltipHeight: number,
+  isMobile: boolean,
   gap = 12
 ): { top: number; left: number } {
   const viewW = window.innerWidth;
@@ -70,23 +71,32 @@ function getTooltipPosition(
   let top = 0;
   let left = 0;
 
-  switch (placement) {
-    case "top":
-      top = targetRect.top - tooltipHeight - gap;
-      left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
-      break;
-    case "bottom":
+  if (isMobile) {
+    left = (viewW - tooltipWidth) / 2;
+    if (placement === "bottom") {
       top = targetRect.bottom + gap;
-      left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
-      break;
-    case "left":
-      top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
-      left = targetRect.left - tooltipWidth - gap;
-      break;
-    case "right":
-      top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
-      left = targetRect.right + gap;
-      break;
+    } else {
+      top = targetRect.top - tooltipHeight - gap;
+    }
+  } else {
+    switch (placement) {
+      case "top":
+        top = targetRect.top - tooltipHeight - gap;
+        left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
+        break;
+      case "bottom":
+        top = targetRect.bottom + gap;
+        left = targetRect.left + targetRect.width / 2 - tooltipWidth / 2;
+        break;
+      case "left":
+        top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
+        left = targetRect.left - tooltipWidth - gap;
+        break;
+      case "right":
+        top = targetRect.top + targetRect.height / 2 - tooltipHeight / 2;
+        left = targetRect.right + gap;
+        break;
+    }
   }
 
   top = Math.max(12, Math.min(top, viewH - tooltipHeight - 12));
@@ -113,9 +123,9 @@ function TourTooltip({
     const w = el.offsetWidth;
     const h = el.offsetHeight;
     if (w > 0 && h > 0) {
-      setPos(getTooltipPosition(placement, targetRect, w, h));
+      setPos(getTooltipPosition(placement, targetRect, w, h, isMobile));
     }
-  }, [targetRect, placement]);
+  }, [targetRect, placement, isMobile, step]);
 
   if (!step) return null;
 

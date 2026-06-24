@@ -163,6 +163,7 @@ export default function Profile() {
   const { start: startTour } = useOnboardingTour();
   const { upload: uploadImage, uploading: imageUploading } = useImageUpload();
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [avatarHair, _setAvatarHair] = useState("bangs");
   const [avatarMood, _setAvatarMood] = useState("happy");
@@ -280,7 +281,7 @@ export default function Profile() {
  <HugeiconsIcon icon={PencilEdit02Icon} className="mr-2 size-4" />
  Edit Profile
  </Button>
-  <Drawer>
+  <Drawer open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
     <DrawerTrigger asChild>
       <Button variant="outline" size="icon" className="size-8 rounded-full">
         <HugeiconsIcon icon={MoreHorizontalIcon} className="size-5" />
@@ -364,7 +365,10 @@ export default function Profile() {
         </div>
 
         <button
-          onClick={() => startTour()}
+          onClick={() => {
+            setIsSettingsOpen(false);
+            startTour();
+          }}
           className="flex items-center gap-3 w-full py-1.5 cursor-pointer"
         >
           <HugeiconsIcon icon={HelpCircleIcon} className="size-4 text-neutral-400" />

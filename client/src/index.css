@@ -496,3 +496,12 @@ textarea[data-slot="textarea"]:focus {
         inset 0 1px 1px 0 rgba(255, 255, 255, 0.1),
         0 0 0 3px color-mix(in srgb, var(--brand) 15%, transparent) !important;
 }
+
+/* Prevent automatic zoom on iOS Safari by forcing font-size: 16px on mobile for all input-like fields */
+@media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
