@@ -4,7 +4,7 @@ Thumbs.db
 *.swp
 *.swo
 *.swn
-
+client/.agents/
 # Environment files
 .env
 .env.*
