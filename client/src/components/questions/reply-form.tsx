@@ -8,7 +8,7 @@ import {
   Image01Icon,
   Loading03Icon,
 } from "@hugeicons/core-free-icons";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { useWebHaptics } from "@/lib/haptic";
 import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
@@ -66,7 +66,7 @@ export function ReplyForm({
     try {
       const result = await validateMentions(content);
       if (result.missing.length > 0) {
-        toast.error(`User not found: ${result.missing.join(", ")}`);
+        toastManager.add({ title: `User not found: ${result.missing.join(", ")}`, type: "error" });
         setIsValidating(false);
         return;
       }
@@ -75,11 +75,11 @@ export function ReplyForm({
         {
           onSuccess: () => {
             setContent("");
-            toast.success("Reply posted");
+            toastManager.add({ title: "Reply posted", type: "success" });
             onSubmitSuccess?.();
           },
           onError: (err) => {
-            toast.error(err instanceof Error ? err.message : "Failed to submit reply. Please try again.");
+            toastManager.add({ title: err instanceof Error ? err.message : "Failed to submit reply. Please try again.", type: "error" });
           },
           onSettled: () => {
             setIsValidating(false);
@@ -87,7 +87,7 @@ export function ReplyForm({
         },
       );
     } catch {
-      toast.error("Failed to validate mentions");
+      toastManager.add({ title: "Failed to validate mentions", type: "error" });
       setIsValidating(false);
     }
   };
@@ -168,7 +168,7 @@ export function ReplyForm({
             const url = await uploadImagePresigned(file);
             setContent((prev) => prev + `\n${url}\n`);
           } catch {
-            toast.error("Image upload failed");
+            toastManager.add({ title: "Image upload failed", type: "error" });
           } finally {
             setImageUploading(false);
             e.target.value = "";

@@ -42,7 +42,7 @@ import {
 import { PageTransition } from "@/components/page-transition";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatDistanceToNowStrict } from "date-fns";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { PostContent } from "@/components/post-content";
 import { UpvoteButton } from "@/components/upvote-button";
 import { ReplyForm } from "@/components/questions/reply-form";
@@ -145,12 +145,12 @@ export default function QuestionDetailPage() {
       { questionId, pitch: pitchContent },
       {
         onSuccess: () => {
-          toast.success("Application submitted!");
+          toastManager.add({ title: "Application submitted!", type: "success" });
           setPitchContent("");
           setIsApplying(false);
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to submit application");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to submit application", type: "error" });
         },
       },
     );
@@ -550,7 +550,7 @@ export default function QuestionDetailPage() {
                                     btnVal.template ||
                                     `Hey, I'm interested in your post!`,
                                 });
-                                toast.success("Interest sent via DM!");
+                                toastManager.add({ title: "Interest sent via DM!", type: "success" });
                               }}
                               className="cursor-pointer text-xs font-semibold"
                             >
@@ -1311,7 +1311,7 @@ export default function QuestionDetailPage() {
             <AlertDialogClose
               render={<Button variant="destructive" />}
               onClick={() =>
-                deleteQuestion(questionId!, { onSuccess: () => navigate(-1), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete post") })
+                deleteQuestion(questionId!, { onSuccess: () => navigate(-1), onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete post", type: "error" }) })
               }
             >
               Delete

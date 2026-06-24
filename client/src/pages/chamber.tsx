@@ -56,7 +56,7 @@ import {
 import { useWebHaptics } from "@/lib/haptic";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 
 import {
   MessageSquare,
@@ -304,7 +304,7 @@ export default function ChamberPage() {
   const handleEditChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editChannelName.trim()) {
-      toast.error("Channel name is required");
+      toastManager.add({ title: "Channel name is required", type: "error" });
       return;
     }
     if (!editingChannel?.uid) return;
@@ -322,10 +322,10 @@ export default function ChamberPage() {
         onSuccess: () => {
           setIsEditChannelOpen(false);
           setEditingChannel(null);
-          toast.success("Channel updated!");
+          toastManager.add({ title: "Channel updated!", type: "success" });
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to update channel");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to update channel", type: "error" });
         },
       },
     );
@@ -337,7 +337,7 @@ export default function ChamberPage() {
       editingChannel.name === "discussion" ||
       editingChannel.name === "discussions"
     ) {
-      toast.error("Cannot delete default discussion channel");
+      toastManager.add({ title: "Cannot delete default discussion channel", type: "error" });
       return;
     }
 
@@ -351,10 +351,10 @@ export default function ChamberPage() {
           setIsEditChannelOpen(false);
           setEditingChannel(null);
           setSelectedChannelUid("all");
-          toast.success("Channel deleted!");
+          toastManager.add({ title: "Channel deleted!", type: "success" });
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to delete channel");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete channel", type: "error" });
         },
       });
     }
@@ -520,11 +520,11 @@ export default function ChamberPage() {
     if (!chamber?.uid) return;
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid, {
-        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to leave chamber"),
+        onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to leave chamber", type: "error" }),
       });
     } else {
       joinMutation.mutate(chamber.uid, {
-        onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to join chamber"),
+        onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to join chamber", type: "error" }),
       });
     }
   };
@@ -540,7 +540,7 @@ export default function ChamberPage() {
   const handleCreateChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChannelName.trim()) {
-      toast.error("Channel name is required");
+      toastManager.add({ title: "Channel name is required", type: "error" });
       return;
     }
     createChan(
@@ -555,10 +555,10 @@ export default function ChamberPage() {
           setNewChannelName("");
           setNewChannelSchema([]);
           setSelectedChannelUid(newChan.uid);
-          toast.success("Channel created!");
+          toastManager.add({ title: "Channel created!", type: "success" });
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to create channel");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to create channel", type: "error" });
         },
       },
     );
@@ -946,7 +946,7 @@ export default function ChamberPage() {
                     navigate("/");
                   },
                   onError: (err) => {
-                    toast.error(err instanceof Error ? err.message : "Failed to delete chamber");
+                    toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete chamber", type: "error" });
                   },
                 });
               }}

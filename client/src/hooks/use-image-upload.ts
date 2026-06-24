@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { uploadImage, uploadImagePresigned } from "@/api/upload";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 
 export function useImageUpload() {
   const [uploading, setUploading] = useState(false);
@@ -15,11 +15,11 @@ export function useImageUpload() {
         "image/gif",
       ].includes(file.type)
     ) {
-      toast.error("Unsupported file type");
+      toastManager.add({ title: "Unsupported file type", type: "error" });
       return null;
     }
     if (file.size > 6 * 1024 * 1024) {
-      toast.error("File too large (max 6MB)");
+      toastManager.add({ title: "File too large (max 6MB)", type: "error" });
       return null;
     }
 
@@ -32,7 +32,7 @@ export function useImageUpload() {
         const url = await uploadImage(file);
         return url;
       } catch {
-        toast.error("Upload failed");
+        toastManager.add({ title: "Upload failed", type: "error" });
         return null;
       }
     } finally {

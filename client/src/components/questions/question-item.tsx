@@ -57,7 +57,7 @@ import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserPreviewCard } from "@/components/ui/user-preview-card";
 import { formatDistanceToNowStrict } from "date-fns";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import {
   AlertDialog,
   AlertDialogPopup,
@@ -367,7 +367,7 @@ export function QuestionItem({
                     <DropdownMenuItem
                       onClick={() => {
                         navigator.clipboard.writeText(question.content);
-                        toast.success("Copied to clipboard");
+                        toastManager.add({ title: "Copied to clipboard", type: "success" });
                       }}
                     >
                       <HugeiconsIcon
@@ -380,7 +380,7 @@ export function QuestionItem({
                       onClick={() => {
                         const url = `${window.location.origin}/q/${questionId}`;
                         navigator.clipboard.writeText(url);
-                        toast.success("Link copied to clipboard");
+                        toastManager.add({ title: "Link copied to clipboard", type: "success" });
                       }}
                     >
                       <HugeiconsIcon
@@ -777,7 +777,7 @@ export function QuestionItem({
                                             btnVal.template ||
                                             `Hey, I'm interested in your post!`,
                                         });
-                                        toast.success("Interest sent via DM!");
+                                        toastManager.add({ title: "Interest sent via DM!", type: "success" });
                                       }}
                                       className="cursor-pointer text-xs font-semibold"
                                     >

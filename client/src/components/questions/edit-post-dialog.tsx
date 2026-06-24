@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUpdateQuestion } from "@/hooks/use-questions";
 import { useEditPostModal } from "@/hooks/use-edit-post-modal";
 import { validateMentions } from "@/lib/mention-validation";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { MentionField } from "@/components/ui/mention-field";
@@ -105,13 +105,13 @@ export function EditPostDialog() {
     try {
       const result = await validateMentions(content);
       if (result.missing.length > 0) {
-        toast.error(`User not found: ${result.missing.join(", ")}`);
+        toastManager.add({ title: `User not found: ${result.missing.join(", ")}`, type: "error" });
         setIsValidating(false);
         return;
       }
 
       if (countWords(content) > MAX_POST_WORDS) {
-        toast.error(`Post exceeds ${MAX_POST_WORDS} word limit`);
+        toastManager.add({ title: `Post exceeds ${MAX_POST_WORDS} word limit`, type: "error" });
         setIsValidating(false);
         return;
       }
@@ -146,17 +146,17 @@ export function EditPostDialog() {
         },
         {
           onSuccess: () => {
-            toast.success("Post updated!");
+            toastManager.add({ title: "Post updated!", type: "success" });
             close();
           },
           onError: (err) => {
-            toast.error(err instanceof Error ? err.message : "Failed to update post");
+            toastManager.add({ title: err instanceof Error ? err.message : "Failed to update post", type: "error" });
           },
           onSettled: () => setIsValidating(false),
         },
       );
     } catch {
-      toast.error("Failed to validate mentions");
+      toastManager.add({ title: "Failed to validate mentions", type: "error" });
       setIsValidating(false);
     }
   };
@@ -345,9 +345,9 @@ export function EditPostDialog() {
                           try {
                             const publicUrl = await uploadImagePresigned(file);
                             setFieldVal({ url: publicUrl, name: file.name, size: file.size, type: file.type });
-                            toast.success("File uploaded!");
+                            toastManager.add({ title: "File uploaded!", type: "success" });
                           } catch {
-                            toast.error("Failed to upload");
+                            toastManager.add({ title: "Failed to upload", type: "error" });
                           } finally {
                             setFileUploadPending((p) => ({ ...p, [field.id]: false }));
                           }
@@ -407,16 +407,16 @@ export function EditPostDialog() {
                           const file = e.target.files?.[0];
                           if (!file) return;
                           if (!file.type.startsWith("image/")) {
-                            toast.error("Please upload an image file");
+                            toastManager.add({ title: "Please upload an image file", type: "error" });
                             return;
                           }
                           setFileUploadPending((p) => ({ ...p, [field.id]: true }));
                           try {
                             const publicUrl = await uploadImagePresigned(file);
                             setFieldVal({ url: publicUrl, name: file.name, size: file.size });
-                            toast.success("Image uploaded!");
+                            toastManager.add({ title: "Image uploaded!", type: "success" });
                           } catch {
-                            toast.error("Failed to upload image");
+                            toastManager.add({ title: "Failed to upload image", type: "error" });
                           } finally {
                             setFileUploadPending((p) => ({ ...p, [field.id]: false }));
                           }

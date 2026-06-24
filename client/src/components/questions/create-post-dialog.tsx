@@ -18,7 +18,7 @@ import { useAuth, useToken } from "@/hooks/use-auth";
 import { useCreateQuestion, useQuestionDraft } from "@/hooks/use-questions";
 import { useListChambers, useListChannels } from "@/hooks/use-chamber";
 import { validateMentions } from "@/lib/mention-validation";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 
@@ -180,7 +180,7 @@ export function CreatePostDialog() {
     if (!files) return;
     const remaining = 4 - images.length;
     if (remaining <= 0) {
-      toast.error("Max 4 images per post");
+      toastManager.add({ title: "Max 4 images per post", type: "error" });
       return;
     }
     setImageUploading(true);
@@ -189,7 +189,7 @@ export function CreatePostDialog() {
       try {
         urls.push(await uploadImagePresigned(file));
       } catch {
-        toast.error(`Failed to upload ${file.name}`);
+        toastManager.add({ title: `Failed to upload ${file.name}`, type: "error" });
       }
     }
     setImages((prev) => [...prev, ...urls]);
@@ -267,13 +267,13 @@ export function CreatePostDialog() {
     try {
       const result = await validateMentions(draft.content);
       if (result.missing.length > 0) {
-        toast.error(`User not found: ${result.missing.join(", ")}`);
+        toastManager.add({ title: `User not found: ${result.missing.join(", ")}`, type: "error" });
         setIsValidating(false);
         return;
       }
 
       if (countWords(draft.content) > MAX_POST_WORDS) {
-        toast.error(`Post exceeds ${MAX_POST_WORDS} word limit`);
+        toastManager.add({ title: `Post exceeds ${MAX_POST_WORDS} word limit`, type: "error" });
         setIsValidating(false);
         return;
       }
@@ -291,16 +291,14 @@ export function CreatePostDialog() {
             (!pollVal?.question?.trim() ||
               pollVal.options.filter((o) => o.trim()).length < 2)
           ) {
-            toast.error(
-              `"${field.label}" requires a question and at least 2 options`,
-            );
+            toastManager.add({ title: `"${field.label}" requires a question and at least 2 options`, type: "error" });
             setIsValidating(false);
             return;
           }
         } else {
           const isEmpty = val === undefined || val === null || val === "";
           if (field.required && isEmpty) {
-            toast.error(`"${field.label}" is required`);
+            toastManager.add({ title: `"${field.label}" is required`, type: "error" });
             setIsValidating(false);
             return;
           }
@@ -377,16 +375,16 @@ export function CreatePostDialog() {
           setCustomFields({});
           setActiveFields([]);
           setTtlHours(null);
-          toast.success("Posted successfully!");
+          toastManager.add({ title: "Posted successfully!", type: "success" });
           close();
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to create post");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to create post", type: "error" });
         },
         onSettled: () => setIsValidating(false),
       });
     } catch {
-      toast.error("Failed to validate mentions");
+      toastManager.add({ title: "Failed to validate mentions", type: "error" });
       setIsValidating(false);
     }
   };
@@ -583,9 +581,9 @@ export function CreatePostDialog() {
                                   size: file.size,
                                   type: file.type,
                                 });
-                                toast.success("File uploaded!");
+                                toastManager.add({ title: "File uploaded!", type: "success" });
                               } catch {
-                                toast.error("Failed to upload");
+                                toastManager.add({ title: "Failed to upload", type: "error" });
                               } finally {
                                 setFileUploadPending((p) => ({
                                   ...p,
@@ -661,7 +659,7 @@ export function CreatePostDialog() {
                               const file = e.target.files?.[0];
                               if (!file) return;
                               if (!file.type.startsWith("image/")) {
-                                toast.error("Please upload an image file");
+                                toastManager.add({ title: "Please upload an image file", type: "error" });
                                 return;
                               }
                               setFileUploadPending((p) => ({
@@ -676,9 +674,9 @@ export function CreatePostDialog() {
                                   name: file.name,
                                   size: file.size,
                                 });
-                                toast.success("Image uploaded!");
+                                toastManager.add({ title: "Image uploaded!", type: "success" });
                               } catch {
-                                toast.error("Failed to upload image");
+                                toastManager.add({ title: "Failed to upload image", type: "error" });
                               } finally {
                                 setFileUploadPending((p) => ({
                                   ...p,

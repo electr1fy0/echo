@@ -13,7 +13,7 @@ import type { Chamber } from "@/types";
 import { useUpdateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { CropImageDialog } from "@/components/ui/crop-image-dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -58,11 +58,11 @@ export function EditChamberDialog({
       },
       {
         onSuccess: () => {
-          toast.success("Chamber updated");
+          toastManager.add({ title: "Chamber updated", type: "success" });
           onOpenChange(false);
         },
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to update chamber");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to update chamber", type: "error" });
         },
       },
     );

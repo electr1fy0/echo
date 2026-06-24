@@ -27,7 +27,7 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserPreviewCard } from "@/components/ui/user-preview-card";
 import { formatDistanceToNowStrict } from "date-fns";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -74,7 +74,7 @@ export function ReplyItem({
       {
         onSuccess: () => setIsEditing(false),
         onError: (err) => {
-          toast.error(err instanceof Error ? err.message : "Failed to update reply");
+          toastManager.add({ title: err instanceof Error ? err.message : "Failed to update reply", type: "error" });
         },
       },
     );
@@ -222,7 +222,7 @@ export function ReplyItem({
                 <DropdownMenuItem
                   onClick={() => {
                     navigator.clipboard.writeText(reply.content);
-                    toast.success("Copied to clipboard");
+                    toastManager.add({ title: "Copied to clipboard", type: "success" });
                   }}
                 >
                   <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />

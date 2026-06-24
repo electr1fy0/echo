@@ -11,7 +11,7 @@ import {
 import { ErrorBoundary } from "react-error-boundary";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ProtectedRoute } from "@/components/route-guards";
-import { Toaster } from "@/components/ui/sonner";
+import { ToastProvider, AnchoredToastProvider } from "@/components/ui/toast";
 import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
@@ -176,8 +176,11 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-        <Toaster />
-        <ReloadPrompt />
+        <ToastProvider>
+          <AnchoredToastProvider>
+            <ReloadPrompt />
+          </AnchoredToastProvider>
+        </ToastProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

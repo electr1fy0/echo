@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageTransition } from "@/components/page-transition";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon, Edit01Icon, Delete01Icon } from "@hugeicons/core-free-icons";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -136,6 +136,7 @@ export default function DMConversationPage() {
 
   const conversation = conversations?.find((c) => c.uid === conversationId);
   const otherUser = conversation?.otherUsername;
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (conversationId) markRead(conversationId);
@@ -155,7 +156,7 @@ export default function DMConversationPage() {
 
   const handleSend = () => {
     if (!input.trim() || isPending) return;
-    send(input.trim(), { onSuccess: () => setInput(""), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to send message") });
+    send(input.trim(), { onSuccess: () => setInput(""), onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to send message", type: "error" }) });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -173,7 +174,7 @@ export default function DMConversationPage() {
 
   const saveEdit = () => {
     if (!editingId || !editInput.trim() || isEditing) return;
-    editMsg({ messageUid: editingId, content: editInput.trim() }, { onSuccess: () => cancelEdit(), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to edit message") });
+    editMsg({ messageUid: editingId, content: editInput.trim() }, { onSuccess: () => cancelEdit(), onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to edit message", type: "error" }) });
   };
 
   const handleEditKeyDown = (e: React.KeyboardEvent) => {
@@ -184,7 +185,7 @@ export default function DMConversationPage() {
   if (!conversationId) return null;
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-16 mt-0 px-4 pb-4 flex flex-col md:h-[calc(100vh-4rem)] h-[calc(100vh-6rem)]">
+    <PageTransition className="max-w-[40rem] w-full md:mt-16 mt-6 px-4 pb-4 flex flex-col md:h-[calc(100vh-4rem)] h-[calc(100vh-6rem)]">
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -198,7 +199,7 @@ export default function DMConversationPage() {
             <Button
               variant="default"
               size="sm"
-              onClick={() => { if (deleteTarget) deleteMsg(deleteTarget, { onSuccess: () => setDeleteTarget(null), onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to delete message") }); }}
+              onClick={() => { if (deleteTarget) deleteMsg(deleteTarget, { onSuccess: () => setDeleteTarget(null), onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete message", type: "error" }) }); }}
               className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
             >
               Delete
@@ -288,7 +289,7 @@ export default function DMConversationPage() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
-          className="min-h-10 flex-1 pr-14"
+          className={cn("min-h-10 flex-1", isMobile ? "pl-14" : "pr-14")}
           rows={1}
           unstyled
           style={{ resize: "none" }}
@@ -297,7 +298,7 @@ export default function DMConversationPage() {
           variant="default"
           onClick={handleSend}
           disabled={isPending || !input.trim()}
-          className="absolute bottom-1.5 right-1.5 size-9 p-0 rounded-lg cursor-pointer"
+          className={cn("absolute bottom-1.5 size-9 p-0 rounded-lg cursor-pointer", isMobile ? "left-1.5" : "right-1.5")}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4 -rotate-90">
             <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />

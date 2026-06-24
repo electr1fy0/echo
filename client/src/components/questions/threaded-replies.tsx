@@ -37,13 +37,16 @@ function buildTree(replies: AnswerItem[]): TreeNode[] {
 }
 
 const depthColors = [
-  "border-sky-300 dark:border-sky-600",
-  "border-emerald-300 dark:border-emerald-600",
-  "border-amber-300 dark:border-amber-600",
-  "border-violet-300 dark:border-violet-600",
-  "border-rose-300 dark:border-rose-600",
-  "border-cyan-300 dark:border-cyan-600",
+  "border-sky-200 dark:border-sky-700",
+  "border-emerald-200 dark:border-emerald-700",
+  "border-amber-200 dark:border-amber-700",
+  "border-violet-200 dark:border-violet-700",
+  "border-rose-200 dark:border-rose-700",
+  "border-cyan-200 dark:border-cyan-700",
 ];
+
+const INDENT_PER_LEVEL = 0.75;
+const INDENT_CAP = 5;
 
 function TreeNodeComponent({
   node,
@@ -59,14 +62,16 @@ function TreeNodeComponent({
   onDelete: (replyId: string) => void;
 }) {
   const [isReplying, setIsReplying] = useState(false);
-  const indentLevel = Math.min(depth, 6);
-  const indent = indentLevel * 1.25;
+  const showIndent = depth > 0 && depth <= INDENT_CAP;
   const lineColor = depth > 0 ? depthColors[(depth - 1) % depthColors.length] : "";
 
   return (
-    <div style={{ marginLeft: depth > 0 ? `${indent}rem` : undefined }}>
-      <div className={depth > 0 ? `border-l-2 ${lineColor}` : ""}>
-        <div style={{ paddingLeft: depth > 0 ? "0.75rem" : undefined }}>
+    <div>
+      <div style={{ marginLeft: showIndent ? `${INDENT_PER_LEVEL}rem` : undefined }}>
+        <div
+          className={depth > 0 ? `border-l ${lineColor}` : ""}
+          style={{ paddingLeft: depth > 0 ? "0.5rem" : undefined }}
+        >
           <ReplyItem
             answerItem={node.item}
             onDelete={() => onDelete(node.item.answer.uid)}
@@ -75,33 +80,33 @@ function TreeNodeComponent({
             onReply={() => setIsReplying(true)}
           />
         </div>
-      </div>
-      {isReplying && (
-        <div className="mb-2" style={{ paddingLeft: depth > 0 ? "1rem" : undefined, marginTop: "0.5rem" }}>
-          <ReplyForm
-            questionId={questionId}
-            parentReplyUid={node.item.answer.uid}
-            replyingToUsername={node.item.author?.username}
-            compact
-            onSubmitSuccess={() => setIsReplying(false)}
-            onCancel={() => setIsReplying(false)}
-          />
-        </div>
-      )}
-      {node.children.length > 0 && (
-        <div>
-          {node.children.map((child) => (
-            <TreeNodeComponent
-              key={child.item.answer.uid}
-              node={child}
-              depth={depth + 1}
+        {isReplying && (
+          <div className="mb-2" style={{ marginTop: "0.5rem" }}>
+            <ReplyForm
               questionId={questionId}
-              authorUsername={authorUsername}
-              onDelete={onDelete}
+              parentReplyUid={node.item.answer.uid}
+              replyingToUsername={node.item.author?.username}
+              compact
+              onSubmitSuccess={() => setIsReplying(false)}
+              onCancel={() => setIsReplying(false)}
             />
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+        {node.children.length > 0 && (
+          <div>
+            {node.children.map((child) => (
+              <TreeNodeComponent
+                key={child.item.answer.uid}
+                node={child}
+                depth={depth + 1}
+                questionId={questionId}
+                authorUsername={authorUsername}
+                onDelete={onDelete}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

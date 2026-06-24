@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { useEffect } from "react";
 
@@ -14,16 +14,18 @@ export function ReloadPrompt() {
 
   useEffect(() => {
     if (needRefresh) {
-      toast.info("New version available", {
+      toastManager.add({
+        title: "New version available",
         description: "Click refresh to update to the latest version.",
-        action: {
-          label: "Refresh",
+        type: "info",
+        actionProps: {
+          children: "Refresh",
           onClick: () => {
             updateServiceWorker(true);
             setNeedRefresh(false);
           },
         },
-        duration: Infinity,
+        timeout: Infinity,
       });
     }
   }, [needRefresh, updateServiceWorker, setNeedRefresh]);

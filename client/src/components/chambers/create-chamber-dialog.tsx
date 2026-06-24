@@ -14,7 +14,7 @@ import { useCreateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { CropImageDialog } from "@/components/ui/crop-image-dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -61,13 +61,11 @@ export function CreateChamberDialog({
         });
         if (newChamber?.uid) {
           navigate(`/chamber/${newChamber.uid}`);
-          toast.success("Chamber created successfully");
+          toastManager.add({ title: "Chamber created successfully", type: "success" });
         }
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to create chamber",
-        );
+        toastManager.add({ title: err instanceof Error ? err.message : "Failed to create chamber", type: "error" });
       },
     });
   };

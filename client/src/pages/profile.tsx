@@ -53,7 +53,7 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "next-themes";
 import { useAccentTheme } from "@/hooks/use-accent-theme";
@@ -225,13 +225,11 @@ export default function Profile() {
     e.preventDefault();
     updateProfile(editForm, {
       onSuccess: () => {
-        toast.success("Profile updated successfully");
+        toastManager.add({ title: "Profile updated successfully", type: "success" });
         setIsEditOpen(false);
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to update profile",
-        );
+        toastManager.add({ title: err instanceof Error ? err.message : "Failed to update profile", type: "error" });
       },
     });
   };
@@ -1017,11 +1015,11 @@ export default function Profile() {
                   onClick={() => {
                     deleteAccount(undefined, {
                       onSuccess: () => {
-                        toast.success("Account deleted successfully");
+                        toastManager.add({ title: "Account deleted successfully", type: "success" });
                         setIsDeleteOpen(false);
                       },
                       onError: (err) => {
-                        toast.error(err instanceof Error ? err.message : "Failed to delete account");
+                        toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete account", type: "error" });
                       },
                     });
                   }}
