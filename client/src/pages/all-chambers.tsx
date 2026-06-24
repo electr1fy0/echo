@@ -44,14 +44,23 @@ export default function AllChambers() {
         <div className="relative">
           <HugeiconsIcon
             icon={Search01Icon}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 size-5"
+            className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400 dark:text-neutral-500 pointer-events-none"
           />
           <Input
             placeholder="Search chambers..."
-            className="pl-10 h-10 bg-[#F5F5F5] dark:bg-neutral-800/50 border-transparent focus-visible:bg-transparent border-neutral-200 dark:border-neutral-700 rounded-full"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            className="rounded-full border-neutral-200 dark:border-neutral-800 bg-[#F5F5F5] dark:bg-neutral-800/50"
+            style={{ paddingLeft: "2.5rem", paddingRight: "2rem" }}
           />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors text-xs cursor-pointer border-none bg-transparent flex items-center justify-center"
+            >
+              ✕
+            </button>
+          )}
         </div>
         <CreateChamberButton onClick={() => setCreateChamberOpen(true)} />
         <div>

@@ -29,13 +29,19 @@ import {
 import { useSound } from "@/hooks/use-sound";
 import {
   Drawer,
-  DrawerContent,
+  DrawerPopup,
+  DrawerPanel,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-type FormMode = "signin" | "signup" | "forgot" | "forgot-success" | "signup-success";
+type FormMode =
+  | "signin"
+  | "signup"
+  | "forgot"
+  | "forgot-success"
+  | "signup-success";
 
 const MODE_COPY: Record<
   "signin" | "signup" | "forgot",
@@ -48,7 +54,8 @@ const MODE_COPY: Record<
   },
   signup: {
     title: "Create an account",
-    description: "Enter your details to start posting and connecting on TurnsOut.",
+    description:
+      "Enter your details to start posting and connecting on TurnsOut.",
     submitLabel: "Create Account",
   },
   forgot: {
@@ -151,21 +158,28 @@ export function AuthDialog() {
   const copy = MODE_COPY[formMode];
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) close(); }}>
-      <DialogContent className="sm:max-w-md bg-background text-neutral-900 dark:text-neutral-100 p-6 border border-neutral-200 dark:border-neutral-800">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
+    >
+      <DialogContent className="sm:max-w-md p-6">
         {mode === "forgot-success" ? (
           <div className="text-center space-y-4 py-4">
             <div className="mx-auto size-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <span className="text-2xl">📧</span>
             </div>
-            <DialogTitle className="text-lg font-bold text-center">Check your email</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-center">
+              Check your email
+            </DialogTitle>
             <DialogDescription className="text-center text-sm text-neutral-500">
               If an account exists for <strong>{form.email}</strong>, we've sent
               instructions to reset your password.
             </DialogDescription>
             <Button
               variant="outline"
-              className="w-full mt-4 rounded-full"
+              className="w-full mt-4"
               onClick={() => setMode("signin")}
             >
               Back to Sign In
@@ -176,7 +190,9 @@ export function AuthDialog() {
             <div className="mx-auto size-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <span className="text-2xl">✉️</span>
             </div>
-            <DialogTitle className="text-lg font-bold text-center">Check your email</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-center">
+              Check your email
+            </DialogTitle>
             <DialogDescription className="text-center text-sm text-neutral-500">
               We've sent a verification link to <strong>{form.email}</strong>.
               Please click the link to verify your account before signing in.
@@ -184,14 +200,14 @@ export function AuthDialog() {
             <div className="space-y-2 pt-2">
               <Button
                 variant="outline"
-                className="w-full rounded-full"
+                className="w-full"
                 onClick={() => setMode("signin")}
               >
                 Back to Sign In
               </Button>
               <Button
                 variant="ghost"
-                className="w-full text-xs text-muted-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full"
+                className="w-full"
                 disabled={isResendPending}
                 onClick={async () => {
                   if (!form.email) return;
@@ -219,7 +235,9 @@ export function AuthDialog() {
                   />
                 </div>
               </div>
-              <DialogTitle className="text-lg text-left font-semibold">{copy.title}</DialogTitle>
+              <DialogTitle className="text-lg text-left font-semibold">
+                {copy.title}
+              </DialogTitle>
               <DialogDescription className="text-left text-xs">
                 {copy.description}
               </DialogDescription>
@@ -241,7 +259,7 @@ export function AuthDialog() {
                     placeholder="Username"
                     autoComplete="username"
                     required
-                    className="text-base md:text-sm pl-3 h-10"
+                    className="text-base md:text-sm"
                     value={form.username}
                     onChange={(e) => updateForm({ username: e.target.value })}
                   />
@@ -255,13 +273,13 @@ export function AuthDialog() {
                       placeholder="Email"
                       autoComplete="email"
                       required
-                      className="text-base md:text-sm pl-3 h-10"
+                      className="text-base md:text-sm"
                       value={form.email}
                       onChange={(e) => updateForm({ email: e.target.value })}
                     />
                     {formMode === "signup" && (
                       <Drawer>
-                        <DrawerTrigger asChild>
+                        <DrawerTrigger>
                           <button
                             type="button"
                             className="text-[11px] text-muted-foreground/70 px-1 hover:text-muted-foreground transition-colors cursor-pointer"
@@ -269,22 +287,28 @@ export function AuthDialog() {
                             Only university emails are accepted
                           </button>
                         </DrawerTrigger>
-                        <DrawerContent>
+                        <DrawerPopup>
                           <DrawerHeader>
                             <DrawerTitle>Supported Universities</DrawerTitle>
                           </DrawerHeader>
-                          <div className="px-4 pb-4 space-y-2">
-                            <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                              <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                                V
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">VIT University</p>
-                                <p className="text-xs text-muted-foreground">@vitstudent.ac.in</p>
+                          <DrawerPanel>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                                <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                                  V
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium">
+                                    VIT University
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    @vitstudent.ac.in
+                                  </p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </DrawerContent>
+                          </DrawerPanel>
+                        </DrawerPopup>
                       </Drawer>
                     )}
                   </div>
@@ -298,10 +322,12 @@ export function AuthDialog() {
                       formMode === "signup" ? "Create Password" : "Password"
                     }
                     autoComplete={
-                      formMode === "signup" ? "new-password" : "current-password"
+                      formMode === "signup"
+                        ? "new-password"
+                        : "current-password"
                     }
                     required
-                    className="text-base md:text-sm pl-3 h-10"
+                    className="text-base md:text-sm"
                     value={form.password}
                     onChange={(e) => updateForm({ password: e.target.value })}
                   />
@@ -316,7 +342,10 @@ export function AuthDialog() {
                     disabled={
                       formMode === "signin"
                         ? !form.username || !form.password || isLoading
-                        : !form.username || !form.password || !form.email || isLoading
+                        : !form.username ||
+                          !form.password ||
+                          !form.email ||
+                          isLoading
                     }
                     className="w-full"
                   >
@@ -324,7 +353,11 @@ export function AuthDialog() {
                       <SlideToUnlockText>
                         {({ isDragging }) => (
                           <ShimmeringText
-                            text={formMode === "signin" ? "Slide to sign in" : "Slide to create account"}
+                            text={
+                              formMode === "signin"
+                                ? "Slide to sign in"
+                                : "Slide to create account"
+                            }
                             isStopped={isDragging}
                             className="[--color:rgba(120,113,108,0.6)] [--shimmering-color:rgb(120,113,108)]"
                           />
@@ -334,7 +367,13 @@ export function AuthDialog() {
                     </SlideToUnlockTrack>
                   </SlideToUnlock>
                 ) : (
-                  <Button className="w-full h-10 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white cursor-pointer" type="submit" disabled={isLoading}>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full"
+                    type="submit"
+                    disabled={isLoading}
+                  >
                     {isLoading ? (
                       <HugeiconsIcon
                         icon={Loading03Icon}
@@ -372,8 +411,8 @@ export function AuthDialog() {
                     </div>
                     <Button
                       type="button"
-                      variant="secondary"
-                      className="w-full h-10 rounded-xl border border-neutral-200 dark:border-neutral-800 flex items-center justify-center gap-2 cursor-pointer"
+                      variant="outline"
+                      className="w-full"
                       onClick={handleSigninWithGoogle}
                     >
                       <img
@@ -386,7 +425,7 @@ export function AuthDialog() {
                     </Button>
                   </div>
                 )}
-                
+
                 <button
                   type="button"
                   onClick={() => {

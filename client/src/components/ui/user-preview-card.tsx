@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { PreviewCard, PreviewCardTrigger, PreviewCardPopup } from "@/components/ui/preview-card";
 import type { User } from "@/types";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Link01Icon } from "@hugeicons/core-free-icons";
 import { LevelBadge } from "@/components/ui/level-badge";
+import { useFetchPublicProfile, useFollowUser, useUnfollowUser } from "@/hooks/use-profile";
+import { useAuth } from "@/hooks/use-auth";
+import { useAuthModal } from "@/hooks/use-auth-modal";
+import { Button } from "@/components/ui/button";
 
 interface UserPreviewCardProps {
   user: User;
@@ -12,48 +15,74 @@ interface UserPreviewCardProps {
 }
 
 function UserPreviewCard({ user, children }: UserPreviewCardProps) {
+  const { data: fetchedUser } = useFetchPublicProfile(user.username);
+  const { data: currentUser } = useAuth();
+  const { open: openAuthModal } = useAuthModal();
+  const { mutate: doFollow, isPending: isFollowPending } = useFollowUser();
+  const { mutate: doUnfollow, isPending: isUnfollowPending } = useUnfollowUser();
+
+  const profile = fetchedUser ?? user;
+  const isPending = isFollowPending || isUnfollowPending;
+  const [optimistic, setOptimistic] = useState<boolean | null>(null);
+  const isFollowing = optimistic ?? profile.isFollowing ?? false;
+
+  const isOwnProfile = currentUser?.username === profile.username;
+
   return (
     <PreviewCard>
       <PreviewCardTrigger render={children as React.ReactElement} />
-      <PreviewCardPopup className="w-56">
-        <div className="relative">
-          <div className="h-16 bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-700" />
-          <div className="px-4 pb-4">
-            <div className="-mt-6 mb-2">
-              <UserAvatar
-                src={user.avatar}
-                name={user.username}
-                className="size-12 ring-2 ring-background"
-              />
-            </div>
+      <PreviewCardPopup className="w-52 p-3 block">
+        <div className="flex items-start gap-2.5">
+          <UserAvatar
+            src={profile.avatar}
+            name={profile.username}
+            className="size-9 shrink-0 mt-0.5"
+          />
+          <div className="min-w-0 flex-1">
             <Link
-              to={`/u/${user.username}`}
+              to={`/u/${profile.username}`}
               className="text-sm font-semibold text-foreground hover:underline line-clamp-1 flex items-center gap-1.5"
             >
-              {user.username}
-              <LevelBadge reputation={user.reputation ?? 0} size="sm" />
+              {profile.username}
+              <LevelBadge reputation={profile.reputation ?? 0} size="sm" />
             </Link>
-            {user.bio && (
-              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                {user.bio}
-              </p>
-            )}
-            <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
               <span>
-                <span className="font-medium text-foreground">{user.reputation ?? 0}</span> rep
+                <span className="font-medium text-foreground">{profile.reputation ?? 0}</span> rep
               </span>
+              <span>·</span>
               <span>
-                <span className="font-medium text-foreground">{user.posted}</span> posted
-              </span>
-              <span>
-                <span className="font-medium text-foreground">{user.answered}</span> answered
+                <span className="font-medium text-foreground">{profile.followersCount ?? 0}</span> followers
               </span>
             </div>
-            {user.link && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <HugeiconsIcon icon={Link01Icon} className="size-3 shrink-0" />
-                <span className="truncate">{user.link}</span>
-              </div>
+            {currentUser && !isOwnProfile && (
+              <Button
+                variant={isFollowing ? "default" : "outline"}
+                size="sm"
+                className="rounded-full mt-2 h-7 text-xs"
+                disabled={isPending}
+                onClick={() => {
+                  if (isFollowing) {
+                    setOptimistic(false);
+                    doUnfollow(profile.username);
+                  } else {
+                    setOptimistic(true);
+                    doFollow(profile.username);
+                  }
+                }}
+              >
+                {isFollowing ? "Following" : "Follow"}
+              </Button>
+            )}
+            {!currentUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full mt-2 h-7 text-xs"
+                onClick={() => openAuthModal("signin")}
+              >
+                Follow
+              </Button>
             )}
           </div>
         </div>

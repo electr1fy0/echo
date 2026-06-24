@@ -1,4 +1,4 @@
-import { desc, eq, inArray, and, sql } from "drizzle-orm";
+import { desc, eq, inArray, and, or, notInArray, sql } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -67,7 +67,51 @@ export const countUnreadNotifications = async (db: DB, currentUser: string): Pro
   return Number(result?.count ?? 0);
 };
 
+export const markNotificationsAsRead = async (db: DB, currentUser: string) => {
+  await db
+    .update(schema.notifications)
+    .set({ isRead: true })
+    .where(and(eq(schema.notifications.userUsername, currentUser), eq(schema.notifications.isRead, false)));
+};
+
+export const cleanupOrphanedNotifications = async (db: DB, currentUser: string) => {
+  const userNotifications = db
+    .select({ uid: schema.notifications.uid, referenceUid: schema.notifications.referenceUid, type: schema.notifications.type })
+    .from(schema.notifications)
+    .where(eq(schema.notifications.userUsername, currentUser))
+    .as("user_notifications");
+
+  // Delete post-type notifications where the post no longer exists
+  await db
+    .delete(schema.notifications)
+    .where(
+      and(
+        eq(schema.notifications.userUsername, currentUser),
+        inArray(schema.notifications.type, ["upvote_post", "mention_post", "express_interest", "milestone"]),
+        notInArray(
+          schema.notifications.referenceUid,
+          db.select({ uid: schema.posts.uid }).from(schema.posts),
+        ),
+      ),
+    );
+
+  // Delete reply-type notifications where the reply no longer exists
+  await db
+    .delete(schema.notifications)
+    .where(
+      and(
+        eq(schema.notifications.userUsername, currentUser),
+        inArray(schema.notifications.type, ["upvote_reply", "reply_post", "mention_reply"]),
+        notInArray(
+          schema.notifications.referenceUid,
+          db.select({ uid: schema.replies.uid }).from(schema.replies),
+        ),
+      ),
+    );
+};
+
 export const listNotifications = async (db: DB, currentUser: string, limit: number, offset: number) => {
+  await cleanupOrphanedNotifications(db, currentUser);
   const rows = await db
     .select({
       uid: schema.notifications.uid,
@@ -76,8 +120,8 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       actorAvatar: schema.users.avatar,
       type: schema.notifications.type,
       referenceUid: schema.notifications.referenceUid,
-      content: schema.notifications.referenceUid,
-      questionContent: schema.notifications.referenceUid,
+      content: sql<string>`''`,
+      questionContent: sql<string>`''`,
       isRead: schema.notifications.isRead,
       createdAt: schema.notifications.createdAt,
     })
@@ -92,8 +136,10 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
     rows.map(async (row) => {
       let content = "";
       let questionContent = "";
+      let postUid: string | null = null;
 
-      if (row.type === "upvote_question" || row.type === "mention_question" || row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest") {
+      if (row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest" || row.type === "milestone") {
+        postUid = row.referenceUid;
         const [post] = await db
           .select({ content: schema.posts.content })
           .from(schema.posts)
@@ -109,6 +155,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
         content = reply?.content ?? "";
 
         if (reply?.postUid) {
+          postUid = reply.postUid;
           const [post] = await db
             .select({ content: schema.posts.content })
             .from(schema.posts)
@@ -125,6 +172,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
         actor_avatar: row.actorAvatar ?? "",
         type: row.type,
         reference_uid: row.referenceUid,
+        post_uid: postUid ?? "",
         content,
         question_content: questionContent,
         is_read: row.isRead ?? false,

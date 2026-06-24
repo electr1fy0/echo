@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and, desc } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -30,6 +30,14 @@ const profileSelect = {
   answered: sql<number>`(
     select count(*)::int from ${schema.replies}
     where ${schema.replies.author} = ${schema.users.username}
+  )`,
+  followersCount: sql<number>`(
+    select count(*)::int from ${schema.follows}
+    where ${schema.follows.followingUsername} = ${schema.users.username}
+  )`,
+  followingCount: sql<number>`(
+    select count(*)::int from ${schema.follows}
+    where ${schema.follows.followerUsername} = ${schema.users.username}
   )`,
 };
 
@@ -111,5 +119,100 @@ export const getProfileByUsername = async (db: DB, username: string, includeEmai
         reputation: profile.reputation,
         posted: profile.posted,
         answered: profile.answered,
+        followersCount: profile.followersCount,
+        followingCount: profile.followingCount,
       };
+};
+
+export const followUser = async (db: DB, follower: string, target: string) => {
+  if (follower === target) {
+    throw new ApiError(400, "cannot follow yourself");
+  }
+
+  const [user] = await db
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.username, target))
+    .limit(1);
+
+  if (!user) {
+    throw new ApiError(404, "user not found");
+  }
+
+  await db.insert(schema.follows).values({
+    followerUsername: follower,
+    followingUsername: target,
+  }).onConflictDoNothing();
+
+  return { message: "user followed" };
+};
+
+export const unfollowUser = async (db: DB, follower: string, target: string) => {
+  await db.delete(schema.follows).where(
+    and(
+      eq(schema.follows.followerUsername, follower),
+      eq(schema.follows.followingUsername, target),
+    ),
+  );
+  return { message: "user unfollowed" };
+};
+
+export const isFollowing = async (db: DB, follower: string | undefined | null, target: string): Promise<boolean> => {
+  if (!follower) return false;
+
+  const [row] = await db
+    .select({ followingUsername: schema.follows.followingUsername })
+    .from(schema.follows)
+    .where(
+      and(
+        eq(schema.follows.followerUsername, follower),
+        eq(schema.follows.followingUsername, target),
+      ),
+    )
+    .limit(1);
+
+  return !!row;
+};
+
+export const getFollowers = async (db: DB, username: string, limit = 50, offset = 0) => {
+  const rows = await db
+    .select({
+      username: schema.follows.followerUsername,
+      avatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
+      bio: sql<string>`coalesce(${schema.users.bio}, '')`,
+    })
+    .from(schema.follows)
+    .leftJoin(schema.users, eq(schema.users.username, schema.follows.followerUsername))
+    .where(eq(schema.follows.followingUsername, username))
+    .orderBy(desc(schema.follows.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return rows;
+};
+
+export const getFollowing = async (db: DB, username: string, limit = 50, offset = 0) => {
+  const rows = await db
+    .select({
+      username: schema.follows.followingUsername,
+      avatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
+      bio: sql<string>`coalesce(${schema.users.bio}, '')`,
+    })
+    .from(schema.follows)
+    .leftJoin(schema.users, eq(schema.users.username, schema.follows.followingUsername))
+    .where(eq(schema.follows.followerUsername, username))
+    .orderBy(desc(schema.follows.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return rows;
+};
+
+export const getFollowedUsernames = async (db: DB, username: string): Promise<string[]> => {
+  const rows = await db
+    .select({ followingUsername: schema.follows.followingUsername })
+    .from(schema.follows)
+    .where(eq(schema.follows.followerUsername, username));
+
+  return rows.map((r) => r.followingUsername);
 };

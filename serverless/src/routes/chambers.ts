@@ -5,6 +5,7 @@ import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { listChambers, mapChamber } from "../services/questions";
+import { safeParse, createChamberSchema, updateChamberSchema, createChannelSchema, updateChannelSchema, deleteChamberSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const chamberRoutes = new Hono<AppEnv>();
@@ -46,15 +47,10 @@ chamberRoutes.use("*", requireAuth);
 
 
 chamberRoutes.post("/", async (c) => {
-  const body = (await c.req.json()) as {
-    name?: string;
-    description?: string;
-    colorIndex?: number;
-    picture?: string | null;
-  };
+  const body = safeParse(createChamberSchema, await c.req.json());
   const [created] = await c.get("db").insert(schema.chambers).values({
-    name: body.name ?? "",
-    description: body.description ?? "",
+    name: body.name,
+    description: body.description,
     creatorUsername: c.get("user"),
     colorIndex: body.colorIndex ?? 0,
     picture: body.picture ?? null,
@@ -131,19 +127,21 @@ chamberRoutes.post("/", async (c) => {
 });
 
 chamberRoutes.delete("/", async (c) => {
-  const body = (await c.req.json()) as { name?: string };
-  await c.get("db").delete(schema.chambers).where(
-    and(eq(schema.chambers.creatorUsername, c.get("user")), eq(schema.chambers.name, body.name ?? "")),
-  );
+  const body = safeParse(deleteChamberSchema, await c.req.json());
+  const deleted = await c.get("db").delete(schema.chambers).where(
+    and(eq(schema.chambers.creatorUsername, c.get("user")), eq(schema.chambers.name, body.name)),
+  ).returning({ uid: schema.chambers.uid });
+
+  if (!deleted.length) {
+    throw new ApiError(404, "chamber not found or not authorized");
+  }
+
   return c.json({ message: "chamber deleted" });
 });
 
 chamberRoutes.patch("/:uid", async (c) => {
   const uid = c.req.param("uid");
-  const body = (await c.req.json()) as { name?: string; description?: string; colorIndex?: number; picture?: string | null };
-  if (!body.name || !body.description) {
-    throw new ApiError(400, "name and description are required");
-  }
+  const body = safeParse(updateChamberSchema, await c.req.json());
 
   const [chamber] = await c.get("db").select({
     creatorUsername: schema.chambers.creatorUsername,
@@ -219,14 +217,7 @@ chamberRoutes.post("/:uid/channels", async (c) => {
     throw new ApiError(403, "only chamber creator can create channels");
   }
 
-  const body = (await c.req.json()) as {
-    name?: string;
-    icon?: string;
-    schema?: any[];
-  };
-  if (!body.name) {
-    throw new ApiError(400, "channel name is required");
-  }
+  const body = safeParse(createChannelSchema, await c.req.json());
 
   const [created] = await c.get("db").insert(schema.channels).values({
     chamberUid: uid,
@@ -256,11 +247,7 @@ chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
     throw new ApiError(403, "only chamber creator can edit channels");
   }
 
-  const body = (await c.req.json()) as {
-    name?: string;
-    icon?: string;
-    schema?: any[];
-  };
+  const body = safeParse(updateChannelSchema, await c.req.json());
 
   const updates: Record<string, any> = {};
   if (body.name) updates.name = body.name.toLowerCase().replace(/\s+/g, "-");

@@ -1,56 +1,61 @@
-"use client"
+"use client";
 
-import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card"
-import { cn } from "@/lib/utils"
+import { PreviewCard as PreviewCardPrimitive } from "@base-ui/react/preview-card";
+import type React from "react";
+import { cn } from "@/lib/utils";
 
-function PreviewCard({ ...props }: PreviewCardPrimitive.Root.Props) {
-  return <PreviewCardPrimitive.Root {...props} />
-}
+export const PreviewCard: typeof PreviewCardPrimitive.Root =
+  PreviewCardPrimitive.Root;
 
-function PreviewCardTrigger({ ...props }: PreviewCardPrimitive.Trigger.Props) {
-  return <PreviewCardPrimitive.Trigger {...props} />
-}
-
-function PreviewCardPortal({ ...props }: PreviewCardPrimitive.Portal.Props) {
-  return <PreviewCardPrimitive.Portal {...props} />
-}
-
-function PreviewCardPositioner({ className, ...props }: PreviewCardPrimitive.Positioner.Props) {
+export function PreviewCardTrigger({
+  ...props
+}: PreviewCardPrimitive.Trigger.Props): React.ReactElement {
   return (
-    <PreviewCardPrimitive.Positioner
-      className={cn("z-50 outline-none", className)}
-      {...props}
-    />
-  )
+    <PreviewCardPrimitive.Trigger data-slot="preview-card-trigger" {...props} />
+  );
 }
 
-function PreviewCardPopup({
+export function PreviewCardPopup({
   className,
   children,
-  side,
-  align,
-  sideOffset = 8,
+  align = "center",
+  sideOffset = 4,
+  anchor,
+  portalProps,
   ...props
 }: PreviewCardPrimitive.Popup.Props & {
-  side?: PreviewCardPrimitive.Positioner.Props["side"];
   align?: PreviewCardPrimitive.Positioner.Props["align"];
   sideOffset?: PreviewCardPrimitive.Positioner.Props["sideOffset"];
-}) {
+  anchor?: PreviewCardPrimitive.Positioner.Props["anchor"];
+  portalProps?: PreviewCardPrimitive.Portal.Props;
+}): React.ReactElement {
   return (
-    <PreviewCardPortal>
-      <PreviewCardPositioner side={side} align={align} sideOffset={sideOffset}>
+    <PreviewCardPrimitive.Portal {...portalProps}>
+      <PreviewCardPrimitive.Positioner
+        align={align}
+        anchor={anchor}
+        className="z-50"
+        data-slot="preview-card-positioner"
+        sideOffset={sideOffset}
+      >
         <PreviewCardPrimitive.Popup
           className={cn(
-            "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/5 rounded-xl p-0 text-sm ring-1 duration-100 outline-none overflow-hidden",
-            className
+            "relative flex w-64 origin-(--transform-origin) text-balance rounded-lg border bg-popover p-4 text-popover-foreground text-sm shadow-lg transition-[scale,opacity] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0",
+            className,
           )}
+          data-slot="preview-card-content"
           {...props}
         >
           {children}
         </PreviewCardPrimitive.Popup>
-      </PreviewCardPositioner>
-    </PreviewCardPortal>
-  )
+      </PreviewCardPrimitive.Positioner>
+    </PreviewCardPrimitive.Portal>
+  );
 }
 
-export { PreviewCard, PreviewCardTrigger, PreviewCardPopup }
+export {
+  PreviewCardPrimitive,
+  PreviewCard as HoverCard,
+  PreviewCardTrigger as HoverCardTrigger,
+  PreviewCardPopup as HoverCardContent,
+};

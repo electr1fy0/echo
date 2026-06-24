@@ -1,81 +1,67 @@
-"use client"
-import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip"
-import { cn } from "@/lib/utils"
+"use client";
 
-function TooltipProvider({ ...props }: TooltipPrimitive.Provider.Props) {
-  return <TooltipPrimitive.Provider data-slot="tooltip-provider" {...props} />
+import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
+import type React from "react";
+import { cn } from "@/lib/utils";
+
+export const TooltipCreateHandle: typeof TooltipPrimitive.createHandle =
+  TooltipPrimitive.createHandle;
+
+export const TooltipProvider: typeof TooltipPrimitive.Provider =
+  TooltipPrimitive.Provider;
+
+export const Tooltip: typeof TooltipPrimitive.Root = TooltipPrimitive.Root;
+
+export function TooltipTrigger(
+  props: TooltipPrimitive.Trigger.Props,
+): React.ReactElement {
+  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
-function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-}
-
-function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
-}
-
-function TooltipPortal({ ...props }: TooltipPrimitive.Portal.Props) {
-  return <TooltipPrimitive.Portal data-slot="tooltip-portal" {...props} />
-}
-
-function TooltipPositioner({ className, ...props }: TooltipPrimitive.Positioner.Props) {
-  return (
-    <TooltipPrimitive.Positioner
-      data-slot="tooltip-positioner"
-      className={cn("z-50 outline-none", className)}
-      {...props}
-    />
-  )
-}
-
-function TooltipContent({
+export function TooltipPopup({
   className,
-  children,
-  side = "top",
-  sideOffset = 4,
   align = "center",
-  alignOffset = 0,
+  sideOffset = 4,
+  side = "top",
+  anchor,
+  children,
+  portalProps,
   ...props
 }: TooltipPrimitive.Popup.Props & {
-  side?: "top" | "right" | "bottom" | "left";
-  sideOffset?: number;
-  align?: "start" | "center" | "end";
-  alignOffset?: number;
-}) {
+  align?: TooltipPrimitive.Positioner.Props["align"];
+  side?: TooltipPrimitive.Positioner.Props["side"];
+  sideOffset?: TooltipPrimitive.Positioner.Props["sideOffset"];
+  anchor?: TooltipPrimitive.Positioner.Props["anchor"];
+  portalProps?: TooltipPrimitive.Portal.Props;
+}): React.ReactElement {
   return (
-    <TooltipPortal>
-      <TooltipPositioner side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset}>
+    <TooltipPrimitive.Portal {...portalProps}>
+      <TooltipPrimitive.Positioner
+        align={align}
+        anchor={anchor}
+        className="z-50 h-(--positioner-height) w-(--positioner-width) max-w-(--available-width) transition-[top,left,right,bottom,transform] data-instant:transition-none"
+        data-slot="tooltip-positioner"
+        side={side}
+        sideOffset={sideOffset}
+      >
         <TooltipPrimitive.Popup
-          data-slot="tooltip-content"
           className={cn(
-            "bg-foreground text-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 px-2.5 py-1.5 rounded-lg text-xs leading-none duration-100 outline-none flex items-center gap-1.5",
-            className
+            "relative flex h-(--popup-height,auto) w-(--popup-width,auto) origin-(--transform-origin) text-balance rounded-md border bg-popover text-popover-foreground text-xs shadow-md transition-[width,height,scale,opacity] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0 data-instant:duration-0",
+            className,
           )}
+          data-slot="tooltip-popup"
           {...props}
         >
-          {children}
+          <TooltipPrimitive.Viewport
+            className="relative size-full overflow-clip px-(--viewport-inline-padding) py-1 [--viewport-inline-padding:--spacing(2)] data-instant:transition-none **:data-current:data-ending-style:opacity-0 **:data-current:data-starting-style:opacity-0 **:data-previous:data-ending-style:opacity-0 **:data-previous:data-starting-style:opacity-0 **:data-current:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-previous:w-[calc(var(--popup-width)-2*var(--viewport-inline-padding)-2px)] **:data-previous:truncate **:data-current:opacity-100 **:data-previous:opacity-100 **:data-current:transition-opacity **:data-previous:transition-opacity"
+            data-slot="tooltip-viewport"
+          >
+            {children}
+          </TooltipPrimitive.Viewport>
         </TooltipPrimitive.Popup>
-      </TooltipPositioner>
-    </TooltipPortal>
-  )
+      </TooltipPrimitive.Positioner>
+    </TooltipPrimitive.Portal>
+  );
 }
 
-function TooltipArrow({ className, ...props }: TooltipPrimitive.Arrow.Props) {
-  return (
-    <TooltipPrimitive.Arrow
-      data-slot="tooltip-arrow"
-      className={cn("fill-foreground", className)}
-      {...props}
-    />
-  )
-}
-
-export {
-  Tooltip,
-  TooltipArrow,
-  TooltipContent,
-  TooltipPortal,
-  TooltipPositioner,
-  TooltipProvider,
-  TooltipTrigger,
-}
+export { TooltipPrimitive, TooltipPopup as TooltipContent };

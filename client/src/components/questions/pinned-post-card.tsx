@@ -7,7 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserPreviewCard } from "@/components/ui/user-preview-card";
-import { formatRelativeTime } from "@/lib/format-time";
+import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { QuestionItem } from "@/types";
 import { useUnpinQuestion } from "@/hooks/use-questions";
@@ -16,7 +16,7 @@ import { UpvoteButton } from "@/components/upvote-button";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { PostContent } from "@/components/post-content";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { useRepliesQuery } from "@/hooks/use-replies";
 
 type PinnedPostCardProps = {
@@ -33,7 +33,8 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
-  const { mutate: unpinQuestion, isPending: isUnpinPending } = useUnpinQuestion();
+  const { mutate: unpinQuestion, isPending: isUnpinPending } =
+    useUnpinQuestion();
   const { data: replies = [] } = useRepliesQuery(questionId);
 
   if (!question || !questionId) return null;
@@ -49,7 +50,9 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
         toast.success("Post unpinned");
       },
       onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to unpin post");
+        toast.error(
+          err instanceof Error ? err.message : "Failed to unpin post",
+        );
       },
     });
   };
@@ -60,7 +63,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
       className={cn(
         "flex flex-col justify-between h-[160px] w-[280px] shrink-0 snap-start p-4 rounded-xl border",
         "border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900",
-        "hover:bg-neutral-50 dark:hover:bg-neutral-950 transition-colors duration-150 cursor-pointer select-none"
+        "hover:bg-neutral-50 dark:hover:bg-neutral-950 transition-colors duration-150 cursor-pointer select-none",
       )}
     >
       {/* Top Section: Author info & Unpin/Pin indicator */}
@@ -69,7 +72,11 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
           {(() => {
             const avatarLink = (
               <Link
-                to={question.authorUsername ? `/u/${question.authorUsername}` : "#"}
+                to={
+                  question.authorUsername
+                    ? `/u/${question.authorUsername}`
+                    : "#"
+                }
                 className="shrink-0"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -91,7 +98,10 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
               {question.authorUsername || "Anonymous"}
             </span>
             <span className="text-[9px] text-neutral-400 dark:text-neutral-500">
-              {question.timeCreated && formatRelativeTime(new Date(question.timeCreated))}
+              {question.timeCreated &&
+                formatDistanceToNowStrict(new Date(question.timeCreated), {
+                  addSuffix: true,
+                })}
             </span>
           </div>
         </div>
@@ -105,7 +115,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
               title="Unpin post"
               className={cn(
                 "p-1 rounded-md text-neutral-400 hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800",
-                "transition-colors duration-150 cursor-pointer"
+                "transition-colors duration-150 cursor-pointer",
               )}
             >
               <HugeiconsIcon icon={PinOffIcon} className="size-3.5" />
@@ -123,7 +133,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
         <div className="line-clamp-2 text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed font-normal">
           <PostContent content={question.content} />
         </div>
-        
+
         {/* Post Type Specific Tiny Badges */}
         {question.postType === "partner" && (
           <span className="inline-block mt-1 text-[8px] font-bold uppercase tracking-wider text-[var(--brand)] bg-[var(--brand-5)] px-1.5 py-0.5 rounded border border-[var(--brand-10)]">
@@ -140,7 +150,6 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
             Taxi Sharing
           </span>
         )}
-
       </div>
 
       {/* Bottom Section: Upvote, Replies, and extra meta */}
@@ -161,7 +170,9 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
           />
           <div className="flex items-center gap-1 text-neutral-400 dark:text-neutral-500 text-[11px] px-1">
             <HugeiconsIcon icon={BubbleChatIcon} className="size-3.5" />
-            <span className="font-medium">{question.repliesCount ?? replies.length}</span>
+            <span className="font-medium">
+              {question.repliesCount ?? replies.length}
+            </span>
           </div>
         </div>
 
@@ -171,17 +182,20 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
             ₹{(question.tradePrice / 100).toFixed(0)}
           </span>
         )}
-        
+
         {/* Partner Slots (if applicable) */}
         {question.postType === "partner" && question.partnerSlotsNeeded && (
           <span className="text-[9px] font-semibold text-neutral-500 dark:text-neutral-400">
             {question.partnerSlotsNeeded} slots left
           </span>
         )}
-        
+
         {/* Taxi route (if applicable) */}
         {question.postType === "taxi" && (
-          <span className="text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 truncate max-w-[130px]" title={`${question.taxiDeparture} ➔ ${question.taxiDestination}`}>
+          <span
+            className="text-[9px] font-semibold text-neutral-500 dark:text-neutral-400 truncate max-w-[130px]"
+            title={`${question.taxiDeparture} ➔ ${question.taxiDestination}`}
+          >
             {question.taxiDeparture} ➔ {question.taxiDestination}
           </span>
         )}

@@ -7,6 +7,7 @@ export interface Notification {
     actor_avatar: string;
     type: string;
     reference_uid: string;
+    post_uid: string;
     content: string;
     question_content?: string;
     is_read: boolean;
@@ -25,6 +26,13 @@ export async function listNotifications(limit?: number, offset?: number): Promis
     });
     if (!res.ok) throw new Error("failed");
     return res.json();
+}
+
+export async function markNotificationsRead(): Promise<void> {
+  await fetch(`${API_URL}/users/me/notifications/read`, {
+    method: "POST",
+    headers: { ...getAuthHeaders() },
+  });
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {

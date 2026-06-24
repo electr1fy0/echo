@@ -98,22 +98,20 @@ export default function ResetPassword() {
  <span>{error.message}</span>
  </div>
  )}
- <Input
- type="password"
- placeholder="New Password"
- aria-label="New Password"
- className="text-base pl-3"
- onChange={(e) => setNewPassword(e.target.value)}
- required
- />
- <Input
- type="password"
- placeholder="Confirm Password"
- aria-label="Confirm Password"
- className="text-base pl-3"
- onChange={(e) => setConfirmPassword(e.target.value)}
- required
- />
+            <Input
+              type="password"
+              placeholder="New Password"
+              aria-label="New Password"
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              placeholder="Confirm Password"
+              aria-label="Confirm Password"
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
  <Button
  className="w-full"
  type="submit"

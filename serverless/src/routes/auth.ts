@@ -13,13 +13,12 @@ import { rateLimit } from "../middleware/rateLimit";
 import { fetchGoogleProfileEmail } from "../services/google";
 import { getProfileByUsername } from "../services/users";
 import {
-  ensureValidUsername,
   getClientUrl,
   getGoogleRedirectUrl,
-  normalizeUsername,
   randomToken,
   requireEnv,
 } from "../lib/utils";
+import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, googleOnboardingSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const authRoutes = new Hono<AppEnv>();
@@ -74,21 +73,15 @@ const handleGoogleCallback = async (c: Context<AppEnv>) => {
 
 authRoutes.post("/signup", async (c) => {
   const db = c.get("db");
-  const body = (await c.req.json()) as {
-    username?: string;
-    email?: string;
-    password?: string;
-  };
+  const body = safeParse(signupSchema, await c.req.json());
 
-  const username = normalizeUsername(body.username ?? "");
-  ensureValidUsername(username);
-
-  const email = (body.email ?? "").trim().toLowerCase();
+  const username = body.username;
+  const email = body.email;
   // TODO: re-enable college email restriction
   // if (!email.endsWith("@vitstudent.ac.in")) {
   //   throw new ApiError(400, "only @vitstudent.ac.in emails are allowed");
   // }
-  const passwordHash = await bcrypt.hash(body.password ?? "", 10);
+  const passwordHash = await bcrypt.hash(body.password, 10);
   const verificationToken = randomToken(32);
 
   try {
@@ -119,8 +112,8 @@ authRoutes.post("/signup", async (c) => {
 });
 
 authRoutes.post("/signin", async (c) => {
-  const body = (await c.req.json()) as { username?: string; password?: string };
-  const username = normalizeUsername(body.username ?? "");
+  const body = safeParse(signinSchema, await c.req.json());
+  const username = body.username;
 
   const [user] = await c
     .get("db")
@@ -145,12 +138,8 @@ authRoutes.post("/signin", async (c) => {
 });
 
 authRoutes.post("/verify-email", async (c) => {
-  const body = (await c.req.json()) as { token?: string };
-  const token = body.token?.trim();
-
-  if (!token) {
-    throw new ApiError(400, "invalid request");
-  }
+  const body = safeParse(verifyEmailSchema, await c.req.json());
+  const token = body.token;
 
   const result = await c
     .get("db")
@@ -168,8 +157,8 @@ authRoutes.post("/verify-email", async (c) => {
 });
 
 authRoutes.post("/resend-verification", async (c) => {
-  const body = (await c.req.json()) as { email?: string };
-  const email = (body.email ?? "").trim().toLowerCase();
+  const body = safeParse(resendVerificationSchema, await c.req.json());
+  const email = body.email;
 
   const [user] = await c
     .get("db")
@@ -199,8 +188,8 @@ authRoutes.post("/resend-verification", async (c) => {
 });
 
 authRoutes.post("/request-password-reset", async (c) => {
-  const body = (await c.req.json()) as { email?: string };
-  const email = (body.email ?? "").trim().toLowerCase();
+  const body = safeParse(requestPasswordResetSchema, await c.req.json());
+  const email = body.email;
 
   const [user] = await c
     .get("db")
@@ -226,12 +215,8 @@ authRoutes.post("/request-password-reset", async (c) => {
 });
 
 authRoutes.post("/reset-password", async (c) => {
-  const body = (await c.req.json()) as { token?: string; new_password?: string };
-  const token = body.token?.trim();
-
-  if (!token) {
-    throw new ApiError(400, "invalid request");
-  }
+  const body = safeParse(resetPasswordSchema, await c.req.json());
+  const token = body.token;
 
   const [user] = await c
     .get("db")
@@ -286,14 +271,13 @@ authRoutes.get("/callback", handleGoogleCallback);
 authRoutes.get("/google/callback", handleGoogleCallback);
 
 authRoutes.post("/google/onboarding", async (c) => {
-  const body = (await c.req.json()) as { token?: string; username?: string };
-  const email = await verifyGoogleOnboardingToken(c.env.SECRET_KEY, body.token ?? "");
+  const body = safeParse(googleOnboardingSchema, await c.req.json());
+  const email = await verifyGoogleOnboardingToken(c.env.SECRET_KEY, body.token);
   // TODO: re-enable college email restriction
   // if (!email.endsWith("@vitstudent.ac.in")) {
   //   throw new ApiError(400, "only @vitstudent.ac.in emails are allowed");
   // }
-  const username = normalizeUsername(body.username ?? "");
-  ensureValidUsername(username);
+  const username = body.username;
 
   const [existingUsername] = await c
     .get("db")

@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { uploadImage, uploadImagePresigned } from "@/api/upload";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 
 export function useImageUpload() {
   const [uploading, setUploading] = useState(false);
 
   const upload = async (file: File): Promise<string | null> => {
-    if (!["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"].includes(file.type)) {
+    if (
+      ![
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/avif",
+        "image/gif",
+      ].includes(file.type)
+    ) {
       toast.error("Unsupported file type");
       return null;
     }

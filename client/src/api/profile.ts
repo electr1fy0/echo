@@ -42,3 +42,19 @@ export async function fetchPublicProfile(username: string): Promise<User> {
   if (!res.ok) throw new Error("Failed to fetch profile");
   return res.json() as Promise<User>;
 }
+
+export async function followUser(username: string): Promise<void> {
+  const res = await fetch(`${API_URL}/users/${username}/follow`, {
+    method: "POST",
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to follow user");
+}
+
+export async function unfollowUser(username: string): Promise<void> {
+  const res = await fetch(`${API_URL}/users/${username}/follow`, {
+    method: "DELETE",
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to unfollow user");
+}

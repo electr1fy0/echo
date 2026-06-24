@@ -1,22 +1,68 @@
-import * as React from "react";
+"use client";
+
 import { Input as InputPrimitive } from "@base-ui/react/input";
+import type * as React from "react";
 import { cn } from "@/lib/utils";
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
-    return (
-      <InputPrimitive
-        ref={ref}
-        type={type}
-        data-slot="input"
-        className={cn(
-          "bg-input/30 border-input focus-visible:ring-2 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-700 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 h-9 rounded-2xl border px-3 py-1 text-base transition-all duration-200 file:h-7 file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground w-full min-w-0 outline-none file:inline-flex file:border-0 file:bg-transparent disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 select-none",
+export type InputProps = Omit<
+  InputPrimitive.Props & React.RefAttributes<HTMLInputElement>,
+  "size"
+> & {
+  size?: "sm" | "default" | "lg" | number;
+  unstyled?: boolean;
+  nativeInput?: boolean;
+};
+
+export function Input({
+  className,
+  size = "default",
+  unstyled = false,
+  nativeInput = false,
+  style,
+  ...props
+}: InputProps): React.ReactElement {
+  const inputClassName = cn(
+    "h-8.5 w-full min-w-0 rounded-[inherit] px-[calc(--spacing(3)-1px)] leading-8.5 outline-none [transition:background-color_5000000s_ease-in-out_0s] placeholder:text-muted-foreground/72 sm:h-7.5 sm:leading-7.5",
+    size === "sm" &&
+      "h-7.5 px-[calc(--spacing(2.5)-1px)] leading-7.5 sm:h-6.5 sm:leading-6.5",
+    size === "lg" && "h-9.5 leading-9.5 sm:h-8.5 sm:leading-8.5",
+    props.type === "search" &&
+      "[&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none",
+    props.type === "file" &&
+      "text-muted-foreground file:me-3 file:bg-transparent file:font-medium file:text-foreground file:text-sm",
+  );
+
+  return (
+    <span
+      className={
+        cn(
+          !unstyled &&
+            "inline-flex w-full rounded-lg border border-input bg-background text-base text-foreground shadow-xs ring-ring/24 transition-shadow has-focus-visible:has-aria-invalid:border-destructive/64 has-focus-visible:has-aria-invalid:ring-destructive/16 has-aria-invalid:border-destructive/36 has-focus-visible:border-ring has-autofill:bg-foreground/4 has-disabled:opacity-64 has-focus-visible:ring-[3px] sm:text-sm dark:bg-input/32 dark:has-autofill:bg-foreground/8 dark:has-aria-invalid:ring-destructive/24",
           className,
-        )}
-        {...props}
-      />
-    );
-  },
-);
-Input.displayName = "Input";
-export { Input };
+        ) || undefined
+      }
+      data-size={size}
+      data-slot="input-control"
+    >
+      {nativeInput ? (
+        <input
+          className={inputClassName}
+          data-slot="input"
+          size={typeof size === "number" ? size : undefined}
+          style={typeof style === "function" ? undefined : style}
+          {...props}
+        />
+      ) : (
+        <InputPrimitive
+          className={inputClassName}
+          data-slot="input"
+          size={typeof size === "number" ? size : undefined}
+          style={style}
+          {...props}
+        />
+      )}
+    </span>
+  );
+}
+
+export { InputPrimitive };

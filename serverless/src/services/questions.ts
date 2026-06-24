@@ -236,6 +236,15 @@ export const getPostItems = async (
     conditions.push(isNotNull(schema.chamberMembers.username));
   }
 
+  if (params.filter === "following") {
+    conditions.push(
+      or(
+        isNotNull(schema.chamberMembers.username),
+        isNotNull(schema.follows.followerUsername),
+      ),
+    );
+  }
+
   const rows = await db
     .select({
       uid: schema.posts.uid,
@@ -324,6 +333,13 @@ export const getPostItems = async (
       and(
         eq(schema.chamberMembers.chamberUid, schema.posts.chamberUid),
         eq(schema.chamberMembers.username, currentUser || ""),
+      ),
+    )
+    .leftJoin(
+      schema.follows,
+      and(
+        eq(schema.follows.followerUsername, currentUser || ""),
+        eq(schema.follows.followingUsername, schema.posts.author),
       ),
     )
     .leftJoin(schema.polls, eq(schema.polls.postUid, schema.posts.uid))

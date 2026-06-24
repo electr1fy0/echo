@@ -11,10 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
-function getCroppedImg(
-  imageSrc: string,
-  pixelCrop: Area,
-): Promise<Blob> {
+function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = "anonymous";
@@ -78,12 +75,9 @@ export function CropImageDialog({
     setZoom(zoom);
   }, []);
 
-  const onCropAreaChange = useCallback(
-    (_: Area, croppedAreaPixels: Area) => {
-      setCroppedAreaPixels(croppedAreaPixels);
-    },
-    [],
-  );
+  const onCropAreaChange = useCallback((_: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   const handleSave = async () => {
     if (!croppedAreaPixels) return;
@@ -120,11 +114,11 @@ export function CropImageDialog({
         <div className="flex items-center gap-3 px-1">
           <span className="text-xs text-neutral-500 shrink-0">Zoom</span>
           <Slider
-            value={[zoom]}
+            value={zoom}
             min={1}
             max={3}
             step={0.1}
-            onValueChange={([v]) => setZoom(v)}
+            onValueChange={(value) => setZoom(value as number)}
             className="flex-1"
           />
         </div>

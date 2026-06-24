@@ -8,8 +8,13 @@ import {
   getOrCreateConversation,
   getMessages,
   createMessage,
+  markConversationAsRead,
+  getUnreadMessageCount,
+  editMessage,
+  deleteMessage,
 } from "../services/dms";
 import { parsePagination } from "../lib/utils";
+import { safeParse, createMessageSchema, createConversationSchema, updateMessageSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const dmRoutes = new Hono<AppEnv>();
@@ -19,6 +24,16 @@ dmRoutes.use("*", requireAuth);
 dmRoutes.get("/conversations", async (c) => {
   const convs = await getConversations(c.get("db"), c.get("user"));
   return c.json(convs);
+});
+
+dmRoutes.get("/unread-count", async (c) => {
+  const count = await getUnreadMessageCount(c.get("db"), c.get("user"));
+  return c.json({ count });
+});
+
+dmRoutes.post("/conversations/:uid/read", async (c) => {
+  await markConversationAsRead(c.get("db"), c.req.param("uid"), c.get("user"));
+  return c.json({ success: true });
 });
 
 dmRoutes.get("/conversations/:uid/messages", async (c) => {
@@ -34,10 +49,7 @@ dmRoutes.get("/conversations/:uid/messages", async (c) => {
 });
 
 dmRoutes.post("/conversations/:uid/messages", async (c) => {
-  const body = (await c.req.json()) as { content?: string };
-  if (!body.content?.trim()) {
-    throw new ApiError(400, "content is required");
-  }
+  const body = safeParse(createMessageSchema, await c.req.json());
 
   const msg = await createMessage(
     c.get("db"),
@@ -53,12 +65,22 @@ dmRoutes.post("/conversations/:uid/messages", async (c) => {
   return c.json(msg, 201);
 });
 
+dmRoutes.patch("/conversations/:convUid/messages/:msgUid", async (c) => {
+  const body = safeParse(updateMessageSchema, await c.req.json());
+  const msg = await editMessage(c.get("db"), c.req.param("convUid"), c.req.param("msgUid"), c.get("user"), body.content);
+  if (!msg) throw new ApiError(404, "message not found or not yours");
+  return c.json(msg);
+});
+
+dmRoutes.delete("/conversations/:convUid/messages/:msgUid", async (c) => {
+  const ok = await deleteMessage(c.get("db"), c.req.param("convUid"), c.req.param("msgUid"), c.get("user"));
+  if (!ok) throw new ApiError(404, "message not found or not yours");
+  return c.json({ success: true });
+});
+
 dmRoutes.post("/conversations", async (c) => {
-  const body = (await c.req.json()) as { username?: string };
-  const otherUsername = body.username?.trim();
-  if (!otherUsername) {
-    throw new ApiError(400, "username is required");
-  }
+  const body = safeParse(createConversationSchema, await c.req.json());
+  const otherUsername = body.username;
 
   const currentUser = c.get("user");
   if (otherUsername === currentUser) {

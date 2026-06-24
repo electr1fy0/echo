@@ -17,7 +17,7 @@ export async function fetchQuestion(questionId: string) {
 
 export async function fetchQuestions(
   sort?: "votes" | "time_created" | "hot",
-  filter?: "joined",
+  filter?: "joined" | "following",
   chamberId?: string,
   author?: string,
   limit?: number,

@@ -3,8 +3,12 @@ import { Button } from "@/components/ui/button";
 import { MentionField } from "@/components/ui/mention-field";
 import { useCreateReply } from "@/hooks/use-replies";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Comment01Icon, Image01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
-import { toast } from "@/lib/toast";
+import {
+  Comment01Icon,
+  Image01Icon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
+import { toast } from "sonner";
 import { haptic } from "@/lib/haptic";
 import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
@@ -23,7 +27,14 @@ type ReplyFormProps = {
   compact?: boolean;
 };
 
-export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSubmitSuccess, onCancel, compact }: ReplyFormProps) {
+export function ReplyForm({
+  questionId,
+  parentReplyUid,
+  replyingToUsername,
+  onSubmitSuccess,
+  onCancel,
+  compact,
+}: ReplyFormProps) {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
@@ -45,8 +56,6 @@ export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSu
       </div>
     );
   }
-
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,13 +92,23 @@ export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSu
   };
 
   return (
-    <form className={cn("flex gap-4 items-start", compact ? "mt-2" : "mt-4")} onSubmit={handleSubmit}>
+    <form
+      className={cn("flex gap-4 items-start", compact ? "mt-2" : "mt-4")}
+      onSubmit={handleSubmit}
+    >
       <div className="flex-1 space-y-2">
         {replyingToUsername && (
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Replying to <span className="font-medium text-neutral-700 dark:text-neutral-300">@{replyingToUsername}</span>
+            Replying to{" "}
+            <span className="font-medium text-neutral-700 dark:text-neutral-300">
+              @{replyingToUsername}
+            </span>
             {onCancel && (
-              <button type="button" onClick={onCancel} className="ml-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="ml-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 cursor-pointer"
+              >
                 Cancel
               </button>
             )}
@@ -108,7 +127,9 @@ export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSu
           <button
             type="button"
             disabled={imageUploading}
-            onClick={() => document.getElementById("reply-image-input")?.click()}
+            onClick={() =>
+              document.getElementById("reply-image-input")?.click()
+            }
             className="flex items-center gap-1.5 h-7 px-2 rounded-lg text-xs font-medium border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer transition-colors disabled:opacity-50"
           >
             {imageUploading ? (
@@ -145,7 +166,6 @@ export function ReplyForm({ questionId, parentReplyUid, replyingToUsername, onSu
         variant="outline"
         disabled={!content.trim() || isValidating || isPending}
         type="submit"
-        className={cn(compact && "h-8 text-xs")}
       >
         {isPending ? (
           <HugeiconsIcon icon={Loading03Icon} className="size-4 animate-spin" />

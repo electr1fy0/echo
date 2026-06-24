@@ -179,6 +179,8 @@ export const conversations = pgTable("conversations", {
   lastMessageAt: timestamp("last_message_at", { mode: "date" }),
   lastMessagePreview: text("last_message_preview"),
   lastMessageSender: text("last_message_sender"),
+  participantALastReadAt: timestamp("participant_a_last_read_at", { mode: "date" }),
+  participantBLastReadAt: timestamp("participant_b_last_read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 }, (table) => [
   unique("conversations_participants_key").on(table.participantA, table.participantB),
@@ -234,6 +236,18 @@ export const partnerApplications = pgTable("partner_applications", {
   status: text("status").default("pending").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
+
+export const follows = pgTable("follows", {
+  followerUsername: text("follower_username")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  followingUsername: text("following_username")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.followerUsername, table.followingUsername], name: "follows_pkey" }),
+]);
 
 export const analyticsEvents = pgTable("analytics_events", {
   id: serial("id").primaryKey(),

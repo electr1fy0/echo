@@ -56,6 +56,9 @@ export interface User {
   posted: number;
   dmEnabled?: boolean;
   badges?: Badge[];
+  isFollowing?: boolean;
+  followersCount?: number;
+  followingCount?: number;
 }
 export interface UserSummary {
   username: string;
@@ -129,6 +132,7 @@ export interface Conversation {
   otherAvatar: string;
   otherBio: string;
   otherDmEnabled: boolean;
+  unreadCount?: number;
 }
 
 export interface Message {

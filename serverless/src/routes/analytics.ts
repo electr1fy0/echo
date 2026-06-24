@@ -10,6 +10,7 @@ import {
   getPostAnalytics,
   checkAndAwardMilestones,
 } from "../services/analytics";
+import { safeParse, trackEventsSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 import { ApiError } from "../lib/errors";
 
@@ -18,16 +19,9 @@ export const analyticsRoutes = new Hono<AppEnv>();
 analyticsRoutes.use("*", requireAuth);
 
 analyticsRoutes.post("/events", async (c) => {
-  const body = (await c.req.json()) as {
-    events?: {
-      event: string;
-      properties?: Record<string, unknown>;
-      page?: string;
-    }[];
-  };
-
+  const body = safeParse(trackEventsSchema, await c.req.json());
   const user = c.get("user");
-  const events = body.events ?? [];
+  const events = body.events;
 
   if (!events.length) {
     return c.json({ message: "no events" });

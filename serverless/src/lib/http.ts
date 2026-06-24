@@ -8,17 +8,29 @@ export const toErrorResponse = (message: string) => ({ error: message });
 
 export const handleAppError = (error: unknown, c: Context<AppEnv>) => {
   if (isApiError(error)) {
-    return c.newResponse(JSON.stringify(toErrorResponse(error.message)), error.status as 400, {
-      "Content-Type": "application/json",
+    return new Response(JSON.stringify(toErrorResponse(error.message)), {
+      status: error.status,
+      headers: { "Content-Type": "application/json" },
     });
   }
 
   if (error instanceof HTTPException) {
-    return c.newResponse(JSON.stringify(toErrorResponse(error.message)), error.status as 400, {
-      "Content-Type": "application/json",
+    return new Response(JSON.stringify(toErrorResponse(error.message)), {
+      status: error.status,
+      headers: { "Content-Type": "application/json" },
     });
   }
 
-  console.error(error);
-  return c.json(toErrorResponse("internal error"), 500);
+  if (error instanceof SyntaxError) {
+    return new Response(JSON.stringify(toErrorResponse("invalid request body")), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  console.error("unhandled error:", error);
+  return new Response(JSON.stringify(toErrorResponse("internal error")), {
+    status: 500,
+    headers: { "Content-Type": "application/json" },
+  });
 };

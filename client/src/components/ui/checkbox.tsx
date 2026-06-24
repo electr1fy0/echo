@@ -1,48 +1,68 @@
-"use client"
-import * as React from "react"
-import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox"
-import { cn } from "@/lib/utils"
+"use client";
 
-interface CheckboxProps extends CheckboxPrimitive.Root.Props {
-  variant?: "default" | "destructive"
-}
+import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
+import type React from "react";
+import { cn } from "@/lib/utils";
 
-function Checkbox({
+export function Checkbox({
   className,
-  variant = "default",
   ...props
-}: CheckboxProps) {
+}: CheckboxPrimitive.Root.Props): React.ReactElement {
   return (
     <CheckboxPrimitive.Root
-      data-slot="checkbox"
-      data-variant={variant}
       className={cn(
-        "peer group/checkbox inline-flex items-center justify-center size-4 shrink-0 rounded border transition-all duration-150 outline-none",
-        "focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-ring",
-        "data-disabled:cursor-not-allowed data-disabled:opacity-50",
-        "border-input data-checked:border-primary data-checked:bg-primary data-checked:text-primary-foreground",
-        variant === "destructive" &&
-          "data-checked:border-destructive data-checked:bg-destructive data-checked:text-destructive-foreground",
-        className
+        "relative inline-flex size-4.5 shrink-0 items-center justify-center rounded-[.25rem] border border-input bg-background shadow-xs outline-none ring-ring transition-shadow focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-background aria-invalid:border-destructive/36 focus-visible:aria-invalid:border-destructive/64 focus-visible:aria-invalid:ring-destructive/48 data-disabled:cursor-not-allowed data-disabled:opacity-64 sm:size-4 dark:not-data-checked:bg-input/32 dark:aria-invalid:ring-destructive/24",
+        className,
       )}
+      data-slot="checkbox"
       {...props}
     >
       <CheckboxPrimitive.Indicator
+        className="absolute -inset-px flex items-center justify-center rounded-[.25rem] text-primary-foreground data-unchecked:hidden data-checked:bg-primary data-indeterminate:text-foreground"
         data-slot="checkbox-indicator"
-        className="flex items-center justify-center size-full data-unchecked:hidden"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={3}
-          className="size-3"
-        >
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      </CheckboxPrimitive.Indicator>
+        render={(
+          props: React.ComponentProps<"span">,
+          state: CheckboxPrimitive.Indicator.State,
+        ) => (
+          <span {...props}>
+            {state.indeterminate ? (
+              <svg
+                aria-hidden="true"
+                className="size-3.5 sm:size-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M5.252 12h13.496" />
+              </svg>
+            ) : (
+              <svg
+                aria-hidden="true"
+                className="size-3.5 sm:size-3"
+                fill="none"
+                height="24"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+                viewBox="0 0 24 24"
+                width="24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+              </svg>
+            )}
+          </span>
+        )}
+      />
     </CheckboxPrimitive.Root>
-  )
+  );
 }
 
-export { Checkbox }
+export { CheckboxPrimitive };

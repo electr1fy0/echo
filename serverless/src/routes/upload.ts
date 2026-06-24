@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth";
 import { rateLimit } from "../middleware/rateLimit";
 import { ApiError } from "../lib/errors";
 import { generatePresignedPutUrl } from "../lib/s3";
+import { safeParse, presignUploadSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 const ALLOWED_TYPES = [
@@ -26,14 +27,7 @@ export const uploadRoutes = new Hono<AppEnv>();
 uploadRoutes.use("*", rateLimit("AUTH_LIMITER", { keyPrefix: "upload", limitFallback: 30, periodFallback: 60 }));
 
 uploadRoutes.post("/presign", requireAuth, async (c) => {
-  const { filename, contentType } = (await c.req.json()) as {
-    filename?: string;
-    contentType?: string;
-  };
-
-  if (!filename || !contentType) {
-    throw new ApiError(400, "filename and contentType are required");
-  }
+  const { filename, contentType } = safeParse(presignUploadSchema, await c.req.json());
   if (!ALLOWED_TYPES.includes(contentType)) {
     throw new ApiError(400, `unsupported content type, allowed: ${ALLOWED_TYPES.join(", ")}`);
   }
@@ -63,7 +57,7 @@ uploadRoutes.post("/", requireAuth, async (c) => {
     throw new ApiError(400, `unsupported content type, allowed: ${ALLOWED_TYPES.join(", ")}`);
   }
   if (file.size > MAX_SIZE) {
-    throw new ApiError(400, "file too large, max 6MB");
+    throw new ApiError(400, `file too large, max ${MAX_SIZE / (1024 * 1024)}MB`);
   }
 
   const ext = file.name.split(".").pop() || "bin";

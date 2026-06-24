@@ -1,27 +1,76 @@
+"use client";
+
+import { Slider as SliderPrimitive } from "@base-ui/react/slider";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
-type SliderProps = {
-  value: number[];
-  min: number;
-  max: number;
-  step: number;
-  onValueChange: (value: number[]) => void;
-  className?: string;
-};
+export function Slider({
+  className,
+  children,
+  defaultValue,
+  value,
+  min = 0,
+  max = 100,
+  ...props
+}: SliderPrimitive.Root.Props): React.ReactElement {
+  const _values = React.useMemo(() => {
+    if (value !== undefined) {
+      return Array.isArray(value) ? value : [value];
+    }
+    if (defaultValue !== undefined) {
+      return Array.isArray(defaultValue) ? defaultValue : [defaultValue];
+    }
+    return [min];
+  }, [value, defaultValue, min]);
 
-export function Slider({ value, min, max, step, onValueChange, className }: SliderProps) {
   return (
-    <input
-      type="range"
-      min={min}
+    <SliderPrimitive.Root
+      className={cn("data-[orientation=horizontal]:w-full", className)}
+      defaultValue={defaultValue}
       max={max}
-      step={step}
-      value={value[0]}
-      onChange={(e) => onValueChange([parseFloat(e.target.value)])}
-      className={cn(
-        "w-full h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-full appearance-none cursor-pointer accent-neutral-900 dark:accent-neutral-100",
-        className,
-      )}
+      min={min}
+      thumbAlignment="edge"
+      value={value}
+      {...props}
+    >
+      {children}
+      <SliderPrimitive.Control
+        className="flex touch-none select-none data-disabled:pointer-events-none data-[orientation=vertical]:h-full data-[orientation=vertical]:min-h-44 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:min-w-44 data-[orientation=vertical]:flex-col data-disabled:opacity-64"
+        data-slot="slider-control"
+      >
+        <SliderPrimitive.Track
+          className="relative grow select-none rounded-full bg-input data-[orientation=horizontal]:h-1 data-[orientation=vertical]:h-full data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-1"
+          data-slot="slider-track"
+        >
+          <SliderPrimitive.Indicator
+            className="select-none rounded-full bg-primary data-[orientation=horizontal]:ms-0.5 data-[orientation=vertical]:mb-0.5"
+            data-slot="slider-indicator"
+          />
+          {Array.from({ length: _values.length }, (_, index) => (
+            <SliderPrimitive.Thumb
+              className="block size-5 shrink-0 select-none rounded-full border border-input bg-white shadow-xs outline-none transition-[box-shadow,scale] has-focus-visible:ring-[3px] has-focus-visible:ring-ring/24 data-dragging:scale-120 sm:size-4 dark:border-background dark:has-focus-visible:ring-ring/48"
+              data-slot="slider-thumb"
+              index={index}
+              key={String(index)}
+            />
+          ))}
+        </SliderPrimitive.Track>
+      </SliderPrimitive.Control>
+    </SliderPrimitive.Root>
+  );
+}
+
+export function SliderValue({
+  className,
+  ...props
+}: SliderPrimitive.Value.Props): React.ReactElement {
+  return (
+    <SliderPrimitive.Value
+      className={cn("flex justify-end text-sm", className)}
+      data-slot="slider-value"
+      {...props}
     />
   );
 }
+
+export { SliderPrimitive };

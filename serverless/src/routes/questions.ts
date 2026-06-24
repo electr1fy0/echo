@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, desc, eq, sql, or } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
@@ -12,6 +12,7 @@ import {
   mapPostItem,
 } from "../services/questions";
 import { parsePagination, countWords, MAX_POST_WORDS } from "../lib/utils";
+import { safeParse, createPostSchema, updatePostSchema, createReplySchema, updateReplySchema, pollVoteSchema, partnerApplySchema, updateApplicationSchema, expressInterestSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const questionRoutes = new Hono<AppEnv>();
@@ -35,29 +36,7 @@ questionRoutes.get("/", optionalAuth, async (c) => {
 });
 
 questionRoutes.post("/", requireAuth, async (c) => {
-  const body = (await c.req.json()) as {
-    content?: string;
-    chamberUid?: string;
-    channelUid?: string;
-    customFields?: Record<string, any>;
-    postType?: string;
-    ttlHours?: number;
-    partnerTargetGrade?: string;
-    partnerWorkstyle?: string;
-    partnerSlotsNeeded?: number;
-    tradePrice?: number;
-    tradeCondition?: string;
-    tradeBookIsbn?: string;
-    taxiDeparture?: string;
-    taxiDestination?: string;
-    taxiDatetime?: string;
-    taxiSeatsAvailable?: number;
-    pollQuestion?: string;
-    pollOptions?: string[];
-  };
-  if (!body.chamberUid) {
-    throw new ApiError(400, "chamber uid is required");
-  }
+  const body = safeParse(createPostSchema, await c.req.json());
 
   if (body.content && countWords(body.content) > MAX_POST_WORDS) {
     throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
@@ -240,22 +219,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
 });
 
 questionRoutes.patch("/:uid", requireAuth, async (c) => {
-  const body = (await c.req.json()) as {
-    content?: string;
-    tradeStatus?: string;
-    partnerSlotsNeeded?: number;
-    partnerStatus?: string;
-    tradePrice?: number;
-    tradeCondition?: string;
-    tradeBookIsbn?: string;
-    partnerTargetGrade?: string;
-    partnerWorkstyle?: string;
-    taxiDeparture?: string;
-    taxiDestination?: string;
-    taxiDatetime?: string;
-    taxiSeatsAvailable?: number;
-    taxiStatus?: string;
-  };
+  const body = safeParse(updatePostSchema, await c.req.json());
   if (body.content !== undefined && countWords(body.content) > MAX_POST_WORDS) {
     throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
   }
@@ -291,7 +255,17 @@ questionRoutes.delete("/:uid", requireAuth, async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
-  await c.get("db").delete(schema.posts).where(eq(schema.posts.uid, c.req.param("uid")));
+  const db = c.get("db");
+  await db.delete(schema.notifications).where(
+    or(
+      eq(schema.notifications.referenceUid, c.req.param("uid")),
+      inArray(
+        schema.notifications.referenceUid,
+        db.select({ uid: schema.replies.uid }).from(schema.replies).where(eq(schema.replies.postUid, c.req.param("uid"))),
+      ),
+    ),
+  );
+  await db.delete(schema.posts).where(eq(schema.posts.uid, c.req.param("uid")));
   return c.json({ message: "post deleted" });
 });
 
@@ -366,13 +340,13 @@ questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
 questionRoutes.get("/:uid/replies", optionalAuth, async (c) => c.json(await getReplies(c.get("db"), c.get("user"), c.req.param("uid"))));
 
 questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
-  const body = (await c.req.json()) as { content?: string; parentReplyUid?: string };
+  const body = safeParse(createReplySchema, await c.req.json());
   const uid = c.req.param("uid");
   const currentUser = c.get("user");
   const db = c.get("db");
 
   const [created] = await db.insert(schema.replies).values({
-    content: body.content ?? "",
+    content: body.content,
     postUid: uid,
     parentReplyUid: body.parentReplyUid ?? null,
     author: currentUser,
@@ -405,8 +379,8 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
 });
 
 questionRoutes.patch("/:uid/replies/:ruid", requireAuth, async (c) => {
-  const body = (await c.req.json()) as { content?: string };
-  const updated = await c.get("db").update(schema.replies).set({ content: body.content ?? "" }).where(
+  const body = safeParse(updateReplySchema, await c.req.json());
+  const updated = await c.get("db").update(schema.replies).set({ content: body.content }).where(
     and(eq(schema.replies.uid, c.req.param("ruid")), eq(schema.replies.author, c.get("user"))),
   ).returning({ uid: schema.replies.uid });
 
@@ -513,11 +487,7 @@ questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
   const uid = c.req.param("uid");
   const currentUser = c.get("user");
   const db = c.get("db");
-  const body = (await c.req.json()) as { optionIndex?: number };
-
-  if (body.optionIndex === undefined || body.optionIndex < 0) {
-    throw new ApiError(400, "optionIndex is required");
-  }
+  const body = safeParse(pollVoteSchema, await c.req.json());
 
   const [poll] = await db.select({
     uid: schema.polls.uid,
@@ -578,7 +548,7 @@ questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
 questionRoutes.post("/:uid/interest", requireAuth, async (c) => {
   const postUid = c.req.param("uid");
   const currentUser = c.get("user");
-  const body = (await c.req.json()) as { message?: string };
+  const body = safeParse(expressInterestSchema, await c.req.json());
 
   const [post] = await c.get("db").select({ author: schema.posts.author }).from(schema.posts).where(eq(schema.posts.uid, postUid)).limit(1);
   if (!post) {
@@ -602,11 +572,7 @@ questionRoutes.post("/:uid/interest", requireAuth, async (c) => {
 questionRoutes.post("/:uid/apply", requireAuth, async (c) => {
   const postUid = c.req.param("uid");
   const applicantUsername = c.get("user");
-  const body = (await c.req.json()) as { pitch?: string };
-
-  if (!body.pitch) {
-    throw new ApiError(400, "pitch is required");
-  }
+  const body = safeParse(partnerApplySchema, await c.req.json());
 
   await ensurePostExists(c.get("db"), postUid);
 
@@ -663,12 +629,8 @@ questionRoutes.patch("/:uid/applications/:appUid", requireAuth, async (c) => {
   const postUid = c.req.param("uid");
   const appUid = c.req.param("appUid");
   const currentUser = c.get("user");
-  const body = (await c.req.json()) as { status?: string };
+  const body = safeParse(updateApplicationSchema, await c.req.json());
   const db = c.get("db");
-
-  if (!body.status || !["accepted", "declined"].includes(body.status)) {
-    throw new ApiError(400, "invalid status");
-  }
 
   const post = await ensurePostExists(db, postUid);
   if (post.author !== currentUser) {

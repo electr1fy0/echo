@@ -30,7 +30,11 @@ interface ChamberCardProps {
   chamber: Chamber;
   compact?: boolean;
 }
-import { useJoinChamber, useLeaveChamber, useDeleteChamber } from "@/hooks/use-chamber";
+import {
+  useJoinChamber,
+  useLeaveChamber,
+  useDeleteChamber,
+} from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "./consts";
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const { data: user } = useAuth();
@@ -98,8 +102,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
           <>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              size="icon-xs"
               onClick={(e) => {
                 e.preventDefault();
                 setIsEditOpen(true);
@@ -110,8 +113,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
             </Button>
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-neutral-500 hover:text-red-500 dark:text-neutral-400 dark:hover:text-red-400"
+              size="icon-xs"
               onClick={(e) => {
                 e.preventDefault();
                 setIsDeleteOpen(true);
@@ -124,14 +126,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
         )}
         <Button
           variant={chamber.isJoined ? "secondary" : "default"}
-          size="sm"
-          className={cn(
-            "rounded-full h-7 px-3 text-xs transition-all shadow-none",
-            !chamber.isJoined &&
-            "bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-transparent",
-            chamber.isJoined &&
-            "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300",
-          )}
+          size="xs"
           onClick={handleToggleJoin}
         >
           {chamber.isJoined ? "Joined" : "Join"}
@@ -151,10 +146,14 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
             <DialogTitle>Delete Chamber</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-neutral-500">
-            Are you sure you want to delete <strong>{chamber.name}</strong>? This will permanently remove the chamber and all its posts. This action cannot be undone.
+            Are you sure you want to delete <strong>{chamber.name}</strong>?
+            This will permanently remove the chamber and all its posts. This
+            action cannot be undone.
           </p>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" className="rounded-full" />}>
+            <DialogClose
+              render={<Button variant="outline" className="rounded-full" />}
+            >
               Cancel
             </DialogClose>
             <Button

@@ -35,6 +35,40 @@ export async function fetchMessages(conversationUid: string, limit = 50, offset 
   return res.json() as Promise<Message[]>;
 }
 
+export async function markConversationRead(conversationUid: string): Promise<void> {
+  await fetch(`${API_URL}/dms/conversations/${conversationUid}/read`, {
+    method: "POST",
+    headers: { ...getAuthHeaders() },
+  });
+}
+
+export async function getUnreadMessageCount(): Promise<number> {
+  const res = await fetch(`${API_URL}/dms/unread-count`, {
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to fetch unread count");
+  const { count } = await res.json();
+  return count;
+}
+
+export async function editMessage(conversationUid: string, messageUid: string, content: string) {
+  const res = await fetch(`${API_URL}/dms/conversations/${conversationUid}/messages/${messageUid}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ content }),
+  });
+  if (!res.ok) throw new Error("Failed to edit message");
+  return res.json() as Promise<Message>;
+}
+
+export async function deleteMessage(conversationUid: string, messageUid: string) {
+  const res = await fetch(`${API_URL}/dms/conversations/${conversationUid}/messages/${messageUid}`, {
+    method: "DELETE",
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to delete message");
+}
+
 export async function sendMessage(conversationUid: string, content: string) {
   const res = await fetch(`${API_URL}/dms/conversations/${conversationUid}/messages`, {
     method: "POST",

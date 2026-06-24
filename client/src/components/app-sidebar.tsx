@@ -17,6 +17,7 @@ import { cn, getInitials } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnreadNotificationCount } from "@/hooks/use-notifications";
+import { useUnreadMessageCount } from "@/hooks/use-dms";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -131,11 +132,13 @@ export function AppSidebar() {
   const { open: openCreatePost } = useCreatePostModal();
   const { data: chambersData = [] } = useListChambers();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const { data: unreadMessageCount = 0 } = useUnreadMessageCount();
 
   const joinedChambers = chambersData.filter((c) => c.isJoined);
 
   const badgeMap: Record<string, boolean> = {
     "/notifications": unreadCount > 0,
+    "/dm": unreadMessageCount > 0,
   };
 
   const navItems: NavItem[] = [

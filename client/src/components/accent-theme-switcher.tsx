@@ -1,9 +1,5 @@
 import { useAccentTheme, type AccentTheme } from "@/hooks/use-accent-theme";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverTrigger, PopoverPopup } from "@/components/ui/popover";
 
 const THEME_LIST: AccentTheme[] = ["orange", "blue", "violet", "rose", "green"];
 
@@ -26,7 +22,7 @@ export function AccentThemeSwitcher() {
           </button>
         }
       />
-      <PopoverContent side="right" align="center" className="w-auto p-2">
+      <PopoverPopup side="right" align="center" className="w-auto p-2">
         <div className="flex flex-col gap-1">
           {THEME_LIST.map((t) => (
             <button
@@ -46,7 +42,7 @@ export function AccentThemeSwitcher() {
             </button>
           ))}
         </div>
-      </PopoverContent>
+      </PopoverPopup>
     </Popover>
   );
 }

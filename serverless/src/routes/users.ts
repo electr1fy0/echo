@@ -4,10 +4,11 @@ import { eq, inArray } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
-import { listNotifications, countUnreadNotifications } from "../services/notifications";
+import { listNotifications, countUnreadNotifications, markNotificationsAsRead } from "../services/notifications";
 import { getPostItems, searchUsers } from "../services/questions";
-import { getProfileByUsername, computeBadges } from "../services/users";
+import { getProfileByUsername, computeBadges, followUser, unfollowUser, isFollowing, getFollowers, getFollowing } from "../services/users";
 import { ensureValidUsername } from "../lib/utils";
+import { safeParse, updateProfileSchema, resolveUsernamesSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 import { parsePagination } from "../lib/utils";
 
@@ -26,13 +27,7 @@ userRoutes.get("/me", async (c) => {
 });
 
 userRoutes.patch("/me", async (c) => {
-  const body = (await c.req.json()) as {
-    username?: string;
-    bio?: string;
-    avatar?: string;
-    link?: string;
-    dmEnabled?: boolean;
-  };
+  const body = safeParse(updateProfileSchema, await c.req.json());
   const currentUsername = c.get("user");
   const requestedUsername = body.username?.trim();
   const nextUsername = requestedUsername && requestedUsername !== currentUsername
@@ -76,6 +71,11 @@ userRoutes.get("/me/notifications", async (c) => {
   return c.json(await listNotifications(c.get("db"), c.get("user"), limit, offset));
 });
 
+userRoutes.post("/me/notifications/read", async (c) => {
+  await markNotificationsAsRead(c.get("db"), c.get("user"));
+  return c.json({ success: true });
+});
+
 userRoutes.get("/me/notifications/unread-count", requireAuth, async (c) => {
   const count = await countUnreadNotifications(c.get("db"), c.get("user"));
   return c.json({ count });
@@ -87,8 +87,8 @@ userRoutes.get("/search", async (c) => {
 });
 
 userRoutes.post("/resolve", async (c) => {
-  const body = (await c.req.json()) as { usernames?: string[] };
-  const usernames = body.usernames ?? [];
+  const body = safeParse(resolveUsernamesSchema, await c.req.json());
+  const usernames = body.usernames;
   if (!usernames.length) {
     return c.json({ existing: [] });
   }
@@ -103,7 +103,36 @@ userRoutes.post("/resolve", async (c) => {
 });
 
 userRoutes.get("/:username", async (c) => {
-  const profile = await getProfileByUsername(c.get("db"), c.req.param("username"), false);
-  const badges = await computeBadges(c.get("db"), c.req.param("username"));
-  return c.json({ ...profile, badges });
+  const targetUsername = c.req.param("username");
+  const profile = await getProfileByUsername(c.get("db"), targetUsername, false);
+  const badges = await computeBadges(c.get("db"), targetUsername);
+
+  let isUserFollowing = false;
+  try { isUserFollowing = await isFollowing(c.get("db"), c.get("user"), targetUsername); } catch {}
+
+  return c.json({ ...profile, badges, isFollowing: isUserFollowing });
+});
+
+userRoutes.post("/:username/follow", requireAuth, async (c) => {
+  const target = c.req.param("username");
+  const result = await followUser(c.get("db"), c.get("user"), target);
+  return c.json(result);
+});
+
+userRoutes.delete("/:username/follow", requireAuth, async (c) => {
+  const target = c.req.param("username");
+  const result = await unfollowUser(c.get("db"), c.get("user"), target);
+  return c.json(result);
+});
+
+userRoutes.get("/:username/followers", async (c) => {
+  const { limit, offset } = parsePagination(c.req.query());
+  const rows = await getFollowers(c.get("db"), c.req.param("username"), limit, offset);
+  return c.json(rows);
+});
+
+userRoutes.get("/:username/following", async (c) => {
+  const { limit, offset } = parsePagination(c.req.query());
+  const rows = await getFollowing(c.get("db"), c.req.param("username"), limit, offset);
+  return c.json(rows);
 });

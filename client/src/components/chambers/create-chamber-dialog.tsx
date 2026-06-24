@@ -14,7 +14,7 @@ import { useCreateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
 import { useNavigate } from "react-router";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { CropImageDialog } from "@/components/ui/crop-image-dialog";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -33,7 +33,7 @@ export function CreateChamberDialog({
   const { mutate: createChamber, isPending } = useCreateChamber();
   const { upload: uploadImage, uploading: imageUploading } = useImageUpload();
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
-  
+
   const [chamber, setChamber] = useState<Chamber>({
     name: "",
     description: "",
@@ -48,7 +48,8 @@ export function CreateChamberDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (isPending || !chamber.name.trim() || !chamber.description.trim()) return;
+    if (isPending || !chamber.name.trim() || !chamber.description.trim())
+      return;
 
     createChamber(chamber, {
       onSuccess: (newChamber) => {
@@ -64,7 +65,9 @@ export function CreateChamberDialog({
         }
       },
       onError: (err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to create chamber");
+        toast.error(
+          err instanceof Error ? err.message : "Failed to create chamber",
+        );
       },
     });
   };
@@ -89,7 +92,6 @@ export function CreateChamberDialog({
               placeholder="e.g. Photography Club"
               value={chamber.name}
               onChange={(e) => updateChamber({ name: e.target.value })}
-              className="rounded-xl h-9 text-sm"
             />
           </div>
 
@@ -101,7 +103,6 @@ export function CreateChamberDialog({
               placeholder="What is this chamber about?"
               value={chamber.description}
               onChange={(e) => updateChamber({ description: e.target.value })}
-              className="resize-none min-h-16 rounded-xl text-sm"
             />
           </div>
 
@@ -129,7 +130,9 @@ export function CreateChamberDialog({
                 <div
                   className={cn(
                     "size-14 rounded-xl flex items-center justify-center text-white text-sm shrink-0",
-                    CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length],
+                    CHAMBER_COLORS[
+                      (chamber.colorIndex ?? 0) % CHAMBER_COLORS.length
+                    ],
                   )}
                 >
                   {getInitials(chamber.name || "C")}
@@ -183,14 +186,20 @@ export function CreateChamberDialog({
             </div>
           </div>
 
-          <DialogFooter className="pt-2">
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isPending || !chamber.name.trim() || !chamber.description.trim()} 
-              className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
+            <Button
+              variant="default"
+              type="submit"
+              disabled={
+                isPending || !chamber.name.trim() || !chamber.description.trim()
+              }
             >
               Create Chamber
             </Button>

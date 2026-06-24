@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -27,7 +28,17 @@ export function PollVoter({
   const { open: openAuthModal } = useAuthModal();
   const { mutate: vote, isPending } = useVotePoll();
 
+  const prevVotesRef = useRef<{ optionIndex: number; count: number }[] | null>(null);
+
+  useEffect(() => {
+    if (!isPending) {
+      prevVotesRef.current = null;
+    }
+  }, [isPending]);
+
   const totalVotes = pollVotes.reduce((sum, v) => sum + v.count, 0);
+  const snapshot = isPending ? prevVotesRef.current : null;
+  const snapshotTotal = snapshot ? snapshot.reduce((s, v) => s + v.count, 0) : 0;
 
   const handleVote = (optionIndex: number) => {
     if (!user) {
@@ -35,6 +46,7 @@ export function PollVoter({
       return;
     }
     if (isPollClosed) return;
+    prevVotesRef.current = pollVotes;
     vote({ questionId, optionIndex });
   };
 
@@ -65,6 +77,14 @@ export function PollVoter({
           const isUserVote = userPollVote === i;
           const hasVoted = userPollVote !== null;
 
+          const optSnapshot = snapshot?.find((v) => v.optionIndex === i);
+          const baseCount = optSnapshot?.count ?? 0;
+          const increment = snapshot && optSnapshot ? count - baseCount : 0;
+          const basePct = snapshotTotal > 0 ? (baseCount / snapshotTotal) * 100 : 0;
+          const incrementPct = snapshot && snapshotTotal > 0 && increment > 0
+            ? (increment / snapshotTotal) * 100
+            : 0;
+
           return (
             <button
               key={i}
@@ -77,25 +97,30 @@ export function PollVoter({
               className={cn(
                 "relative w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-left transition-all cursor-pointer overflow-hidden",
                 isUserVote
-                  ? "bg-neutral-900/5 dark:bg-neutral-100/5 border border-neutral-900/20 dark:border-neutral-100/20"
+                  ? "border border-neutral-900/20 dark:border-neutral-100/20"
                   : "hover:bg-neutral-100 dark:hover:bg-neutral-800/50 border border-transparent",
               )}
             >
-              <span
-                className={cn(
-                  "absolute inset-0 transition-all duration-300 rounded-lg",
-                  isUserVote
-                    ? "bg-neutral-900/10 dark:bg-neutral-100/10"
-                    : "bg-neutral-900/5 dark:bg-neutral-100/5",
-                )}
-                style={{
-                  width: hasVoted ? `${pct}%` : "0%",
-                }}
-              />
+              {hasVoted && (
+                <span
+                  className="absolute inset-y-0 left-0 transition-all duration-300 rounded-lg bg-neutral-900/5 dark:bg-neutral-100/5"
+                  style={{ width: snapshot ? `${basePct}%` : `${pct}%` }}
+                />
+              )}
+              {snapshot && increment > 0 && (
+                <span
+                  className="absolute inset-y-0 transition-all duration-300 rounded-r-lg bg-neutral-900/10 dark:bg-neutral-100/10"
+                  style={{
+                    left: `${basePct}%`,
+                    width: `${incrementPct}%`,
+                  }}
+                />
+              )}
               <span className="relative z-10 flex items-center gap-2 w-full">
-                <span className="size-4 rounded-full border-2 flex items-center justify-center shrink-0" style={{
-                  borderColor: isUserVote ? "currentColor" : undefined,
-                }}>
+                <span className={cn(
+                  "size-4 rounded-full border-2 flex items-center justify-center shrink-0",
+                  isUserVote && "border-neutral-800 dark:border-neutral-200",
+                )}>
                   {isUserVote && (
                     <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3 text-neutral-800 dark:text-neutral-200" />
                   )}
@@ -104,8 +129,23 @@ export function PollVoter({
                   {option}
                 </span>
                 {hasVoted && (
-                  <span className="font-semibold text-neutral-500 text-[10px] shrink-0">
-                    {count} ({Math.round(pct)}%)
+                  <span className="font-semibold text-neutral-500 text-[10px] shrink-0 flex items-center gap-1">
+                    {snapshot && increment > 0 ? (
+                      <>
+                        <span>{baseCount}+{increment}</span>
+                        <span className="tabular-nums">
+                          ({Math.round(basePct)}%&rarr;{Math.round(pct)}%)
+                        </span>
+                      </>
+                    ) : snapshot && increment < 0 ? (
+                      <>
+                        <span className="text-neutral-400 line-through">{baseCount}</span>
+                        <span>{count}</span>
+                        <span className="tabular-nums">({Math.round(pct)}%)</span>
+                      </>
+                    ) : (
+                      <>{count} ({Math.round(pct)}%)</>
+                    )}
                   </span>
                 )}
               </span>

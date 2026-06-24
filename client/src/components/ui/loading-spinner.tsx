@@ -1,13 +1,9 @@
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Loading03Icon } from "@hugeicons/core-free-icons";
+import { Spinner } from "@/components/ui/spinner";
 
 export function LoadingSpinner() {
   return (
     <div className="flex h-[50vh] w-full items-center justify-center">
-      <HugeiconsIcon
-        icon={Loading03Icon}
-        className="size-8 animate-spin text-neutral-400"
-      />
+      <Spinner className="size-8 text-neutral-400" aria-label="Loading" />
     </div>
   );
 }

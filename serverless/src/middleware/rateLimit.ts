@@ -47,7 +47,12 @@ export const rateLimit = (
     }
 
     const url = new URL(c.req.url);
-    if (url.pathname === "/ping" || url.pathname.startsWith("/images/")) {
+    if (
+      url.pathname === "/ping" ||
+      url.pathname.startsWith("/images/") ||
+      url.pathname.endsWith("/unread-count") ||
+      url.pathname.endsWith("/read")
+    ) {
       return next();
     }
 
