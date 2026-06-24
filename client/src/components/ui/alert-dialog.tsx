@@ -109,12 +109,14 @@ export function AlertDialogHeader({
 
 export function AlertDialogFooter({
   className,
+  variant = "default",
   ...props
-}: React.ComponentProps<"div">): React.ReactElement {
+}: React.ComponentProps<"div"> & { variant?: "default" | "bare" }): React.ReactElement {
   return (
     <div
       className={cn(
         "flex flex-col-reverse gap-2 px-6 pb-6 sm:flex-row sm:justify-end",
+        variant === "default" && "border-t border-border pt-4 rounded-b-2xl bg-neutral-50 dark:bg-neutral-900/50",
         className,
       )}
       data-slot="alert-dialog-footer"

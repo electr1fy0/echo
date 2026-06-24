@@ -9,7 +9,7 @@ import {
   Loading03Icon,
 } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
-import { haptic } from "@/lib/haptic";
+import { useWebHaptics } from "@/lib/haptic";
 import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
 import { uploadImagePresigned } from "@/api/upload";
@@ -41,6 +41,7 @@ export function ReplyForm({
   const [imageUploading, setImageUploading] = useState(false);
   const { mutate: submitReply, isPending } = useCreateReply();
   const [isValidating, setIsValidating] = useState(false);
+  const { trigger } = useWebHaptics();
 
   if (!user) {
     return (
@@ -60,7 +61,7 @@ export function ReplyForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || isPending || isValidating) return;
-    haptic();
+    trigger("success");
     setIsValidating(true);
     try {
       const result = await validateMentions(content);

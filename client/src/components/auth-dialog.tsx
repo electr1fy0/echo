@@ -27,6 +27,7 @@ import {
   SlideToUnlockTrack,
 } from "@/components/slide-to-unlock";
 import { useSound } from "@/hooks/use-sound";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
   DrawerPopup,
@@ -68,6 +69,7 @@ const MODE_COPY: Record<
 export function AuthDialog() {
   const { isOpen, close, defaultTab } = useAuthModal();
   const [mode, setMode] = useState<FormMode>("signin");
+  const isMobile = useIsMobile();
 
   // Keep state sync with defaultTab when modal opens
   const [lastOpen, setLastOpen] = useState(false);
@@ -157,6 +159,310 @@ export function AuthDialog() {
   const isLoading = isInPending || isUpPending || isResetPending;
   const copy = MODE_COPY[formMode];
 
+  const renderContent = () => (
+    <>
+      {mode === "forgot-success" ? (
+        <div className="text-center space-y-4 py-4">
+          <div className="mx-auto size-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+            <span className="text-2xl">📧</span>
+          </div>
+          <DialogTitle className="text-lg font-bold text-center">
+            Check your email
+          </DialogTitle>
+          <DialogDescription className="text-center text-sm text-neutral-500">
+            If an account exists for <strong>{form.email}</strong>, we've sent
+            instructions to reset your password.
+          </DialogDescription>
+          <Button
+            variant="outline"
+            className="w-full mt-4"
+            onClick={() => setMode("signin")}
+          >
+            Back to Sign In
+          </Button>
+        </div>
+      ) : mode === "signup-success" ? (
+        <div className="text-center space-y-4 py-4">
+          <div className="mx-auto size-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+            <span className="text-2xl">✉️</span>
+          </div>
+          <DialogTitle className="text-lg font-bold text-center">
+            Check your email
+          </DialogTitle>
+          <DialogDescription className="text-center text-sm text-neutral-500">
+            We've sent a verification link to <strong>{form.email}</strong>.
+            Please click the link to verify your account before signing in.
+          </DialogDescription>
+          <div className="space-y-2 pt-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setMode("signin")}
+            >
+              Back to Sign In
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              disabled={isResendPending}
+              onClick={async () => {
+                if (!form.email) return;
+                try {
+                  await resendVerification(form.email);
+                  alert("Verification email resent!");
+                } catch {
+                  alert("Failed to resend email. Please try again.");
+                }
+              }}
+            >
+              {isResendPending ? "Sending..." : "Resend Validation Email"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <DialogHeader className="text-left pb-2">
+            <div className="my-2 flex justify-start">
+              <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+                <img
+                  src="/turnsoutlogo.svg"
+                  alt="TurnsOut"
+                  className="size-7 invert dark:invert-0 opacity-80"
+                />
+              </div>
+            </div>
+            <DialogTitle className="text-lg text-left font-semibold">
+              {copy.title}
+            </DialogTitle>
+            <DialogDescription className="text-left text-xs">
+              {copy.description}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            <form className="space-y-3" onSubmit={handleSubmit}>
+              {error && (
+                <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} size={20} />
+                  <span>{error.message}</span>
+                </div>
+              )}
+
+              {formMode !== "forgot" && (
+                <Input
+                  name="username"
+                  type="text"
+                  placeholder="Username"
+                  autoComplete="username"
+                  required
+                  className="text-base md:text-sm"
+                  value={form.username}
+                  onChange={(e) => updateForm({ username: e.target.value })}
+                />
+              )}
+
+              {(formMode === "signup" || formMode === "forgot") && (
+                <div className="space-y-1">
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    autoComplete="email"
+                    required
+                    className="text-base md:text-sm"
+                    value={form.email}
+                    onChange={(e) => updateForm({ email: e.target.value })}
+                  />
+                  {formMode === "signup" && (
+                    <Drawer>
+                      <DrawerTrigger>
+                        <button
+                          type="button"
+                          className="text-[11px] text-muted-foreground/70 px-1 hover:text-muted-foreground transition-colors cursor-pointer"
+                        >
+                          Only university emails are accepted
+                        </button>
+                      </DrawerTrigger>
+                      <DrawerPopup>
+                        <DrawerHeader>
+                          <DrawerTitle>Supported Universities</DrawerTitle>
+                        </DrawerHeader>
+                        <DrawerPanel>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3 rounded-lg border border-border p-3">
+                              <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                                V
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">
+                                  VIT University
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  @vitstudent.ac.in
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </DrawerPanel>
+                      </DrawerPopup>
+                    </Drawer>
+                  )}
+                </div>
+              )}
+
+              {formMode !== "forgot" && (
+                <Input
+                  name="password"
+                  type="password"
+                  placeholder={
+                    formMode === "signup" ? "Create Password" : "Password"
+                  }
+                  autoComplete={
+                    formMode === "signup"
+                      ? "new-password"
+                      : "current-password"
+                  }
+                  required
+                  className="text-base md:text-sm"
+                  value={form.password}
+                  onChange={(e) => updateForm({ password: e.target.value })}
+                />
+              )}
+
+              {formMode === "signin" || formMode === "signup" ? (
+                <SlideToUnlock
+                  onUnlock={() => {
+                    play();
+                    handleSubmit();
+                  }}
+                  disabled={
+                    formMode === "signin"
+                      ? !form.username || !form.password || isLoading
+                      : !form.username ||
+                        !form.password ||
+                        !form.email ||
+                        isLoading
+                  }
+                  className="w-full"
+                >
+                  <SlideToUnlockTrack>
+                    <SlideToUnlockText>
+                      {({ isDragging }) => (
+                        <ShimmeringText
+                          text={
+                            formMode === "signin"
+                              ? "Slide to sign in"
+                              : "Slide to create account"
+                          }
+                          isStopped={isDragging}
+                          className="[--color:rgba(120,113,108,0.6)] [--shimmering-color:rgb(120,113,108)]"
+                        />
+                      )}
+                    </SlideToUnlockText>
+                    <SlideToUnlockHandle className="bg-[var(--brand)] text-white" />
+                  </SlideToUnlockTrack>
+                </SlideToUnlock>
+              ) : (
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <HugeiconsIcon
+                      icon={Loading03Icon}
+                      className="size-5 animate-spin"
+                    />
+                  ) : (
+                    copy.submitLabel
+                  )}
+                </Button>
+              )}
+            </form>
+
+            <div className="space-y-4 text-center">
+              {formMode === "signin" && (
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot")}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
+                  Forgot your password?
+                </button>
+              )}
+
+              {formMode !== "forgot" && (
+                <div className="space-y-4 pt-1">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
+                    </div>
+                    <div className="relative flex justify-center">
+                      <span className="bg-background px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                        or continue with
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleSigninWithGoogle}
+                  >
+                    <img
+                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                      alt=""
+                      className="size-4"
+                      aria-hidden="true"
+                    />
+                    Continue with Google
+                  </Button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (formMode === "forgot") {
+                    setMode("signin");
+                  } else if (formMode === "signup") {
+                    setMode("signin");
+                  } else {
+                    setMode("signup");
+                  }
+                }}
+                className="mt-5 block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                {formMode === "forgot"
+                  ? "Back to Sign In"
+                  : formMode === "signup"
+                    ? "Already have an account?"
+                    : "Don't have an account?"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) close();
+        }}
+      >
+        <DrawerPopup className="p-6">
+          {renderContent()}
+        </DrawerPopup>
+      </Drawer>
+    );
+  }
+
   return (
     <Dialog
       open={isOpen}
@@ -165,290 +471,7 @@ export function AuthDialog() {
       }}
     >
       <DialogContent className="sm:max-w-md p-6">
-        {mode === "forgot-success" ? (
-          <div className="text-center space-y-4 py-4">
-            <div className="mx-auto size-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <span className="text-2xl">📧</span>
-            </div>
-            <DialogTitle className="text-lg font-bold text-center">
-              Check your email
-            </DialogTitle>
-            <DialogDescription className="text-center text-sm text-neutral-500">
-              If an account exists for <strong>{form.email}</strong>, we've sent
-              instructions to reset your password.
-            </DialogDescription>
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => setMode("signin")}
-            >
-              Back to Sign In
-            </Button>
-          </div>
-        ) : mode === "signup-success" ? (
-          <div className="text-center space-y-4 py-4">
-            <div className="mx-auto size-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <span className="text-2xl">✉️</span>
-            </div>
-            <DialogTitle className="text-lg font-bold text-center">
-              Check your email
-            </DialogTitle>
-            <DialogDescription className="text-center text-sm text-neutral-500">
-              We've sent a verification link to <strong>{form.email}</strong>.
-              Please click the link to verify your account before signing in.
-            </DialogDescription>
-            <div className="space-y-2 pt-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setMode("signin")}
-              >
-                Back to Sign In
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full"
-                disabled={isResendPending}
-                onClick={async () => {
-                  if (!form.email) return;
-                  try {
-                    await resendVerification(form.email);
-                    alert("Verification email resent!");
-                  } catch {
-                    alert("Failed to resend email. Please try again.");
-                  }
-                }}
-              >
-                {isResendPending ? "Sending..." : "Resend Validation Email"}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <DialogHeader className="text-left pb-2">
-              <div className="my-2 flex justify-start">
-                <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                  <img
-                    src="/turnsoutlogo.svg"
-                    alt="TurnsOut"
-                    className="size-7 invert dark:invert-0 opacity-80"
-                  />
-                </div>
-              </div>
-              <DialogTitle className="text-lg text-left font-semibold">
-                {copy.title}
-              </DialogTitle>
-              <DialogDescription className="text-left text-xs">
-                {copy.description}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 mt-2">
-              <form className="space-y-3" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="bg-destructive/15 text-destructive text-sm px-4 py-3 rounded-lg flex items-center gap-3">
-                    <HugeiconsIcon icon={Alert02Icon} size={20} />
-                    <span>{error.message}</span>
-                  </div>
-                )}
-
-                {formMode !== "forgot" && (
-                  <Input
-                    name="username"
-                    type="text"
-                    placeholder="Username"
-                    autoComplete="username"
-                    required
-                    className="text-base md:text-sm"
-                    value={form.username}
-                    onChange={(e) => updateForm({ username: e.target.value })}
-                  />
-                )}
-
-                {(formMode === "signup" || formMode === "forgot") && (
-                  <div className="space-y-1">
-                    <Input
-                      name="email"
-                      type="email"
-                      placeholder="Email"
-                      autoComplete="email"
-                      required
-                      className="text-base md:text-sm"
-                      value={form.email}
-                      onChange={(e) => updateForm({ email: e.target.value })}
-                    />
-                    {formMode === "signup" && (
-                      <Drawer>
-                        <DrawerTrigger>
-                          <button
-                            type="button"
-                            className="text-[11px] text-muted-foreground/70 px-1 hover:text-muted-foreground transition-colors cursor-pointer"
-                          >
-                            Only university emails are accepted
-                          </button>
-                        </DrawerTrigger>
-                        <DrawerPopup>
-                          <DrawerHeader>
-                            <DrawerTitle>Supported Universities</DrawerTitle>
-                          </DrawerHeader>
-                          <DrawerPanel>
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                                <div className="size-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
-                                  V
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    VIT University
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    @vitstudent.ac.in
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </DrawerPanel>
-                        </DrawerPopup>
-                      </Drawer>
-                    )}
-                  </div>
-                )}
-
-                {formMode !== "forgot" && (
-                  <Input
-                    name="password"
-                    type="password"
-                    placeholder={
-                      formMode === "signup" ? "Create Password" : "Password"
-                    }
-                    autoComplete={
-                      formMode === "signup"
-                        ? "new-password"
-                        : "current-password"
-                    }
-                    required
-                    className="text-base md:text-sm"
-                    value={form.password}
-                    onChange={(e) => updateForm({ password: e.target.value })}
-                  />
-                )}
-
-                {formMode === "signin" || formMode === "signup" ? (
-                  <SlideToUnlock
-                    onUnlock={() => {
-                      play();
-                      handleSubmit();
-                    }}
-                    disabled={
-                      formMode === "signin"
-                        ? !form.username || !form.password || isLoading
-                        : !form.username ||
-                          !form.password ||
-                          !form.email ||
-                          isLoading
-                    }
-                    className="w-full"
-                  >
-                    <SlideToUnlockTrack>
-                      <SlideToUnlockText>
-                        {({ isDragging }) => (
-                          <ShimmeringText
-                            text={
-                              formMode === "signin"
-                                ? "Slide to sign in"
-                                : "Slide to create account"
-                            }
-                            isStopped={isDragging}
-                            className="[--color:rgba(120,113,108,0.6)] [--shimmering-color:rgb(120,113,108)]"
-                          />
-                        )}
-                      </SlideToUnlockText>
-                      <SlideToUnlockHandle className="bg-[var(--brand)] text-white" />
-                    </SlideToUnlockTrack>
-                  </SlideToUnlock>
-                ) : (
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-full"
-                    type="submit"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <HugeiconsIcon
-                        icon={Loading03Icon}
-                        className="size-5 animate-spin"
-                      />
-                    ) : (
-                      copy.submitLabel
-                    )}
-                  </Button>
-                )}
-              </form>
-
-              <div className="space-y-4 text-center">
-                {formMode === "signin" && (
-                  <button
-                    type="button"
-                    onClick={() => setMode("forgot")}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  >
-                    Forgot your password?
-                  </button>
-                )}
-
-                {formMode !== "forgot" && (
-                  <div className="space-y-4 pt-1">
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t border-neutral-200 dark:border-neutral-800" />
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-background px-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                          or continue with
-                        </span>
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleSigninWithGoogle}
-                    >
-                      <img
-                        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                        alt=""
-                        className="size-4"
-                        aria-hidden="true"
-                      />
-                      Continue with Google
-                    </Button>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (formMode === "forgot") {
-                      setMode("signin");
-                    } else if (formMode === "signup") {
-                      setMode("signin");
-                    } else {
-                      setMode("signup");
-                    }
-                  }}
-                  className="mt-5 block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                >
-                  {formMode === "forgot"
-                    ? "Back to Sign In"
-                    : formMode === "signup"
-                      ? "Already have an account?"
-                      : "Don't have an account?"}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+        {renderContent()}
       </DialogContent>
     </Dialog>
   );

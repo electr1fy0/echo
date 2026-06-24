@@ -323,7 +323,7 @@ export default function Profile() {
                     className="size-5"
                   />
                 </DrawerTrigger>
-                <DrawerPopup className="sm:max-w-[90vw] sm:max-h-[80vh]">
+                <DrawerPopup className="sm:max-w-[500px] sm:max-h-[80vh]">
                   <DrawerPanel className="space-y-5">
                     {/* Theme */}
                     <div className="space-y-3">

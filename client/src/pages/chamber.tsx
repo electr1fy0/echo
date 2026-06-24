@@ -53,7 +53,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/menu";
-import { haptic } from "@/lib/haptic";
+import { useWebHaptics } from "@/lib/haptic";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -290,6 +290,8 @@ export default function ChamberPage() {
   const [editChannelSchema, setEditChannelSchema] = useState<any[]>([]);
   const updateChannelMutation = useUpdateChannel(chamberId || "");
   const deleteChannelMutation = useDeleteChannel(chamberId || "");
+
+  const { trigger } = useWebHaptics();
 
   useEffect(() => {
     if (editingChannel) {
@@ -639,7 +641,7 @@ export default function ChamberPage() {
             size="icon-sm"
             disabled={isPending}
             onClick={() => {
-              haptic();
+              chamber.isJoined ? trigger("warning") : trigger("success");
               handleToggleJoin();
             }}
             title={
@@ -691,7 +693,7 @@ export default function ChamberPage() {
                         : "text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200 hover:bg-neutral-50/50 dark:hover:bg-neutral-950/30",
                     )}
                     onClick={() => {
-                      haptic();
+                      trigger("selection");
                       setSelectedChannelUid(ch.uid);
                     }}
                   >
@@ -705,7 +707,7 @@ export default function ChamberPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          haptic();
+                          trigger("light");
                           setEditingChannel(ch);
                           setIsEditChannelOpen(true);
                         }}

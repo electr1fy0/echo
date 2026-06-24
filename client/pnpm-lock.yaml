@@ -98,6 +98,9 @@ importers:
       use-sound:
         specifier: ^5.0.0
         version: 5.0.0(react@19.2.3)
+      web-haptics:
+        specifier: ^0.0.6
+        version: 0.0.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       workbox-window:
         specifier: ^7.4.0
         version: 7.4.0
@@ -4228,6 +4231,23 @@ packages:
       tsx:
         optional: true
       yaml:
+        optional: true
+
+  web-haptics@0.0.6:
+    resolution: {integrity: sha512-eCzcf1LDi20+Fr0x9V3OkX92k0gxEQXaHajmhXHitsnk6SxPeshv8TBtBRqxyst8HI1uf2FyFVE7QS3jo1gkrw==}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+      svelte: '>=4'
+      vue: '>=3'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      svelte:
+        optional: true
+      vue:
         optional: true
 
   web-streams-polyfill@3.3.3:
@@ -8631,6 +8651,11 @@ snapshots:
       jiti: 2.6.1
       lightningcss: 1.30.2
       terser: 5.48.0
+
+  web-haptics@0.0.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    optionalDependencies:
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
 
   web-streams-polyfill@3.3.3: {}
 
