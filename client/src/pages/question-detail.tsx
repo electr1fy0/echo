@@ -445,7 +445,6 @@ export default function QuestionDetailPage() {
         {/* Images Section */}
         {hasImages && (
           <div className="flex flex-col gap-1.5 w-full">
-            <span className="text-[10px] text-neutral-400 dark:text-neutral-500 font-bold uppercase tracking-wider block">Photos</span>
             <div className="flex gap-3 overflow-x-auto scrollbar-none py-0.5">
               {entries.map(([key, val]) => {
                 if (val === undefined || val === null || val === "") return null;

@@ -201,69 +201,75 @@ function CenterCard() {
   const isMobile = useIsMobile();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92, y: 8 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+    <div
       style={{
         position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         zIndex: 10001,
+        pointerEvents: "none",
       }}
-      className={`${isMobile ? "w-[calc(100vw-2rem)] max-w-80" : "w-80"} bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-2xl p-6 text-center`}
     >
-      <div className="flex justify-center mb-3">
-        <div className="flex items-center gap-1.5">
-          {[...Array(totalSteps)].map((_, i) => (
-            <span
-              key={i}
-              className={`block rounded-full transition-all duration-300 ${
-                i === currentStep
-                  ? "bg-[var(--brand)] w-5 h-1.5"
-                  : i < currentStep
-                    ? "bg-neutral-300 dark:bg-neutral-600 w-1.5 h-1.5"
-                    : "bg-neutral-200 dark:bg-neutral-700 w-1.5 h-1.5"
-              }`}
-            />
-          ))}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        style={{ pointerEvents: "auto" }}
+        className={`${isMobile ? "w-[calc(100vw-2rem)] max-w-80" : "w-80"} bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-2xl p-6 text-center`}
+      >
+        <div className="flex justify-center mb-3">
+          <div className="flex items-center gap-1.5">
+            {[...Array(totalSteps)].map((_, i) => (
+              <span
+                key={i}
+                className={`block rounded-full transition-all duration-300 ${
+                  i === currentStep
+                    ? "bg-[var(--brand)] w-5 h-1.5"
+                    : i < currentStep
+                      ? "bg-neutral-300 dark:bg-neutral-600 w-1.5 h-1.5"
+                      : "bg-neutral-200 dark:bg-neutral-700 w-1.5 h-1.5"
+                }`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
 
-      <div className="size-12 rounded-xl bg-[var(--brand-10)] flex items-center justify-center mx-auto mb-3">
-        <img src="/turnsoutlogo.svg" alt="" className="size-7 invert dark:invert-0 opacity-60" />
-      </div>
+        <div className="size-12 rounded-xl bg-[var(--brand-10)] flex items-center justify-center mx-auto mb-3">
+          <img src="/turnsoutlogo.svg" alt="" className="size-7 invert dark:invert-0 opacity-60" />
+        </div>
 
-      <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1.5">
-        {step.title}
-      </h3>
-      <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed mb-5">
-        {step.description}
-      </p>
+        <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1.5">
+          {step.title}
+        </h3>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed mb-5">
+          {step.description}
+        </p>
 
-      <div className="flex items-center justify-center gap-3">
-        <button
-          onClick={skip}
-          className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
-        >
-          Skip tour
-        </button>
-        <button
-          onClick={next}
-          className="flex items-center gap-1 text-xs font-medium bg-[var(--brand)] text-white px-4 py-1.5 rounded-lg hover:bg-[var(--brand-hover)] transition-colors cursor-pointer"
-        >
-          {currentStep < totalSteps - 1 ? (
-            <>
-              Get Started
-              <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
-            </>
-          ) : (
-            "Got it!"
-          )}
-        </button>
-      </div>
-    </motion.div>
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={skip}
+            className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+          >
+            Skip tour
+          </button>
+          <button
+            onClick={next}
+            className="flex items-center gap-1 text-xs font-medium bg-[var(--brand)] text-white px-4 py-1.5 rounded-lg hover:bg-[var(--brand-hover)] transition-colors cursor-pointer"
+          >
+            {currentStep < totalSteps - 1 ? (
+              <>
+                Get Started
+                <HugeiconsIcon icon={ArrowRight01Icon} className="size-3.5" />
+              </>
+            ) : (
+              "Got it!"
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
