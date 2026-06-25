@@ -213,7 +213,7 @@ export function AppSidebar() {
             <HugeiconsIcon icon={Edit01Icon} className="size-6" />
           </button>
         )}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-8 px-2">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-[max(2rem,env(safe-area-inset-bottom,0px))] px-2">
           <div data-tour="nav-shortcuts" className="flex items-center justify-around">
             {navItems.map((item) => (
               <div

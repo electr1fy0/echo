@@ -141,7 +141,7 @@ export function ReplyItem({
         )}
         <div className="flex-1 min-w-0">
           <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 w-full">
               {reply.isAnonymous ? (
                 <span>Anonymous</span>
               ) : (
@@ -162,6 +162,78 @@ export function ReplyItem({
                 <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
                   Accepted
                 </span>
+              )}
+              <span className="flex-1" />
+              {!isEditing && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="outline-none">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="More options"
+                    >
+                      <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        navigator.clipboard.writeText(reply.content);
+                        toastManager.add({ title: "Copied to clipboard", type: "success" });
+                      }}
+                    >
+                      <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
+                      Copy Text
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => alert("Reported content")}>
+                      <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+                      Report
+                    </DropdownMenuItem>
+                    {user?.username === reply.authorUsername && (
+                      <>
+                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                          <HugeiconsIcon
+                            icon={PencilEdit02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setShowDeleteAlert(true)}
+                        >
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {canAccept && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          toggleAccept({
+                            qid: reply.questionUid,
+                            rid: reply.uid,
+                            accept: !reply.isAccepted,
+                          })
+                        }
+                        disabled={isAcceptPending}
+                      >
+                        <HugeiconsIcon
+                          icon={
+                            reply.isAccepted
+                              ? CancelCircleIcon
+                              : CheckmarkCircle02Icon
+                          }
+                          className="mr-2 size-4"
+                        />
+                        {reply.isAccepted ? "Unaccept answer" : "Accept answer"}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </span>
             {isEditing ? (
@@ -203,95 +275,26 @@ export function ReplyItem({
                 </div>
               </div>
             ) : (
-              <PostContent
-                content={reply.content}
-                className="block text-sm text-neutral-700 dark:text-neutral-300"
-              />
+              <>
+                <PostContent
+                  content={reply.content}
+                  className="block text-sm text-neutral-700 dark:text-neutral-300"
+                />
+                {onReply && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={onReply}
+                      className="text-[11px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer"
+                    >
+                      Reply
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </p>
         </div>
-        {!isEditing && (
-          <div className="flex items-center gap-1 shrink-0">
-            {onReply && (
-              <button
-                type="button"
-                onClick={onReply}
-                className="text-[11px] text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors cursor-pointer px-1.5 py-0.5"
-              >
-                Reply
-              </button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="outline-none">
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label="More options"
-                >
-                  <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    navigator.clipboard.writeText(reply.content);
-                    toastManager.add({ title: "Copied to clipboard", type: "success" });
-                  }}
-                >
-                  <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
-                  Copy Text
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => alert("Reported content")}>
-                  <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
-                  Report
-                </DropdownMenuItem>
-                {user?.username === reply.authorUsername && (
-                  <>
-                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <HugeiconsIcon
-                        icon={PencilEdit02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => setShowDeleteAlert(true)}
-                    >
-                      <HugeiconsIcon
-                        icon={Delete02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {canAccept && (
-                  <DropdownMenuItem
-                    onClick={() =>
-                      toggleAccept({
-                        qid: reply.questionUid,
-                        rid: reply.uid,
-                        accept: !reply.isAccepted,
-                      })
-                    }
-                    disabled={isAcceptPending}
-                  >
-                    <HugeiconsIcon
-                      icon={
-                        reply.isAccepted
-                          ? CancelCircleIcon
-                          : CheckmarkCircle02Icon
-                      }
-                      className="mr-2 size-4"
-                    />
-                    {reply.isAccepted ? "Unaccept answer" : "Accept answer"}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
       </div>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>

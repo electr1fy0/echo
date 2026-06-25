@@ -130,7 +130,28 @@ export function useUpdateReply() {
   return useMutation({
     mutationFn: ({ qid, rid, content }: { qid: string; rid: string; content: string }) =>
       updateReply(qid, rid, content),
-    onSuccess: (_, { qid }) => {
+    onMutate: async ({ qid, rid, content }) => {
+      await queryClient.cancelQueries({ queryKey: ["replies", qid] });
+      const previousReplies = queryClient.getQueryData<AnswerItem[]>([
+        "replies",
+        qid,
+      ]);
+      queryClient.setQueryData<AnswerItem[]>(["replies", qid], (old) => {
+        if (!old) return undefined;
+        return old.map((item) =>
+          item.answer.uid === rid
+            ? { ...item, answer: { ...item.answer, content } }
+            : item,
+        );
+      });
+      return { previousReplies };
+    },
+    onError: (_err, { qid }, context) => {
+      if (context?.previousReplies) {
+        queryClient.setQueryData(["replies", qid], context.previousReplies);
+      }
+    },
+    onSettled: (_, __, { qid }) => {
       queryClient.invalidateQueries({ queryKey: ["replies", qid] });
     },
   });
@@ -148,7 +169,30 @@ export function useAcceptReply() {
       rid: string;
       accept: boolean;
     }) => (accept ? acceptReply(qid, rid) : unacceptReply(qid, rid)),
-    onSuccess: (_data, { qid }) => {
+    onMutate: async ({ qid, rid, accept }) => {
+      await queryClient.cancelQueries({ queryKey: ["replies", qid] });
+      const previousReplies = queryClient.getQueryData<AnswerItem[]>([
+        "replies",
+        qid,
+      ]);
+      queryClient.setQueryData<AnswerItem[]>(["replies", qid], (old) => {
+        if (!old) return undefined;
+        return old.map((item) =>
+          item.answer.uid === rid
+            ? { ...item, answer: { ...item.answer, isAccepted: accept } }
+            : accept
+              ? { ...item, answer: { ...item.answer, isAccepted: false } }
+              : item,
+        );
+      });
+      return { previousReplies };
+    },
+    onError: (_err, { qid }, context) => {
+      if (context?.previousReplies) {
+        queryClient.setQueryData(["replies", qid], context.previousReplies);
+      }
+    },
+    onSettled: (_, __, { qid }) => {
       queryClient.invalidateQueries({ queryKey: ["replies", qid] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
