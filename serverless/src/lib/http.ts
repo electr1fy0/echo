@@ -29,7 +29,8 @@ export const handleAppError = (error: unknown, c: Context<AppEnv>) => {
   }
 
   console.error("unhandled error:", error);
-  return new Response(JSON.stringify(toErrorResponse("internal error")), {
+  const message = error instanceof Error ? error.message : "internal error";
+  return new Response(JSON.stringify(toErrorResponse(message)), {
     status: 500,
     headers: { "Content-Type": "application/json" },
   });

@@ -6,6 +6,7 @@ export interface Notification {
     user_username: string;
     actor_username: string;
     actor_avatar: string;
+    actor_is_anonymous?: boolean;
     type: string;
     reference_uid: string;
     post_uid: string;

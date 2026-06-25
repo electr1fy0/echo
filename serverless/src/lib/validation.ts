@@ -1,10 +1,13 @@
 import { z } from "zod";
 import { ApiError } from "./errors";
 
+const RESERVED_USERNAMES = ["anonymous", "admin", "moderator", "system", "opencode"];
+
 export const usernameSchema = z.string()
   .min(3, "username must be at least 3 characters")
   .max(20, "username must be at most 20 characters")
-  .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, "username must start with a letter and contain only letters, numbers, underscores, and hyphens");
+  .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, "username must start with a letter and contain only letters, numbers, underscores, and hyphens")
+  .refine((v) => !RESERVED_USERNAMES.includes(v.toLowerCase()), "this username is reserved");
 
 export const emailSchema = z.string()
   .email("invalid email format")
@@ -163,16 +166,20 @@ export const updateApplicationSchema = z.object({
   status: z.union([z.literal("accepted"), z.literal("declined")]),
 });
 
+export const changeEmailSchema = z.object({
+  new_email: emailSchema,
+});
+
+export const confirmEmailChangeSchema = z.object({
+  otp: z.string().length(6, "otp must be 6 digits"),
+});
+
 export const resolveUsernamesSchema = z.object({
   usernames: z.array(z.string()).max(100, "too many usernames"),
 });
 
 export const deleteChamberSchema = z.object({
   name: z.string().min(1, "name is required"),
-});
-
-export const expressInterestSchema = z.object({
-  message: z.string().optional(),
 });
 
 export const presignUploadSchema = z.object({

@@ -8,7 +8,8 @@ import { listNotifications, countUnreadNotifications, markNotificationsAsRead } 
 import { getPostItems, searchUsers } from "../services/questions";
 import { getProfileByUsername, computeBadges, followUser, unfollowUser, isFollowing, getFollowers, getFollowing } from "../services/users";
 import { ensureValidUsername } from "../lib/utils";
-import { safeParse, updateProfileSchema, resolveUsernamesSchema } from "../lib/validation";
+import { sendEmailChangeOtp, sendEmailChangeNotification } from "../lib/email";
+import { safeParse, updateProfileSchema, resolveUsernamesSchema, changeEmailSchema, confirmEmailChangeSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 import { parsePagination } from "../lib/utils";
 
@@ -59,6 +60,94 @@ userRoutes.patch("/me", async (c) => {
 userRoutes.delete("/me", async (c) => {
   await c.get("db").delete(schema.users).where(eq(schema.users.username, c.get("user")));
   return c.json({ message: "Account deleted successfully" });
+});
+
+userRoutes.post("/me/email-change", async (c) => {
+  const body = safeParse(changeEmailSchema, await c.req.json());
+  const username = c.get("user");
+  const newEmail = body.new_email;
+
+  const [user] = await c.get("db")
+    .select({ email: schema.users.email })
+    .from(schema.users)
+    .where(eq(schema.users.username, username))
+    .limit(1);
+
+  if (user.email === newEmail) {
+    throw new ApiError(400, "new email is the same as your current email");
+  }
+
+  const [existing] = await c.get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.email, newEmail))
+    .limit(1);
+
+  if (existing) {
+    throw new ApiError(409, "email already in use");
+  }
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  await c.get("db").update(schema.users).set({
+    newEmail,
+    emailChangeToken: otp,
+    emailChangeExpiry: otpExpiry,
+  }).where(eq(schema.users.username, username));
+
+  c.executionCtx.waitUntil(
+    sendEmailChangeOtp(c.env, user.email, username, otp).catch((error) => {
+      console.error("failed to send email change OTP", error);
+    }),
+  );
+
+  return c.json({ message: "OTP sent to your current email" });
+});
+
+userRoutes.post("/me/email-change/confirm", async (c) => {
+  const body = safeParse(confirmEmailChangeSchema, await c.req.json());
+  const username = c.get("user");
+
+  const [user] = await c.get("db")
+    .select({
+      email: schema.users.email,
+      newEmail: schema.users.newEmail,
+      emailChangeToken: schema.users.emailChangeToken,
+      emailChangeExpiry: schema.users.emailChangeExpiry,
+    })
+    .from(schema.users)
+    .where(eq(schema.users.username, username))
+    .limit(1);
+
+  if (!user?.newEmail || !user.emailChangeToken) {
+    throw new ApiError(400, "no pending email change");
+  }
+
+  if (user.emailChangeToken !== body.otp) {
+    throw new ApiError(401, "invalid OTP");
+  }
+
+  if (!user.emailChangeExpiry || user.emailChangeExpiry.getTime() < Date.now()) {
+    throw new ApiError(400, "OTP expired");
+  }
+
+  const oldEmail = user.email;
+
+  await c.get("db").update(schema.users).set({
+    email: user.newEmail,
+    newEmail: null,
+    emailChangeToken: null,
+    emailChangeExpiry: null,
+  }).where(eq(schema.users.username, username));
+
+  c.executionCtx.waitUntil(
+    sendEmailChangeNotification(c.env, oldEmail, username).catch((error) => {
+      console.error("failed to send email change notification", error);
+    }),
+  );
+
+  return c.json({ message: "Email updated successfully" });
 });
 
 userRoutes.get("/me/questions", async (c) => {

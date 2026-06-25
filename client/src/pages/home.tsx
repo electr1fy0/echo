@@ -672,7 +672,9 @@ export default function Home() {
             chamberSource:
               !hasToken && (c.chamberSource === "joined" || c.chamberSource === "following")
                 ? "global"
-                : c.chamberSource,
+                : hasToken && c.chamberSource === "global"
+                  ? "joined"
+                  : c.chamberSource,
           };
         });
         return migrated;
@@ -695,6 +697,36 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("turnsout_columns", JSON.stringify(columns));
   }, [columns]);
+
+  const prevHasToken = useRef(hasToken);
+  useEffect(() => {
+    if (!prevHasToken.current && hasToken) {
+      setColumns((prev) => {
+        let changed = false;
+        const updated = prev.map((col) => {
+          if (col.chamberSource === "global") {
+            changed = true;
+            return { ...col, chamberSource: "joined" as const };
+          }
+          return col;
+        });
+        return changed ? updated : prev;
+      });
+    } else if (prevHasToken.current && !hasToken) {
+      setColumns((prev) => {
+        let changed = false;
+        const updated = prev.map((col) => {
+          if (col.chamberSource === "joined") {
+            changed = true;
+            return { ...col, chamberSource: "global" as const };
+          }
+          return col;
+        });
+        return changed ? updated : prev;
+      });
+    }
+    prevHasToken.current = hasToken;
+  }, [hasToken]);
 
   const handleAddColumn = () => {
     const newCol: FeedColumn = {
@@ -730,51 +762,22 @@ export default function Home() {
         isMobile ? "min-h-dvh overflow-y-auto" : "overflow-hidden h-dvh",
       )}
     >
-      {!user && !isAuthLoading && (
-        <div className="max-w-[40rem] mx-auto w-full shrink-0 space-y-2 px-4 md:px-8 pb-2">
-          <h1 className="text-neutral-800 dark:text-neutral-200 text-lg py-0 my-0 text-balance">
-            TurnsOut
-          </h1>
-          <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance inline-grid">
-            <span
-              className="invisible col-start-1 row-start-1 select-none"
-              aria-hidden
-            >
-              Campus questions, answered by the people who get it.
-            </span>
-            <TextFlip
-              as="span"
-              interval={3}
-              className="col-start-1 row-start-1"
-            >
-              <span>Ask. Trade. Ride. Connect.</span>
-              <span>The platform built for campus life.</span>
-              <span>Where students help students.</span>
-              <span>Campus questions, answered by the people who get it.</span>
-              <span>Your campus community, one message away.</span>
-            </TextFlip>
-          </h2>
+      {isMobile && !user && !isAuthLoading && (
+        <div className="w-full shrink-0 px-4 pb-2">
           <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-4 flex items-center justify-between gap-4">
             <button
-              onClick={() => openAuthModal("signup")}
+              onClick={() => openAuthModal()}
               className="text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors text-left cursor-pointer"
             >
               Join your campus community to interact.
             </button>
             <div className="flex gap-2 shrink-0">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openAuthModal("signin")}
-              >
-                Sign in
-              </Button>
-              <Button
                 variant="default"
                 size="sm"
-                onClick={() => openAuthModal("signup")}
+                onClick={() => openAuthModal()}
               >
-                Sign up
+                Get started
               </Button>
             </div>
           </div>
@@ -785,8 +788,8 @@ export default function Home() {
         className={cn(
           isMobile
             ? "flex flex-col gap-4 px-4 pb-4"
-            : "flex-1 flex overflow-x-auto gap-6 pb-2 px-4 md:px-8 min-h-0 scrollbar-modern scroll-smooth",
-          !isMobile && columns.length === 1 && "sm:justify-center",
+            : "flex-1 flex overflow-x-auto gap-8 pb-2 px-4 md:px-8 min-h-0 scrollbar-modern scroll-smooth",
+          !isMobile && columns.length === 1 && !user && "sm:justify-center",
         )}
       >
         {visibleColumns.map((col) => (
@@ -796,6 +799,7 @@ export default function Home() {
               isMobile
                 ? "w-full"
                 : "flex-shrink-0 w-full sm:w-[36rem] flex flex-col min-h-0",
+              !isMobile && columns.length === 1 && user && "sm:mx-auto",
             )}
           >
             <ColumnFeed
@@ -813,11 +817,76 @@ export default function Home() {
           </div>
         ))}
 
+        {/* Desktop logged-out: CTA card on the right */}
+        {!isMobile && !user && !isAuthLoading && (
+          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-8">
+            <div className="space-y-1">
+              <h1 className="text-neutral-800 dark:text-neutral-200 text-lg font-semibold">
+                TurnsOut
+              </h1>
+              <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance inline-grid">
+                <span className="invisible col-start-1 row-start-1 select-none" aria-hidden>
+                  Campus questions, answered by the people who get it.
+                </span>
+                <TextFlip as="span" interval={3} className="col-start-1 row-start-1">
+                  <span>Ask. Trade. Ride. Connect.</span>
+                  <span>The platform built for campus life.</span>
+                  <span>Where students help students.</span>
+                  <span>Campus questions, answered by the people who get it.</span>
+                  <span>Your campus community, one message away.</span>
+                </TextFlip>
+              </h2>
+            </div>
+            <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Explore topic-specific chambers and channels</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Ask questions and get answers from your campus</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Trade textbooks, electronics, and hostel gear</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Coordinate carpools to airports and weekend trips</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Form study groups and LeetCode prep sessions</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Share lecture notes, resources, and files</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
+                <span>Post anonymously and connect via DMs</span>
+              </li>
+            </ul>
+            <Button
+              variant="default"
+              className="w-full mt-auto"
+              onClick={() => openAuthModal()}
+            >
+              Get started
+            </Button>
+          </div>
+        )}
+
         {/* Add Column Button - desktop only */}
-        {!isMobile && user && (
+        {!isMobile && (
           <button
             onClick={handleAddColumn}
-            className="flex-shrink-0 flex items-center justify-center size-8 rounded-full border border-dashed border-neutral-300 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition-all cursor-pointer self-center"
+            className={cn(
+              "flex-shrink-0 flex items-center justify-center size-8 rounded-full border border-dashed self-center transition-all",
+              user
+                ? "border-neutral-300 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900/40 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 cursor-pointer visible"
+                : "border-transparent text-transparent pointer-events-none invisible",
+            )}
             title="Add Column"
             aria-label="Add Column"
           >

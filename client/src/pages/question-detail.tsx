@@ -22,7 +22,6 @@ import {
   Delete02Icon,
   UserMultiple02Icon,
   BubbleChatIcon,
-  Share01Icon,
 } from "@hugeicons/core-free-icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -42,6 +41,7 @@ import {
 import { PageTransition } from "@/components/page-transition";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatDistanceToNowStrict } from "date-fns";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { PostContent } from "@/components/post-content";
 import { UpvoteButton } from "@/components/upvote-button";
@@ -150,7 +150,7 @@ export default function QuestionDetailPage() {
           setIsApplying(false);
         },
         onError: (err) => {
-          toastManager.add({ title: err instanceof Error ? err.message : "Failed to submit application", type: "error" });
+          handleApiError(err, "Failed to submit application");
         },
       },
     );
@@ -332,8 +332,7 @@ export default function QuestionDetailPage() {
               ([key, val]) => getFieldInfo(key, val).isFile,
             );
 
-            const showInterested = !question.isAnonymous && user?.username !== question.authorUsername;
-            if (!hasMetadata && !hasImages && !hasFiles && !showInterested)
+            if (!hasMetadata && !hasImages && !hasFiles)
               return null;
 
             return (
@@ -752,52 +751,6 @@ export default function QuestionDetailPage() {
                   </div>
                 )}
 
-                {/* Quick action DM button */}
-                {!question.isAnonymous && user?.username !== question.authorUsername && (
-                  <Button
-                    onClick={() => {
-                      if (!user) {
-                        openAuthModal("signin");
-                        return;
-                      }
-
-                      const customFields = question.customFields || {};
-                      let dmMsg = `Hey! I'm interested in your post: "${question.content.slice(0, 100)}..."`;
-                      if (customFields.departure && customFields.destination) {
-                        dmMsg = `Hey! I'd like to join your carpool from ${customFields.departure} to ${customFields.destination}. Is there still space?`;
-                      } else if (customFields.price) {
-                        dmMsg = `Hey! I'm interested in buying your item for ₹${customFields.price}. Is it still available?`;
-                      } else if (customFields.slots) {
-                        dmMsg = `Hey! I'm interested in joining your group. Let me know if you still have space!`;
-                      } else if (customFields.item) {
-                        const itemType =
-                          customFields.type === "Found" ? "found" : "lost";
-                        dmMsg = `Hey! I saw your post about the ${itemType} item: "${customFields.item}". I have some info / would like to connect!`;
-                      } else if (customFields.file) {
-                        const fileObj = customFields.file as { name: string };
-                        dmMsg = `Hey! I saw your uploaded resource "${fileObj.name || "file"}" in the chamber. Had a quick question about it!`;
-                      } else if (customFields.difficulty) {
-                        dmMsg = `Hey! I'm interested in joining your ${customFields.difficulty} LeetCode prep group.`;
-                      } else if (customFields.pickup) {
-                        dmMsg = `Hey! I'm interested in joining the food group-buy for ${customFields.pickup}.`;
-                      }
-
-                      sendInterestDM({
-                        authorUsername: question.authorUsername!,
-                        templateMessage: dmMsg,
-                      });
-                    }}
-                    disabled={isDMPending}
-                    variant="default"
-                    className="w-full"
-                  >
-                    <HugeiconsIcon
-                      icon={Share01Icon}
-                      className="size-3.5 rotate-180"
-                    />
-                    Interested
-                  </Button>
-                )}
               </div>
             );
           })()}
@@ -1320,7 +1273,7 @@ export default function QuestionDetailPage() {
             <AlertDialogClose
               render={<Button variant="destructive" />}
               onClick={() =>
-                deleteQuestion(questionId!, { onSuccess: () => navigate(-1), onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete post", type: "error" }) })
+                deleteQuestion(questionId!, { onSuccess: () => navigate(-1), onError: (err) => handleApiError(err, "Failed to delete post") })
               }
             >
               Delete

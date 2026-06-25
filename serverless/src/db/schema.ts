@@ -29,6 +29,9 @@ export const users = pgTable("users", {
   dmEnabled: boolean("dm_enabled").default(true).notNull(),
   reputation: integer("reputation").default(0).notNull(),
   badges: json("badges").$type<string[]>().default([]).notNull(),
+  newEmail: text("new_email"),
+  emailChangeToken: text("email_change_token"),
+  emailChangeExpiry: timestamp("email_change_expiry", { mode: "date" }),
 }, (table) => [unique("users_email_key").on(table.email)]);
 
 export const chambers = pgTable("chambers", {
@@ -161,6 +164,7 @@ export const notifications = pgTable("notifications", {
   type: text("type").notNull(),
   referenceUid: uuid("reference_uid").notNull(),
   isRead: boolean("is_read").default(false),
+  actorIsAnonymous: boolean("actor_is_anonymous").default(false).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 }, (table) => [
   unique("notifications_dedupe_unique").on(

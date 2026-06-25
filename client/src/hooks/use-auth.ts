@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { signin, signup, verifySession, signout } from "@/api/auth";
-import { getToken } from "@/lib/utils";
+import { getToken, setGoogleOnboardingToken } from "@/lib/utils";
 import { useNavigate } from "react-router";
 
 export function useToken() {
@@ -87,10 +87,16 @@ export function useSendOtp() {
 
 export function useVerifyOtp() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   return useMutation({
     mutationFn: ({ email, otp }: { email: string; otp: string }) =>
       verifyOtp(email, otp),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data.needsOnboarding) {
+        setGoogleOnboardingToken(data.onboardingToken);
+        navigate("/onboarding", { replace: true });
+        return;
+      }
       queryClient.refetchQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["chambers"] });

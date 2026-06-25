@@ -18,6 +18,7 @@ import { useAuth, useToken } from "@/hooks/use-auth";
 import { useCreateQuestion, useQuestionDraft } from "@/hooks/use-questions";
 import { useListChambers, useListChannels } from "@/hooks/use-chamber";
 import { validateMentions } from "@/lib/mention-validation";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
@@ -382,7 +383,7 @@ export function CreatePostDialog() {
           close();
         },
         onError: (err) => {
-          toastManager.add({ title: err instanceof Error ? err.message : "Failed to create post", type: "error" });
+          handleApiError(err, "Failed to create post");
         },
         onSettled: () => setIsValidating(false),
       });

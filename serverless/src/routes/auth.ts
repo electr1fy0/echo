@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { and, eq, gt } from "drizzle-orm";
 
 import { schema } from "../db";
-import { issueAuthToken, issueGoogleOnboardingToken, verifyGoogleOnboardingToken } from "../lib/auth";
+import { issueAuthToken, issueGoogleOnboardingToken, issueOnboardingToken, verifyGoogleOnboardingToken, verifyOnboardingToken } from "../lib/auth";
 import { sendOtpEmail, sendPasswordResetEmail, sendVerificationEmail } from "../lib/email";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
@@ -18,7 +18,7 @@ import {
   randomToken,
   requireEnv,
 } from "../lib/utils";
-import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, sendOtpSchema, verifyOtpSchema, googleOnboardingSchema } from "../lib/validation";
+import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, sendOtpSchema, verifyOtpSchema, googleOnboardingSchema, usernameSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const authRoutes = new Hono<AppEnv>();
@@ -36,6 +36,7 @@ authRoutes.use("/reset-password", authLimiter);
 authRoutes.use("/send-otp", authLimiter);
 authRoutes.use("/verify-otp", authLimiter);
 authRoutes.use("/google/onboarding", authLimiter);
+authRoutes.use("/onboarding", authLimiter);
 authRoutes.use("/magic-link", authLimiter);
 
 const handleGoogleCallback = async (c: Context<AppEnv>) => {
@@ -98,11 +99,31 @@ authRoutes.post("/signup", async (c) => {
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
       if ((error as { constraint?: string }).constraint === "users_email_key") {
-        throw new ApiError(409, "email already in use");
+        const [existing] = await db
+          .select({ isVerified: schema.users.isVerified })
+          .from(schema.users)
+          .where(eq(schema.users.email, email))
+          .limit(1);
+
+        if (existing && !existing.isVerified) {
+          await db
+            .update(schema.users)
+            .set({
+              username,
+              password: passwordHash,
+              verificationToken,
+              isVerified: false,
+            })
+            .where(eq(schema.users.email, email));
+        } else {
+          throw new ApiError(409, "email already in use");
+        }
+      } else {
+        throw new ApiError(409, "username already taken");
       }
-      throw new ApiError(409, "username already taken");
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   c.executionCtx.waitUntil(
@@ -308,6 +329,37 @@ authRoutes.post("/google/onboarding", async (c) => {
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, username) });
 });
 
+authRoutes.post("/onboarding", async (c) => {
+  const body = safeParse(googleOnboardingSchema, await c.req.json());
+  const email = await verifyOnboardingToken(c.env.SECRET_KEY, body.token);
+  const username = body.username;
+
+  const [existingUsername] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.username, username))
+    .limit(1);
+
+  if (existingUsername) {
+    throw new ApiError(409, "username already taken");
+  }
+
+  const [existingUserByEmail] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.email, email))
+    .limit(1);
+
+  if (existingUserByEmail) {
+    return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, existingUserByEmail.username) });
+  }
+
+  await c.get("db").insert(schema.users).values({ username, email, isVerified: true });
+  return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, username) });
+});
+
 authRoutes.post("/send-otp", async (c) => {
   const body = safeParse(sendOtpSchema, await c.req.json());
   const email = body.email;
@@ -374,21 +426,8 @@ authRoutes.post("/verify-otp", async (c) => {
     .limit(1);
 
   if (!user) {
-    let newUsername = email.split("@")[0];
-    const baseUsername = newUsername;
-    let counter = 1;
-    while (true) {
-      const [existing] = await c.get("db").select({ username: schema.users.username }).from(schema.users).where(eq(schema.users.username, newUsername)).limit(1);
-      if (!existing) break;
-      newUsername = `${baseUsername}${counter}`;
-      counter++;
-    }
-    await c.get("db").insert(schema.users).values({
-      username: newUsername,
-      email,
-      isVerified: true,
-    });
-    user = { username: newUsername };
+    const onboardingToken = await issueOnboardingToken(c.env.SECRET_KEY, email);
+    return c.json({ onboardingToken, needsOnboarding: true });
   }
 
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, user.username) });
@@ -427,21 +466,12 @@ authRoutes.get("/magic-link", async (c) => {
     .limit(1);
 
   if (!user) {
-    let newUsername = otpRecord.email.split("@")[0];
-    const baseUsername = newUsername;
-    let counter = 1;
-    while (true) {
-      const [existing] = await c.get("db").select({ username: schema.users.username }).from(schema.users).where(eq(schema.users.username, newUsername)).limit(1);
-      if (!existing) break;
-      newUsername = `${baseUsername}${counter}`;
-      counter++;
-    }
-    await c.get("db").insert(schema.users).values({
-      username: newUsername,
-      email: otpRecord.email,
-      isVerified: true,
-    });
-    user = { username: newUsername };
+    const frontendUrl = getClientUrl(c.env);
+    const onboardingToken = await issueOnboardingToken(c.env.SECRET_KEY, otpRecord.email);
+    return c.redirect(
+      `${frontendUrl}/auth?onboarding=1&onboardingToken=${encodeURIComponent(onboardingToken)}`,
+      302,
+    );
   }
 
   const jwt = await issueAuthToken(c.env.SECRET_KEY, user.username);
@@ -450,5 +480,30 @@ authRoutes.get("/magic-link", async (c) => {
 });
 
 authRoutes.post("/signout", (c) => c.body(null, 200));
+
+authRoutes.get("/check-username", async (c) => {
+  const username = c.req.query("username");
+  if (!username) {
+    return c.json({ available: false, error: "username is required" });
+  }
+
+  const result = usernameSchema.safeParse(username);
+  if (!result.success) {
+    return c.json({ available: false, error: result.error.issues[0].message });
+  }
+
+  const [existing] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.username, result.data))
+    .limit(1);
+
+  if (existing) {
+    return c.json({ available: false, error: "username already taken" });
+  }
+
+  return c.json({ available: true });
+});
 
 authRoutes.get("/verify", async (c) => c.json(await getProfileByUsername(c.get("db"), c.get("user"), true)));

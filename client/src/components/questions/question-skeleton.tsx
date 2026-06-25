@@ -39,7 +39,7 @@ export function QuestionSkeleton() {
 
 export function QuestionListSkeleton({ count = 6, className }: { count?: number; className?: string }) {
     return (
-        <div className={cn("space-y-0 dark:bg-[#1D1D1D] rounded-2xl border border-neutral-200 dark:border-neutral-800/80 overflow-hidden", className)}>
+        <div className={cn("space-y-0 dark:bg-[#1D1D1D] rounded-2xl overflow-hidden", className)}>
             {Array.from({ length: count }).map((_, i) => (
                 <QuestionSkeleton key={i} />
             ))}

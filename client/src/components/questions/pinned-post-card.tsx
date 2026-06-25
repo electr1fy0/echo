@@ -16,6 +16,7 @@ import { UpvoteButton } from "@/components/upvote-button";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { PostContent } from "@/components/post-content";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { useRepliesQuery } from "@/hooks/use-replies";
 
@@ -50,7 +51,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
         toastManager.add({ title: "Post unpinned", type: "success" });
       },
       onError: (err) => {
-        toastManager.add({ title: err instanceof Error ? err.message : "Failed to unpin post", type: "error" });
+        handleApiError(err, "Failed to unpin post");
       },
     });
   };

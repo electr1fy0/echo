@@ -138,6 +138,14 @@ function NotificationItem({ notification }: { notification: Notification }) {
         <div className="size-9 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-1">
           <span className="text-lg">🎉</span>
         </div>
+      ) : notification.actor_is_anonymous ? (
+        <div className="shrink-0 mt-1">
+          <UserAvatar
+            src={undefined}
+            name="Anonymous"
+            className="size-9"
+          />
+        </div>
       ) : (
         <Link
           to={`/u/${notification.actor_username}`}
@@ -157,8 +165,8 @@ function NotificationItem({ notification }: { notification: Notification }) {
             <span className="font-medium">Milestone Unlocked 🎯</span>
           ) : (
             <>
-              <span className="hover:underline">
-                {notification.actor_username}
+              <span className={cn(notification.actor_is_anonymous ? "" : "hover:underline")}>
+                {notification.actor_is_anonymous ? "Anonymous" : notification.actor_username}
               </span>
               <span className="text-neutral-500 dark:text-neutral-400">
                 {isUpvote && " upvoted your post"}

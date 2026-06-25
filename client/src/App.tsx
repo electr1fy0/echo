@@ -40,7 +40,6 @@ const AllChambers = lazy(() => import("@/pages/all-chambers"));
 const ChamberPage = lazy(() => import("@/pages/chamber"));
 const Notifications = lazy(() => import("@/pages/notifications"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));
-const ResetPassword = lazy(() => import("@/pages/reset-password"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const QuestionDetailPage = lazy(() => import("@/pages/question-detail"));
@@ -117,11 +116,8 @@ function AuthenticatedLayout() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => openAuthModal("signin")}>
-                Sign in
-              </Button>
-              <Button variant="default" onClick={() => openAuthModal("signup")}>
-                Sign up
+              <Button variant="default" onClick={() => openAuthModal()}>
+                Get started
               </Button>
             </div>
           </div>
@@ -150,7 +146,6 @@ export default function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/onboarding" element={<Onboarding />} />
 
             {/* Public layout routes */}
@@ -161,6 +156,7 @@ export default function App() {
               <Route path="/chamber/:chamberId" element={<ChamberPage />} />
               <Route path="/q/:questionId" element={<QuestionDetailPage />} />
               <Route path="/u/:username" element={<PublicProfile />} />
+              <Route path="/auth" element={<LoadingSpinner />} />
             </Route>
 
             {/* Protected layout routes */}

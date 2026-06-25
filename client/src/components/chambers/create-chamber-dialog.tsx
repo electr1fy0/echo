@@ -14,6 +14,7 @@ import { useCreateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn, getInitials } from "@/lib/utils";
 import { useNavigate } from "react-router";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { CropImageDialog } from "@/components/ui/crop-image-dialog";
@@ -65,7 +66,7 @@ export function CreateChamberDialog({
         }
       },
       onError: (err) => {
-        toastManager.add({ title: err instanceof Error ? err.message : "Failed to create chamber", type: "error" });
+        handleApiError(err, "Failed to create chamber");
       },
     });
   };

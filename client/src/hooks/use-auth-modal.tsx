@@ -2,25 +2,20 @@ import { createContext, useContext, useState } from "react";
 
 type AuthModalContextType = {
   isOpen: boolean;
-  open: (defaultTab?: "signin" | "signup" | "forgot") => void;
+  open: (tab?: string) => void;
   close: () => void;
-  defaultTab: "signin" | "signup" | "forgot";
 };
 
 const AuthModalContext = createContext<AuthModalContextType | undefined>(undefined);
 
 export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [defaultTab, setDefaultTab] = useState<"signin" | "signup" | "forgot">("signin");
 
-  const open = (tab: "signin" | "signup" | "forgot" = "signin") => {
-    setDefaultTab(tab);
-    setIsOpen(true);
-  };
+  const open = (_tab?: string) => setIsOpen(true);
   const close = () => setIsOpen(false);
 
   return (
-    <AuthModalContext.Provider value={{ isOpen, open, close, defaultTab }}>
+    <AuthModalContext.Provider value={{ isOpen, open, close }}>
       {children}
     </AuthModalContext.Provider>
   );

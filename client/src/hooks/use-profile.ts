@@ -1,4 +1,4 @@
-import { fetchProfile, updateProfile, fetchPublicProfile, followUser, unfollowUser } from "@/api/profile";
+import { fetchProfile, updateProfile, fetchPublicProfile, followUser, unfollowUser, requestEmailChange, confirmEmailChange } from "@/api/profile";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@/types";
 import { useToken } from "./use-auth";
@@ -47,6 +47,23 @@ export function useUnfollowUser() {
     mutationFn: (username: string) => unfollowUser(username),
     onSuccess: (_data, username) => {
       queryClient.invalidateQueries({ queryKey: ["profile", username] });
+    },
+  });
+}
+
+export function useEmailChange() {
+  return useMutation({
+    mutationFn: (newEmail: string) => requestEmailChange(newEmail),
+  });
+}
+
+export function useConfirmEmailChange() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (otp: string) => confirmEmailChange(otp),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
   });
 }

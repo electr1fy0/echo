@@ -13,7 +13,6 @@ import {
   searchQuestions,
   pinQuestion,
   unpinQuestion,
-  expressInterest,
   expressInterestViaDM,
   applyToPartner,
   fetchPartnerApplications,
@@ -249,17 +248,6 @@ export function useSearchQuestions(query: string) {
     queryFn: () => searchQuestions(query),
     enabled: query.length > 0,
     staleTime: 30_000,
-  });
-}
-
-export function useExpressInterest() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ questionId, message }: { questionId: string; message?: string }) =>
-      expressInterest(questionId, message),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-    },
   });
 }
 

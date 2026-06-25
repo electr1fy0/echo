@@ -17,7 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { track } from "@/lib/analytics";
 import { useCreateConversation } from "@/hooks/use-dms";
-import { toastManager } from "@/components/ui/toast";
+import { handleApiError } from "@/lib/api-error";
 import { LevelBadge } from "@/components/ui/level-badge";
 import { BadgeDisplay } from "@/components/ui/badge-display";
 
@@ -205,7 +205,7 @@ export default function PublicProfile() {
                     startConversation(username!, {
                       onSuccess: (conv) => navigate(`/dm/${conv.uid}`),
                       onError: (err) =>
-                        toastManager.add({ title: err instanceof Error ? err.message : "Cannot start conversation", type: "error" }),
+                        handleApiError(err, "Cannot start conversation"),
                     });
                   }}
                 >

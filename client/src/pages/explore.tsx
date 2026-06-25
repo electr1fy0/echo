@@ -31,18 +31,19 @@ import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 
 function ReplyResult({ item }: { item: AnswerItem }) {
+  const isAnonymous = item.answer.isAnonymous;
   return (
     <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
       <div className="flex items-start gap-3">
         <UserAvatar
-          src={item.author.avatar}
-          name={item.author.username}
+          src={isAnonymous ? undefined : item.author.avatar}
+          name={isAnonymous ? "Anonymous" : item.author.username}
           className="size-8"
         />
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start">
             <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-              {item.author.username}
+              {isAnonymous ? "Anonymous" : item.author.username}
             </span>
             <span className="text-xs text-neutral-500">
               {item.answer.timeCreated

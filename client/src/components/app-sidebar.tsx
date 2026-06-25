@@ -1,4 +1,3 @@
-import { useState, useRef } from "react";
 import type { User } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useLocation, Link } from "react-router";
@@ -197,62 +196,17 @@ export function AppSidebar() {
     },
   });
 
-  const [fabPos, setFabPos] = useState({ bottom: 96, right: 16 });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef<{ startX: number; startY: number; origBottom: number; origRight: number } | null>(null);
+  const isDmPage = location.pathname.startsWith("/dm");
 
   if (isMobile) {
     return (
       <>
         {/* Floating action button for mobile post creation */}
-        {user && (
+        {user && !isDmPage && (
           <button
             data-tour="create-post"
-            ref={(el) => {
-              if (el && !dragRef.current && fabPos.bottom === 96 && fabPos.right === 16) {
-                const saved = localStorage.getItem("fab-pos");
-                if (saved) try {
-                  const p = JSON.parse(saved);
-                  setFabPos(p);
-                } catch {/* ignore */}
-              }
-            }}
-            onClick={() => {
-              if (!isDragging) openCreatePost();
-            }}
-            onPointerDown={(e) => {
-              const btn = e.currentTarget;
-              void btn.getBoundingClientRect();
-              dragRef.current = {
-                startX: e.clientX,
-                startY: e.clientY,
-                origBottom: fabPos.bottom,
-                origRight: fabPos.right,
-              };
-              btn.setPointerCapture(e.pointerId);
-            }}
-            onPointerMove={(e) => {
-              if (!dragRef.current) return;
-              const dx = dragRef.current.startX - e.clientX;
-              const dy = dragRef.current.startY - e.clientY;
-              setFabPos({
-                bottom: Math.max(80, dragRef.current.origBottom + dy),
-                right: Math.max(8, dragRef.current.origRight + dx),
-              });
-              setIsDragging(true);
-            }}
-            onPointerUp={(e) => {
-              if (!dragRef.current) return;
-              const btn = e.currentTarget;
-              btn.releasePointerCapture(e.pointerId);
-              if (isDragging) {
-                localStorage.setItem("fab-pos", JSON.stringify(fabPos));
-                setTimeout(() => setIsDragging(false), 0);
-              }
-              dragRef.current = null;
-            }}
-            className="fixed z-40 flex items-center justify-center size-12 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white cursor-grab active:cursor-grabbing touch-none select-none"
-            style={{ bottom: fabPos.bottom, right: fabPos.right }}
+            onClick={() => openCreatePost()}
+            className="fixed z-40 flex items-center justify-center size-12 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white bottom-24 right-4 cursor-pointer"
             title="Create a Post"
             aria-label="Create a Post"
           >

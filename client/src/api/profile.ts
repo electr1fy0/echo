@@ -34,6 +34,26 @@ export async function updateProfile(user: User): Promise<void> {
   }
 }
 
+export async function requestEmailChange(newEmail: string): Promise<void> {
+  const res = await fetch(`${API_URL}/users/me/email-change`, {
+    method: "POST",
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ new_email: newEmail }),
+  });
+  if (!res.ok) await parseApiError(res);
+  return res.json();
+}
+
+export async function confirmEmailChange(otp: string): Promise<void> {
+  const res = await fetch(`${API_URL}/users/me/email-change/confirm`, {
+    method: "POST",
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ otp }),
+  });
+  if (!res.ok) await parseApiError(res);
+  return res.json();
+}
+
 export async function fetchPublicProfile(username: string): Promise<User> {
   const res = await fetch(`${API_URL}/users/${username}`, {
     headers: {

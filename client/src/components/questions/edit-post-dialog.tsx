@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUpdateQuestion } from "@/hooks/use-questions";
 import { useEditPostModal } from "@/hooks/use-edit-post-modal";
 import { validateMentions } from "@/lib/mention-validation";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
@@ -150,7 +151,7 @@ export function EditPostDialog() {
             close();
           },
           onError: (err) => {
-            toastManager.add({ title: err instanceof Error ? err.message : "Failed to update post", type: "error" });
+            handleApiError(err, "Failed to update post");
           },
           onSettled: () => setIsValidating(false),
         },

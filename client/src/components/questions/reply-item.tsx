@@ -27,6 +27,7 @@ import { useAuthModal } from "@/hooks/use-auth-modal";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserPreviewCard } from "@/components/ui/user-preview-card";
 import { formatDistanceToNowStrict } from "date-fns";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import {
@@ -74,7 +75,7 @@ export function ReplyItem({
       {
         onSuccess: () => setIsEditing(false),
         onError: (err) => {
-          toastManager.add({ title: err instanceof Error ? err.message : "Failed to update reply", type: "error" });
+          handleApiError(err, "Failed to update reply");
         },
       },
     );

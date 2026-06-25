@@ -174,21 +174,6 @@ export async function unpinQuestion(questionId: string) {
   if (!res.ok) await parseApiError(res);
 }
 
-export async function expressInterest(questionId: string, message?: string) {
-  const res = await fetch(
-    `${API_URL}/questions/${encodeURIComponent(questionId)}/interest`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify({ message }),
-    }
-  );
-  if (!res.ok) await parseApiError(res);
-}
-
 export async function expressInterestViaDM(authorUsername: string, templateMessage: string) {
   const convRes = await fetch(`${API_URL}/dms/conversations`, {
     method: "POST",

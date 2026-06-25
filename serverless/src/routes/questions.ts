@@ -13,7 +13,7 @@ import {
   mapPostItem,
 } from "../services/questions";
 import { parsePagination, countWords, MAX_POST_WORDS } from "../lib/utils";
-import { safeParse, createPostSchema, updatePostSchema, createReplySchema, updateReplySchema, pollVoteSchema, partnerApplySchema, updateApplicationSchema, expressInterestSchema } from "../lib/validation";
+import { safeParse, createPostSchema, updatePostSchema, createReplySchema, updateReplySchema, pollVoteSchema, partnerApplySchema, updateApplicationSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
 export const questionRoutes = new Hono<AppEnv>();
@@ -106,7 +106,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
     });
   }
 
-  await notifyMentions(c.get("db"), body.content ?? "", c.get("user"), created.uid, false);
+  await notifyMentions(c.get("db"), body.content ?? "", c.get("user"), created.uid, false, undefined, body.isAnonymous ?? false);
   return c.json({ message: "post created", uid: created.uid }, 201);
 });
 
@@ -371,10 +371,11 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
       actorUsername: currentUser,
       type: "reply_post",
       referenceUid: created.uid,
+      actorIsAnonymous: body.isAnonymous ?? false,
     });
   }
 
-  await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author);
+  await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author, body.isAnonymous ?? false);
 
   return c.json({
     uid: created.uid,
@@ -559,30 +560,6 @@ questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
   }
 
   return c.json({ message: "vote updated" });
-});
-
-// Express interest route (for trade, taxi, partner posts)
-questionRoutes.post("/:uid/interest", requireAuth, async (c) => {
-  const postUid = c.req.param("uid");
-  const currentUser = c.get("user");
-  const body = safeParse(expressInterestSchema, await c.req.json());
-
-  const [post] = await c.get("db").select({ author: schema.posts.author }).from(schema.posts).where(eq(schema.posts.uid, postUid)).limit(1);
-  if (!post) {
-    throw new ApiError(404, "post not found");
-  }
-  if (post.author === currentUser) {
-    throw new ApiError(400, "cannot express interest in your own post");
-  }
-
-  await createNotification(c.get("db"), {
-    userUsername: post.author,
-    actorUsername: currentUser,
-    type: "express_interest",
-    referenceUid: postUid,
-  });
-
-  return c.json({ message: "interest expressed" });
 });
 
 // Partner application routes

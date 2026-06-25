@@ -184,7 +184,6 @@ export function QuestionItem({
   const { mutate: sendInterestDM, isPending: isDMPending } =
     useExpressInterestViaDM();
 
-  const [interestSent, setInterestSent] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
@@ -309,23 +308,24 @@ export function QuestionItem({
                 {replies && replies.length > 0 && (
                   <div className="flex items-center gap-1.5 ml-1">
                     <AvatarGroup className="h-3">
-                      {Array.from(
-                        new Set(replies.map((r) => r.answer.authorUsername)),
-                      )
-                        .slice(0, 3)
-                        .map((username, i) => {
-                          const reply = replies.find(
-                            (r) => r.answer.authorUsername === username,
-                          );
-                          return (
-                            <UserAvatar
-                              key={username || i}
-                              name={username || "Anonymous"}
-                              src={reply?.author?.avatar}
-                              className="size-3 ring-1 ring-background"
-                            />
-                          );
-                        })}
+                        {Array.from(
+                          new Set(replies.map((r) => r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername)),
+                        )
+                          .slice(0, 3)
+                          .map((username, i) => {
+                            const reply = replies.find(
+                              (r) => (r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername) === username,
+                            );
+                            const isAnonReply = reply?.answer.isAnonymous;
+                            return (
+                              <UserAvatar
+                                key={username || i}
+                                name={isAnonReply ? "Anonymous" : username}
+                                src={isAnonReply ? undefined : reply?.author?.avatar}
+                                className="size-3 ring-1 ring-background"
+                              />
+                            );
+                          })}
                       {new Set(replies.map((r) => r.answer.authorUsername))
                         .size > 3 && (
                         <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
@@ -1009,79 +1009,6 @@ export function QuestionItem({
                     );
                   })()}
 
-                {/* Quick action DM button */}
-                {!isAnonymous && user?.username !== question.authorUsername && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!user) {
-                        openAuthModal("signin");
-                        return;
-                      }
-
-                      // Custom DM content template based on fields
-                      const customFields = question.customFields || {};
-                      let dmMsg = `Hey! I'm interested in your post: "${question.content.slice(0, 100)}..."`;
-                      if (customFields.departure && customFields.destination) {
-                        dmMsg = `Hey! I'd like to join your carpool from ${customFields.departure} to ${customFields.destination}. Is there still space?`;
-                      } else if (customFields.price) {
-                        dmMsg = `Hey! I'm interested in buying your item for ₹${customFields.price}. Is it still available?`;
-                      } else if (customFields.slots) {
-                        dmMsg = `Hey! I'm interested in joining your group. Let me know if you still have space!`;
-                      } else if (customFields.item) {
-                        const itemType =
-                          customFields.type === "Found" ? "found" : "lost";
-                        dmMsg = `Hey! I saw your post about the ${itemType} item: "${customFields.item}". I have some info / would like to connect!`;
-                      } else if (customFields.difficulty) {
-                        dmMsg = `Hey! I'm interested in joining your ${customFields.difficulty} LeetCode prep group.`;
-                      } else if (customFields.pickup) {
-                        dmMsg = `Hey! I'm interested in joining the food group-buy for ${customFields.pickup}.`;
-                      } else if (customFields.file) {
-                        const fileObj = customFields.file as { name: string };
-                        dmMsg = `Hey! I saw your uploaded resource "${fileObj.name || "file"}" in the chamber. Had a quick question about it!`;
-                      }
-
-                      sendInterestDM({
-                        authorUsername: question.authorUsername!,
-                        templateMessage: dmMsg,
-                      });
-                      setInterestSent(true);
-                      setTimeout(() => setInterestSent(false), 2000);
-                    }}
-                    disabled={isDMPending || interestSent}
-                    className={cn(
-                      "shrink-0 flex items-center gap-1.5 h-8.5 px-4 rounded-xl text-xs font-semibold transition-all duration-150 cursor-pointer shadow-sm active:scale-95 w-full sm:w-auto justify-center self-end",
-                      interestSent
-                        ? "bg-emerald-600 text-white"
-                        : "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-200",
-                    )}
-                  >
-                    {interestSent ? (
-                      <>
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="size-3.5"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        Sent
-                      </>
-                    ) : (
-                      <>
-                        <HugeiconsIcon
-                          icon={Share01Icon}
-                          className="size-3.5 rotate-180"
-                        />
-                        Interested
-                      </>
-                    )}
-                  </button>
-                )}
           </div>
         </div>
       </TriggerWrapper>

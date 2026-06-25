@@ -74,6 +74,7 @@ export function useJoinChamber() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
   });
 }
@@ -120,6 +121,7 @@ export function useLeaveChamber() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
   });
 }

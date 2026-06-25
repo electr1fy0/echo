@@ -11,6 +11,7 @@ export const createNotification = async (
     actorUsername?: string | null;
     type: string;
     referenceUid: string;
+    actorIsAnonymous?: boolean;
   },
 ) => {
   await db
@@ -20,6 +21,7 @@ export const createNotification = async (
       actorUsername: payload.actorUsername ?? null,
       type: payload.type,
       referenceUid: payload.referenceUid,
+      actorIsAnonymous: payload.actorIsAnonymous ?? false,
     })
     .onConflictDoNothing();
 };
@@ -31,6 +33,7 @@ export const notifyMentions = async (
   referenceUid: string,
   isReply: boolean,
   skipUser?: string,
+  isAnonymous?: boolean,
 ) => {
   const mentions = extractMentions(content);
   if (!mentions.length) {
@@ -54,6 +57,7 @@ export const notifyMentions = async (
           actorUsername: actor,
           type: notificationType,
           referenceUid,
+          actorIsAnonymous: isAnonymous,
         }),
       ),
   );
@@ -118,6 +122,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       userUsername: schema.notifications.userUsername,
       actorUsername: schema.notifications.actorUsername,
       actorAvatar: schema.users.avatar,
+      actorIsAnonymous: schema.notifications.actorIsAnonymous,
       type: schema.notifications.type,
       referenceUid: schema.notifications.referenceUid,
       content: sql<string>`''`,
@@ -170,6 +175,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
         user_username: row.userUsername,
         actor_username: row.actorUsername ?? "",
         actor_avatar: row.actorAvatar ?? "",
+        actor_is_anonymous: row.actorIsAnonymous ?? false,
         type: row.type,
         reference_uid: row.referenceUid,
         post_uid: postUid ?? "",

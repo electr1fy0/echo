@@ -8,6 +8,7 @@ import {
   Image01Icon,
   Loading03Icon,
 } from "@hugeicons/core-free-icons";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { useWebHaptics } from "@/lib/haptic";
 import type { QuestionId } from "@/types";
@@ -81,7 +82,7 @@ export function ReplyForm({
             onSubmitSuccess?.();
           },
           onError: (err) => {
-            toastManager.add({ title: err instanceof Error ? err.message : "Failed to submit reply. Please try again.", type: "error" });
+            handleApiError(err, "Failed to submit reply. Please try again.");
           },
           onSettled: () => {
             setIsValidating(false);

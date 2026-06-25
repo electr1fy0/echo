@@ -56,6 +56,7 @@ import {
 import { useWebHaptics } from "@/lib/haptic";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { Input } from "@/components/ui/input";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 
 import {
@@ -325,7 +326,7 @@ export default function ChamberPage() {
           toastManager.add({ title: "Channel updated!", type: "success" });
         },
         onError: (err) => {
-          toastManager.add({ title: err instanceof Error ? err.message : "Failed to update channel", type: "error" });
+          handleApiError(err, "Failed to update channel");
         },
       },
     );
@@ -354,7 +355,7 @@ export default function ChamberPage() {
           toastManager.add({ title: "Channel deleted!", type: "success" });
         },
         onError: (err) => {
-          toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete channel", type: "error" });
+          handleApiError(err, "Failed to delete channel");
         },
       });
     }
@@ -520,11 +521,11 @@ export default function ChamberPage() {
     if (!chamber?.uid) return;
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid, {
-        onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to leave chamber", type: "error" }),
+        onError: (err) => handleApiError(err, "Failed to leave chamber"),
       });
     } else {
       joinMutation.mutate(chamber.uid, {
-        onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to join chamber", type: "error" }),
+        onError: (err) => handleApiError(err, "Failed to join chamber"),
       });
     }
   };
@@ -558,7 +559,7 @@ export default function ChamberPage() {
           toastManager.add({ title: "Channel created!", type: "success" });
         },
         onError: (err) => {
-          toastManager.add({ title: err instanceof Error ? err.message : "Failed to create channel", type: "error" });
+          handleApiError(err, "Failed to create channel");
         },
       },
     );
@@ -946,7 +947,7 @@ export default function ChamberPage() {
                     navigate("/");
                   },
                   onError: (err) => {
-                    toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete chamber", type: "error" });
+                    handleApiError(err, "Failed to delete chamber");
                   },
                 });
               }}

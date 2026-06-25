@@ -10,7 +10,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { UserGroupIcon } from "@hugeicons/core-free-icons";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { formatDistanceToNowStrict } from "date-fns";
-import { toastManager } from "@/components/ui/toast";
+import { handleApiError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 
 export default function DMsPage() {
@@ -27,7 +27,7 @@ export default function DMsPage() {
         setUsername("");
       },
       onError: (err) => {
-        toastManager.add({ title: err instanceof Error ? err.message : "Failed to start conversation", type: "error" });
+        handleApiError(err, "Failed to start conversation");
       },
     });
   };

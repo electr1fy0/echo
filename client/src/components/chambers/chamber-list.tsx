@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toastManager } from "@/components/ui/toast";
+import { handleApiError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -58,11 +58,11 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
     if (!chamber.uid || isPending) return;
     if (chamber.isJoined) {
       leaveMutation.mutate(chamber.uid, {
-        onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to leave chamber", type: "error" }),
+        onError: (err) => handleApiError(err, "Failed to leave chamber"),
       });
     } else {
       joinMutation.mutate(chamber.uid, {
-        onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to join chamber", type: "error" }),
+        onError: (err) => handleApiError(err, "Failed to join chamber"),
       });
     }
   };
@@ -167,7 +167,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
               disabled={deleteMutation.isPending}
               onClick={() => {
                 deleteMutation.mutate(chamber.name, {
-                  onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete chamber", type: "error" }),
+                  onError: (err) => handleApiError(err, "Failed to delete chamber"),
                 });
               }}
             >

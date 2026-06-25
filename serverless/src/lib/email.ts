@@ -27,43 +27,97 @@ const getTemplate = (
   actionText: string,
   actionUrl: string,
   extraContent?: string,
+  logoUrl?: string,
 ) => `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #09090b; margin: 0; padding: 0; background-color: #ffffff; }
-    .container { max-width: 480px; margin: 60px auto; background: #ffffff; border: 1px dashed #e4e4e7; border-radius: 12px; padding: 48px; }
-    .header { margin-bottom: 32px; }
-    .logo { color: #09090b; font-size: 20px; font-weight: 300; text-decoration: none; letter-spacing: 0.5px; }
-    .h1 { font-size: 18px; font-weight: 400; margin-top: 0; margin-bottom: 24px; color: #09090b; }
-    .text { font-size: 15px; font-weight: 300; margin-bottom: 24px; color: #52525b; }
-    .btn-container { margin: 32px 0; }
-    .btn { display: inline-block; border: 1px solid #09090b; color: #09090b; padding: 10px 24px; border-radius: 9999px; font-weight: 400; text-decoration: none; font-size: 14px; }
-    .footer { margin-top: 48px; padding-top: 24px; border-top: 1px dashed #e4e4e7; font-size: 12px; font-weight: 300; color: #a1a1aa; }
-    .link { color: #09090b; text-decoration: underline; text-underline-offset: 4px; word-break: break-all; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    @media (prefers-color-scheme: dark) {
+      .email-bg { background-color: #0c0c0d !important; }
+      .email-card { background-color: #18181b !important; border-color: #27272a !important; }
+      .email-header-text { color: #fafafa !important; }
+      .email-title { color: #fafafa !important; }
+      .email-text { color: #a1a1aa !important; }
+      .email-divider { border-color: #27272a !important; }
+      .email-fallback-label { color: #52525b !important; }
+      .email-fallback-link { color: #a1a1aa !important; }
+      .email-footer-text { color: #52525b !important; }
+    }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <span class="logo">TurnsOut</span>
-    </div>
-    <div class="content">
-      <h1 class="h1">${title}</h1>
-      <p class="text">Hi ${username},</p>
-      <p class="text">${content}</p>
-      ${extraContent || ""}
-      <div class="btn-container">
-        <a href="${actionUrl}" class="btn">${actionText}</a>
-      </div>
-      <p style="font-size: 13px; font-weight: 300; color: #71717a; margin-top: 32px; margin-bottom: 8px;">If the button above doesn't work, you can copy and paste this link:</p>
-      <p style="font-size: 13px; margin: 0;"><a href="${actionUrl}" class="link">${actionUrl}</a></p>
-    </div>
-    <div class="footer">
-      &copy; TurnsOut. All rights reserved.
-    </div>
-  </div>
+<body class="email-bg" style="margin: 0; padding: 0; background-color: #f5f5f4; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f4; width: 100%;">
+    <tr>
+      <td align="center" style="padding: 48px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" style="max-width: 480px; width: 100%;">
+          <tr>
+            <td class="email-card" style="background-color: #ffffff; border-radius: 16px; padding: 48px; border: 1px solid #e4e4e7; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);">
+
+              <!-- Header: Logo + Brand -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding-bottom: 28px; border-bottom: 1px solid #f0f0f0;" class="email-divider">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        ${logoUrl ? `<td style="vertical-align: middle; padding-right: 12px;">
+                          <img src="${logoUrl}" alt="" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px;">
+                        </td>` : ''}
+                        <td style="vertical-align: middle;">
+                          <span class="email-header-text" style="font-size: 18px; font-weight: 600; color: #09090b; letter-spacing: -0.02em;">TurnsOut</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Content -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding-top: 28px;">
+                    <h1 class="email-title" style="font-size: 20px; font-weight: 600; color: #09090b; margin: 0 0 8px 0; letter-spacing: -0.02em;">${title}</h1>
+                    <p class="email-text" style="font-size: 15px; font-weight: 400; color: #52525b; margin: 16px 0; line-height: 1.6;">Hi ${username},</p>
+                    <p class="email-text" style="font-size: 15px; font-weight: 400; color: #52525b; margin: 16px 0; line-height: 1.6;">${content}</p>
+                    ${extraContent ? `<div style="margin: 24px 0;">${extraContent}</div>` : ''}
+
+                    <!-- CTA Button -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
+                      <tr>
+                        <td>
+                          <a href="${actionUrl}" style="display: inline-block; background: #ff5a1f; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 9999px; font-size: 14px; font-weight: 500; letter-spacing: -0.01em; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.3);">${actionText}</a>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Fallback link -->
+                    <p class="email-fallback-label" style="font-size: 13px; font-weight: 400; color: #a1a1aa; margin: 32px 0 8px 0; line-height: 1.5;">If the button above doesn't work, copy and paste this link:</p>
+                    <p style="font-size: 13px; margin: 0; word-break: break-all;">
+                      <a href="${actionUrl}" class="email-fallback-link" style="color: #52525b; text-decoration: underline; text-underline-offset: 3px;">${actionUrl}</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Footer -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="padding-top: 32px; margin-top: 32px; border-top: 1px solid #f0f0f0;" class="email-divider">
+                    <p class="email-footer-text" style="font-size: 12px; font-weight: 400; color: #a1a1aa; margin: 0; line-height: 1.5;">&copy; TurnsOut. All rights reserved.</p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
@@ -104,18 +158,22 @@ export const sendVerificationEmail = async (
   username: string,
   token: string,
 ) => {
-  const verifyLink = `${toAppBaseUrl(env.ECHO_DOMAIN)}/verify-email?token=${encodeURIComponent(token)}`;
+  const baseUrl = toAppBaseUrl(env.ECHO_DOMAIN);
+  const verifyLink = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}`;
+  const logoUrl = `${baseUrl}/turnsout.svg`;
 
   await sendEmail(
     env,
     to,
-    "Verify your email",
+    "Verify your email — TurnsOut",
     getTemplate(
       "Verify your email",
       username,
       "Thanks for joining TurnsOut. To get started, please verify your email address.",
       "Verify Email",
       verifyLink,
+      undefined,
+      logoUrl,
     ),
   );
 };
@@ -127,23 +185,74 @@ export const sendOtpEmail = async (
   otp: string,
   magicLinkToken: string,
 ) => {
-  const magicLink = `${toAppBaseUrl(env.ECHO_DOMAIN)}/auth/magic-link?token=${encodeURIComponent(magicLinkToken)}`;
+  const baseUrl = toAppBaseUrl(env.ECHO_DOMAIN);
+  const magicLink = `${baseUrl}/auth/magic-link?token=${encodeURIComponent(magicLinkToken)}`;
+  const logoUrl = `${baseUrl}/turnsout.svg`;
 
-  const otpTtl = Math.floor((Date.now() + 10 * 60 * 1000 - Date.now()) / 60);
+  const otpTtl = 10;
 
   await sendEmail(
     env,
     to,
-    "Your sign-in code",
+    "Your sign-in code — TurnsOut",
     getTemplate(
       "Your sign-in code",
       username,
       `Use the code below to sign in to TurnsOut. This code expires in ${otpTtl} minutes.`,
       "Sign in with code",
       magicLink,
-      `<div style="letter-spacing: 0.25em; font-size: 32px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', monospace;">${otp}</div>
+      `<div style="letter-spacing: 0.25em; font-size: 36px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #09090b;">${otp}</div>
 
-<p class="text">Alternatively, click the button above to sign in automatically.</p>`,
+<p style="font-size: 15px; font-weight: 400; color: #52525b; margin: 16px 0; line-height: 1.6; text-align: center;">Alternatively, click the button above to sign in automatically.</p>`,
+      logoUrl,
+    ),
+  );
+};
+
+export const sendEmailChangeOtp = async (
+  env: EmailEnv,
+  to: string,
+  username: string,
+  otp: string,
+) => {
+  const logoUrl = `${toAppBaseUrl(env.ECHO_DOMAIN)}/turnsout.svg`;
+
+  await sendEmail(
+    env,
+    to,
+    "Verify your email change — TurnsOut",
+    getTemplate(
+      "Verify your email change",
+      username,
+      "We received a request to change your email address. Use the code below to verify this change.",
+      "Copy code",
+      "#",
+      `<div style="letter-spacing: 0.25em; font-size: 36px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #09090b;">${otp}</div>`,
+      logoUrl,
+    ),
+  );
+};
+
+export const sendEmailChangeNotification = async (
+  env: EmailEnv,
+  to: string,
+  username: string,
+) => {
+  const baseUrl = toAppBaseUrl(env.ECHO_DOMAIN);
+  const logoUrl = `${baseUrl}/turnsout.svg`;
+
+  await sendEmail(
+    env,
+    to,
+    "Your email was changed — TurnsOut",
+    getTemplate(
+      "Your email was changed",
+      username,
+      "Your TurnsOut account email was recently changed. If you didn't make this change, please contact support immediately.",
+      "Go to TurnsOut",
+      baseUrl,
+      undefined,
+      logoUrl,
     ),
   );
 };
@@ -154,18 +263,22 @@ export const sendPasswordResetEmail = async (
   username: string,
   token: string,
 ) => {
-  const resetLink = `${toAppBaseUrl(env.ECHO_DOMAIN)}/reset-password?token=${encodeURIComponent(token)}`;
+  const baseUrl = toAppBaseUrl(env.ECHO_DOMAIN);
+  const resetLink = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
+  const logoUrl = `${baseUrl}/turnsout.svg`;
 
   await sendEmail(
     env,
     to,
-    "Reset Your Password",
+    "Reset your password — TurnsOut",
     getTemplate(
       "Reset your password",
       username,
       "We received a request to reset your password. If you didn't make this request, you can safely ignore this email.",
       "Reset Password",
       resetLink,
+      undefined,
+      logoUrl,
     ),
   );
 };

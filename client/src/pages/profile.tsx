@@ -29,6 +29,7 @@ import {
   ArrowLeft02Icon,
 } from "@hugeicons/core-free-icons";
 import { Drawer, DrawerPopup, DrawerPanel, DrawerTrigger } from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Dialog as EditDialog,
   DialogContent as EditDialogContent,
@@ -45,7 +46,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useFetchProfile, useUpdateProfile } from "@/hooks/use-profile";
+import { OTPField, OTPFieldInput, OTPFieldSeparator } from "@/components/ui/otp-field";
+import { useFetchProfile, useUpdateProfile, useEmailChange, useConfirmEmailChange } from "@/hooks/use-profile";
 import { useDeleteAccount, useSignout } from "@/hooks/use-auth";
 import type { User } from "@/types";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -53,6 +55,7 @@ import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
 import { useTheme } from "next-themes";
@@ -134,6 +137,22 @@ function buildDiceBearUrl(
   return `https://api.dicebear.com/10.x/dylan/svg?${params}`;
 }
 
+function parseDiceBearUrl(url: string) {
+  try {
+    const u = new URL(url);
+    if (!u.hostname.endsWith("dicebear.com")) return null;
+    const seed = u.searchParams.get("seed") || undefined;
+    const hairColor = u.searchParams.get("hairColor") || undefined;
+    const backgroundColor = u.searchParams.get("backgroundColor") || undefined;
+    const skinColor = u.searchParams.get("skinColor") || undefined;
+    const hair = u.searchParams.get("hair") || undefined;
+    const mood = u.searchParams.get("mood") || undefined;
+    return { seed, hairColor, backgroundColor, skinColor, hair, mood };
+  } catch {
+    return null;
+  }
+}
+
 export default function Profile() {
   const {
     data: user,
@@ -194,6 +213,7 @@ export default function Profile() {
   }, []);
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { mutate: deleteAccount } = useDeleteAccount();
+  const isMobile = useIsMobile();
   const { mutate: signout } = useSignout();
   const { theme, setTheme } = useTheme();
   const { accent, setAccent, themes } = useAccentTheme();
@@ -229,6 +249,12 @@ export default function Profile() {
     posted: 0,
     dmEnabled: true,
   });
+  const { mutate: sendOtp, isPending: isSendingOtp } = useEmailChange();
+  const { mutate: confirmOtp, isPending: isConfirmingOtp } = useConfirmEmailChange();
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const { data: chambers = [], isLoading: isChambersLoading } =
     useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
@@ -240,7 +266,7 @@ export default function Profile() {
         setIsEditOpen(false);
       },
       onError: (err) => {
-        toastManager.add({ title: err instanceof Error ? err.message : "Failed to update profile", type: "error" });
+        handleApiError(err, "Failed to update profile");
       },
     });
   };
@@ -464,7 +490,7 @@ export default function Profile() {
                         setIsSettingsOpen(false);
                         startTour();
                       }}
-                      className="flex items-center gap-3 w-full py-1.5 cursor-pointer"
+                      className="flex items-center gap-3 w-full py-1.5 px-2 -mx-2 rounded-lg cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
                       <HugeiconsIcon
                         icon={HelpCircleIcon}
@@ -480,7 +506,7 @@ export default function Profile() {
                     {/* Account */}
                     <button
                       onClick={() => signout()}
-                      className="flex items-center gap-3 w-full py-1.5 cursor-pointer text-red-500"
+                      className="flex items-center gap-3 w-full py-1.5 px-2 -mx-2 rounded-lg cursor-pointer text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
                       <HugeiconsIcon icon={Logout01Icon} className="size-4" />
                       <span className="text-sm">Sign Out</span>
@@ -488,7 +514,7 @@ export default function Profile() {
 
                     <button
                       onClick={() => setIsDeleteOpen(true)}
-                      className="flex items-center gap-3 w-full py-1.5 cursor-pointer text-red-500"
+                      className="flex items-center gap-3 w-full py-1.5 px-2 -mx-2 rounded-lg cursor-pointer text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
                       <HugeiconsIcon icon={Alert02Icon} className="size-4" />
                       <span className="text-sm">Delete Account</span>
@@ -692,17 +718,8 @@ export default function Profile() {
             </div>
           )}
         </div>
-        <EditDialog
-          open={isEditOpen}
-          onOpenChange={(open) => {
-            setIsEditOpen(open);
-            if (!open) setEditPage("profile");
-          }}
-        >
-          <EditDialogContent
-            className="sm:min-w-[420px] sm:max-w-[560px] max-sm:max-w-[90vw] overflow-hidden p-0"
-            showCloseButton={editPage === "profile"}
-          >
+        {(() => {
+          const editContent = (
             <div className="relative overflow-hidden">
               <div
                 className="flex transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] w-[200%]"
@@ -718,125 +735,264 @@ export default function Profile() {
                   <EditDialogHeader className="px-6 pt-6 pb-0">
                     <EditDialogTitle>Edit Profile</EditDialogTitle>
                   </EditDialogHeader>
-                  <form
-                    onSubmit={(e) => handleSubmit(e)}
-                    className="px-6 pb-6 space-y-5 pt-5"
-                  >
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="username"
-                        className="text-sm text-neutral-700 dark:text-neutral-300"
-                      >
-                        Username
-                      </label>
-                      <Input
-                        id="username"
-                        value={editForm.username}
-                        onChange={(e) =>
-                          updateDraft({ username: e.target.value })
-                        }
-                        placeholder="username"
-                        className="select-text"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="bio"
-                        className="text-sm text-neutral-700 dark:text-neutral-300"
-                      >
-                        Bio
-                      </label>
-                      <Textarea
-                        id="bio"
-                        value={editForm.bio}
-                        onChange={(e) => updateDraft({ bio: e.target.value })}
-                        placeholder="Info about you"
-                        className="select-text"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor="link"
-                        className="text-sm text-neutral-700 dark:text-neutral-300"
-                      >
-                        Link
-                      </label>
-                      <Input
-                        id="link"
-                        placeholder="https://example.com"
-                        className="select-text"
-                        value={editForm.link || ""}
-                        onChange={(e) => updateDraft({ link: e.target.value })}
-                      />
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!editForm.avatar)
-                          setAvatarSeed(
-                            DYLAN_SEEDS[
-                              Math.floor(Math.random() * DYLAN_SEEDS.length)
-                            ],
-                          );
-                        setEditPage("avatar");
-                      }}
-                      className="flex items-center justify-between w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-3">
-                        {editForm.avatar ? (
-                          <img
-                            src={editForm.avatar}
-                            className="size-10 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-800"
+                  {(() => {
+                    const fields = (
+                      <div className="px-6 space-y-5">
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="username"
+                            className="text-sm text-neutral-700 dark:text-neutral-300"
+                          >
+                            Username
+                          </label>
+                          <Input
+                            id="username"
+                            value={editForm.username}
+                            onChange={(e) =>
+                              updateDraft({ username: e.target.value })
+                            }
+                            placeholder="username"
+                            className="select-text"
                           />
-                        ) : (
-                          <div className="size-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center ring-1 ring-neutral-200 dark:ring-neutral-800">
-                            <HugeiconsIcon
-                              icon={Add01Icon}
-                              className="size-4 text-neutral-400"
-                            />
-                          </div>
-                        )}
-                        <div className="text-left">
-                          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                            Avatar
-                          </span>
-                          <p className="text-xs text-neutral-500">
-                            Choose or upload an avatar
-                          </p>
                         </div>
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="bio"
+                            className="text-sm text-neutral-700 dark:text-neutral-300"
+                          >
+                            Bio
+                          </label>
+                          <Textarea
+                            id="bio"
+                            value={editForm.bio}
+                            onChange={(e) => updateDraft({ bio: e.target.value })}
+                            placeholder="Info about you"
+                            className="select-text"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="link"
+                            className="text-sm text-neutral-700 dark:text-neutral-300"
+                          >
+                            Link
+                          </label>
+                          <Input
+                            id="link"
+                            placeholder="https://example.com"
+                            className="select-text"
+                            value={editForm.link || ""}
+                            onChange={(e) => updateDraft({ link: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <p className="text-sm text-neutral-700 dark:text-neutral-300">Email</p>
+                              <p className="text-xs text-neutral-500 mt-0.5">{editForm.email}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="xs"
+                              onClick={() => {
+                                setNewEmail("");
+                                setOtp("");
+                                setOtpSent(false);
+                                setShowEmailChange(!showEmailChange);
+                              }}
+                            >
+                              {showEmailChange ? "Cancel" : "Change"}
+                            </Button>
+                          </div>
+                          {showEmailChange && (
+                            <div className="space-y-3">
+                              {!otpSent ? (
+                                <>
+                                  <Input
+                                    type="email"
+                                    placeholder="New email address"
+                                    value={newEmail}
+                                    onChange={(e) => setNewEmail(e.target.value)}
+                                    disabled={isSendingOtp}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="default"
+                                    size="xs"
+                                    disabled={isSendingOtp || !newEmail}
+                                    onClick={() => {
+                                      sendOtp(newEmail, {
+                                        onSuccess: () => {
+                                          setOtpSent(true);
+                                          toastManager.add({ title: "OTP sent to your current email", type: "success" });
+                                        },
+                                        onError: (err) => {
+                                          handleApiError(err, "Failed to send OTP");
+                                        },
+                                      });
+                                    }}
+                                  >
+                                    {isSendingOtp ? "Sending..." : "Send OTP"}
+                                  </Button>
+                                </>
+                              ) : (
+                                <div className="space-y-4">
+                                  <p className="text-xs text-neutral-500">OTP sent to your current email. Enter it below.</p>
+                                  <div className="flex justify-center py-1">
+                                    <OTPField
+                                      length={6}
+                                      validationType="numeric"
+                                      onValueChange={(value: string) => {
+                                        setOtp(value);
+                                        if (value.length === 6 && !isConfirmingOtp) {
+                                          confirmOtp(value, {
+                                            onSuccess: () => {
+                                              toastManager.add({ title: "Email updated successfully", type: "success" });
+                                              setShowEmailChange(false);
+                                              setOtpSent(false);
+                                              refetchProfile();
+                                            },
+                                            onError: (err) => {
+                                              handleApiError(err, "Failed to confirm email change");
+                                            },
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      <OTPFieldInput aria-label="Character 1 of 6" />
+                                      <OTPFieldInput aria-label="Character 2 of 6" />
+                                      <OTPFieldInput aria-label="Character 3 of 6" />
+                                      <OTPFieldSeparator />
+                                      <OTPFieldInput aria-label="Character 4 of 6" />
+                                      <OTPFieldInput aria-label="Character 5 of 6" />
+                                      <OTPFieldInput aria-label="Character 6 of 6" />
+                                    </OTPField>
+                                  </div>
+                                  <div className="flex justify-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setOtpSent(false);
+                                        setOtp("");
+                                      }}
+                                      className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                                    >
+                                      Back
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editForm.avatar) {
+                              const parsed = parseDiceBearUrl(editForm.avatar);
+                              if (parsed) {
+                                if (parsed.seed) setAvatarSeed(parsed.seed);
+                                if (parsed.hairColor)
+                                  setAvatarHairColor(parsed.hairColor);
+                                if (parsed.backgroundColor)
+                                  setAvatarBgColor(parsed.backgroundColor);
+                                if (parsed.skinColor)
+                                  setAvatarSkinColor(parsed.skinColor);
+                                if (parsed.hair) _setAvatarHair(parsed.hair);
+                                if (parsed.mood) _setAvatarMood(parsed.mood);
+                              }
+                            } else {
+                              setAvatarSeed(
+                                DYLAN_SEEDS[
+                                  Math.floor(Math.random() * DYLAN_SEEDS.length)
+                                ],
+                              );
+                            }
+                            setEditPage("avatar");
+                          }}
+                          className="flex items-center justify-between w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3">
+                            {editForm.avatar ? (
+                              <img
+                                src={editForm.avatar}
+                                className="size-10 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-800"
+                              />
+                            ) : (
+                              <div className="size-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center ring-1 ring-neutral-200 dark:ring-neutral-800">
+                                <HugeiconsIcon
+                                  icon={Add01Icon}
+                                  className="size-4 text-neutral-400"
+                                />
+                              </div>
+                            )}
+                            <div className="text-left">
+                              <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                Avatar
+                              </span>
+                              <p className="text-xs text-neutral-500">
+                                Choose or upload an avatar
+                              </p>
+                            </div>
+                          </div>
+                          <HugeiconsIcon
+                            icon={ArrowLeft02Icon}
+                            className="size-4 text-neutral-400 rotate-180 group-hover:-translate-x-0.5 transition-transform"
+                          />
+                        </button>
                       </div>
-                      <HugeiconsIcon
-                        icon={ArrowLeft02Icon}
-                        className="size-4 text-neutral-400 rotate-180 group-hover:-translate-x-0.5 transition-transform"
-                      />
-                    </button>
+                    );
 
-                    <CropImageDialog
-                      open={!!cropImageSrc}
-                      onOpenChange={() => setCropImageSrc(null)}
-                      imageSrc={cropImageSrc || ""}
-                      onCropComplete={async (blob) => {
-                        const file = new File([blob], "avatar.jpg", {
-                          type: "image/jpeg",
-                        });
-                        const url = await uploadImage(file);
-                        if (url) updateDraft({ avatar: url });
-                        setCropImageSrc(null);
-                      }}
-                    />
+                    const footer = (
+                      <>
+                        <CropImageDialog
+                          open={!!cropImageSrc}
+                          onOpenChange={() => setCropImageSrc(null)}
+                          imageSrc={cropImageSrc || ""}
+                          onCropComplete={async (blob) => {
+                            const file = new File([blob], "avatar.jpg", {
+                              type: "image/jpeg",
+                            });
+                            const url = await uploadImage(file);
+                            if (url) updateDraft({ avatar: url });
+                            setCropImageSrc(null);
+                          }}
+                        />
+                        <EditDialogFooter className={cn("flex-row gap-2 px-6 pt-4", isMobile && "rounded-none", !isMobile && "pb-6")}>
+                          <EditDialogClose
+                            render={<Button variant="outline" className="flex-1" />}
+                          >
+                            Cancel
+                          </EditDialogClose>
+                          <Button variant="default" type="submit" className="flex-1">
+                            Save Changes
+                          </Button>
+                        </EditDialogFooter>
+                      </>
+                    );
 
-                    <EditDialogFooter className="flex-row gap-2 pt-2">
-                      <EditDialogClose
-                        render={<Button variant="outline" className="flex-1" />}
+                    return (
+                      <form
+                        onSubmit={(e) => handleSubmit(e)}
+                        className="space-y-5 pt-5"
                       >
-                        Cancel
-                      </EditDialogClose>
-                      <Button variant="default" type="submit" className="flex-1">
-                        Save Changes
-                      </Button>
-                    </EditDialogFooter>
-                  </form>
+                        {isMobile ? (
+                          <>
+                            {footer}
+                            {fields}
+                          </>
+                        ) : (
+                          <>
+                            {fields}
+                            {footer}
+                          </>
+                        )}
+                      </form>
+                    );
+                  })()}
                 </div>
 
                 {/* ───── Page 2: Avatar Studio ───── */}
@@ -1021,8 +1177,40 @@ export default function Profile() {
                 </div>
               </div>
             </div>
-          </EditDialogContent>
-        </EditDialog>
+          );
+
+          const handleClose = (open: boolean) => {
+            setIsEditOpen(open);
+            if (!open) {
+              setEditPage("profile");
+              setShowEmailChange(false);
+              setOtpSent(false);
+              setNewEmail("");
+              setOtp("");
+            }
+          };
+
+          if (isMobile) {
+            return (
+              <Drawer open={isEditOpen} onOpenChange={handleClose}>
+                <DrawerPopup className="p-0" showCloseButton={editPage === "profile"}>
+                  {editContent}
+                </DrawerPopup>
+              </Drawer>
+            );
+          }
+
+          return (
+            <EditDialog open={isEditOpen} onOpenChange={handleClose}>
+              <EditDialogContent
+                className="sm:min-w-[420px] sm:max-w-[560px] overflow-hidden p-0"
+                showCloseButton={editPage === "profile"}
+              >
+                {editContent}
+              </EditDialogContent>
+            </EditDialog>
+          );
+        })()}
         <CreateChamberDialog
           open={createChamberOpen}
           onOpenChange={setCreateChamberOpen}
@@ -1032,7 +1220,7 @@ export default function Profile() {
             <DialogHeader>
               <DialogTitle>Delete Account</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 p-6">
               <p className="text-sm text-neutral-500">
                 Are you sure you want to delete your account? This action cannot
                 be undone. All your data will be permanently removed.
@@ -1053,7 +1241,7 @@ export default function Profile() {
                         setIsDeleteOpen(false);
                       },
                       onError: (err) => {
-                        toastManager.add({ title: err instanceof Error ? err.message : "Failed to delete account", type: "error" });
+                        handleApiError(err, "Failed to delete account");
                       },
                     });
                   }}
@@ -1064,6 +1252,8 @@ export default function Profile() {
             </div>
           </DialogContent>
         </Dialog>
+
+
       </div>
     </PageTransition>
   );

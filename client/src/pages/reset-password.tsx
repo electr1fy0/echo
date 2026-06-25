@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { toastManager } from "@/components/ui/toast";
+import { handleApiError } from "@/lib/api-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,7 +42,7 @@ export default function ResetPassword() {
  { token, newPassword },
  {
  onSuccess: () => setSuccess(true),
-  onError: (err) => toastManager.add({ title: err instanceof Error ? err.message : "Failed to reset password", type: "error" }),
+  onError: (err) => handleApiError(err, "Failed to reset password"),
  },
  );
  }

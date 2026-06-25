@@ -88,7 +88,7 @@ function TreeNodeComponent({
             <ReplyForm
               questionId={questionId}
               parentReplyUid={node.item.answer.uid}
-              replyingToUsername={node.item.author?.username}
+              replyingToUsername={node.item.answer.isAnonymous ? "Anonymous" : node.item.author?.username}
               compact
               onSubmitSuccess={() => setIsReplying(false)}
               onCancel={() => setIsReplying(false)}
