@@ -19,6 +19,7 @@ import {
   requireEnv,
 } from "../lib/utils";
 import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, sendOtpSchema, verifyOtpSchema, googleOnboardingSchema, usernameSchema } from "../lib/validation";
+import { z } from "zod";
 import type { AppEnv } from "../types/app";
 
 export const authRoutes = new Hono<AppEnv>();
@@ -38,6 +39,7 @@ authRoutes.use("/verify-otp", authLimiter);
 authRoutes.use("/google/onboarding", authLimiter);
 authRoutes.use("/onboarding", authLimiter);
 authRoutes.use("/magic-link", authLimiter);
+authRoutes.use("/verify-magic-link", authLimiter);
 
 const handleGoogleCallback = async (c: Context<AppEnv>) => {
   const state = c.req.query("state");
@@ -427,6 +429,43 @@ authRoutes.post("/verify-otp", async (c) => {
 
   if (!user) {
     const onboardingToken = await issueOnboardingToken(c.env.SECRET_KEY, email);
+    return c.json({ onboardingToken, needsOnboarding: true });
+  }
+
+  return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, user.username) });
+});
+
+authRoutes.post("/verify-magic-link", async (c) => {
+  const { token } = safeParse(z.object({ token: z.string().min(1) }), await c.req.json());
+
+  const [otpRecord] = await c
+    .get("db")
+    .select()
+    .from(schema.otpCodes)
+    .where(
+      and(
+        eq(schema.otpCodes.magicLinkToken, token),
+        eq(schema.otpCodes.used, false),
+        gt(schema.otpCodes.expiresAt, new Date()),
+      ),
+    )
+    .limit(1);
+
+  if (!otpRecord) {
+    throw new ApiError(401, "invalid or expired link");
+  }
+
+  await c.get("db").update(schema.otpCodes).set({ used: true }).where(eq(schema.otpCodes.id, otpRecord.id));
+
+  let [user] = await c
+    .get("db")
+    .select({ username: schema.users.username })
+    .from(schema.users)
+    .where(eq(schema.users.email, otpRecord.email))
+    .limit(1);
+
+  if (!user) {
+    const onboardingToken = await issueOnboardingToken(c.env.SECRET_KEY, otpRecord.email);
     return c.json({ onboardingToken, needsOnboarding: true });
   }
 

@@ -279,6 +279,7 @@ export function ReplyItem({
                 <PostContent
                   content={reply.content}
                   className="block text-sm text-neutral-700 dark:text-neutral-300"
+                  showPreviews={false}
                 />
                 {onReply && (
                   <div className="text-right">

@@ -40,6 +40,7 @@ const AllChambers = lazy(() => import("@/pages/all-chambers"));
 const ChamberPage = lazy(() => import("@/pages/chamber"));
 const Notifications = lazy(() => import("@/pages/notifications"));
 const VerifyEmail = lazy(() => import("@/pages/verify-email"));
+const MagicLink = lazy(() => import("@/pages/magic-link"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const QuestionDetailPage = lazy(() => import("@/pages/question-detail"));
@@ -146,6 +147,7 @@ export default function App() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/auth/magic-link" element={<MagicLink />} />
             <Route path="/onboarding" element={<Onboarding />} />
 
             {/* Public layout routes */}

@@ -7,6 +7,7 @@ import { fetchLinkPreview, type LinkPreviewData } from "@/api/link-previews";
 type PostContentProps = {
   content: string;
   className?: string;
+  showPreviews?: boolean;
 };
 
 const mentionRegex = /@([a-zA-Z0-9_]+)/g;
@@ -229,7 +230,7 @@ function LinkPreview({ url }: { url: string }) {
   );
 }
 
-export function PostContent({ content, className }: PostContentProps) {
+export function PostContent({ content, className, showPreviews = true }: PostContentProps) {
   const segments = tokenize(content);
 
   const nodes: React.ReactNode[] = [];
@@ -258,7 +259,7 @@ export function PostContent({ content, className }: PostContentProps) {
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-[var(--brand)] hover:underline inline-flex items-center gap-0.5 font-semibold break-all"
+          className="text-[var(--brand)] hover:underline inline-flex items-center gap-0.5 break-all"
         >
           {displayUrl}
         </a>
@@ -294,7 +295,7 @@ export function PostContent({ content, className }: PostContentProps) {
   return (
     <span className={cn("whitespace-pre-wrap block", className)}>
       {nodes}
-      {uniqueUrls.length > 0 && (
+      {showPreviews && uniqueUrls.length > 0 && (
         <span className="flex flex-col gap-2 mt-2.5 empty:hidden" onClick={(e) => e.stopPropagation()}>
           {uniqueUrls.map((url, i) => (
             <LinkPreview key={`preview-${i}`} url={url} />

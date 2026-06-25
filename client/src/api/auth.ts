@@ -142,6 +142,20 @@ export async function resendVerification(email: string) {
   return res.json();
 }
 
+export async function verifyMagicLink(token: string) {
+  const res = await fetch(`${API_URL}/auth/verify-magic-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) await parseApiError(res);
+  const data = await res.json();
+  if (data.token) {
+    setToken(data.token);
+  }
+  return data;
+}
+
 export async function completeOnboarding(token: string, username: string) {
   const res = await fetch(`${API_URL}/auth/onboarding`, {
     method: "POST",
