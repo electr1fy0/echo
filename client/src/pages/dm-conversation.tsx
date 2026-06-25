@@ -225,7 +225,7 @@ export default function DMConversationPage() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 scrollbar-none">
+      <div className="flex-1 overflow-y-auto space-y-2 mb-4 min-h-0 scrollbar-none pt-3">
         {isLoading ? (
           <div className="space-y-3 p-4">
             {Array.from({ length: 4 }).map((_, i) => (

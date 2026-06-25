@@ -166,7 +166,7 @@ export default function PublicProfile() {
   })();
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-0 pb-36 md:pb-16 relative">
+    <PageTransition className="max-w-[40rem] w-full mt-4 space-y-0 pb-36 md:pb-16 relative">
       <div className="relative h-40 w-auto mb-4 mx-4 mt-4 overflow-hidden rounded-2xl bg-neutral-100 dark:bg-neutral-800/60">
         <DotGridSpotlight
           dotColor={

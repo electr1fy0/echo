@@ -10,6 +10,7 @@ import {
   getUnreadMessageCount,
 } from "@/api/dms";
 import { useToken } from "@/hooks/use-auth";
+import type { Conversation } from "@/types";
 
 export function useConversations() {
   return useQuery({
@@ -44,7 +45,40 @@ export function useMarkConversationRead() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (conversationUid: string) => markConversationRead(conversationUid),
-    onSuccess: () => {
+    onMutate: async (conversationUid) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ["conversations"] }),
+        queryClient.cancelQueries({ queryKey: ["messages", "unread-count"] }),
+      ]);
+
+      const previousConversations = queryClient.getQueryData<Conversation[]>(["conversations"]);
+      const previousUnreadCount = queryClient.getQueryData<number>(["messages", "unread-count"]);
+
+      queryClient.setQueryData<Conversation[]>(["conversations"], (old) =>
+        old?.map((conv) =>
+          conv.uid === conversationUid ? { ...conv, unreadCount: 0 } : conv
+        )
+      );
+
+      if (previousConversations) {
+        const conv = previousConversations.find((c) => c.uid === conversationUid);
+        const delta = conv?.unreadCount ?? 1;
+        if (previousUnreadCount !== undefined) {
+          queryClient.setQueryData<number>(["messages", "unread-count"], Math.max(0, previousUnreadCount - delta));
+        }
+      }
+
+      return { previousConversations, previousUnreadCount };
+    },
+    onError: (_err, _conversationUid, context) => {
+      if (context?.previousConversations) {
+        queryClient.setQueryData(["conversations"], context.previousConversations);
+      }
+      if (context?.previousUnreadCount !== undefined) {
+        queryClient.setQueryData(["messages", "unread-count"], context.previousUnreadCount);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["messages", "unread-count"] });
     },

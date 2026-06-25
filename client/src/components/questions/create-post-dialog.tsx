@@ -449,86 +449,71 @@ export function CreatePostDialog() {
             </div>
           )}
 
-          {/* Prominent chamber selector */}
-          <div className={cn(
-            "rounded-2xl transition-all",
-            selectedChamber
-              ? "border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 p-3"
-              : "border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50/40 dark:bg-neutral-900/20 p-5"
-          )}>
-            {!selectedChamber && (
-              <div className="flex items-center gap-2 mb-4">
-                <Layers className="size-4 text-neutral-400" />
-                <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
-                  Select a chamber
-                </span>
-              </div>
-            )}
-            <div className={cn("flex items-center gap-2 flex-wrap", !selectedChamber && "justify-center")}>
+          {/* Chamber selector */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <DropdownMenu>
+              <DropdownMenuTrigger className={cn(
+                "inline-flex items-center justify-center gap-2 rounded-xl border transition-colors focus:outline-none cursor-pointer h-8 px-2.5 text-xs font-semibold text-neutral-700 dark:text-neutral-200 bg-white dark:bg-neutral-900",
+                selectedChamber
+                  ? "border-neutral-300 dark:border-neutral-600 hover:bg-neutral-200/50 dark:hover:bg-neutral-800"
+                  : "border-2 border-dashed border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100/50 dark:hover:bg-neutral-800/50"
+              )}>
+                {selectedChamberData ? (
+                  <>
+                    <div className={cn("size-2 rounded-full", CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length])} />
+                    <span className="truncate">{selectedChamberData.name}</span>
+                    <ChevronDown className="size-3 text-neutral-400 shrink-0" />
+                  </>
+                ) : (
+                  <>
+                    <Layers className="size-3.5 text-neutral-400" />
+                    <span>Choose a chamber</span>
+                    <ChevronDown className="size-3 text-neutral-400 shrink-0" />
+                  </>
+                )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 max-h-[200px] overflow-y-auto scrollbar-thin">
+                {JOINED_CHAMBERS.length > 0 ? (
+                  JOINED_CHAMBERS.map((chamber, i) => (
+                    <DropdownMenuItem
+                      key={chamber.uid || i}
+                      onClick={() => setSelectedChamber(chamber.uid!)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <div className={cn("size-2 rounded-full", CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length])} />
+                      {chamber.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-1.5 text-xs text-neutral-500">No chambers joined</div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {selectedChamber && (
               <DropdownMenu>
-                <DropdownMenuTrigger className={cn(
-                  "inline-flex items-center justify-center gap-2 rounded-xl border transition-colors focus:outline-none cursor-pointer",
-                  selectedChamber
-                    ? "h-9 px-3 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900"
-                    : "h-11 px-5 text-sm font-semibold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 min-w-[220px]"
-                )}>
-                  {selectedChamberData ? (
-                    <>
-                      <div className={cn("size-2.5 rounded-full", CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length])} />
-                      <span className="truncate">{selectedChamberData.name}</span>
-                      <ChevronDown className="size-3.5 text-neutral-400 shrink-0" />
-                    </>
-                  ) : (
-                    <>
-                      <Layers className="size-4 text-neutral-400" />
-                      <span>Choose a chamber</span>
-                      <ChevronDown className="size-3.5 text-neutral-400" />
-                    </>
-                  )}
+                <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 h-8 px-2.5 rounded-xl border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer">
+                  <Hash className="size-3.5 text-neutral-400 shrink-0" />
+                  <span className="truncate">#{selectedChannelData?.name || "discussion"}</span>
+                  <ChevronDown className="size-3 text-neutral-400 shrink-0" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 max-h-[200px] overflow-y-auto scrollbar-thin">
-                  {JOINED_CHAMBERS.length > 0 ? (
-                    JOINED_CHAMBERS.map((chamber, i) => (
+                <DropdownMenuContent align="start" className="w-48 max-h-[200px] overflow-y-auto scrollbar-thin">
+                  {channelsData.length > 0 ? (
+                    channelsData.map((ch: any) => (
                       <DropdownMenuItem
-                        key={chamber.uid || i}
-                        onClick={() => setSelectedChamber(chamber.uid!)}
-                        className="gap-2 cursor-pointer text-xs"
+                        key={ch.uid}
+                        onClick={() => setSelectedChannelUid(ch.uid)}
+                        className="cursor-pointer text-xs"
                       >
-                        <div className={cn("size-2.5 rounded-full", CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length])} />
-                        {chamber.name}
+                        #{ch.name}
                       </DropdownMenuItem>
                     ))
                   ) : (
-                    <div className="px-2 py-1.5 text-xs text-neutral-500">No chambers joined</div>
+                    <div className="px-2 py-1.5 text-xs text-neutral-500">No channels</div>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              {selectedChamber && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-xl border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer">
-                    <Hash className="size-3.5 text-neutral-400 shrink-0" />
-                    <span className="truncate">#{selectedChannelData?.name || "discussion"}</span>
-                    <ChevronDown className="size-3.5 text-neutral-400 shrink-0" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48 max-h-[200px] overflow-y-auto scrollbar-thin">
-                    {channelsData.length > 0 ? (
-                      channelsData.map((ch: any) => (
-                        <DropdownMenuItem
-                          key={ch.uid}
-                          onClick={() => setSelectedChannelUid(ch.uid)}
-                          className="cursor-pointer text-xs"
-                        >
-                          #{ch.name}
-                        </DropdownMenuItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1.5 text-xs text-neutral-500">No channels</div>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
+            )}
           </div>
 
           {selectedChamber && (
@@ -1148,7 +1133,6 @@ export function CreatePostDialog() {
             </DrawerTitle>
             <Button
               variant="default"
-              size="sm"
               onClick={handleSubmit}
               disabled={
                 !selectedChamber ||
@@ -1185,7 +1169,7 @@ export function CreatePostDialog() {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 px-6 pb-4 pt-1 flex-1 overflow-y-auto min-h-0">
+        <div className="space-y-4 px-6 pb-4 pt-1 flex-1 overflow-y-auto min-h-[340px]">
           {renderFormContent()}
         </div>
 
