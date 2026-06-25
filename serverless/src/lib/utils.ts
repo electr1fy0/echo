@@ -23,10 +23,19 @@ export const randomToken = (byteLength: number) => {
   return Array.from(bytes, (byte: number) => byte.toString(16).padStart(2, "0")).join("");
 };
 
-export const getClientUrl = (env: Bindings) => env.CLIENT_URL ?? "http://localhost:5173";
+export const getClientUrl = (env: Bindings) => {
+  if (env.CLIENT_URL) return env.CLIENT_URL;
+  if (env.ECHO_DOMAIN) {
+    if (env.ECHO_DOMAIN.startsWith("http://") || env.ECHO_DOMAIN.startsWith("https://")) {
+      return env.ECHO_DOMAIN;
+    }
+    return `https://${env.ECHO_DOMAIN}`;
+  }
+  return "http://localhost:5173";
+};
 
 export const getGoogleRedirectUrl = (env: Bindings) =>
-  env.GOOGLE_REDIRECT_URL ?? "http://localhost:8080/auth/google/callback";
+  env.GOOGLE_REDIRECT_URL ?? "http://localhost:8787/auth/google/callback";
 
 export const requireEnv = (value: string | undefined, name: string) => {
   if (!value) {
