@@ -249,7 +249,9 @@ export function AuthDialog() {
         }}
       >
         <DrawerPopup className="p-0">
-          {renderContent()}
+          <div data-base-ui-swipe-ignore>
+            {renderContent()}
+          </div>
         </DrawerPopup>
       </Drawer>
     );
