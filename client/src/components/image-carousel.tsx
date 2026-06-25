@@ -17,7 +17,7 @@ export function ImageCarousel({ urls, className }: ImageCarouselProps) {
     <>
       <div
         className={cn(
-          "flex overflow-x-auto snap-x snap-mandatory scrollbar-none rounded-lg bg-neutral-100 dark:bg-neutral-800",
+          "flex overflow-x-auto snap-x snap-mandatory scrollbar-none gap-3",
           className,
         )}
       >
@@ -26,17 +26,17 @@ export function ImageCarousel({ urls, className }: ImageCarouselProps) {
             key={i}
             type="button"
             onClick={() => setLightboxIdx(i)}
-            className="snap-start shrink-0 w-full relative cursor-pointer text-left"
+            className="snap-start shrink-0 relative cursor-pointer text-left"
           >
             <img
               src={url}
               alt=""
               draggable={false}
-              className="w-full object-contain max-h-96 bg-neutral-100 dark:bg-neutral-800"
+              className="max-h-80 min-h-48 max-w-full object-contain rounded-lg"
               loading="lazy"
             />
             {urls.length > 1 && (
-              <div className="absolute bottom-2 right-2 text-[10px] bg-black/40 text-white px-1.5 py-0.5 rounded pointer-events-none">
+              <div className="absolute bottom-1.5 right-1.5 text-[10px] font-medium backdrop-blur-sm bg-black/20 text-white/80 px-1.5 py-0.5 rounded-full pointer-events-none">
                 {i + 1}/{urls.length}
               </div>
             )}
