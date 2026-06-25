@@ -9,6 +9,7 @@ import {
   markConversationRead,
   getUnreadMessageCount,
 } from "@/api/dms";
+import { useToken } from "@/hooks/use-auth";
 
 export function useConversations() {
   return useQuery({
@@ -74,12 +75,14 @@ export function useDeleteMessage(conversationUid: string | undefined) {
 }
 
 export function useUnreadMessageCount() {
+  const token = useToken();
   return useQuery({
     queryKey: ["messages", "unread-count"],
     queryFn: getUnreadMessageCount,
     refetchInterval: 30_000,
     staleTime: 15_000,
     retry: false,
+    enabled: !!token,
   });
 }
 

@@ -45,6 +45,15 @@ const handleGoogleCallback = async (c: Context<AppEnv>) => {
   const state = c.req.query("state");
   const storedState = getCookie(c, "oauth_state");
 
+  console.log("[google-auth] callback received", {
+    hasState: !!state,
+    hasStoredState: !!storedState,
+    stateMatch: state === storedState,
+    state: state?.slice(0, 8) + "...",
+    storedState: storedState?.slice(0, 8) + "...",
+    url: c.req.url,
+  });
+
   if (!state || !storedState || state !== storedState) {
     throw new ApiError(401, "invalid oauth state");
   }
@@ -57,6 +66,8 @@ const handleGoogleCallback = async (c: Context<AppEnv>) => {
   }
 
   const email = await fetchGoogleProfileEmail(c.env, code);
+  console.log("[google-auth] profile fetched", { email });
+
   const [user] = await c
     .get("db")
     .select({ username: schema.users.username })
@@ -65,6 +76,12 @@ const handleGoogleCallback = async (c: Context<AppEnv>) => {
     .limit(1);
 
   const frontendUrl = getClientUrl(c.env);
+  console.log("[google-auth] redirecting", {
+    userFound: !!user,
+    username: user?.username,
+    frontendUrl,
+  });
+
   if (user) {
     const token = await issueAuthToken(c.env.SECRET_KEY, user.username);
     return c.redirect(`${frontendUrl}/auth?token=${encodeURIComponent(token)}`, 307);
@@ -283,6 +300,7 @@ authRoutes.get("/signin-with-google", async (c) => {
 
   const clientId = requireEnv(c.env.GOOGLE_CLIENT_ID, "GOOGLE_CLIENT_ID");
   const redirectUri = getGoogleRedirectUrl(c.env);
+  console.log("[google-auth] signin-with-google", { clientId: clientId.slice(0, 10) + "...", redirectUri, state: state.slice(0, 8) + "..." });
   const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   authUrl.searchParams.set("client_id", clientId);
   authUrl.searchParams.set("redirect_uri", redirectUri);

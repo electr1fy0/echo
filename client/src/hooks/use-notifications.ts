@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { listNotifications, getUnreadNotificationCount, markNotificationsRead } from "@/api/notifications";
+import { useToken } from "@/hooks/use-auth";
 export function useNotificationsQuery() {
     return useQuery({
         queryKey: ["notifications"],
@@ -9,12 +10,14 @@ export function useNotificationsQuery() {
 }
 
 export function useUnreadNotificationCount() {
+    const token = useToken();
     return useQuery({
         queryKey: ["notifications", "unread-count"],
         queryFn: getUnreadNotificationCount,
         refetchInterval: 60_000,
         staleTime: 30_000,
         retry: false,
+        enabled: !!token,
     });
 }
 
