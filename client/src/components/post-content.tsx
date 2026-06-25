@@ -1,6 +1,8 @@
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { ImageCarousel } from "@/components/image-carousel";
+import { fetchLinkPreview, type LinkPreviewData } from "@/api/link-previews";
 
 type PostContentProps = {
   content: string;
@@ -88,15 +90,101 @@ function tokenize(content: string): Segment[] {
   return segments;
 }
 
+function useLinkPreview(url: string) {
+  const [data, setData] = useState<LinkPreviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const fetchedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (fetchedRef.current === url) return;
+    fetchedRef.current = url;
+    setLoading(true);
+    fetchLinkPreview(url).then((d) => {
+      setData(d);
+      setLoading(false);
+    });
+  }, [url]);
+
+  return { data, loading };
+}
+
 function LinkPreview({ url }: { url: string }) {
   let hostname = "";
   try {
-    hostname = new URL(url).hostname;
+    hostname = new URL(url).hostname.replace(/^www\./, "");
   } catch {
     hostname = url;
   }
 
+  const { data, loading } = useLinkPreview(url);
   const faviconUrl = `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-3.5 p-3 my-1 border border-neutral-200 dark:border-neutral-800 bg-neutral-50/20 dark:bg-neutral-950/10 rounded-2xl max-w-md shadow-sm">
+        <div className="size-10 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-32 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          <div className="h-2.5 w-48 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (data?.title) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="flex flex-col my-1 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-350 dark:hover:border-neutral-700 bg-white dark:bg-neutral-900/60 rounded-2xl overflow-hidden transition-all duration-200 max-w-md group cursor-pointer shadow-sm active:scale-[0.99]"
+      >
+        {data.image && (
+          <div className="relative w-full aspect-[2/1] bg-neutral-100 dark:bg-neutral-850 overflow-hidden">
+            <img
+              src={data.image}
+              alt=""
+              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = "none";
+              }}
+            />
+          </div>
+        )}
+        <div className="flex items-start gap-3 p-3">
+          <div className="size-9 rounded-xl bg-white dark:bg-neutral-850 border border-neutral-200/60 dark:border-neutral-800 flex items-center justify-center shrink-0 shadow-sm">
+            <img
+              src={faviconUrl}
+              alt=""
+              className="size-4 object-contain"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = "none";
+              }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug group-hover:text-[var(--brand)] transition-colors">
+              {data.title}
+            </div>
+            {data.description && (
+              <div className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
+                {data.description}
+              </div>
+            )}
+            <div className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium truncate mt-1 flex items-center gap-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-3 shrink-0">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              {hostname}
+            </div>
+          </div>
+        </div>
+      </a>
+    );
+  }
 
   return (
     <a

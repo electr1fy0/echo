@@ -53,5 +53,6 @@ app.route("/dms", dmRoutes);
 app.route("/upload", uploadRoutes);
 app.route("/images", imageRoutes);
 app.route("/analytics", analyticsRoutes);
+app.route("/link-previews", linkPreviewRoutes);
 
 export default app;
