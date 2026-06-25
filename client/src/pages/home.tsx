@@ -788,7 +788,7 @@ export default function Home() {
       <div
         className={cn(
           isMobile
-            ? "flex flex-col gap-4 px-4 pb-4"
+            ? "flex flex-col gap-4 px-4 pb-24"
             : "flex-1 flex overflow-x-auto gap-8 pb-2 px-4 md:px-8 min-h-0 scrollbar-modern scroll-smooth",
           !isMobile && columns.length === 1 && !user && "sm:justify-center",
         )}
