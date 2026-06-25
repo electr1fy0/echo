@@ -312,7 +312,7 @@ export default function Profile() {
   }
 
   return (
-    <PageTransition className="max-w-[40rem] w-full -mt-6 space-y-0 pb-36 md:pb-16 relative">
+    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 space-y-0 pb-36 md:pb-16 relative">
       {isProfileLoading ? (
         <Skeleton className="h-28 w-auto mb-2 mx-4" />
       ) : (
