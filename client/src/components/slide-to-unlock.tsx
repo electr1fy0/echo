@@ -180,7 +180,8 @@ export function SlideToUnlockHandle({
   } = useSlideToUnlock();
 
   return (
-    <motion.div
+      <motion.div
+      data-base-ui-swipe-ignore
       data-slot="handle"
       className={cn(
         "absolute top-0 left-0 flex h-10 items-center justify-center rounded-lg bg-white text-zinc-400 shadow-sm",

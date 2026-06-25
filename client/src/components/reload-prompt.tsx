@@ -7,6 +7,23 @@ export function ReloadPrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+
+      setInterval(() => {
+        registration.update();
+      }, 60_000);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          registration.update();
+        }
+      });
+
+      window.addEventListener("focus", () => {
+        registration.update();
+      });
+    },
     onRegisterError(error) {
       console.error("SW registration error", error);
     },
