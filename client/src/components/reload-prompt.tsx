@@ -10,19 +10,27 @@ export function ReloadPrompt() {
     onRegisteredSW(_swUrl, registration) {
       if (!registration) return;
 
-      setInterval(() => {
-        registration.update();
-      }, 60_000);
-
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
+      const check = () => {
+        try {
           registration.update();
+        } catch {
+          /* network or browser errors */
         }
-      });
+      };
 
-      window.addEventListener("focus", () => {
-        registration.update();
-      });
+      if (registration.waiting) {
+        setNeedRefresh(true);
+      }
+
+      check();
+      setInterval(check, 60_000);
+
+      const onVisibilityChange = () => {
+        if (document.visibilityState === "visible") check();
+      };
+
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      window.addEventListener("focus", check);
     },
     onRegisterError(error) {
       console.error("SW registration error", error);

@@ -820,7 +820,7 @@ export default function Home() {
 
         {/* Desktop logged-out: CTA card on the right */}
         {!isMobile && !user && !isAuthLoading && (
-          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-12">
+          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-11">
             <div className="space-y-1">
               <h1 className="text-neutral-800 dark:text-neutral-200 text-lg">
                 TurnsOut

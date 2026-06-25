@@ -11,6 +11,7 @@ import { userRoutes } from "./routes/users";
 import { dmRoutes } from "./routes/dms";
 import { uploadRoutes, imageRoutes } from "./routes/upload";
 import { analyticsRoutes } from "./routes/analytics";
+import { linkPreviewRoutes } from "./routes/link-previews";
 import type { AppEnv } from "./types/app";
 import { rateLimit } from "./middleware/rateLimit";
 

@@ -9,6 +9,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "prompt",
       includeAssets: ["turnsout.svg", "turnsoutlogo.svg", "thumb.jpg"],
       manifest: {
@@ -45,35 +48,8 @@ export default defineConfig({
         ],
       },
       workbox: {
-        mode: "development",
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => {
-              return (
-                url.origin.includes("echo-server.up.railway.app") &&
-                url.pathname.match(
-                  /^\/(auth|users|questions|chambers|search)/
-                ) &&
-                true
-              );
-            },
-            handler: "NetworkOnly",
-            options: {
-              cacheName: "api-cache",
-            },
-          },
-          {
-            urlPattern: ({ request }) => request.destination === "image",
-            handler: "CacheFirst",
-            options: {
-              cacheName: "images",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 2592000,
-              },
-            },
-          },
-        ],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,jpg}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
     }),
   ],
