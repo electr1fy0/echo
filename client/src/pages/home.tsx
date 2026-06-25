@@ -428,7 +428,7 @@ function ColumnFeed({
     <div className="flex flex-col flex-1 min-h-0">
       {/* Column Header */}
       <div className="flex flex-col gap-2 mb-3">
-        <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/80 pb-2">
+        <div className="flex items-center justify-between pb-2">
           <div className="flex-1 min-w-0 mr-2">
             <Popover>
               <PopoverTrigger
@@ -760,6 +760,7 @@ export default function Home() {
       className={cn(
         "flex flex-col w-full pt-4 md:pt-6",
         isMobile ? "min-h-dvh overflow-y-auto" : "overflow-hidden h-dvh",
+        !isMobile && !user && !isAuthLoading && "pb-20",
       )}
     >
       {isMobile && !user && !isAuthLoading && (
@@ -819,9 +820,9 @@ export default function Home() {
 
         {/* Desktop logged-out: CTA card on the right */}
         {!isMobile && !user && !isAuthLoading && (
-          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-8">
+          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-12">
             <div className="space-y-1">
-              <h1 className="text-neutral-800 dark:text-neutral-200 text-lg font-semibold">
+              <h1 className="text-neutral-800 dark:text-neutral-200 text-lg">
                 TurnsOut
               </h1>
               <h2 className="text-neutral-600 dark:text-neutral-400 text-sm text-balance inline-grid">
@@ -852,11 +853,7 @@ export default function Home() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
-                <span>Coordinate carpools to airports and weekend trips</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
-                <span>Form study groups and LeetCode prep sessions</span>
+                <span>Share cabs to airports and weekend trips</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
