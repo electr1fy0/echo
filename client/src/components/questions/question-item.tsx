@@ -491,6 +491,7 @@ export function QuestionItem({
                     pollVotes={question.pollVotes ?? []}
                     userPollVote={question.userPollVote ?? null}
                     isPollClosed={question.pollIsClosed ?? false}
+                    pollExpiresAt={question.pollExpiresAt ?? null}
                   />
                 )}
 
@@ -832,13 +833,13 @@ export function QuestionItem({
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className={cn(
-                                        "inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white hover:bg-neutral-50 dark:bg-neutral-900/50 dark:hover:bg-neutral-900 shadow-sm text-xs text-[var(--brand)] font-bold transition-all",
+                                        "inline-flex items-center gap-1.5 h-8 px-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white hover:bg-neutral-50 dark:bg-neutral-900/50 dark:hover:bg-neutral-900 shadow-sm text-xs text-blue-600 dark:text-blue-400 font-bold transition-all",
                                         info.disabled &&
                                           "opacity-50 line-through",
                                       )}
                                       onClick={(e) => e.stopPropagation()}
                                     >
-                                      <LinkIcon className="size-3.5 text-[var(--brand)] shrink-0" />
+                                      <LinkIcon className="size-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
                                       <span className="hover:underline">
                                         {showLabel ? info.label : "Link"}
                                       </span>
@@ -973,11 +974,11 @@ export function QuestionItem({
                                     )}
                                   >
                                     <div className="flex items-center gap-3 min-w-0 max-w-[80%]">
-                                      <FileIconComp className="size-5 shrink-0 text-neutral-500 group-hover:text-[var(--brand)] transition-colors group-hover:scale-105 transition-transform" />
+                                      <FileIconComp className="size-5 shrink-0 text-neutral-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors group-hover:scale-105 transition-transform" />
                                       <div className="flex flex-col min-w-0">
                                         <span
                                           className={cn(
-                                            "text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-[var(--brand)] transition-colors",
+                                            "text-xs font-semibold text-neutral-850 dark:text-neutral-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors",
                                             info.disabled &&
                                               "line-through text-neutral-500",
                                           )}

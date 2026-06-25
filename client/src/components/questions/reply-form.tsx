@@ -51,7 +51,7 @@ export function ReplyForm({
         Please{" "}
         <button
           onClick={() => openAuthModal("signin")}
-          className="text-[var(--brand)] hover:underline font-semibold cursor-pointer bg-transparent border-none p-0 inline"
+          className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer bg-transparent border-none p-0 inline"
         >
           sign in
         </button>{" "}

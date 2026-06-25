@@ -1,10 +1,11 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useVotePoll } from "@/hooks/use-questions";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import { formatDistanceToNowStrict } from "date-fns";
 
 interface PollVoterProps {
   questionId: string;
@@ -14,6 +15,7 @@ interface PollVoterProps {
   pollVotes: { optionIndex: number; count: number }[];
   userPollVote: number | null;
   isPollClosed: boolean;
+  pollExpiresAt?: string | null;
 }
 
 export function PollVoter({
@@ -23,7 +25,19 @@ export function PollVoter({
   pollVotes,
   userPollVote,
   isPollClosed,
+  pollExpiresAt,
 }: PollVoterProps) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!pollExpiresAt) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [pollExpiresAt]);
+
+  const expiresAtDate = pollExpiresAt ? new Date(pollExpiresAt) : null;
+  const isExpired = expiresAtDate && now > expiresAtDate.getTime();
+  const isEffectivelyClosed = isPollClosed || !!isExpired;
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const { mutate: vote, isPending } = useVotePoll();
@@ -45,7 +59,7 @@ export function PollVoter({
       openAuthModal("signin");
       return;
     }
-    if (isPollClosed) return;
+    if (isEffectivelyClosed) return;
     prevVotesRef.current = pollVotes;
     vote({ questionId, optionIndex });
   };
@@ -89,7 +103,7 @@ export function PollVoter({
             <button
               key={i}
               type="button"
-              disabled={isPending || isPollClosed}
+              disabled={isPending || isEffectivelyClosed}
               onClick={(e) => {
                 e.stopPropagation();
                 handleVote(i);
@@ -146,9 +160,18 @@ export function PollVoter({
         <span className="text-[10px] text-neutral-400">
           {totalVotes} {totalVotes === 1 ? "vote" : "votes"}
         </span>
-        {isPollClosed && (
-          <span className="text-[10px] text-neutral-400 font-medium">Closed</span>
-        )}
+        <span className="flex items-center gap-2">
+          {expiresAtDate && !isEffectivelyClosed && (
+            <span className="text-[10px] text-neutral-400">
+              Closes {formatDistanceToNowStrict(expiresAtDate, { addSuffix: true })}
+            </span>
+          )}
+          {isEffectivelyClosed && (
+            <span className="text-[10px] text-neutral-400 font-medium">
+              {isPollClosed ? "Closed" : "Expired"}
+            </span>
+          )}
+        </span>
       </div>
     </div>
   );

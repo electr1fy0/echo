@@ -235,7 +235,7 @@ export function CreatePostDialog() {
     if (type === "poll") {
       setCustomFields((p) => ({
         ...p,
-        [id]: { question: "", options: ["", ""] },
+        [id]: { question: "", options: ["", ""], ttlHours: null },
       }));
     } else if (type === "source_destination") {
       setCustomFields((p) => ({ ...p, [id]: { source: "", destination: "" } }));
@@ -336,14 +336,16 @@ export function CreatePostDialog() {
       let postType: "qna" | "poll" = "qna";
       let pollQuestion = "";
       let pollOptions: string[] = [];
+      let pollTtlHours: number | null = null;
       for (const [k, v] of Object.entries(finalCustomFields)) {
         if (k.startsWith("_")) continue;
         if (v && typeof v === "object" && "question" in v && "options" in v) {
-          const pv = v as { question: string; options: string[] };
+          const pv = v as { question: string; options: string[]; ttlHours?: number | null };
           if (pv.question.trim()) {
             postType = "poll";
             pollQuestion = pv.question.trim();
             pollOptions = pv.options.filter((o) => o.trim());
+            pollTtlHours = pv.ttlHours ?? null;
             break;
           }
         }
@@ -368,6 +370,9 @@ export function CreatePostDialog() {
       if (postType === "poll") {
         payload.pollQuestion = pollQuestion;
         payload.pollOptions = pollOptions;
+        if (pollTtlHours != null) {
+          payload.ttlHours = pollTtlHours;
+        }
       }
 
       submitQuestion(payload, {
@@ -742,15 +747,26 @@ export function CreatePostDialog() {
 
                         {field.type === "poll" &&
                           (() => {
+                            const POLL_DURATIONS = [
+                              { label: "No limit", hours: null },
+                              { label: "30m", hours: 0.5 },
+                              { label: "1h", hours: 1 },
+                              { label: "6h", hours: 6 },
+                              { label: "24h", hours: 24 },
+                              { label: "3d", hours: 72 },
+                              { label: "7d", hours: 168 },
+                            ] as const;
                             const pollVal = (val as
-                              | { question: string; options: string[] }
+                              | { question: string; options: string[]; ttlHours?: number | null }
                               | undefined) || {
                               question: "",
                               options: ["", ""],
+                              ttlHours: null,
                             };
                             const setPoll = (update: {
                               question?: string;
                               options?: string[];
+                              ttlHours?: number | null;
                             }) => setVal({ ...pollVal, ...update });
                             return (
                               <div className="space-y-2 w-full">
@@ -815,6 +831,30 @@ export function CreatePostDialog() {
                                     Add option
                                   </button>
                                 )}
+                                <div className="pt-1 border-t border-neutral-100 dark:border-neutral-800/50">
+                                  <div className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-1.5">
+                                    Poll duration
+                                  </div>
+                                  <div className="flex gap-1 flex-wrap">
+                                    {POLL_DURATIONS.map((d) => (
+                                      <button
+                                        key={d.label}
+                                        type="button"
+                                        onClick={() =>
+                                          setPoll({ ttlHours: d.hours })
+                                        }
+                                        className={cn(
+                                          "px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer border",
+                                          pollVal.ttlHours === d.hours
+                                            ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                                            : "bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-300",
+                                        )}
+                                      >
+                                        {d.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
                               </div>
                             );
                           })()}

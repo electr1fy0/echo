@@ -55,6 +55,7 @@ export function useSignout() {
       queryClient.removeQueries({ queryKey: ["auth"] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["chambers"] });
+      localStorage.removeItem("turnsout_columns");
       navigate("/", { replace: true });
     },
   });

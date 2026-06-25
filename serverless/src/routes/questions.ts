@@ -511,6 +511,7 @@ questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
     uid: schema.polls.uid,
     options: schema.polls.options,
     isClosed: schema.polls.isClosed,
+    expiresAt: schema.polls.expiresAt,
   }).from(schema.polls).where(eq(schema.polls.postUid, uid)).limit(1);
 
   if (!poll) {
@@ -519,6 +520,12 @@ questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
 
   if (poll.isClosed) {
     throw new ApiError(400, "poll is closed");
+  }
+
+  // Auto-close if expired
+  if (!poll.isClosed && poll.expiresAt && new Date() > new Date(poll.expiresAt)) {
+    await db.update(schema.polls).set({ isClosed: true }).where(eq(schema.polls.uid, poll.uid));
+    throw new ApiError(400, "poll has expired");
   }
 
   if (body.optionIndex >= poll.options.length) {

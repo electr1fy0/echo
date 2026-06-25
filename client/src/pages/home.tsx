@@ -161,7 +161,7 @@ function ColumnFeed({
               </div>
               <Link
                 to="/chambers"
-                className="block text-center text-xs text-neutral-600 dark:text-neutral-400 hover:text-[var(--brand)] transition-colors pt-2"
+                className="block text-center text-xs text-neutral-600 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors pt-2"
               >
                 Explore all chambers →
               </Link>

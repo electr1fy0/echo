@@ -466,11 +466,21 @@ export function EditPostDialog() {
                       })()}
 
                       {field.type === "poll" && (() => {
-                        const pollVal = (fieldVal as { question: string; options: string[] } | undefined) || {
+                        const POLL_DURATIONS = [
+                          { label: "No limit", hours: null },
+                          { label: "30m", hours: 0.5 },
+                          { label: "1h", hours: 1 },
+                          { label: "6h", hours: 6 },
+                          { label: "24h", hours: 24 },
+                          { label: "3d", hours: 72 },
+                          { label: "7d", hours: 168 },
+                        ] as const;
+                        const pollVal = (fieldVal as { question: string; options: string[]; ttlHours?: number | null } | undefined) || {
                           question: "",
                           options: ["", ""],
+                          ttlHours: null,
                         };
-                        const setPoll = (update: { question?: string; options?: string[] }) => setFieldVal({ ...pollVal, ...update });
+                        const setPoll = (update: { question?: string; options?: string[]; ttlHours?: number | null }) => setFieldVal({ ...pollVal, ...update });
                         return (
                           <div className="space-y-2 w-full">
                             <input
@@ -518,6 +528,28 @@ export function EditPostDialog() {
                                 <span className="text-sm leading-none">+</span> Add option
                               </button>
                             )}
+                            <div className="pt-1 border-t border-neutral-100 dark:border-neutral-800/50">
+                              <div className="text-[10px] font-semibold text-neutral-400 dark:text-neutral-500 mb-1.5">
+                                Poll duration
+                              </div>
+                              <div className="flex gap-1 flex-wrap">
+                                {POLL_DURATIONS.map((d) => (
+                                  <button
+                                    key={d.label}
+                                    type="button"
+                                    onClick={() => setPoll({ ttlHours: d.hours })}
+                                    className={cn(
+                                      "px-2 py-1 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer border",
+                                      pollVal.ttlHours === d.hours
+                                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                                        : "bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-700 hover:text-neutral-700 dark:hover:text-neutral-300",
+                                    )}
+                                  >
+                                    {d.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         );
                       })()}

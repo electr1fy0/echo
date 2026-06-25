@@ -209,9 +209,6 @@ function LinkPreview({ url }: { url: string }) {
         <div className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 truncate group-hover:text-[var(--brand)] transition-colors">
           {hostname}
         </div>
-        <div className="text-[10px] text-neutral-450 dark:text-neutral-500 font-medium truncate mt-0.5">
-          {url}
-        </div>
       </div>
       <svg
         viewBox="0 0 24 24"
