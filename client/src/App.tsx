@@ -12,7 +12,6 @@ import { ErrorBoundary } from "react-error-boundary";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ProtectedRoute } from "@/components/route-guards";
 import { ToastProvider, AnchoredToastProvider } from "@/components/ui/toast";
-import { ReloadPrompt } from "@/components/reload-prompt";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -133,15 +132,40 @@ function AccentThemeInitializer() {
   return null;
 }
 
+function ErrorFallback({ error, resetErrorBoundary }: { error: unknown; resetErrorBoundary: () => void }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 gap-4 bg-background text-foreground">
+      <p className="text-sm text-muted-foreground text-center max-w-md">
+        {error instanceof Error && error.message === "Loading chunk failed"
+          ? "A page chunk failed to load. This can happen after an app update."
+          : "Something went wrong."}
+      </p>
+      <div className="flex gap-3">
+        <button
+          onClick={resetErrorBoundary}
+          className="px-4 py-2 text-xs font-semibold rounded-xl bg-neutral-900 dark:bg-neutral-100 text-white dark:text-black hover:opacity-90 transition-opacity cursor-pointer"
+        >
+          Try again
+        </button>
+        <button
+          onClick={() => {
+            if ("caches" in window) {
+              caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+            }
+            window.location.reload();
+          }}
+          className="px-4 py-2 text-xs font-semibold rounded-xl bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 hover:opacity-90 transition-opacity cursor-pointer"
+        >
+          Clear cache & refresh
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <ErrorBoundary
-      fallback={
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <p className="text-sm text-muted-foreground">Something went wrong.</p>
-        </div>
-      }
-    >
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
       <BrowserRouter>
         <AccentThemeInitializer />
         <Suspense fallback={<LoadingSpinner />}>
@@ -180,9 +204,7 @@ export default function App() {
           </Routes>
         </Suspense>
         <ToastProvider>
-          <AnchoredToastProvider>
-            <ReloadPrompt />
-          </AnchoredToastProvider>
+          <AnchoredToastProvider />
         </ToastProvider>
       </BrowserRouter>
     </ErrorBoundary>
