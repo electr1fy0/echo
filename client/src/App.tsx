@@ -112,7 +112,7 @@ function AuthenticatedLayout() {
               <h4 className="text-sm ">Don't miss what's happening</h4>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
                 People on TurnsOut are finding project partners, trading items,
-                coordinating rides, and sharing ideas in real-time. Sign up to
+                coordinating rides, and sharing ideas. Sign up to
                 join them!
               </p>
             </div>

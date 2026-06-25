@@ -122,11 +122,11 @@ function LinkPreview({ url }: { url: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-3.5 p-3 my-1 border border-neutral-200 dark:border-neutral-800 bg-neutral-50/20 dark:bg-neutral-950/10 rounded-2xl max-w-md shadow-sm">
-        <div className="size-10 rounded-xl bg-neutral-200 dark:bg-neutral-800 animate-pulse shrink-0" />
+      <div className="flex items-center gap-2.5 p-2.5 my-1 border border-neutral-200 dark:border-neutral-800 bg-neutral-50/20 dark:bg-neutral-950/10 rounded-2xl max-w-sm shadow-sm">
+        <div className="size-8 rounded-lg bg-neutral-200 dark:bg-neutral-800 animate-pulse shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-32 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
-          <div className="h-2.5 w-48 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          <div className="h-2.5 w-24 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          <div className="h-2 w-36 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
         </div>
       </div>
     );
@@ -139,10 +139,10 @@ function LinkPreview({ url }: { url: string }) {
         target="_blank"
         rel="noopener noreferrer"
         onClick={(e) => e.stopPropagation()}
-        className="flex flex-col my-1 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-350 dark:hover:border-neutral-700 bg-white dark:bg-neutral-900/60 rounded-2xl overflow-hidden transition-all duration-200 max-w-md group cursor-pointer shadow-sm active:scale-[0.99]"
+        className="flex flex-col my-1 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-350 dark:hover:border-neutral-700 bg-white dark:bg-neutral-900/60 rounded-2xl overflow-hidden transition-all duration-200 max-w-sm group cursor-pointer shadow-sm active:scale-[0.99]"
       >
         {data.image && (
-          <div className="relative w-full aspect-[2/1] bg-neutral-100 dark:bg-neutral-850 overflow-hidden">
+          <div className="relative w-full aspect-[2.4/1] bg-neutral-100 dark:bg-neutral-850 overflow-hidden">
             <img
               src={data.image}
               alt=""
@@ -153,78 +153,33 @@ function LinkPreview({ url }: { url: string }) {
             />
           </div>
         )}
-        <div className="flex items-start gap-3 p-3">
-          <div className="size-9 rounded-xl bg-white dark:bg-neutral-850 border border-neutral-200/60 dark:border-neutral-800 flex items-center justify-center shrink-0 shadow-sm">
+        <div className="flex items-start gap-2.5 p-2.5">
+          <div className="size-8 rounded-lg bg-white dark:bg-neutral-850 border border-neutral-200/60 dark:border-neutral-800 flex items-center justify-center shrink-0 shadow-sm">
             <img
               src={faviconUrl}
               alt=""
-              className="size-4 object-contain"
+              className="size-3.5 object-contain"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = "none";
               }}
             />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug group-hover:text-[var(--brand)] transition-colors">
+            <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug group-hover:text-[var(--brand)] transition-colors">
               {data.title}
             </div>
             {data.description && (
-              <div className="text-[11px] text-neutral-500 dark:text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
+              <div className="text-[10px] text-neutral-500 dark:text-neutral-400 line-clamp-2 mt-0.5 leading-relaxed">
                 {data.description}
               </div>
             )}
-            <div className="text-[10px] text-neutral-400 dark:text-neutral-500 font-medium truncate mt-1 flex items-center gap-1">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="size-3 shrink-0">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-              {hostname}
-            </div>
           </div>
         </div>
       </a>
     );
   }
 
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      className="flex items-center gap-3.5 p-3 my-1 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-350 dark:hover:border-neutral-700 bg-neutral-50/20 hover:bg-neutral-100/50 dark:bg-neutral-950/10 dark:hover:bg-neutral-900/35 rounded-2xl transition-all duration-200 text-left select-none max-w-md group cursor-pointer shadow-sm active:scale-[0.99]"
-    >
-      <div className="size-10 rounded-xl bg-white dark:bg-neutral-850 border border-neutral-200/60 dark:border-neutral-800 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105 duration-200">
-        <img
-          src={faviconUrl}
-          alt=""
-          className="size-5 object-contain"
-          onError={(e) => {
-            (e.target as HTMLElement).style.display = "none";
-          }}
-        />
-      </div>
-      <div className="flex-1 min-w-0 pr-1">
-        <div className="text-[11px] font-bold text-neutral-800 dark:text-neutral-200 truncate group-hover:text-[var(--brand)] transition-colors">
-          {hostname}
-        </div>
-      </div>
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="size-3.5 text-neutral-400 group-hover:text-neutral-600 dark:group-hover:text-neutral-250 transition-colors shrink-0"
-      >
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-        <polyline points="15 3 21 3 21 9" />
-        <line x1="10" y1="14" x2="21" y2="3" />
-      </svg>
-    </a>
-  );
+  return null;
 }
 
 export function PostContent({ content, className, showPreviews = true }: PostContentProps) {
@@ -256,7 +211,7 @@ export function PostContent({ content, className, showPreviews = true }: PostCon
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}
-          className="text-[var(--brand)] hover:underline inline-flex items-center gap-0.5 break-all"
+          className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-0.5 break-all"
         >
           {displayUrl}
         </a>

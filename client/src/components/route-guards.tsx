@@ -4,7 +4,7 @@ import { PageSkeleton } from "@/components/ui/skeletons";
 import { getToken } from "@/lib/utils";
 
 export function ProtectedRoute() {
-  const { data: user, isLoading, isError } = useAuth();
+  const { data: user, isLoading, isError, error } = useAuth();
   const token = getToken();
 
   if (!token) {
@@ -16,6 +16,24 @@ export function ProtectedRoute() {
   }
 
   if (isError || !user) {
+    if (error instanceof Error && error.message === "rate-limit") {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background text-foreground">
+          <div className="max-w-md space-y-3">
+            <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Too many requests</h1>
+            <p className="text-sm text-neutral-500">
+              The rate limiter is preventing new requests. Please wait a few moments and reload.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow transition-colors cursor-pointer"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      );
+    }
     return <Navigate to="/" replace />;
   }
 

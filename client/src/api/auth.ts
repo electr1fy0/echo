@@ -56,6 +56,9 @@ export async function verifySession() {
     throw new Error("Session expired");
   }
   if (!res.ok) {
+    if (res.status === 429) {
+      throw new Error("rate-limit");
+    }
     throw new Error("verification failed");
   }
   return res.json() as Promise<User>;

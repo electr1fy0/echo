@@ -40,7 +40,12 @@ export function useAuth() {
     queryKey: ["auth", token],
     queryFn: verifySession,
     enabled: !!token,
-    retry: false,
+    retry: (failureCount, error) => {
+      if (error instanceof Error && error.message === "rate-limit") {
+        return failureCount < 3;
+      }
+      return false;
+    },
     staleTime: 5 * 60 * 1000,
   });
 }
