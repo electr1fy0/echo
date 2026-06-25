@@ -78,7 +78,7 @@ function DirectoryChamberCard({
     <div className="p-3 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] rounded-xl flex items-center justify-between gap-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-950">
       <div
         className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-        onClick={() => navigate(`/chamber/${chamber.uid}`)}
+        onClick={() => navigate(`/chambers/${chamber.name}`)}
       >
         <div
           className={cn(

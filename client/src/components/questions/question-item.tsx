@@ -35,7 +35,6 @@ import {
   PinOffIcon,
   BookOpen01Icon,
   Share01Icon,
-  ChartUpIcon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ThreadedReplies } from "./threaded-replies";
@@ -66,7 +65,6 @@ type QuestionItemProps = {
 };
 
 import { QuestionListSkeleton } from "./question-skeleton";
-import { PostAnalytics } from "@/components/analytics/post-analytics";
 
 function CountdownRing({
   expiresAt,
@@ -167,7 +165,6 @@ export function QuestionItem({
   const { mutate: sendInterestDM, isPending: isDMPending } =
     useExpressInterestViaDM();
 
-  const [showAnalytics, setShowAnalytics] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   if (!question || !questionId) return null;
@@ -245,7 +242,7 @@ export function QuestionItem({
                 )}
                 {showChamberName && question.chamberName && (
                   <Link
-                    to={`/chamber/${question.chamberUid}`}
+                    to={`/chambers/${question.chamberUid}`}
                     className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                   >
                     in {question.chamberName}
@@ -425,15 +422,6 @@ export function QuestionItem({
                     {user?.username === question.authorUsername && (
                       <>
                         <DropdownMenuItem
-                          onClick={() => setShowAnalytics(true)}
-                        >
-                          <HugeiconsIcon
-                            icon={ChartUpIcon}
-                            className="mr-2 size-4"
-                          />
-                          View Analytics
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
                           onClick={() => openEditModal(question)}
                         >
                           <HugeiconsIcon
@@ -542,23 +530,6 @@ export function QuestionItem({
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
-
-      {showAnalytics && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-          onClick={() => setShowAnalytics(false)}
-        >
-          <div
-            className="bg-background rounded-xl shadow-xl border border-neutral-200 dark:border-neutral-800 w-full max-w-sm mx-4 max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <PostAnalytics
-              postUid={questionId}
-              onClose={() => setShowAnalytics(false)}
-            />
-          </div>
-        </div>
-      )}
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogPopup portalProps={{}}>

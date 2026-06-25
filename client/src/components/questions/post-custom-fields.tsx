@@ -95,7 +95,7 @@ export function PostCustomFields({
   if (!hasMetadata && !hasImages && !hasFiles) return null;
 
   return (
-    <div className="mt-3.5 p-4 flex flex-col gap-4 bg-linear-to-br from-neutral-50/60 to-neutral-100/30 dark:from-neutral-900/40 dark:to-neutral-950/20 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full shadow-xs hover:border-neutral-350 dark:hover:border-neutral-700/80 transition-all duration-300">
+    <div className="mt-3.5 p-4 flex flex-col gap-4 bg-linear-to-br from-neutral-50/60 to-neutral-100/30 dark:from-neutral-900/40 dark:to-neutral-950/20 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full shadow-xs">
       {/* Metadata fields list (excluding files/images) */}
       {hasMetadata && (
         <div className="flex flex-col gap-1.5 min-w-0 w-full">
@@ -316,7 +316,7 @@ export function PostCustomFields({
                         type: "success",
                       });
                     }}
-                    className="cursor-pointer text-xs font-semibold rounded-2xl h-8 px-4 bg-gradient-to-r from-[var(--brand)] to-[var(--brand-hover)] text-white border-none shadow-xs hover:shadow-md active:scale-[0.98] transition-all duration-200 shrink-0"
+                    className="cursor-pointer text-xs font-semibold rounded-2xl h-8 px-4 bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-none shadow-xs hover:shadow-md active:scale-[0.98] transition-all duration-200 shrink-0"
                   >
                     {btnVal.label}
                   </Button>

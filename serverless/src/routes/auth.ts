@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import bcrypt from "bcryptjs";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { Hono } from "hono";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, desc } from "drizzle-orm";
 
 import { schema } from "../db";
 import { issueAuthToken, issueGoogleOnboardingToken, issueOnboardingToken, verifyGoogleOnboardingToken, verifyOnboardingToken } from "../lib/auth";
@@ -28,13 +28,19 @@ authRoutes.use("/signout", requireAuth);
 authRoutes.use("/verify", requireAuth);
 
 const authLimiter = rateLimit("AUTH_LIMITER", { keyPrefix: "auth" });
+const resendCodeLimiter = rateLimit("AUTH_LIMITER", {
+  keyPrefix: "resend-code",
+  limitFallback: 3, // 3 requests
+  periodFallback: 60, // per 60 seconds
+});
+
 authRoutes.use("/signup", authLimiter);
 authRoutes.use("/signin", authLimiter);
 authRoutes.use("/verify-email", authLimiter);
-authRoutes.use("/resend-verification", authLimiter);
+authRoutes.use("/resend-verification", resendCodeLimiter);
 authRoutes.use("/request-password-reset", authLimiter);
 authRoutes.use("/reset-password", authLimiter);
-authRoutes.use("/send-otp", authLimiter);
+authRoutes.use("/send-otp", resendCodeLimiter);
 authRoutes.use("/verify-otp", authLimiter);
 authRoutes.use("/google/onboarding", authLimiter);
 authRoutes.use("/onboarding", authLimiter);
@@ -100,10 +106,6 @@ authRoutes.post("/signup", async (c) => {
 
   const username = body.username;
   const email = body.email;
-  // TODO: re-enable college email restriction
-  // if (!email.endsWith("@vitstudent.ac.in")) {
-  //   throw new ApiError(400, "only @vitstudent.ac.in emails are allowed");
-  // }
   const passwordHash = await bcrypt.hash(body.password, 10);
   const verificationToken = randomToken(32);
 
@@ -164,6 +166,7 @@ authRoutes.post("/signin", async (c) => {
       username: schema.users.username,
       password: schema.users.password,
       isVerified: schema.users.isVerified,
+      deletedAt: schema.users.deletedAt,
     })
     .from(schema.users)
     .where(eq(schema.users.username, username))
@@ -175,6 +178,10 @@ authRoutes.post("/signin", async (c) => {
 
   if (!user.isVerified) {
     throw new ApiError(403, "please verify your email before signing in");
+  }
+
+  if (user.deletedAt) {
+    throw new ApiError(403, "this account has been deleted");
   }
 
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, user.username) });
@@ -317,10 +324,6 @@ authRoutes.get("/google/callback", handleGoogleCallback);
 authRoutes.post("/google/onboarding", async (c) => {
   const body = safeParse(googleOnboardingSchema, await c.req.json());
   const email = await verifyGoogleOnboardingToken(c.env.SECRET_KEY, body.token);
-  // TODO: re-enable college email restriction
-  // if (!email.endsWith("@vitstudent.ac.in")) {
-  //   throw new ApiError(400, "only @vitstudent.ac.in emails are allowed");
-  // }
   const username = body.username;
 
   const [existingUsername] = await c
@@ -383,6 +386,24 @@ authRoutes.post("/onboarding", async (c) => {
 authRoutes.post("/send-otp", async (c) => {
   const body = safeParse(sendOtpSchema, await c.req.json());
   const email = body.email;
+
+  // Check if a code was sent in the last 60 seconds to prevent spamming
+  const [lastOtp] = await c
+    .get("db")
+    .select({ createdAt: schema.otpCodes.createdAt })
+    .from(schema.otpCodes)
+    .where(
+      and(
+        eq(schema.otpCodes.email, email),
+        gt(schema.otpCodes.createdAt, new Date(Date.now() - 60 * 1000))
+      )
+    )
+    .orderBy(desc(schema.otpCodes.createdAt))
+    .limit(1);
+
+  if (lastOtp) {
+    throw new ApiError(429, "Please wait at least 60 seconds before requesting another code.");
+  }
 
   const [user] = await c
     .get("db")
@@ -563,4 +584,11 @@ authRoutes.get("/check-username", async (c) => {
   return c.json({ available: true });
 });
 
-authRoutes.get("/verify", async (c) => c.json(await getProfileByUsername(c.get("db"), c.get("user"), true)));
+authRoutes.get("/verify", async (c) => {
+  try {
+    const profile = await getProfileByUsername(c.get("db"), c.get("user"), true);
+    return c.json(profile);
+  } catch (e) {
+    throw new ApiError(401, "session expired");
+  }
+});

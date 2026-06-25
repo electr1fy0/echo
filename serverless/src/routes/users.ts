@@ -58,7 +58,15 @@ userRoutes.patch("/me", async (c) => {
 });
 
 userRoutes.delete("/me", async (c) => {
-  await c.get("db").delete(schema.users).where(eq(schema.users.username, c.get("user")));
+  await c.get("db").update(schema.users).set({
+    deletedAt: new Date(),
+    password: null,
+    email: `deleted-${c.get("user")}@deleted.local`,
+    bio: null,
+    avatar: null,
+    links: null,
+    dmEnabled: false,
+  }).where(eq(schema.users.username, c.get("user")));
   return c.json({ message: "Account deleted successfully" });
 });
 

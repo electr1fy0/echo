@@ -165,7 +165,7 @@ function LinkPreview({ url }: { url: string }) {
             />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug group-hover:text-[var(--brand)] transition-colors">
+            <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 leading-snug transition-colors">
               {data.title}
             </div>
             {data.description && (

@@ -50,6 +50,7 @@ import {
   Layers,
   IndianRupee,
   Calendar,
+  ChevronDown,
   FileUp,
   Image as ImageIcon,
   BarChart3,
@@ -62,7 +63,6 @@ import {
 import type { SchemaField } from "@/types";
 
 const FIELD_TYPES = [
-  { value: "image", label: "Image", icon: ImageIcon },
   { value: "poll", label: "Poll", icon: BarChart3 },
   { value: "currency", label: "Price", icon: IndianRupee },
   { value: "datetime", label: "Date-Time", icon: Calendar },
@@ -449,7 +449,89 @@ export function CreatePostDialog() {
             </div>
           )}
 
-          {/* Dynamic custom fields form engine */}
+          {/* Prominent chamber selector */}
+          <div className={cn(
+            "rounded-2xl transition-all",
+            selectedChamber
+              ? "border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/50 p-3"
+              : "border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-neutral-50/40 dark:bg-neutral-900/20 p-5"
+          )}>
+            {!selectedChamber && (
+              <div className="flex items-center gap-2 mb-4">
+                <Layers className="size-4 text-neutral-400" />
+                <span className="text-sm font-semibold text-neutral-500 dark:text-neutral-400">
+                  Select a chamber
+                </span>
+              </div>
+            )}
+            <div className={cn("flex items-center gap-2 flex-wrap", !selectedChamber && "justify-center")}>
+              <DropdownMenu>
+                <DropdownMenuTrigger className={cn(
+                  "inline-flex items-center justify-center gap-2 rounded-xl border transition-colors focus:outline-none cursor-pointer",
+                  selectedChamber
+                    ? "h-9 px-3 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900"
+                    : "h-11 px-5 text-sm font-semibold text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 min-w-[220px]"
+                )}>
+                  {selectedChamberData ? (
+                    <>
+                      <div className={cn("size-2.5 rounded-full", CHAMBER_COLORS[(selectedChamberData.colorIndex || 0) % CHAMBER_COLORS.length])} />
+                      <span className="truncate">{selectedChamberData.name}</span>
+                      <ChevronDown className="size-3.5 text-neutral-400 shrink-0" />
+                    </>
+                  ) : (
+                    <>
+                      <Layers className="size-4 text-neutral-400" />
+                      <span>Choose a chamber</span>
+                      <ChevronDown className="size-3.5 text-neutral-400" />
+                    </>
+                  )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 max-h-[200px] overflow-y-auto scrollbar-thin">
+                  {JOINED_CHAMBERS.length > 0 ? (
+                    JOINED_CHAMBERS.map((chamber, i) => (
+                      <DropdownMenuItem
+                        key={chamber.uid || i}
+                        onClick={() => setSelectedChamber(chamber.uid!)}
+                        className="gap-2 cursor-pointer text-xs"
+                      >
+                        <div className={cn("size-2.5 rounded-full", CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length])} />
+                        {chamber.name}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1.5 text-xs text-neutral-500">No chambers joined</div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {selectedChamber && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-xl border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-700 dark:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer">
+                    <Hash className="size-3.5 text-neutral-400 shrink-0" />
+                    <span className="truncate">#{selectedChannelData?.name || "discussion"}</span>
+                    <ChevronDown className="size-3.5 text-neutral-400 shrink-0" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48 max-h-[200px] overflow-y-auto scrollbar-thin">
+                    {channelsData.length > 0 ? (
+                      channelsData.map((ch: any) => (
+                        <DropdownMenuItem
+                          key={ch.uid}
+                          onClick={() => setSelectedChannelUid(ch.uid)}
+                          className="cursor-pointer text-xs"
+                        >
+                          #{ch.name}
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-xs text-neutral-500">No channels</div>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          {selectedChamber && (
           <div className="space-y-4 pt-3 border-t border-neutral-100 dark:border-neutral-900/60 mt-2">
             {/* Field Selector UI */}
             <div className="space-y-2">
@@ -974,94 +1056,10 @@ export function CreatePostDialog() {
               </div>
             )}
           </div>
+          )}
 
           <div className="flex items-center justify-between gap-2 flex-wrap pt-4 border-t border-neutral-100 dark:border-neutral-900 mt-2">
             <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-              <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-8 px-2.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer border border-neutral-200 dark:border-neutral-700 max-w-[180px] truncate">
-                  {selectedChamberData ? (
-                    <>
-                      <div
-                        className={cn(
-                          "size-2 rounded-full",
-                          CHAMBER_COLORS[
-                            (selectedChamberData.colorIndex || 0) %
-                              CHAMBER_COLORS.length
-                          ],
-                        )}
-                      />
-                      <span className="truncate">
-                        {selectedChamberData.name}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Layers className="size-3 text-neutral-500" />
-                      Chamber
-                    </>
-                  )}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="w-56 max-h-[200px] overflow-y-auto scrollbar-thin"
-                >
-                  {JOINED_CHAMBERS.length > 0 ? (
-                    JOINED_CHAMBERS.map((chamber, i) => (
-                      <DropdownMenuItem
-                        key={chamber.uid || i}
-                        onClick={() => setSelectedChamber(chamber.uid!)}
-                        className="gap-2 cursor-pointer text-xs"
-                      >
-                        <div
-                          className={cn(
-                            "size-2.5 rounded-full",
-                            CHAMBER_COLORS[
-                              (chamber.colorIndex || 0) % CHAMBER_COLORS.length
-                            ],
-                          )}
-                        />
-                        {chamber.name}
-                      </DropdownMenuItem>
-                    ))
-                  ) : (
-                    <div className="px-2 py-1.5 text-xs text-neutral-500">
-                      No chambers joined
-                    </div>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {selectedChamber && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-lg gap-1.5 h-8 px-2.5 text-[11px] font-semibold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200/50 dark:hover:bg-neutral-800 transition-colors focus:outline-none cursor-pointer border border-neutral-200 dark:border-neutral-700 max-w-[180px] truncate">
-                    <Hash className="size-3 text-neutral-500 shrink-0" />
-                    <span className="truncate">
-                      #{selectedChannelData?.name || "Channel"}
-                    </span>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="start"
-                    className="w-48 max-h-[200px] overflow-y-auto scrollbar-thin"
-                  >
-                    {channelsData.length > 0 ? (
-                      channelsData.map((ch: any) => (
-                        <DropdownMenuItem
-                          key={ch.uid}
-                          onClick={() => setSelectedChannelUid(ch.uid)}
-                          className="cursor-pointer text-xs"
-                        >
-                          #{ch.name}
-                        </DropdownMenuItem>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1.5 text-xs text-neutral-500">
-                        No channels
-                      </div>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-
               <button
                 type="button"
                 disabled={imageUploading || images.length >= 4}

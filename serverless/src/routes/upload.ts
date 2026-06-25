@@ -24,7 +24,7 @@ const imageUrl = (c: { env: { ECHO_DOMAIN?: string }; req: { url: string } }, ke
 
 export const uploadRoutes = new Hono<AppEnv>();
 
-uploadRoutes.use("*", rateLimit("AUTH_LIMITER", { keyPrefix: "upload", limitFallback: 30, periodFallback: 60 }));
+uploadRoutes.use("*", rateLimit("AUTH_LIMITER", { keyPrefix: "upload", limitFallback: 60, periodFallback: 60 }));
 
 uploadRoutes.post("/presign", requireAuth, async (c) => {
   const { filename, contentType } = safeParse(presignUploadSchema, await c.req.json());

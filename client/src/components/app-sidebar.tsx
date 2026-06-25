@@ -321,7 +321,7 @@ export function AppSidebar() {
           <div data-tour="chambers" className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-none">
             {joinedChambers.map((c) => {
               const color = CHAMBER_COLORS[(c.colorIndex || 0) % CHAMBER_COLORS.length];
-              const active = isActive(`/chamber/${c.uid}`);
+              const active = isActive(`/chambers/${c.name}`) || isActive(`/chambers/${c.uid}`);
               const displayInitials = getInitials(c.name);
 
               return (
@@ -329,7 +329,7 @@ export function AppSidebar() {
                   <TooltipTrigger
                     render={
                       <Link
-                        to={`/chamber/${c.uid}`}
+                        to={`/chambers/${c.name}`}
                         className={cn(
                           "size-8 rounded-xl flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-all duration-300 hover:rounded-lg select-none shadow-sm cursor-pointer",
                           color,

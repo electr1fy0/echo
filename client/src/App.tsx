@@ -155,7 +155,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/explore" element={<Explore />} />
-              <Route path="/chamber/:chamberId" element={<ChamberPage />} />
+              <Route path="/chambers/:chamberId" element={<ChamberPage />} />
               <Route path="/q/:questionId" element={<QuestionDetailPage />} />
               <Route path="/u/:username" element={<PublicProfile />} />
               <Route path="/auth" element={<LoadingSpinner />} />

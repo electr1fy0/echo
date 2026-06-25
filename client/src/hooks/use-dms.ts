@@ -15,8 +15,8 @@ export function useConversations() {
   return useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: 10_000,
-    staleTime: 5_000,
+    refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 }
 
@@ -35,8 +35,8 @@ export function useMessages(conversationUid: string | undefined) {
     queryKey: ["messages", conversationUid],
     queryFn: () => fetchMessages(conversationUid!),
     enabled: !!conversationUid,
-    refetchInterval: 3_000,
-    staleTime: 1_000,
+    refetchInterval: 8_000,
+    staleTime: 5_000,
   });
 }
 
@@ -79,8 +79,8 @@ export function useUnreadMessageCount() {
   return useQuery({
     queryKey: ["messages", "unread-count"],
     queryFn: getUnreadMessageCount,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
     retry: false,
     enabled: !!token,
   });

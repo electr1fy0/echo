@@ -45,14 +45,20 @@ export const resetPasswordSchema = z.object({
 });
 
 export const createChamberSchema = z.object({
-  name: z.string().min(1, "name is required").max(100),
+  name: z.string()
+    .min(1, "name is required")
+    .max(100)
+    .regex(/^\S+$/, "chamber name cannot contain spaces"),
   description: z.string().max(2000).default(""),
   colorIndex: z.number().int().min(0).max(20).default(0),
   picture: z.string().nullable().optional(),
 });
 
 export const updateChamberSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string()
+    .min(1)
+    .max(100)
+    .regex(/^\S+$/, "chamber name cannot contain spaces"),
   description: z.string().max(2000),
   colorIndex: z.number().int().min(0).max(20).optional(),
   picture: z.string().nullable().optional(),

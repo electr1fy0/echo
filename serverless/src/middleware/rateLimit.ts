@@ -36,7 +36,7 @@ export const rateLimit = (
 ) => {
   const {
     keyPrefix = "global",
-    limitFallback = limiterName === "AUTH_LIMITER" ? 200 : 1000,
+    limitFallback = limiterName === "AUTH_LIMITER" ? 500 : 2000,
     periodFallback = 60,
   } = options;
 

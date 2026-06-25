@@ -16,7 +16,7 @@ export function useRepliesQuery(questionId: string | undefined) {
     queryKey: ["replies", questionId],
     queryFn: () => fetchReplies(questionId!),
     enabled: !!questionId,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 

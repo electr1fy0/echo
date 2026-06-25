@@ -9,7 +9,8 @@ interface LinkPreviewData {
 }
 
 const cache = new Map<string, { data: LinkPreviewData; expiry: number }>();
-const CACHE_TTL = 1000 * 60 * 60;
+const CACHE_TTL = 1000 * 60 * 60 * 24;
+const MAX_CACHE_SIZE = 500;
 
 export const linkPreviewRoutes = new Hono<AppEnv>();
 
@@ -61,6 +62,10 @@ linkPreviewRoutes.get("/", async (c) => {
       url,
     };
 
+    if (cache.size >= MAX_CACHE_SIZE) {
+      const oldest = cache.entries().next().value;
+      if (oldest) cache.delete(oldest[0]);
+    }
     cache.set(url, { data, expiry: Date.now() + CACHE_TTL });
     return c.json(data);
   } catch {

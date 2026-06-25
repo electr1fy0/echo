@@ -265,14 +265,16 @@ export default function ChamberPage() {
   const { open: openAuthModal } = useAuthModal();
   const { setActiveChamberId, setActiveChannelId } = useCreatePostModal();
   const chambers = chambersData || [];
-  const chamber = chambers.find((c) => c.uid === chamberId);
+  const chamber = chambers.find(
+    (c) => c.name.toLowerCase() === chamberId?.toLowerCase() || c.uid === chamberId,
+  );
   const { mutate: deleteQn } = useDeleteQuestion();
   const deleteChamberMutation = useDeleteChamber();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Channels state
   const { data: channelsData = [], isLoading: isChannelsLoading } =
-    useListChannels(chamberId || "");
+    useListChannels(chamber?.uid || "");
   const [selectedChannelUid, setSelectedChannelUid] = useState<string>("");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
@@ -281,7 +283,7 @@ export default function ChamberPage() {
   const [newChannelIcon, setNewChannelIcon] = useState("message-square");
   const [newChannelSchema, setNewChannelSchema] = useState<any[]>([]);
   const { mutate: createChan, isPending: isCreateChanPending } =
-    useCreateChannel(chamberId || "");
+    useCreateChannel(chamber?.uid || "");
 
   // Edit Channel Form State
   const [editingChannel, setEditingChannel] = useState<any | null>(null);
@@ -289,8 +291,8 @@ export default function ChamberPage() {
   const [editChannelName, setEditChannelName] = useState("");
   const [editChannelIcon, setEditChannelIcon] = useState("message-square");
   const [editChannelSchema, setEditChannelSchema] = useState<any[]>([]);
-  const updateChannelMutation = useUpdateChannel(chamberId || "");
-  const deleteChannelMutation = useDeleteChannel(chamberId || "");
+  const updateChannelMutation = useUpdateChannel(chamber?.uid || "");
+  const deleteChannelMutation = useDeleteChannel(chamber?.uid || "");
 
   const { trigger } = useWebHaptics();
 
@@ -378,11 +380,11 @@ export default function ChamberPage() {
     channels.find((c) => c.uid === selectedChannelUid) || virtualAllChannel;
 
   useEffect(() => {
-    setActiveChamberId(chamberId);
+    setActiveChamberId(chamber?.uid);
     return () => {
       setActiveChamberId(undefined);
     };
-  }, [chamberId, setActiveChamberId]);
+  }, [chamber?.uid, setActiveChamberId]);
 
   useEffect(() => {
     const composeChannelUid =
@@ -422,7 +424,7 @@ export default function ChamberPage() {
   } = useInfiniteQuestionsQuery(
     sortBy,
     undefined,
-    chamberId,
+    chamber?.uid,
     postScope === "my-posts" ? user?.username : undefined,
     20,
     undefined, // postType filter removed in favor of channel separation
@@ -432,7 +434,7 @@ export default function ChamberPage() {
   );
   const questions = questionsData ? questionsData.pages.flat() : [];
   const { data: pinnedPosts = [] } = usePinnedQuestionsQuery(
-    chamberId,
+    chamber?.uid,
     undefined,
     selectedChannel?.uid === "all" ? undefined : selectedChannel?.uid,
   );

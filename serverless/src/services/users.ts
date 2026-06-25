@@ -1,4 +1,4 @@
-import { eq, sql, and, desc } from "drizzle-orm";
+import { eq, sql, and, desc, isNull } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -22,6 +22,7 @@ const profileSelect = {
   bio: sql<string>`coalesce(${schema.users.bio}, '')`,
   avatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
   link: sql<string>`coalesce(${schema.users.links}, '')`,
+  deletedAt: schema.users.deletedAt,
   reputation: reputationSql,
   posted: sql<number>`(
     select count(*)::int from ${schema.posts}
@@ -105,7 +106,7 @@ export const getProfileByUsername = async (db: DB, username: string, includeEmai
     .where(eq(schema.users.username, username))
     .limit(1);
 
-  if (!profile) {
+  if (!profile || profile.deletedAt) {
     throw new ApiError(404, "profile not found");
   }
 
@@ -130,12 +131,12 @@ export const followUser = async (db: DB, follower: string, target: string) => {
   }
 
   const [user] = await db
-    .select({ username: schema.users.username })
+    .select({ username: schema.users.username, deletedAt: schema.users.deletedAt })
     .from(schema.users)
     .where(eq(schema.users.username, target))
     .limit(1);
 
-  if (!user) {
+  if (!user || user.deletedAt) {
     throw new ApiError(404, "user not found");
   }
 

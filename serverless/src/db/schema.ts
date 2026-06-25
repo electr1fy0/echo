@@ -32,6 +32,7 @@ export const users = pgTable("users", {
   newEmail: text("new_email"),
   emailChangeToken: text("email_change_token"),
   emailChangeExpiry: timestamp("email_change_expiry", { mode: "date" }),
+  deletedAt: timestamp("deleted_at", { mode: "date" }),
 }, (table) => [unique("users_email_key").on(table.email)]);
 
 export const chambers = pgTable("chambers", {
@@ -281,6 +282,23 @@ export const postViews = pgTable("post_views", {
     onDelete: "set null",
   }),
   viewedAt: timestamp("viewed_at", { mode: "date" }).defaultNow().notNull(),
+});
+
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  username: text("username").references(() => users.username, {
+    onUpdate: "cascade",
+    onDelete: "set null",
+  }),
+  sessionId: text("session_id").notNull(),
+  ip: text("ip"),
+  userAgent: text("user_agent"),
+  page: text("page"),
+  referrer: text("referrer"),
+  startedAt: timestamp("started_at", { mode: "date" }).defaultNow().notNull(),
+  lastActiveAt: timestamp("last_active_at", { mode: "date" }).defaultNow().notNull(),
+  endedAt: timestamp("ended_at", { mode: "date" }),
+  duration: integer("duration"),
 });
 
 export const otpCodes = pgTable("otp_codes", {

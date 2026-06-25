@@ -418,7 +418,7 @@ export const searchUsers = (db: DB, query: string) =>
       bio: sql<string>`coalesce(${schema.users.bio}, '')`,
     })
     .from(schema.users)
-    .where(ilike(schema.users.username, `%${query}%`))
+    .where(and(ilike(schema.users.username, `%${query}%`), isNull(schema.users.deletedAt)))
     .limit(5);
 
 export const listChambers = (db: DB, currentUser: string | undefined | null, query = "") => {

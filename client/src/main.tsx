@@ -13,7 +13,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
+      staleTime: 60_000,
       retry: (failureCount, error) => {
         if (error instanceof ApiError && error.status === 429) return false;
         return failureCount < 3;

@@ -46,3 +46,29 @@ export async function trackPostView(postUid: string): Promise<void> {
     headers: { ...getAuthHeaders() },
   });
 }
+
+function getSessionId(): string {
+  let sessionId = sessionStorage.getItem("app_session_id");
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    sessionStorage.setItem("app_session_id", sessionId);
+  }
+  return sessionId;
+}
+
+export async function sendHeartbeat(page: string, referrer?: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}/analytics/session/heartbeat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({
+        sessionId: getSessionId(),
+        page,
+        referrer: referrer ?? document.referrer,
+      }),
+    });
+  } catch {}
+}

@@ -60,8 +60,8 @@ export function CreateChamberDialog({
           description: "",
           colorIndex: 0,
         });
-        if (newChamber?.uid) {
-          navigate(`/chamber/${newChamber.uid}`);
+        if (newChamber) {
+          navigate(`/chambers/${newChamber.name || newChamber.uid}`);
           toastManager.add({ title: "Chamber created successfully", type: "success" });
         }
       },

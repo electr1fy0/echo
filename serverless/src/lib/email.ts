@@ -47,6 +47,7 @@ const getTemplate = (
       .email-fallback-label { color: #52525b !important; }
       .email-fallback-link { color: #a1a1aa !important; }
       .email-footer-text { color: #52525b !important; }
+      .email-otp { color: #fafafa !important; }
     }
   </style>
 </head>
@@ -201,7 +202,7 @@ export const sendOtpEmail = async (
       `Use the code below to sign in to TurnsOut. This code expires in ${otpTtl} minutes.`,
       "Sign in with code",
       magicLink,
-      `<div style="letter-spacing: 0.25em; font-size: 36px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #09090b;">${otp}</div>
+      `<div class="email-otp" style="letter-spacing: 0.25em; font-size: 36px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #09090b;">${otp}</div>
 
 <p style="font-size: 15px; font-weight: 400; color: #52525b; margin: 16px 0; line-height: 1.6; text-align: center;">Alternatively, click the button above to sign in automatically.</p>`,
       logoUrl,
@@ -227,7 +228,7 @@ export const sendEmailChangeOtp = async (
       "We received a request to change your email address. Use the code below to verify this change.",
       "Copy code",
       "#",
-      `<div style="letter-spacing: 0.25em; font-size: 36px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #09090b;">${otp}</div>`,
+      `<div class="email-otp" style="letter-spacing: 0.25em; font-size: 36px; font-weight: 600; text-align: center; margin: 24px 0; font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace; color: #09090b;">${otp}</div>`,
       logoUrl,
     ),
   );

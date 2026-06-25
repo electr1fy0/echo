@@ -25,7 +25,7 @@ export function useQuestionQuery(questionId: string | undefined) {
     queryKey: ["question", questionId],
     queryFn: () => fetchQuestion(questionId!),
     enabled: !!questionId,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -39,7 +39,7 @@ export function useQuestionsQuery(
   return useQuery({
     queryKey: ["questions", sort, filter, chamberId, author, postType],
     queryFn: () => fetchQuestions(sort, filter, chamberId, author, undefined, undefined, postType),
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -64,7 +64,7 @@ export function useInfiniteQuestionsQuery(
       if (lastPage.length < pageSize) return undefined;
       return allPages.length * pageSize;
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -73,7 +73,7 @@ export function usePinnedQuestionsQuery(chamberId: string | undefined, postType?
     queryKey: ["questions", "pinned", chamberId, postType, channelUid, channelName],
     queryFn: () => fetchQuestions("time_created", undefined, chamberId, undefined, 10, 0, postType, true, undefined, channelUid, channelName),
     enabled: !!chamberId,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -81,7 +81,7 @@ export function useUserQuestionsQuery() {
   return useQuery({
     queryKey: ["user-questions"],
     queryFn: () => fetchUserQuestions(),
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -95,7 +95,7 @@ export function useInfiniteUserQuestionsQuery(pageSize = 20) {
       if (lastPage.length < pageSize) return undefined;
       return allPages.length * pageSize;
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -103,7 +103,7 @@ export function useTrendingQuestions() {
   return useQuery({
     queryKey: ["questions", "votes"],
     queryFn: () => fetchQuestions("votes"),
-    staleTime: 60_000,
+    staleTime: 120_000,
   });
 }
 
@@ -247,7 +247,7 @@ export function useSearchQuestions(query: string) {
     queryKey: ["search-questions", query],
     queryFn: () => searchQuestions(query),
     enabled: query.length > 0,
-    staleTime: 30_000,
+    staleTime: 60_000,
   });
 }
 
@@ -280,7 +280,7 @@ export function usePartnerApplicationsQuery(questionId: string | undefined) {
     queryKey: ["partner-applications", questionId],
     queryFn: () => fetchPartnerApplications(questionId!),
     enabled: !!questionId,
-    staleTime: 10_000,
+    staleTime: 30_000,
   });
 }
 

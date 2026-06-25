@@ -16,7 +16,7 @@ export function useGlobalSearch(query: string) {
     queryKey: ["search", query],
     queryFn: () => globalSearch(query),
     enabled: query.length > 0,
-    staleTime: 1000 * 60 * 1,
+    staleTime: 1000 * 60 * 2,
   });
   return { ...result, data: normalizeSearchResponse(result.data) };
 }
