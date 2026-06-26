@@ -13,6 +13,16 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { handleApiError } from "@/lib/api-error";
 import { cn } from "@/lib/utils";
 
+const IMAGE_URL_RE = /https?:\/\/\S+\.(jpe?g|png|gif|webp|avif|bmp)(\?.*)?$/i;
+
+function getPreviewText(preview: string | null): string {
+  if (!preview) return "No messages yet";
+  const lines = preview.split("\n").filter((l) => l.trim());
+  const nonImageLines = lines.filter((l) => !IMAGE_URL_RE.test(l.trim()));
+  if (nonImageLines.length === 0) return "Sent an image";
+  return nonImageLines[0];
+}
+
 export default function DMsPage() {
   const { data: conversations, isLoading } = useConversations();
   const { mutate: startConversation, isPending } = useCreateConversation();
@@ -112,7 +122,7 @@ export default function DMsPage() {
                   )}
                 </div>
                 <p className="text-xs text-neutral-500 truncate mt-0.5">
-                  {conv.lastMessagePreview || "No messages yet"}
+                  {getPreviewText(conv.lastMessagePreview)}
                 </p>
               </div>
             </button>

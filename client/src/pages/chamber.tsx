@@ -851,7 +851,7 @@ export default function ChamberPage() {
 
       {/* Edit Channel Dialog */}
       <Dialog open={isEditChannelOpen} onOpenChange={setIsEditChannelOpen}>
-        <DialogPopup className="sm:max-w-[640px]">
+        <DialogPopup className="sm:max-w-[640px] max-sm:mb-4">
           <DialogHeader>
             <DialogTitle>Edit Channel: #{editingChannel?.name}</DialogTitle>
           </DialogHeader>
@@ -876,9 +876,8 @@ export default function ChamberPage() {
             />
           </DialogPanel>
 
-          <DialogFooter className="sm:justify-between" variant="bare">
-            {editingChannel?.name !== "discussion" &&
-            editingChannel?.name !== "discussions" ? (
+          <DialogFooter className="!px-6 mt-4" variant="bare">
+            <div className="flex w-full flex-wrap gap-2 sm:flex-row sm:justify-between">
               <Button
                 type="button"
                 variant="destructive"
@@ -889,25 +888,25 @@ export default function ChamberPage() {
                   ? "Deleting..."
                   : "Delete Channel"}
               </Button>
-            ) : null}
-            <div className="flex gap-2">
-              <DialogClose
-                render={<Button variant="outline" type="button" />}
-              >
-                Cancel
-              </DialogClose>
-              <Button
-                variant="default"
-                type="submit"
-                onClick={handleEditChannelSubmit}
-                disabled={
-                  updateChannelMutation.isPending || !editChannelName.trim()
-                }
-              >
-                {updateChannelMutation.isPending
-                  ? "Saving..."
-                  : "Save Changes"}
-              </Button>
+              <div className="flex gap-2 ml-auto">
+                <DialogClose
+                  render={<Button variant="outline" type="button" />}
+                >
+                  Cancel
+                </DialogClose>
+                <Button
+                  variant="default"
+                  type="submit"
+                  onClick={handleEditChannelSubmit}
+                  disabled={
+                    updateChannelMutation.isPending || !editChannelName.trim()
+                  }
+                >
+                  {updateChannelMutation.isPending
+                    ? "Saving..."
+                    : "Save"}
+                </Button>
+              </div>
             </div>
           </DialogFooter>
         </DialogPopup>

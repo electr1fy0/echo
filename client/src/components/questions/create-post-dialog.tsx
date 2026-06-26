@@ -46,6 +46,15 @@ import {
 } from "@hugeicons/core-free-icons";
 import { uploadImagePresigned } from "@/api/upload";
 import {
+  Attachment,
+  AttachmentMedia,
+  AttachmentContent,
+  AttachmentTitle,
+  AttachmentDescription,
+  AttachmentActions,
+  AttachmentAction,
+} from "@/components/ui/attachment";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -695,53 +704,56 @@ export function CreatePostDialog() {
                             return (
                               <div className="w-full">
                                 {fileVal ? (
-                                  <div className="flex items-center justify-between p-3 border border-neutral-200 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-900/10 rounded-2xl text-xs font-semibold">
-                                    <div className="flex items-center gap-2.5 truncate max-w-[80%] text-neutral-800 dark:text-neutral-200">
-                                      <FileIcon className="size-4 text-neutral-450 dark:text-neutral-400 shrink-0" />
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="font-semibold truncate">
-                                          {fileVal.name}
-                                        </span>
-                                        <span className="text-[10px] text-neutral-450 dark:text-neutral-500 font-medium">
-                                          {(
-                                            fileVal.size /
-                                            (1024 * 1024)
-                                          ).toFixed(2)}{" "}
-                                          MB
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      onClick={() => setVal(undefined)}
-                                      className="text-xs text-[var(--brand)] hover:text-[var(--brand-hover)] cursor-pointer font-bold border-none bg-transparent"
-                                    >
-                                      Remove
-                                    </button>
-                                  </div>
+                                  <Attachment state="done" className="w-full">
+                                    <AttachmentMedia>
+                                      <FileIcon className="size-4" />
+                                    </AttachmentMedia>
+                                    <AttachmentContent>
+                                      <AttachmentTitle>
+                                        {fileVal.name}
+                                      </AttachmentTitle>
+                                      <AttachmentDescription>
+                                        {(fileVal.size / (1024 * 1024)).toFixed(2)} MB
+                                      </AttachmentDescription>
+                                    </AttachmentContent>
+                                    <AttachmentActions>
+                                      <AttachmentAction
+                                        onClick={() => setVal(undefined)}
+                                        aria-label="Remove file"
+                                        size="icon-xs"
+                                      >
+                                        <HugeiconsIcon icon={Delete02Icon} className="size-3" />
+                                      </AttachmentAction>
+                                    </AttachmentActions>
+                                  </Attachment>
                                 ) : (
-                                  <div className="relative w-full h-24 border border-dashed border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700 bg-neutral-50/20 dark:bg-neutral-900/5 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all">
+                                  <div className="relative w-full">
                                     <input
                                       type="file"
                                       onChange={onFileChange}
                                       disabled={isUploading}
-                                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                      className="absolute inset-0 z-10 opacity-0 cursor-pointer h-full w-full"
                                     />
-                                    {isUploading ? (
-                                      <>
-                                        <span className="inline-block size-5 rounded-full border-2 border-neutral-300 border-t-[var(--brand)] animate-spin" />
-                                        <span className="text-[11px] text-neutral-500">
-                                          Uploading...
-                                        </span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <FileUp className="size-5 text-neutral-400 shrink-0" />
-                                        <span className="text-xs text-neutral-500 font-medium">
-                                          Click to Upload (max 12MB)
-                                        </span>
-                                      </>
-                                    )}
+                                    <Attachment
+                                      state={isUploading ? "uploading" : "idle"}
+                                      className="w-full pointer-events-none"
+                                    >
+                                      <AttachmentMedia>
+                                        {isUploading ? (
+                                          <span className="inline-block size-4 rounded-full border-2 border-neutral-300 border-t-[var(--brand)] animate-spin" />
+                                        ) : (
+                                          <FileUp className="size-4" />
+                                        )}
+                                      </AttachmentMedia>
+                                      <AttachmentContent>
+                                        <AttachmentTitle>
+                                          {isUploading ? "Uploading..." : "Click to Upload"}
+                                        </AttachmentTitle>
+                                        <AttachmentDescription>
+                                          Max 12 MB
+                                        </AttachmentDescription>
+                                      </AttachmentContent>
+                                    </Attachment>
                                   </div>
                                 )}
                               </div>

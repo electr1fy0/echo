@@ -164,7 +164,7 @@ function CountdownRing({
 const TriggerWrapper = ({ children, onExpand }: { children: React.ReactNode; onExpand?: () => void }) => {
   return (
     <AccordionTrigger
-      className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
+      className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left min-w-0"
       onPointerDown={onExpand}
     >
       {children}

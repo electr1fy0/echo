@@ -18,7 +18,7 @@ export function ImageCarousel({ urls, className, compact = false }: ImageCarouse
     <>
       <div
         className={cn(
-          "flex overflow-x-auto snap-x snap-mandatory scrollbar-none gap-3",
+          "flex overflow-x-auto snap-x snap-mandatory scrollbar-none gap-3 max-w-full",
           className,
         )}
       >

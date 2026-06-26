@@ -218,11 +218,11 @@ export function PostContent({ content, className, showPreviews = true, compactIm
         </a>
       );
     } else {
+      if (seg.content.trim() === "") continue;
       if (imageGroup.length > 0) {
         nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" compact={compactImages} />);
         imageGroup = [];
       }
-      if (seg.content.trim() === "") continue;
       nodes.push(
         <span key={`txt-${keyIndex++}`} className="inline">
           {renderMentions(seg.content, `pc-${keyIndex}`)}

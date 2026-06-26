@@ -20,6 +20,7 @@
     "@ncdai/react-wheel-picker": "^1.2.2",
     "@number-flow/react": "^0.6.0",
     "@radix-ui/react-popover": "^1.1.17",
+    "@shadcn/react": "^0.1.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tanstack/react-query": "^5.90.17",
     "@vercel/og": "^0.11.1",
