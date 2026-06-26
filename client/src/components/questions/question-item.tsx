@@ -23,6 +23,7 @@ import {
   useUnpinQuestion,
   useExpressInterestViaDM,
 } from "@/hooks/use-questions";
+import { useReportContent } from "@/hooks/use-reports";
 import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -41,7 +42,7 @@ import { ThreadedReplies } from "./threaded-replies";
 import { ReplyForm } from "./reply-form";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserPreviewCard } from "@/components/ui/user-preview-card";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatTimeAgo } from "@/lib/utils";
 import { toastManager } from "@/components/ui/toast";
 import {
   AlertDialog,
@@ -177,10 +178,8 @@ export function QuestionItem({
   const author = (questionItem as QuestionItem | undefined)?.author ?? null;
   const questionId = question?.uid;
   const navigate = useNavigate();
-  const [hasExpanded, setHasExpanded] = useState(false);
-
   const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(
-    hasExpanded ? questionId || undefined : undefined,
+    questionId || undefined,
   );
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
@@ -192,6 +191,7 @@ export function QuestionItem({
     useUnpinQuestion();
   const { mutate: sendInterestDM, isPending: isDMPending } =
     useExpressInterestViaDM();
+  const { mutate: report } = useReportContent();
 
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
@@ -206,7 +206,7 @@ export function QuestionItem({
       value={questionId}
       className="w-full border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
     >
-      <TriggerWrapper onExpand={() => setHasExpanded(true)}>
+      <TriggerWrapper>
         <div className="flex items-start gap-3 w-full">
           {isAnonymous ? (
             <div className="shrink-0 mt-1 relative">
@@ -254,7 +254,7 @@ export function QuestionItem({
             })()
           )}
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-start sm:items-center justify-between gap-2">
               <div className="flex pt-1 items-center gap-2.5 flex-wrap min-w-0">
                 {isAnonymous ? (
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -276,12 +276,6 @@ export function QuestionItem({
                     in {question.chamberName}
                   </Link>
                 )}
-                <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                  {question.timeCreated &&
-                    formatDistanceToNowStrict(new Date(question.timeCreated), {
-                      addSuffix: true,
-                    })}
-                </span>
                 {isExpiring && (
                   <span className="text-neutral-400 dark:text-neutral-500 leading-none inline-flex items-center">
                     <svg
@@ -301,57 +295,67 @@ export function QuestionItem({
                     </svg>
                   </span>
                 )}
-                {isPinned && (
-                  <span className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">
-                    Pinned
+                <span className="flex items-center gap-2.5 flex-nowrap">
+                  <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                    {question.timeCreated && formatTimeAgo(question.timeCreated)}
                   </span>
-                )}
-                {isSolved && (
-                  <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
-                    Solved
-                  </span>
-                )}
-                {replies && replies.length > 0 && (() => {
-                  const uniqueAuthors = Array.from(
-                    new Set(
-                      replies.map((r) =>
-                        r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername,
+                  {isPinned && (
+                    <span className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">
+                      Pinned
+                    </span>
+                  )}
+                  {isSolved && (
+                    <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
+                      Solved
+                    </span>
+                  )}
+                  {replies && replies.length > 0 ? (() => {
+                    const uniqueAuthors = Array.from(
+                      new Set(
+                        replies.map((r) =>
+                          r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername,
+                        ),
                       ),
-                    ),
-                  );
-                  const uniqueCount = uniqueAuthors.length;
-                  const topAuthors = uniqueAuthors.slice(0, 3);
-                  return (
-                    <div className="flex items-center gap-1.5 ml-1">
-                      <AvatarGroup className="h-3">
-                        {topAuthors.map((username, i) => {
-                          const reply = replies.find(
-                            (r) =>
-                              (r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername) === username,
-                          );
-                          const isAnonReply = reply?.answer.isAnonymous;
-                          return (
-                            <UserAvatar
-                              key={username || i}
-                              name={isAnonReply ? "Anonymous" : username}
-                              src={isAnonReply ? undefined : reply?.author?.avatar}
-                              className="size-3 ring-1 ring-background"
-                            />
-                          );
-                        })}
-                        {uniqueCount > 3 && (
-                          <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
-                            +{uniqueCount - 3}
-                          </AvatarGroupCount>
-                        )}
-                      </AvatarGroup>
-                      <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                        {question.repliesCount ?? replies.length}{" "}
-                        {(question.repliesCount ?? replies.length) === 1 ? "reply" : "replies"}
-                      </span>
-                    </div>
-                  );
-                })()}
+                    );
+                    const uniqueCount = uniqueAuthors.length;
+                    const topAuthors = uniqueAuthors.slice(0, 3);
+                    return (
+                      <div className="flex items-center gap-1.5 ml-1">
+                        <AvatarGroup className="h-3">
+                          {topAuthors.map((username, i) => {
+                            const reply = replies.find(
+                              (r) =>
+                                (r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername) === username,
+                            );
+                            const isAnonReply = reply?.answer.isAnonymous;
+                            return (
+                              <UserAvatar
+                                key={username || i}
+                                name={isAnonReply ? "Anonymous" : username}
+                                src={isAnonReply ? undefined : reply?.author?.avatar}
+                                className="size-3 ring-1 ring-background"
+                              />
+                            );
+                          })}
+                          {uniqueCount > 3 && (
+                            <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
+                              +{uniqueCount - 3}
+                            </AvatarGroupCount>
+                          )}
+                        </AvatarGroup>
+                        <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                          {question.repliesCount ?? replies.length}{" "}
+                          {(question.repliesCount ?? replies.length) === 1 ? "reply" : "replies"}
+                        </span>
+                      </div>
+                    );
+                  })() : question.repliesCount ? (
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500 ml-1">
+                      {question.repliesCount}{" "}
+                      {question.repliesCount === 1 ? "reply" : "replies"}
+                    </span>
+                  ) : null}
+                </span>
               </div>
               <div
                 onClick={(e) => e.stopPropagation()}
@@ -432,13 +436,13 @@ export function QuestionItem({
                       />
                       Share
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => alert("Reported content")}>
-                      <HugeiconsIcon
-                        icon={Alert01Icon}
-                        className="mr-2 size-4"
-                      />
-                      Report
-                    </DropdownMenuItem>
+<DropdownMenuItem onClick={() => report({ targetType: "post", targetUid: questionId })}>
+  <HugeiconsIcon
+    icon={Alert01Icon}
+    className="mr-2 size-4"
+  />
+  Report
+</DropdownMenuItem>
                     {user?.username === question.authorUsername && (
                       <>
                         <DropdownMenuItem

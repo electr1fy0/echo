@@ -24,9 +24,10 @@ import { useReplyUpdateVote } from "@/hooks/use-upvote";
 import { useAcceptReply, useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
+import { useReportContent } from "@/hooks/use-reports";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserPreviewCard } from "@/components/ui/user-preview-card";
-import { formatDistanceToNowStrict } from "date-fns";
+import { formatTimeAgo } from "@/lib/utils";
 import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ export function ReplyItem({
   const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
+  const { mutate: report } = useReportContent();
 
   const reply = answerItem.answer;
 
@@ -153,10 +155,7 @@ export function ReplyItem({
                 </span>
               )}
               <span className="text-neutral-400 dark:text-neutral-500">
-                {reply.timeCreated &&
-                  formatDistanceToNowStrict(new Date(reply.timeCreated), {
-                    addSuffix: true,
-                  })}
+                {reply.timeCreated && formatTimeAgo(reply.timeCreated)}
               </span>
               {reply.isAccepted && (
                 <span className="text-[10px] uppercase tracking-wide bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
@@ -185,10 +184,10 @@ export function ReplyItem({
                       <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
                       Copy Text
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => alert("Reported content")}>
-                      <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
-                      Report
-                    </DropdownMenuItem>
+<DropdownMenuItem onClick={() => report({ targetType: "reply", targetUid: reply.uid })}>
+  <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
+  Report
+</DropdownMenuItem>
                     {user?.username === reply.authorUsername && (
                       <>
                         <DropdownMenuItem onClick={() => setIsEditing(true)}>
@@ -280,6 +279,7 @@ export function ReplyItem({
                   content={reply.content}
                   className="block text-sm text-neutral-700 dark:text-neutral-300"
                   showPreviews={false}
+                  compactImages
                 />
                 {onReply && (
                   <div className="text-right">

@@ -188,6 +188,11 @@ export const deleteChamberSchema = z.object({
   name: z.string().min(1, "name is required"),
 });
 
+export const createReportSchema = z.object({
+  targetType: z.union([z.literal("post"), z.literal("reply")]),
+  targetUid: z.string().min(1, "target uid is required"),
+});
+
 export const presignUploadSchema = z.object({
   filename: z.string().min(1, "filename is required"),
   contentType: z.string().min(1, "contentType is required"),

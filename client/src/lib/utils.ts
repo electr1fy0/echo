@@ -1,5 +1,22 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { differenceInMinutes, differenceInHours, differenceInDays, differenceInWeeks, differenceInMonths, differenceInYears } from "date-fns";
+
+export function formatTimeAgo(date: string | Date) {
+  const d = new Date(date);
+  const mins = differenceInMinutes(new Date(), d);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hours = differenceInHours(new Date(), d);
+  if (hours < 24) return `${hours}h`;
+  const days = differenceInDays(new Date(), d);
+  if (days < 7) return `${days}d`;
+  const weeks = differenceInWeeks(new Date(), d);
+  if (weeks < 4) return `${weeks}w`;
+  const months = differenceInMonths(new Date(), d);
+  if (months < 12) return `${months}mo`;
+  return `${differenceInYears(new Date(), d)}y`;
+}
 const GOOGLE_ONBOARDING_TOKEN_KEY = "google_onboarding_token";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

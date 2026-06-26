@@ -12,6 +12,7 @@ import { dmRoutes } from "./routes/dms";
 import { uploadRoutes, imageRoutes } from "./routes/upload";
 import { analyticsRoutes } from "./routes/analytics";
 import { linkPreviewRoutes } from "./routes/link-previews";
+import { reportRoutes } from "./routes/reports";
 import type { AppEnv } from "./types/app";
 import { rateLimit } from "./middleware/rateLimit";
 
@@ -54,5 +55,6 @@ app.route("/upload", uploadRoutes);
 app.route("/images", imageRoutes);
 app.route("/analytics", analyticsRoutes);
 app.route("/link-previews", linkPreviewRoutes);
+app.route("/reports", reportRoutes);
 
 export default app;

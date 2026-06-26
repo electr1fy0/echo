@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 type ImageCarouselProps = {
   urls: string[];
   className?: string;
+  compact?: boolean;
 };
 
-export function ImageCarousel({ urls, className }: ImageCarouselProps) {
+export function ImageCarousel({ urls, className, compact = false }: ImageCarouselProps) {
   const [lightboxIdx, setLightboxIdx] = useState(-1);
 
   if (urls.length === 0) return null;
@@ -32,7 +33,12 @@ export function ImageCarousel({ urls, className }: ImageCarouselProps) {
               src={url}
               alt=""
               draggable={false}
-              className="max-h-80 min-h-48 max-w-full object-contain rounded-lg"
+              className={cn(
+                "max-w-full object-contain rounded-lg",
+                compact
+                  ? "max-h-32 min-h-20 max-sm:max-h-28 max-sm:min-h-16"
+                  : "max-h-80 min-h-48 max-sm:max-h-60 max-sm:min-h-36",
+              )}
               loading="lazy"
             />
             {urls.length > 1 && (

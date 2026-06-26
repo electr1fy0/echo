@@ -315,6 +315,18 @@ export const userSessions = pgTable("user_sessions", {
   duration: integer("duration"),
 });
 
+export const reports = pgTable("reports", {
+  uid: uuid("uid").defaultRandom().primaryKey(),
+  reporterUsername: text("reporter_username")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  targetType: text("target_type").notNull(),
+  targetUid: uuid("target_uid").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+}, (table) => [
+  unique("reports_unique").on(table.reporterUsername, table.targetType, table.targetUid),
+]);
+
 export const otpCodes = pgTable("otp_codes", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),

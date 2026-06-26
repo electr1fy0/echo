@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MentionField } from "@/components/ui/mention-field";
 import { useCreateReply } from "@/hooks/use-replies";
@@ -8,6 +8,7 @@ import {
   Comment01Icon,
   Image01Icon,
   Loading03Icon,
+  Delete02Icon,
 } from "@hugeicons/core-free-icons";
 import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
@@ -45,11 +46,13 @@ export function ReplyForm({
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [content, setContent] = useState("");
+  const [attachedImages, setAttachedImages] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const { mutate: submitReply, isPending } = useCreateReply();
   const [isValidating, setIsValidating] = useState(false);
   const { trigger } = useWebHaptics();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) {
     return (
@@ -68,21 +71,23 @@ export function ReplyForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim() || isPending || isValidating) return;
+    const fullContent = content + (attachedImages.length > 0 ? "\n" + attachedImages.join("\n") : "");
+    if (!fullContent.trim() || isPending || isValidating) return;
     trigger("success");
     setIsValidating(true);
     try {
-      const result = await validateMentions(content);
+      const result = await validateMentions(fullContent);
       if (result.missing.length > 0) {
         toastManager.add({ title: `User not found: ${result.missing.join(", ")}`, type: "error" });
         setIsValidating(false);
         return;
       }
       submitReply(
-        { questionId, content, parentReplyUid, isAnonymous },
+        { questionId, content: fullContent, parentReplyUid, isAnonymous },
         {
           onSuccess: () => {
             setContent("");
+            setAttachedImages([]);
             setIsAnonymous(false);
             toastManager.add({ title: "Reply posted", type: "success" });
             onSubmitSuccess?.();
@@ -139,16 +144,16 @@ export function ReplyForm({
           <Tooltip>
             <TooltipTrigger
               render={
-                <button
-                  type="button"
-                  onClick={() => setIsAnonymous((p) => !p)}
-                  className={cn(
-                    "size-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors",
-                    isAnonymous
-                      ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
-                      : "bg-transparent text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300",
-                  )}
-                >
+                  <button
+                    type="button"
+                    onClick={() => setIsAnonymous((p) => !p)}
+                    className={cn(
+                      "size-8 flex items-center justify-center rounded-lg cursor-pointer transition-colors",
+                      isAnonymous
+                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-300"
+                        : "text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-600 dark:hover:text-white",
+                    )}
+                  >
                   <HugeiconsIcon icon={AnonymousIcon} className="size-4" />
                 </button>
               }
@@ -159,10 +164,8 @@ export function ReplyForm({
           </Tooltip>
           <button
             type="button"
-            disabled={imageUploading}
-            onClick={() =>
-              document.getElementById("reply-image-input")?.click()
-            }
+            disabled={imageUploading || attachedImages.length >= 1}
+            onClick={() => fileInputRef.current?.click()}
             className="size-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer transition-colors disabled:opacity-50"
           >
             {imageUploading ? (
@@ -173,7 +176,7 @@ export function ReplyForm({
           </button>
           <Button
             type="submit"
-            disabled={!content.trim() || isValidating || isPending}
+            disabled={(!content.trim() && attachedImages.length === 0) || isValidating || isPending}
             className="size-8 p-0 rounded-lg cursor-pointer"
           >
             {isPending ? (
@@ -184,8 +187,31 @@ export function ReplyForm({
           </Button>
         </div>
       </div>
+      {attachedImages.length > 0 && (
+        <div className="flex gap-2 pt-2 pb-1 overflow-x-auto scrollbar-none">
+          {attachedImages.map((url, i) => (
+            <div
+              key={i}
+              className="relative shrink-0 group transition-transform hover:scale-105"
+            >
+              <img
+                src={url}
+                alt=""
+                className="size-12 rounded-xl object-cover shadow-sm border border-neutral-200/50 dark:border-neutral-700/50"
+              />
+              <button
+                type="button"
+                onClick={() => setAttachedImages((prev) => prev.filter((_, j) => j !== i))}
+                className="absolute -top-1 -right-1 size-4 rounded-full bg-neutral-900/80 hover:bg-red-500 text-white flex items-center justify-center transition-colors cursor-pointer shadow-sm border border-white dark:border-neutral-800"
+              >
+                <HugeiconsIcon icon={Delete02Icon} className="size-2.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <input
-        id="reply-image-input"
+        ref={fileInputRef}
         type="file"
         accept="image/*"
         className="hidden"
@@ -195,8 +221,9 @@ export function ReplyForm({
           if (!file) return;
           setImageUploading(true);
           try {
+            if (attachedImages.length >= 1) return;
             const url = await uploadImagePresigned(file);
-            setContent((prev) => prev + `\n${url}\n`);
+            setAttachedImages((prev) => [...prev, url]);
           } catch {
             toastManager.add({ title: "Image upload failed", type: "error" });
           } finally {

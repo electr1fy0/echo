@@ -8,6 +8,7 @@ type PostContentProps = {
   content: string;
   className?: string;
   showPreviews?: boolean;
+  compactImages?: boolean;
 };
 
 const mentionRegex = /@([a-zA-Z0-9_]+)/g;
@@ -182,7 +183,7 @@ function LinkPreview({ url }: { url: string }) {
   return null;
 }
 
-export function PostContent({ content, className, showPreviews = true }: PostContentProps) {
+export function PostContent({ content, className, showPreviews = true, compactImages = false }: PostContentProps) {
   const segments = tokenize(content);
 
   const nodes: React.ReactNode[] = [];
@@ -194,7 +195,7 @@ export function PostContent({ content, className, showPreviews = true }: PostCon
       imageGroup.push(seg.url);
     } else if (seg.type === "url") {
       if (imageGroup.length > 0) {
-        nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" />);
+        nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" compact={compactImages} />);
         imageGroup = [];
       }
       
@@ -217,12 +218,11 @@ export function PostContent({ content, className, showPreviews = true }: PostCon
         </a>
       );
     } else {
-      const isWhitespace = seg.content.trim() === "";
-      if (imageGroup.length > 0 && isWhitespace) continue;
       if (imageGroup.length > 0) {
-        nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" />);
+        nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" compact={compactImages} />);
         imageGroup = [];
       }
+      if (seg.content.trim() === "") continue;
       nodes.push(
         <span key={`txt-${keyIndex++}`} className="inline">
           {renderMentions(seg.content, `pc-${keyIndex}`)}
@@ -232,7 +232,7 @@ export function PostContent({ content, className, showPreviews = true }: PostCon
   }
 
   if (imageGroup.length > 0) {
-    nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" />);
+    nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" compact={compactImages} />);
   }
 
   // Generate unique URL bookmarks at the bottom
