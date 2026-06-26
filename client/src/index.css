@@ -750,11 +750,6 @@ a.bg-destructive:active {
     border-bottom-color: color-mix(in srgb, var(--foreground) 12%, transparent) !important;
 }
 
-.driver-overlay {
-    backdrop-filter: blur(4px) !important;
-    -webkit-backdrop-filter: blur(4px) !important;
-}
-
 .driver-stage {
     background: transparent !important;
     box-shadow: 0 0 0 9999px color-mix(in srgb, #000 60%, transparent) !important;

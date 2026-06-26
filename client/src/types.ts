@@ -174,6 +174,20 @@ export interface SchemaField {
   options?: string[];
 }
 
+export const ALLOWED_FIELD_TYPES = [
+  "image",
+  "poll",
+  "currency",
+  "datetime",
+  "file",
+  "location",
+  "source_destination",
+  "key_value",
+  "button",
+] as const;
+
+export type AllowedFieldType = (typeof ALLOWED_FIELD_TYPES)[number];
+
 export interface Channel {
   uid: string;
   chamberUid: string;

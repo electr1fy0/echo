@@ -67,6 +67,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { SchemaField } from "@/types";
+import { ALLOWED_FIELD_TYPES } from "@/types";
 
 const FIELD_TYPES = [
   { value: "image", label: "Image", icon: ImageIcon },
@@ -170,17 +171,8 @@ export function CreatePostDialog() {
       const schemaFields = (selectedChannelData.schema || []).filter(
         (f: any) =>
           f.disabled !== true &&
-          [
-            "image",
-            "poll",
-            "currency",
-            "datetime",
-            "file",
-            "location",
-            "source_destination",
-            "key_value",
-            "button",
-          ].includes(f.type),
+          ALLOWED_FIELD_TYPES.includes(f.type) &&
+          f.required,
       );
       setActiveFields(schemaFields);
     } else {
@@ -213,6 +205,9 @@ export function CreatePostDialog() {
     setImages((prev) => prev.filter((_, i) => i !== idx));
 
   const addFieldType = (type: SchemaField["type"]) => {
+    if (!ALLOWED_FIELD_TYPES.includes(type as any)) return;
+    if (activeFields.some((f) => f.type === type)) return;
+
     const defaultLabels: Record<string, string> = {
       text: "Text Field",
       number: "Count",
@@ -541,7 +536,7 @@ export function CreatePostDialog() {
               <div className="flex items-center gap-1.5 flex-wrap">
                 {FIELD_TYPES.map((ft) => {
                   const Icon = ft.icon;
-                  const disabled = !selectedChamber || restrictedTypes.has(ft.value);
+                  const disabled = !selectedChamber || restrictedTypes.has(ft.value) || activeFields.some((f) => f.type === ft.value);
 
                   return (
                     <button

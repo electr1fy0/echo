@@ -657,7 +657,7 @@ export default function Profile() {
                 <a
                   key={chamber.uid || i}
                   href={`/chambers/${chamber.slug || chamber.uid}`}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
                 >
                   <ChamberAvatar
                     name={chamber.name}
@@ -804,7 +804,7 @@ export default function Profile() {
                             <Button
                               type="button"
                               variant="outline"
-                              size="xs"
+                    size="sm"
                               onClick={() => {
                                 setNewEmail("");
                                 setOtp("");
@@ -829,7 +829,7 @@ export default function Profile() {
                                   <Button
                                     type="button"
                                     variant="default"
-                                    size="xs"
+                  size="sm"
                                     disabled={isSendingOtp || !newEmail}
                                     onClick={() => {
                                       sendOtp(newEmail, {

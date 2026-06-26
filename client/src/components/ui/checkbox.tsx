@@ -18,7 +18,7 @@ export function Checkbox({
       {...props}
     >
       <CheckboxPrimitive.Indicator
-        className="absolute -inset-px flex items-center justify-center rounded-[.25rem] text-primary-foreground data-unchecked:hidden data-checked:bg-primary data-indeterminate:text-foreground"
+        className="absolute -inset-px flex items-center justify-center rounded-[.25rem] text-white data-unchecked:hidden data-checked:bg-neutral-900 dark:data-checked:bg-neutral-100 data-checked:text-white dark:data-checked:text-neutral-900 data-indeterminate:text-foreground"
         data-slot="checkbox-indicator"
         render={(
           props: React.ComponentProps<"span">,

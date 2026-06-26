@@ -65,18 +65,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import {
-  MessageSquare,
-  ShoppingBag,
-  Car,
-  Users,
-  Search,
-  Hash,
-  FileText,
   Plus,
-  HelpCircle,
-  Code,
-  BookOpen,
-  Utensils,
   Trash2,
   Flame,
   Clock,
@@ -88,171 +77,16 @@ import {
   UserCheck,
 } from "lucide-react";
 
-const ICON_MAP: Record<string, any> = {
-  "message-square": MessageSquare,
-  "shopping-bag": ShoppingBag,
-  car: Car,
-  users: Users,
-  search: Search,
-  "file-text": FileText,
-  "help-circle": HelpCircle,
-  code: Code,
-  "book-open": BookOpen,
-  utensils: Utensils,
-  hash: Hash,
-};
-
-const TEMPLATES = [
-  {
-    name: "Discussion",
-    desc: "Q&A, general chatter, and thoughts",
-    icon: "message-square",
-    schema: [],
-  },
-  {
-    name: "Marketplace",
-    desc: "Sell textbooks, hostel gear, or electronics",
-    icon: "shopping-bag",
-    schema: [
-      { id: "price", type: "currency", label: "Price (₹)", required: true },
-      {
-        id: "condition",
-        type: "select",
-        label: "Condition",
-        options: ["Brand New", "Like New", "Used", "Digital/PDF"],
-        required: true,
-      },
-      {
-        id: "category",
-        type: "select",
-        label: "Category",
-        options: [
-          "Textbooks",
-          "Electronics",
-          "Lab Gear",
-          "Hostel Essentials",
-          "Other",
-        ],
-        required: false,
-      },
-    ],
-  },
-  {
-    name: "Carpools",
-    desc: "Coordinate rides to airport, station, or weekend getaways",
-    icon: "car",
-    schema: [
-      { id: "departure", type: "text", label: "From", required: true },
-      { id: "destination", type: "text", label: "To", required: true },
-      {
-        id: "datetime",
-        type: "datetime",
-        label: "Departure Time",
-        required: true,
-      },
-      { id: "seats", type: "number", label: "Seats Available", required: true },
-    ],
-  },
-  {
-    name: "Study Partners",
-    desc: "Form project groups, study pods, or hackathon teams",
-    icon: "users",
-    schema: [
-      { id: "slots", type: "number", label: "Slots Needed", required: true },
-      {
-        id: "grade_target",
-        type: "select",
-        label: "Grade Target",
-        options: ["A+ / Perfect Score", "Pass", "Just for Fun"],
-        required: false,
-      },
-      {
-        id: "workstyle",
-        type: "select",
-        label: "Workstyle",
-        options: ["In-person", "Online", "Hybrid"],
-        required: false,
-      },
-    ],
-  },
-  {
-    name: "Lost & Found",
-    desc: "Report misplaced campus keys, IDs, or accessories",
-    icon: "search",
-    schema: [
-      {
-        id: "type",
-        type: "select",
-        label: "Status",
-        options: ["Lost", "Found"],
-        required: true,
-      },
-      { id: "item", type: "text", label: "Item Name", required: true },
-      { id: "location", type: "location", label: "Location", required: false },
-    ],
-  },
-  {
-    name: "LeetCode Prep",
-    desc: "Coordinate interview prep sessions & coding groups",
-    icon: "code",
-    schema: [
-      {
-        id: "difficulty",
-        type: "select",
-        label: "Target",
-        options: ["Easy", "Medium", "Hard"],
-        required: true,
-      },
-      {
-        id: "language",
-        type: "select",
-        label: "Language",
-        options: ["Python", "C++", "Java", "Go", "TypeScript"],
-        required: false,
-      },
-      {
-        id: "meet_url",
-        type: "url",
-        label: "Meet / Discord Link",
-        required: true,
-      },
-    ],
-  },
-  {
-    name: "Resources",
-    desc: "Share files like lecture notes, slides, cheat sheets, or manuals",
-    icon: "book-open",
-    schema: [
-      { id: "file", type: "file", label: "Resource File", required: true },
-      { id: "course", type: "text", label: "Course Code", required: false },
-      {
-        id: "notes",
-        type: "text",
-        label: "Description / Notes",
-        required: false,
-      },
-    ],
-  },
-  {
-    name: "Food Group-Buy",
-    desc: "Order bulk food delivery to hostels to save shipping",
-    icon: "utensils",
-    schema: [
-      { id: "deadline", type: "datetime", label: "Order By", required: true },
-      {
-        id: "min_order",
-        type: "currency",
-        label: "Min Order for Free Delivery (₹)",
-        required: false,
-      },
-      {
-        id: "pickup",
-        type: "text",
-        label: "Hostel Pick-up Point",
-        required: true,
-      },
-    ],
-  },
+const DEFAULT_CHANNEL_SCHEMA = [
+  { id: "standard_image", type: "image", label: "Image Photo", required: false },
+  { id: "standard_poll", type: "poll", label: "Poll", required: false },
+  { id: "standard_currency", type: "currency", label: "Price", required: false },
+  { id: "standard_datetime", type: "datetime", label: "Date-Time", required: false },
+  { id: "standard_file", type: "file", label: "File", required: false },
+  { id: "standard_location", type: "location", label: "Location", required: false },
+  { id: "standard_source_destination", type: "source_destination", label: "Source → Destination", required: false },
+  { id: "standard_key_value", type: "key_value", label: "Key:Value", required: false },
+  { id: "standard_button", type: "button", label: "DM Button", required: false },
 ];
 
 function formatMemberCount(count: number): string {
@@ -285,8 +119,7 @@ export default function ChamberPage() {
 
   // Create Channel Form State
   const [newChannelName, setNewChannelName] = useState("");
-  const [newChannelIcon, setNewChannelIcon] = useState("message-square");
-  const [newChannelSchema, setNewChannelSchema] = useState<any[]>([]);
+  const [newChannelSchema, setNewChannelSchema] = useState<any[]>(DEFAULT_CHANNEL_SCHEMA);
   const { mutate: createChan, isPending: isCreateChanPending } =
     useCreateChannel(chamber?.uid || "");
 
@@ -294,7 +127,6 @@ export default function ChamberPage() {
   const [editingChannel, setEditingChannel] = useState<any | null>(null);
   const [isEditChannelOpen, setIsEditChannelOpen] = useState(false);
   const [editChannelName, setEditChannelName] = useState("");
-  const [editChannelIcon, setEditChannelIcon] = useState("message-square");
   const [editChannelSchema, setEditChannelSchema] = useState<any[]>([]);
   const updateChannelMutation = useUpdateChannel(chamber?.uid || "");
   const deleteChannelMutation = useDeleteChannel(chamber?.uid || "");
@@ -304,7 +136,6 @@ export default function ChamberPage() {
   useEffect(() => {
     if (editingChannel) {
       setEditChannelName(editingChannel.name);
-      setEditChannelIcon(editingChannel.icon || "message-square");
       setEditChannelSchema(editingChannel.schema || []);
     }
   }, [editingChannel]);
@@ -322,7 +153,6 @@ export default function ChamberPage() {
         channelUid: editingChannel.uid,
         channel: {
           name: editChannelName,
-          icon: editChannelIcon,
           schema: editChannelSchema,
         },
       },
@@ -537,12 +367,6 @@ export default function ChamberPage() {
 
   const canPin = !!user?.username && user.username === chamber.creatorUsername;
 
-  const handleSelectTemplate = (tpl: (typeof TEMPLATES)[number]) => {
-    setNewChannelName(tpl.name.toLowerCase().replace(/\s+/g, "-"));
-    setNewChannelIcon(tpl.icon);
-    setNewChannelSchema([...tpl.schema]);
-  };
-
   const handleCreateChannelSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newChannelName.trim()) {
@@ -552,14 +376,13 @@ export default function ChamberPage() {
     createChan(
       {
         name: newChannelName,
-        icon: newChannelIcon,
         schema: newChannelSchema,
       },
       {
         onSuccess: (newChan) => {
           setIsCreateChannelOpen(false);
           setNewChannelName("");
-          setNewChannelSchema([]);
+          setNewChannelSchema([...DEFAULT_CHANNEL_SCHEMA]);
           setSelectedChannelUid(newChan.uid);
           toastManager.add({ title: "Channel created!", type: "success" });
         },
@@ -989,34 +812,6 @@ export default function ChamberPage() {
           </DialogHeader>
           <form onSubmit={handleCreateChannelSubmit}>
             <DialogPanel className="space-y-5">
-              {/* Template Selector */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
-                  Start with a Template
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {TEMPLATES.map((tpl) => {
-                    const IconComp = ICON_MAP[tpl.icon] || Hash;
-                    return (
-                      <button
-                        key={tpl.name}
-                        type="button"
-                        onClick={() => handleSelectTemplate(tpl)}
-                        className="flex flex-col items-start p-3 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-700 bg-background/50 hover:bg-neutral-50/50 dark:hover:bg-neutral-900/30 rounded-xl text-left transition-all cursor-pointer"
-                      >
-                        <div className="flex items-center gap-1.5 text-xs text-neutral-900 dark:text-neutral-200">
-                          <IconComp className="size-3.5 text-[var(--brand)]" />
-                          {tpl.name}
-                        </div>
-                        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 leading-normal">
-                          {tpl.desc}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* General Properties */}
               <div className="space-y-3 pt-2 border-t border-neutral-100 dark:border-neutral-900">
                 <div>
@@ -1028,33 +823,6 @@ export default function ChamberPage() {
                     value={newChannelName}
                     onChange={(e) => setNewChannelName(e.target.value)}
                   />
-                </div>
-
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
-                    Channel Icon
-                  </label>
-                  <div className="flex gap-2 flex-wrap mt-1">
-                    {Object.keys(ICON_MAP).map((iconName) => {
-                      const IconComp = ICON_MAP[iconName];
-                      const isSelected = newChannelIcon === iconName;
-                      return (
-                        <button
-                          key={iconName}
-                          type="button"
-                          onClick={() => setNewChannelIcon(iconName)}
-                          className={cn(
-                            "size-8 rounded-lg flex items-center justify-center border border-neutral-200 dark:border-neutral-800 transition-all cursor-pointer",
-                            isSelected
-                              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                              : "bg-transparent text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200",
-                          )}
-                        >
-                          <IconComp className="size-4" />
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
 
@@ -1101,33 +869,6 @@ export default function ChamberPage() {
                     value={editChannelName}
                     onChange={(e) => setEditChannelName(e.target.value)}
                   />
-                </div>
-
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
-                    Channel Icon
-                  </label>
-                  <div className="flex gap-2 flex-wrap mt-1">
-                    {Object.keys(ICON_MAP).map((iconName) => {
-                      const IconComp = ICON_MAP[iconName];
-                      const isSelected = editChannelIcon === iconName;
-                      return (
-                        <button
-                          key={iconName}
-                          type="button"
-                          onClick={() => setEditChannelIcon(iconName)}
-                          className={cn(
-                            "size-8 rounded-lg flex items-center justify-center border border-neutral-200 dark:border-neutral-800 transition-all cursor-pointer",
-                            isSelected
-                              ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                              : "bg-transparent text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200",
-                          )}
-                        >
-                          <IconComp className="size-4" />
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
 

@@ -10,6 +10,8 @@ import {
   MessageSquare
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { ALLOWED_FIELD_TYPES } from "@/types";
 import type { SchemaField } from "@/types";
 
 interface SchemaEditorProps {
@@ -17,49 +19,47 @@ interface SchemaEditorProps {
   onChange: (fields: SchemaField[]) => void;
 }
 
-const STANDARD_FIELDS = [
-  { type: "image" as const, label: "Image", icon: Image },
-  { type: "poll" as const, label: "Poll", icon: BarChart3 },
-  { type: "currency" as const, label: "Price", icon: IndianRupee },
-  { type: "datetime" as const, label: "Date-Time", icon: Calendar },
-  { type: "file" as const, label: "File", icon: FileUp },
-  { type: "location" as const, label: "Location", icon: MapPin },
-  { type: "source_destination" as const, label: "Source → Destination", icon: Route },
-  { type: "key_value" as const, label: "Key:Value", icon: Tag },
-  { type: "button" as const, label: "DM Button", icon: MessageSquare },
-];
+const FIELD_META: Record<string, { label: string; icon: any }> = {
+  image: { label: "Image", icon: Image },
+  poll: { label: "Poll", icon: BarChart3 },
+  currency: { label: "Price", icon: IndianRupee },
+  datetime: { label: "Date-Time", icon: Calendar },
+  file: { label: "File", icon: FileUp },
+  location: { label: "Location", icon: MapPin },
+  source_destination: { label: "Source → Destination", icon: Route },
+  key_value: { label: "Key:Value", icon: Tag },
+  button: { label: "DM Button", icon: MessageSquare },
+};
 
 export function SchemaEditor({ fields, onChange }: SchemaEditorProps) {
   const isActive = (type: SchemaField["type"]) =>
     fields.some((f) => f.type === type);
 
-  const handleToggle = (type: SchemaField["type"], checked: boolean) => {
-    const defaultLabels: Record<string, string> = {
-      currency: "Price",
-      datetime: "Date-Time",
-      file: "File",
-      image: "Image Photo",
-      poll: "Poll",
-      location: "Location",
-      source_destination: "Source → Destination",
-      key_value: "Key:Value",
-      button: "DM Button",
-    };
+  const isRequired = (type: SchemaField["type"]) =>
+    fields.some((f) => f.type === type && f.required);
 
+  const handleToggle = (type: SchemaField["type"], checked: boolean) => {
     const nextFields = [...fields];
     const index = nextFields.findIndex((f) => f.type === type);
 
     if (index !== -1) {
       nextFields.splice(index, 1);
-    } else if (checked) {
+    } else if (checked && ALLOWED_FIELD_TYPES.includes(type as any)) {
       nextFields.push({
         id: `standard_${type}`,
         type,
-        label: defaultLabels[type] || "Field",
+        label: FIELD_META[type]?.label || "Field",
         required: false,
       });
     }
 
+    onChange(nextFields);
+  };
+
+  const handleRequiredToggle = (type: SchemaField["type"], required: boolean) => {
+    const nextFields = fields.map((f) =>
+      f.type === type ? { ...f, required } : f
+    );
     onChange(nextFields);
   };
 
@@ -70,35 +70,51 @@ export function SchemaEditor({ fields, onChange }: SchemaEditorProps) {
       </span>
 
       <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
-        {STANDARD_FIELDS.map((sf) => {
-          const Icon = sf.icon;
-          const active = isActive(sf.type);
+        {ALLOWED_FIELD_TYPES.map((type) => {
+          const meta = FIELD_META[type];
+          if (!meta) return null;
+          const Icon = meta.icon;
+          const active = isActive(type);
+          const required = isRequired(type);
 
           return (
             <div
-              key={sf.type}
-              className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-800 rounded-xl transition-all duration-200 bg-transparent hover:bg-neutral-50/20 dark:hover:bg-neutral-900/10 cursor-pointer"
-              onClick={() => handleToggle(sf.type, !active)}
+              key={type}
+              className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-800 rounded-xl transition-all duration-200 bg-transparent hover:bg-neutral-50/20 dark:hover:bg-neutral-900/10"
             >
-              <Checkbox checked={active} readOnly />
-              <Icon
-                className={cn(
-                  "size-4 shrink-0 transition-colors",
-                  active
-                    ? "text-neutral-800 dark:text-neutral-200"
-                    : "text-neutral-400 dark:text-neutral-500",
-                )}
-              />
-              <span
-                className={cn(
-                  "text-xs transition-colors truncate",
-                  active
-                    ? "font-bold text-neutral-900 dark:text-white"
-                    : "font-semibold text-neutral-400 dark:text-neutral-500",
-                )}
+              <div
+                className="flex items-center gap-3 flex-1 cursor-pointer"
+                onClick={() => handleToggle(type, !active)}
               >
-                {sf.label}
-              </span>
+                <Checkbox checked={active} readOnly />
+                <Icon
+                  className={cn(
+                    "size-4 shrink-0 transition-colors",
+                    active
+                      ? "text-neutral-800 dark:text-neutral-200"
+                      : "text-neutral-400 dark:text-neutral-500",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "text-xs transition-colors truncate",
+                    active
+                      ? "text-neutral-900 dark:text-white"
+                      : "text-neutral-400 dark:text-neutral-500",
+                  )}
+                >
+                  {meta.label}
+                </span>
+              </div>
+              {active && (
+                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-[10px] text-neutral-400">Required</span>
+                  <Switch
+                    checked={required}
+                    onCheckedChange={(checked) => handleRequiredToggle(type, checked)}
+                  />
+                </div>
+              )}
             </div>
           );
         })}

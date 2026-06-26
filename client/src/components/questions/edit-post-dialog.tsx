@@ -40,6 +40,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import type { SchemaField } from "@/types";
+import { ALLOWED_FIELD_TYPES } from "@/types";
 
 const MAX_POST_WORDS = 5000;
 const countWords = (text: string) =>
@@ -80,13 +81,15 @@ export function EditPostDialog() {
     const fieldLabelsMeta: Record<string, string> = existingCustomFields._fieldLabels || {};
     const fieldOptionsMeta: Record<string, string[]> = existingCustomFields._fieldOptions || {};
 
-    const fields: SchemaField[] = Object.entries(fieldTypesMeta).map(([id, type]) => ({
-      id,
-      type: type as SchemaField["type"],
-      label: fieldLabelsMeta[id] || id,
-      required: false,
-      options: fieldOptionsMeta[id],
-    }));
+    const fields: SchemaField[] = Object.entries(fieldTypesMeta)
+      .filter((entry) => ALLOWED_FIELD_TYPES.includes(entry[1] as any))
+      .map(([id, type]) => ({
+        id,
+        type: type as SchemaField["type"],
+        label: fieldLabelsMeta[id] || id,
+        required: false,
+        options: fieldOptionsMeta[id],
+      }));
     setActiveFields(fields);
 
     const values: Record<string, any> = {};

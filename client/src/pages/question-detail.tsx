@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -9,10 +15,16 @@ import {
   Delete02Icon,
   UserMultiple02Icon,
   BubbleChatIcon,
+  MoreHorizontalIcon,
+  Copy01Icon,
+  Share01Icon,
+  Alert01Icon,
+  Analytics02Icon,
 } from "@hugeicons/core-free-icons";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { useEditPostModal } from "@/hooks/use-edit-post-modal";
+import { useReportContent } from "@/hooks/use-reports";
 import { useQuestionQuery, useDeleteQuestion } from "@/hooks/use-questions";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
@@ -36,6 +48,8 @@ import { cn } from "@/lib/utils";
 import { PollVoter } from "@/components/poll-voter";
 import { PostCustomFields } from "@/components/questions/post-custom-fields";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
+import { PostAnalytics } from "@/components/analytics/post-analytics";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { trackPostView } from "@/api/analytics";
 import {
   AlertDialog,
@@ -60,6 +74,7 @@ export default function QuestionDetailPage() {
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
   const { mutate: deleteReply } = useDeleteReply();
+  const { mutate: report } = useReportContent();
 
   useEffect(() => {
     if (questionId) {
@@ -69,6 +84,7 @@ export default function QuestionDetailPage() {
 
   const { open: openEditModal } = useEditPostModal();
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [pitchContent, setPitchContent] = useState("");
   const [isApplying, setIsApplying] = useState(false);
   const [interestMessage, setInterestMessage] = useState("");
@@ -239,27 +255,98 @@ export default function QuestionDetailPage() {
 
           {/* Action options */}
           <div className="flex items-center gap-2">
-            {user?.username === question.authorUsername && (
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => openEditModal(question)}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={(props: any) => (
+                  <Button
+                    {...props}
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="More options"
+                  >
+                    <HugeiconsIcon
+                      icon={MoreHorizontalIcon}
+                      className="size-5"
+                    />
+                  </Button>
+                )}
+              />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(question.content);
+                    toastManager.add({
+                      title: "Copied to clipboard",
+                      type: "success",
+                    });
+                  }}
                 >
                   <HugeiconsIcon
-                    icon={PencilEdit02Icon}
-                    className="size-4 text-neutral-500"
+                    icon={Copy01Icon}
+                    className="mr-2 size-4"
                   />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setShowDeleteAlert(true)}
+                  Copy Text
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    toastManager.add({
+                      title: "Link copied to clipboard",
+                      type: "success",
+                    });
+                  }}
                 >
-                  <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-                </Button>
-              </div>
-            )}
+                  <HugeiconsIcon
+                    icon={Share01Icon}
+                    className="mr-2 size-4"
+                  />
+                  Share
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    report({ targetType: "post", targetUid: questionId! })
+                  }
+                >
+                  <HugeiconsIcon
+                    icon={Alert01Icon}
+                    className="mr-2 size-4"
+                  />
+                  Report
+                </DropdownMenuItem>
+                {user?.username === question.authorUsername && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => setShowAnalytics(true)}
+                    >
+                      <HugeiconsIcon
+                        icon={Analytics02Icon}
+                        className="mr-2 size-4"
+                      />
+                      Post Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => openEditModal(question)}
+                    >
+                      <HugeiconsIcon
+                        icon={PencilEdit02Icon}
+                        className="mr-2 size-4"
+                      />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setShowDeleteAlert(true)}
+                    >
+                      <HugeiconsIcon
+                        icon={Delete02Icon}
+                        className="mr-2 size-4"
+                      />
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -798,6 +885,12 @@ export default function QuestionDetailPage() {
           />
         )}
       </div>
+
+      <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <DialogContent className="sm:max-w-[420px]" aria-label="Post Analytics">
+          <PostAnalytics postUid={questionId!} />
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogPopup portalProps={{}}>
