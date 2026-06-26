@@ -3,20 +3,29 @@ import { ApiError } from "../lib/errors";
 import type { AppEnv } from "../types/app";
 
 // For fallback in-memory rate limiting (development / tests)
+const MAX_MEMORY_LIMITER_KEYS = 10000;
 const memoryLimiters = new Map<string, number[]>();
 
 function checkInMemoryLimit(key: string, limit: number, periodSeconds: number): boolean {
   const now = Date.now();
   const windowStart = now - periodSeconds * 1000;
-  
+
+  // Enforce max size: remove oldest entries if over limit
+  if (memoryLimiters.size >= MAX_MEMORY_LIMITER_KEYS) {
+    const oldestKey = memoryLimiters.keys().next().value;
+    if (oldestKey !== undefined) {
+      memoryLimiters.delete(oldestKey);
+    }
+  }
+
   let timestamps = memoryLimiters.get(key) || [];
   timestamps = timestamps.filter((ts) => ts > windowStart);
-  
+
   if (timestamps.length >= limit) {
     memoryLimiters.set(key, timestamps);
     return false;
   }
-  
+
   timestamps.push(now);
   memoryLimiters.set(key, timestamps);
   return true;

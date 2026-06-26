@@ -30,11 +30,16 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { MentionField } from "@/components/ui/mention-field";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  AnonymousIcon,
   Edit01Icon,
-  Image01Icon,
   Delete02Icon,
   HourglassIcon,
 } from "@hugeicons/core-free-icons";
@@ -63,6 +68,7 @@ import {
 import type { SchemaField } from "@/types";
 
 const FIELD_TYPES = [
+  { value: "image", label: "Image", icon: ImageIcon },
   { value: "poll", label: "Poll", icon: BarChart3 },
   { value: "currency", label: "Price", icon: IndianRupee },
   { value: "datetime", label: "Date-Time", icon: Calendar },
@@ -426,7 +432,7 @@ export function CreatePostDialog() {
           />
 
           {images.length > 0 && (
-            <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-none bg-transparent">
+            <div className="flex gap-2 pb-2 pt-1 overflow-x-auto scrollbar-none bg-transparent">
               {images.map((url, i) => (
                 <div
                   key={i}
@@ -448,6 +454,15 @@ export function CreatePostDialog() {
               ))}
             </div>
           )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            disabled={imageUploading}
+            onChange={(e) => handleUploadImages(e.target.files)}
+          />
 
           {/* Chamber selector */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -516,24 +531,34 @@ export function CreatePostDialog() {
             )}
           </div>
 
-          {selectedChamber && (
           <div className="space-y-4 pt-3 border-t border-neutral-100 dark:border-neutral-900/60 mt-2">
             {/* Field Selector UI */}
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 flex-wrap">
                 {FIELD_TYPES.map((ft) => {
                   const Icon = ft.icon;
-                  const isRestricted = restrictedTypes.has(ft.value);
-                  if (isRestricted) return null;
+                  const disabled = !selectedChamber || restrictedTypes.has(ft.value);
 
                   return (
                     <button
                       key={ft.value}
                       type="button"
-                      onClick={() => addFieldType(ft.value)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-250 dark:border-neutral-800/80 bg-neutral-50/20 hover:bg-neutral-100/50 dark:bg-neutral-950/10 dark:hover:bg-neutral-900/40 text-[11px] font-semibold text-neutral-600 dark:text-neutral-300 transition-all cursor-pointer select-none hover:scale-[1.03] active:scale-[0.97]"
+                      disabled={disabled}
+                      onClick={() => {
+                        if (ft.value === "image") {
+                          fileRef.current?.click();
+                        } else {
+                          addFieldType(ft.value);
+                        }
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer select-none text-[11px] font-semibold",
+                        disabled
+                          ? "border-neutral-200/50 dark:border-neutral-800/40 bg-transparent text-neutral-400 dark:text-neutral-600 opacity-50 cursor-not-allowed"
+                          : "border-neutral-250 dark:border-neutral-800/80 bg-neutral-50/20 hover:bg-neutral-100/50 dark:bg-neutral-950/10 dark:hover:bg-neutral-900/40 text-neutral-600 dark:text-neutral-300 hover:scale-[1.03] active:scale-[0.97]",
+                      )}
                     >
-                      <Icon className="size-3.5 text-neutral-450 dark:text-neutral-400" />
+                      <Icon className={cn("size-3.5", disabled ? "text-neutral-400/50 dark:text-neutral-600/50" : "text-neutral-450 dark:text-neutral-400")} />
                       {ft.label}
                     </button>
                   );
@@ -1041,78 +1066,7 @@ export function CreatePostDialog() {
               </div>
             )}
           </div>
-          )}
 
-          <div className="flex items-center justify-between gap-2 flex-wrap pt-4 border-t border-neutral-100 dark:border-neutral-900 mt-2">
-            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-              <button
-                type="button"
-                disabled={imageUploading || images.length >= 4}
-                onClick={() => fileRef.current?.click()}
-                className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-[11px] font-semibold border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 cursor-pointer transition-colors disabled:opacity-50"
-              >
-                {imageUploading ? (
-                  <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
-                ) : (
-                  <HugeiconsIcon icon={Image01Icon} className="size-3.5" />
-                )}
-                {images.length > 0 ? `${images.length}/4` : "Image"}
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                disabled={imageUploading}
-                onChange={(e) => handleUploadImages(e.target.files)}
-              />
-
-              <button
-                type="button"
-                onClick={() => setIsAnonymous((p) => !p)}
-                className={cn(
-                  "flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 border",
-                  isAnonymous
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                    : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
-                )}
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="size-3.5"
-                >
-                  <path d="M17 8a5 5 0 0 1-10 0" />
-                  <path d="M3 21v-1a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v1" />
-                  <path d="M12 14v7" />
-                  <path d="M9 21h6" />
-                </svg>
-                {isAnonymous ? "Anonymous" : "Anonymous"}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const opts: (number | null)[] = [null, 1, 2, 6, 24];
-                  setTtlHours(opts[(opts.indexOf(ttlHours) + 1) % opts.length]);
-                }}
-                className={cn(
-                  "flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 border",
-                  ttlHours !== null
-                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                    : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
-                )}
-              >
-                <HugeiconsIcon icon={HourglassIcon} className="size-3.5" />
-                {ttlHours !== null ? `${ttlHours}h` : "Timer"}
-              </button>
-            </div>
-
-          </div>
         </div>
       </div>
     </div>
@@ -1131,8 +1085,55 @@ export function CreatePostDialog() {
             <DrawerTitle>
               Create a Post
             </DrawerTitle>
+          </DrawerHeader>
+
+          <DrawerPanel scrollFade={false}>
+            {renderFormContent()}
+          </DrawerPanel>
+
+          <div className="flex items-center justify-between gap-2 px-6 py-4 border-t border-neutral-100 dark:border-neutral-900">
+            <div className="flex items-center gap-1.5">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => setIsAnonymous((p) => !p)}
+                      className={cn(
+                        "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
+                        isAnonymous
+                          ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                          : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                      )}
+                    >
+                      <HugeiconsIcon icon={AnonymousIcon} className="size-3.5" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="top">
+                  {isAnonymous ? "Posting anonymously" : "Post anonymously"}
+                </TooltipContent>
+              </Tooltip>
+              <button
+                type="button"
+                onClick={() => {
+                  const opts: (number | null)[] = [null, 1, 2, 6, 24];
+                  setTtlHours(opts[(opts.indexOf(ttlHours) + 1) % opts.length]);
+                }}
+                className={cn(
+                  "flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 border",
+                  ttlHours !== null
+                    ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                    : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                )}
+              >
+                <HugeiconsIcon icon={HourglassIcon} className="size-3.5" />
+                {ttlHours !== null ? `${ttlHours}h` : null}
+              </button>
+            </div>
             <Button
               variant="default"
+              size="sm"
               onClick={handleSubmit}
               disabled={
                 !selectedChamber ||
@@ -1145,11 +1146,7 @@ export function CreatePostDialog() {
               {isCreatePending ? "Posting..." : "Post"}
               <HugeiconsIcon icon={Edit01Icon} className="ml-1.5 size-3.5" />
             </Button>
-          </DrawerHeader>
-
-          <DrawerPanel scrollFade={false}>
-            {renderFormContent()}
-          </DrawerPanel>
+          </div>
         </DrawerPopup>
       </Drawer>
     );
@@ -1173,10 +1170,48 @@ export function CreatePostDialog() {
           {renderFormContent()}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="justify-between">
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={() => setIsAnonymous((p) => !p)}
+                    className={cn(
+                      "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
+                      isAnonymous
+                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                        : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                    )}
+                  >
+                    <HugeiconsIcon icon={AnonymousIcon} className="size-3.5" />
+                  </button>
+                }
+              />
+              <TooltipContent side="top">
+                {isAnonymous ? "Posting anonymously" : "Post anonymously"}
+              </TooltipContent>
+            </Tooltip>
+            <button
+              type="button"
+              onClick={() => {
+                const opts: (number | null)[] = [null, 1, 2, 6, 24];
+                setTtlHours(opts[(opts.indexOf(ttlHours) + 1) % opts.length]);
+              }}
+              className={cn(
+                "flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 border",
+                ttlHours !== null
+                  ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                  : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+              )}
+            >
+              <HugeiconsIcon icon={HourglassIcon} className="size-3.5" />
+              {ttlHours !== null ? `${ttlHours}h` : null}
+            </button>
+          </div>
           <Button
             variant="default"
-            size="sm"
             onClick={handleSubmit}
             disabled={
               !selectedChamber ||

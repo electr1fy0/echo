@@ -58,6 +58,11 @@ import { useCreatePostModal } from "@/hooks/use-create-post-modal";
 import { Input } from "@/components/ui/input";
 import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 import {
   MessageSquare,
@@ -624,43 +629,61 @@ export default function ChamberPage() {
         <div className="flex items-center gap-2 shrink-0">
           {canPin && (
             <>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                className="rounded-full cursor-pointer border-neutral-200 dark:border-neutral-800"
-                onClick={() => setIsEditOpen(true)}
-                title="Edit Chamber"
-              >
-                <Pencil className="size-4 text-neutral-500" />
-              </Button>
-              <Button
-                variant="destructive-outline"
-                size="icon-sm"
-                onClick={() => setIsDeleteOpen(true)}
-                title="Delete Chamber"
-              >
-                <Trash2 className="size-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="icon-sm"
+                      className="cursor-pointer"
+                      onClick={() => setIsEditOpen(true)}
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="top">Edit Chamber</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="destructive-outline"
+                      size="icon-sm"
+                      onClick={() => setIsDeleteOpen(true)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="top">Delete Chamber</TooltipContent>
+              </Tooltip>
             </>
           )}
-          <Button
-            variant={chamber.isJoined ? "outline" : "default"}
-            size="icon-sm"
-            disabled={isPending}
-            onClick={() => {
-              chamber.isJoined ? trigger("warning") : trigger("success");
-              handleToggleJoin();
-            }}
-            title={
-              chamber.isJoined ? "Joined (Click to leave)" : "Join Chamber"
-            }
-          >
-            {chamber.isJoined ? (
-              <UserCheck className="size-4" />
-            ) : (
-              <UserPlus className="size-4" />
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant={chamber.isJoined ? "outline" : "default"}
+                  size="icon-sm"
+                  disabled={isPending}
+                  onClick={() => {
+                    chamber.isJoined ? trigger("warning") : trigger("success");
+                    handleToggleJoin();
+                  }}
+                >
+                  {chamber.isJoined ? (
+                    <UserCheck className="size-4" />
+                  ) : (
+                    <UserPlus className="size-4" />
+                  )}
+                </Button>
+              }
+            />
+            <TooltipContent side="top">
+              {chamber.isJoined ? "Joined (Click to leave)" : "Join Chamber"}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
@@ -671,13 +694,19 @@ export default function ChamberPage() {
           <div className="flex items-center justify-between px-1 text-[11px] text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
             <span>Channels</span>
             {canPin && (
-              <button
-                onClick={() => setIsCreateChannelOpen(true)}
-                className="hover:text-[var(--brand)] transition-colors cursor-pointer"
-                title="Create Channel"
-              >
-                <Plus className="size-3.5" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      onClick={() => setIsCreateChannelOpen(true)}
+                      className="hover:text-[var(--brand)] transition-colors cursor-pointer"
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="top">Create Channel</TooltipContent>
+              </Tooltip>
             )}
           </div>
           {isChannelsLoading ? (

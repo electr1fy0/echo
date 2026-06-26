@@ -105,7 +105,7 @@ export function ReplyItem({
           />
         </div>
         {reply.isAnonymous ? (
-          <div className="shrink-0">
+          <div className="shrink-0 pt-1">
             <UserAvatar
               src={undefined}
               name="Anonymous"
@@ -116,7 +116,7 @@ export function ReplyItem({
           <UserPreviewCard user={answerItem.author}>
             <Link
               to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
-              className="shrink-0"
+              className="shrink-0 pt-1"
               onClick={(e) => e.stopPropagation()}
             >
               <UserAvatar
@@ -129,7 +129,7 @@ export function ReplyItem({
         ) : (
           <Link
             to={reply.authorUsername ? `/u/${reply.authorUsername}` : "#"}
-            className="shrink-0"
+            className="shrink-0 pt-1"
             onClick={(e) => e.stopPropagation()}
           >
             <UserAvatar

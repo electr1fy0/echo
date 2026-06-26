@@ -4,6 +4,38 @@ import { updateReplyVotes } from "@/api/replies";
 import { track } from "@/lib/analytics";
 import type { QuestionItem, AnswerItem } from "@/types";
 
+function toggleQuestionItem(item: QuestionItem): QuestionItem {
+  return {
+    ...item,
+    question: {
+      ...item.question,
+      isUpvoted: !item.question.isUpvoted,
+      upvotes: item.question.isUpvoted ? item.question.upvotes - 1 : item.question.upvotes + 1,
+    },
+  };
+}
+
+function makeUpdater(qid: string) {
+  return (old: unknown) => {
+    if (!old) return old;
+    if (typeof old === "object" && "pages" in old) {
+      const inf = old as { pages: QuestionItem[][]; pageParams: unknown[] };
+      return {
+        ...inf,
+        pages: inf.pages.map((page) =>
+          page.map((item) => (item.question.uid === qid ? toggleQuestionItem(item) : item)),
+        ),
+      };
+    }
+    if (Array.isArray(old)) {
+      return old.map((item: QuestionItem) =>
+        item.question.uid === qid ? toggleQuestionItem(item) : item,
+      );
+    }
+    return old;
+  };
+}
+
 export function useUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -16,95 +48,18 @@ export function useUpdateVote() {
         queryClient.cancelQueries({ queryKey: ["search-questions"] }),
         queryClient.cancelQueries({ queryKey: ["question", qid] }),
       ]);
-      const questionsCache = queryClient.getQueryCache();
-      const matchingQueries = questionsCache.findAll({
-        predicate: (query) => {
-          const key = query.queryKey;
-          return (
-            key[0] === "questions" ||
-            key[0] === "user-questions" ||
-            key[0] === "search-questions" ||
-            (key[0] === "question" && key[1] === qid)
-          );
-        },
-      });
-      const previousData = matchingQueries.map((query) => ({
-        queryKey: query.queryKey,
-        data: query.state.data,
-      }));
 
-      matchingQueries.forEach((query) => {
-        const data = query.state.data;
-        if (!data) return;
+      const updater = makeUpdater(qid);
+      queryClient.setQueriesData({ queryKey: ["questions"] }, updater);
+      queryClient.setQueriesData({ queryKey: ["user-questions"] }, updater);
+      queryClient.setQueriesData({ queryKey: ["search-questions"] }, updater);
+      queryClient.setQueryData(["question", qid], (old: QuestionItem | undefined) =>
+        old ? toggleQuestionItem(old) : old,
+      );
 
-        // 1. Singular question query
-        if (query.queryKey[0] === "question" && query.queryKey[1] === qid) {
-          const item = data as QuestionItem;
-          const isUpvoted = !item.question.isUpvoted;
-          queryClient.setQueryData(query.queryKey, {
-            ...item,
-            question: {
-              ...item.question,
-              isUpvoted,
-              upvotes: isUpvoted ? item.question.upvotes + 1 : item.question.upvotes - 1,
-            },
-          });
-          return;
-        }
-
-        // 2. Infinite query caches
-        if (typeof data === "object" && data !== null && "pages" in data) {
-          const infiniteData = data as { pages: QuestionItem[][]; pageParams: any[] };
-          const updatedPages = infiniteData.pages.map((page) =>
-            page.map((item) => {
-              if (item.question.uid === qid) {
-                const isUpvoted = !item.question.isUpvoted;
-                return {
-                  ...item,
-                  question: {
-                    ...item.question,
-                    isUpvoted,
-                    upvotes: isUpvoted ? item.question.upvotes + 1 : item.question.upvotes - 1,
-                  },
-                };
-              }
-              return item;
-            })
-          );
-          queryClient.setQueryData(query.queryKey, {
-            ...infiniteData,
-            pages: updatedPages,
-          });
-        } 
-        // 3. Regular flat array caches (search / user lists)
-        else if (Array.isArray(data)) {
-          const updatedData = data.map((item) => {
-            if (item.question.uid === qid) {
-              const isUpvoted = !item.question.isUpvoted;
-              return {
-                ...item,
-                question: {
-                  ...item.question,
-                  isUpvoted,
-                  upvotes: isUpvoted ? item.question.upvotes + 1 : item.question.upvotes - 1,
-                },
-              };
-            }
-            return item;
-          });
-          queryClient.setQueryData(query.queryKey, updatedData);
-        }
-      });
-
-      return { previousData };
+      return {};
     },
-    onError: (_err, _qid, context) => {
-      if (context?.previousData) {
-        context.previousData.forEach(({ queryKey, data }) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-    },
+    onError: () => {},
     onSettled: (_data, err, qid) => {
       if (!err) {
         track("post_upvote");

@@ -66,6 +66,22 @@ type QuestionItemProps = {
 
 import { QuestionListSkeleton } from "./question-skeleton";
 
+let sharedTicker: ReturnType<typeof setInterval> | null = null;
+const tickCallbacks = new Set<() => void>();
+
+function startSharedTicker() {
+  if (sharedTicker) return;
+  sharedTicker = setInterval(() => {
+    tickCallbacks.forEach((cb) => cb());
+  }, 1000);
+}
+
+function stopSharedTicker() {
+  if (!sharedTicker) return;
+  clearInterval(sharedTicker);
+  sharedTicker = null;
+}
+
 function CountdownRing({
   expiresAt,
   timeCreated,
@@ -81,21 +97,29 @@ function CountdownRing({
   const circumference = 2 * Math.PI * radius;
 
   const [progress, setProgress] = useState(() => {
-    const total =
-      new Date(expiresAt).getTime() - new Date(timeCreated).getTime();
+    const total = new Date(expiresAt).getTime() - new Date(timeCreated).getTime();
     const elapsed = Date.now() - new Date(timeCreated).getTime();
     return Math.max(0, Math.min(1, 1 - elapsed / total));
   });
 
   useEffect(() => {
-    const total =
-      new Date(expiresAt).getTime() - new Date(timeCreated).getTime();
-    const tick = () => {
-      const elapsed = Date.now() - new Date(timeCreated).getTime();
+    const timeCreatedTime = new Date(timeCreated).getTime();
+    const total = new Date(expiresAt).getTime() - timeCreatedTime;
+
+    const cb = () => {
+      const elapsed = Date.now() - timeCreatedTime;
       setProgress(Math.max(0, Math.min(1, 1 - elapsed / total)));
     };
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+
+    tickCallbacks.add(cb);
+    startSharedTicker();
+
+    return () => {
+      tickCallbacks.delete(cb);
+      if (tickCallbacks.size === 0) {
+        stopSharedTicker();
+      }
+    };
   }, [expiresAt, timeCreated]);
 
   const offset = circumference * (1 - progress);
@@ -132,9 +156,12 @@ function CountdownRing({
   );
 }
 
-const TriggerWrapper = ({ children }: { children: React.ReactNode }) => {
+const TriggerWrapper = ({ children, onExpand }: { children: React.ReactNode; onExpand?: () => void }) => {
   return (
-    <AccordionTrigger className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left">
+    <AccordionTrigger
+      className="font-normal pt-3 pb-4 pr-4 hover:no-underline items-start gap-3 text-left"
+      onPointerDown={onExpand}
+    >
       {children}
     </AccordionTrigger>
   );
@@ -150,9 +177,10 @@ export function QuestionItem({
   const author = (questionItem as QuestionItem | undefined)?.author ?? null;
   const questionId = question?.uid;
   const navigate = useNavigate();
+  const [hasExpanded, setHasExpanded] = useState(false);
 
   const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(
-    questionId || undefined,
+    hasExpanded ? questionId || undefined : undefined,
   );
   const { mutate: deleteReply } = useDeleteReply();
   const { mutate: handleVote, isPending: isVotePending } = useUpdateVote();
@@ -178,7 +206,7 @@ export function QuestionItem({
       value={questionId}
       className="w-full border-b border-neutral-100 dark:border-neutral-800 last:border-b-0"
     >
-      <TriggerWrapper>
+      <TriggerWrapper onExpand={() => setHasExpanded(true)}>
         <div className="flex items-start gap-3 w-full">
           {isAnonymous ? (
             <div className="shrink-0 mt-1 relative">
@@ -283,55 +311,47 @@ export function QuestionItem({
                     Solved
                   </span>
                 )}
-                {replies && replies.length > 0 && (
-                  <div className="flex items-center gap-1.5 ml-1">
-                    <AvatarGroup className="h-3">
-                      {Array.from(
-                        new Set(
-                          replies.map((r) =>
-                            r.answer.isAnonymous
-                              ? "Anonymous"
-                              : r.answer.authorUsername,
-                          ),
-                        ),
-                      )
-                        .slice(0, 3)
-                        .map((username, i) => {
+                {replies && replies.length > 0 && (() => {
+                  const uniqueAuthors = Array.from(
+                    new Set(
+                      replies.map((r) =>
+                        r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername,
+                      ),
+                    ),
+                  );
+                  const uniqueCount = uniqueAuthors.length;
+                  const topAuthors = uniqueAuthors.slice(0, 3);
+                  return (
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <AvatarGroup className="h-3">
+                        {topAuthors.map((username, i) => {
                           const reply = replies.find(
                             (r) =>
-                              (r.answer.isAnonymous
-                                ? "Anonymous"
-                                : r.answer.authorUsername) === username,
+                              (r.answer.isAnonymous ? "Anonymous" : r.answer.authorUsername) === username,
                           );
                           const isAnonReply = reply?.answer.isAnonymous;
                           return (
                             <UserAvatar
                               key={username || i}
                               name={isAnonReply ? "Anonymous" : username}
-                              src={
-                                isAnonReply ? undefined : reply?.author?.avatar
-                              }
+                              src={isAnonReply ? undefined : reply?.author?.avatar}
                               className="size-3 ring-1 ring-background"
                             />
                           );
                         })}
-                      {new Set(replies.map((r) => r.answer.authorUsername))
-                        .size > 3 && (
-                        <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
-                          +
-                          {new Set(replies.map((r) => r.answer.authorUsername))
-                            .size - 3}
-                        </AvatarGroupCount>
-                      )}
-                    </AvatarGroup>
-                    <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                      {question.repliesCount ?? replies.length}{" "}
-                      {(question.repliesCount ?? replies.length) === 1
-                        ? "reply"
-                        : "replies"}
-                    </span>
-                  </div>
-                )}
+                        {uniqueCount > 3 && (
+                          <AvatarGroupCount className="size-4 text-[9px] border-none ring-1 ring-background">
+                            +{uniqueCount - 3}
+                          </AvatarGroupCount>
+                        )}
+                      </AvatarGroup>
+                      <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                        {question.repliesCount ?? replies.length}{" "}
+                        {(question.repliesCount ?? replies.length) === 1 ? "reply" : "replies"}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
               <div
                 onClick={(e) => e.stopPropagation()}

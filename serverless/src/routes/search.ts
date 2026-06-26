@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, ilike, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { schema } from "../db";
 import { optionalAuth } from "../middleware/auth";
@@ -35,12 +35,7 @@ searchRoutes.get("/", async (c) => {
       authorBio: schema.users.bio,
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
-      authorReputation: sql<number>`(
-        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
-        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
-        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
-        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
-      )`,
+      authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
       upvotes: schema.replies.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from reply_upvotes rv
@@ -51,7 +46,7 @@ searchRoutes.get("/", async (c) => {
     })
     .from(schema.replies)
     .leftJoin(schema.users, eq(schema.users.username, schema.replies.author))
-    .where(ilike(schema.replies.content, `%${query}%`))
+    .where(sql`${schema.replies.searchVector} @@ plainto_tsquery('english', ${query})`)
     .limit(5)
     .then((rows) => rows.map(mapReplyItem)),
     searchUsers(db, query),

@@ -32,29 +32,45 @@ export const getConversations = async (db: DB, username: string) => {
 
   const userMap = new Map(userRows.map((u) => [u.username, u]));
 
-  // Batch fetch unread counts for all conversations
-  const unreadCounts = await Promise.all(
-    convs.map(async (c) => {
-      const lastReadCol =
-        c.participantA === username
-          ? c.participantALastReadAt
-          : c.participantBLastReadAt;
-      const conditions: any[] = [
-        eq(schema.messages.conversationUid, c.uid),
+  // Batch fetch unread counts for all conversations in a single query
+  const convUids = convs.map((c) => c.uid);
+  const unreadRows = await db
+    .select({
+      conversationUid: schema.messages.conversationUid,
+      count: sql<number>`count(*)`,
+    })
+    .from(schema.messages)
+    .innerJoin(
+      schema.conversations,
+      eq(schema.messages.conversationUid, schema.conversations.uid),
+    )
+    .where(
+      and(
+        inArray(schema.messages.conversationUid, convUids),
         ne(schema.messages.sender, username),
-      ];
-      if (lastReadCol) {
-        conditions.push(gt(schema.messages.timeCreated, lastReadCol));
-      }
-      const [result] = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(schema.messages)
-        .where(and(...conditions));
-      return Number(result?.count ?? 0);
-    }),
-  );
+        or(
+          and(
+            eq(schema.conversations.participantA, username),
+            or(
+              isNull(schema.conversations.participantALastReadAt),
+              gt(schema.messages.timeCreated, schema.conversations.participantALastReadAt),
+            ),
+          ),
+          and(
+            eq(schema.conversations.participantB, username),
+            or(
+              isNull(schema.conversations.participantBLastReadAt),
+              gt(schema.messages.timeCreated, schema.conversations.participantBLastReadAt),
+            ),
+          ),
+        ),
+      ),
+    )
+    .groupBy(schema.messages.conversationUid);
 
-  return convs.map((c, i) => {
+  const unreadMap = new Map(unreadRows.map((r) => [r.conversationUid, Number(r.count)]));
+
+  return convs.map((c) => {
     const other = c.participantA === username ? c.participantB : c.participantA;
     const u = userMap.get(other);
     return {
@@ -68,7 +84,7 @@ export const getConversations = async (db: DB, username: string) => {
       otherAvatar: u?.avatar ?? "",
       otherBio: u?.bio ?? "",
       otherDmEnabled: u?.dmEnabled ?? true,
-      unreadCount: unreadCounts[i],
+      unreadCount: unreadMap.get(c.uid) ?? 0,
     };
   });
 };

@@ -40,7 +40,10 @@ analyticsRoutes.post("/events", async (c) => {
     })),
   );
 
-  await checkAndAwardMilestones(c.get("db"), user);
+  const milestoneEvents = new Set(["post_create", "reply_create", "upvote_received", "profile_view"]);
+  if (events.some((e) => milestoneEvents.has(e.event))) {
+    await checkAndAwardMilestones(c.get("db"), user);
+  }
 
   return c.json({ message: "events tracked" });
 });

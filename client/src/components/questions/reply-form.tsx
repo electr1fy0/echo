@@ -4,6 +4,7 @@ import { MentionField } from "@/components/ui/mention-field";
 import { useCreateReply } from "@/hooks/use-replies";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  AnonymousIcon,
   Comment01Icon,
   Image01Icon,
   Loading03Icon,
@@ -15,6 +16,11 @@ import type { QuestionId } from "@/types";
 import { validateMentions } from "@/lib/mention-validation";
 import { uploadImagePresigned } from "@/api/upload";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import { cn } from "@/lib/utils";
@@ -130,32 +136,27 @@ export function ReplyForm({
           style={{ resize: "none" }}
         />
         <div className="absolute bottom-1.5 right-1.5 flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => setIsAnonymous((p) => !p)}
-            className={cn(
-              "size-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors",
-              isAnonymous
-                ? "text-neutral-900 dark:text-neutral-100"
-                : "text-neutral-400 dark:text-neutral-500",
-            )}
-            title={isAnonymous ? "Anonymous (on)" : "Anonymous (off)"}
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-4"
-            >
-              <path d="M17 8a5 5 0 0 1-10 0" />
-              <path d="M3 21v-1a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v1" />
-              <path d="M12 14v7" />
-              <path d="M9 21h6" />
-            </svg>
-          </button>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  onClick={() => setIsAnonymous((p) => !p)}
+                  className={cn(
+                    "size-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors",
+                    isAnonymous
+                      ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900"
+                      : "bg-transparent text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300",
+                  )}
+                >
+                  <HugeiconsIcon icon={AnonymousIcon} className="size-4" />
+                </button>
+              }
+            />
+            <TooltipContent side="top">
+              {isAnonymous ? "Replying anonymously" : "Reply anonymously"}
+            </TooltipContent>
+          </Tooltip>
           <button
             type="button"
             disabled={imageUploading}

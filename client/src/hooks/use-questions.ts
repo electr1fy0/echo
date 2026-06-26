@@ -124,49 +124,34 @@ export function useDeleteQuestion() {
   return useMutation({
     mutationFn: (questionId: string) => deleteQuestion(questionId),
     onMutate: async (questionId) => {
-      await queryClient.cancelQueries({ queryKey: ["questions"] });
-      await queryClient.cancelQueries({ queryKey: ["user-questions"] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: ["questions"] }),
+        queryClient.cancelQueries({ queryKey: ["user-questions"] }),
+      ]);
 
-      const questionsCache = queryClient.getQueryCache();
-      const matchingQueries = questionsCache.findAll({
-        predicate: (query) => {
-          const key = query.queryKey;
-          return key[0] === "questions" || key[0] === "user-questions";
-        },
-      });
-
-      const previousData = matchingQueries.map((query) => ({
-        queryKey: query.queryKey,
-        data: query.state.data,
-      }));
-
-      matchingQueries.forEach((query) => {
-        const data = query.state.data;
-        if (!data) return;
-        if (typeof data === "object" && data !== null && "pages" in data) {
-          const infiniteData = data as { pages: QuestionItem[][]; pageParams: any[] };
-          const updatedPages = infiniteData.pages.map((page) =>
-            page.filter((item) => item.question.uid !== questionId)
-          );
-          queryClient.setQueryData(query.queryKey, {
-            ...infiniteData,
-            pages: updatedPages,
-          });
-        } else if (Array.isArray(data)) {
-          const filtered = data.filter((item) => item.question.uid !== questionId);
-          queryClient.setQueryData(query.queryKey, filtered);
+      const removeItem = (old: unknown) => {
+        if (!old) return old;
+        if (typeof old === "object" && "pages" in old) {
+          const inf = old as { pages: QuestionItem[][]; pageParams: unknown[] };
+          return {
+            ...inf,
+            pages: inf.pages.map((page) =>
+              page.filter((item) => item.question.uid !== questionId),
+            ),
+          };
         }
-      });
+        if (Array.isArray(old)) {
+          return old.filter((item: QuestionItem) => item.question.uid !== questionId);
+        }
+        return old;
+      };
 
-      return { previousData };
+      queryClient.setQueriesData({ queryKey: ["questions"] }, removeItem);
+      queryClient.setQueriesData({ queryKey: ["user-questions"] }, removeItem);
+
+      return {};
     },
-    onError: (_err, _questionId, context) => {
-      if (context?.previousData) {
-        context.previousData.forEach(({ queryKey, data }) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-    },
+    onError: () => {},
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
@@ -354,66 +339,42 @@ export function useVotePoll() {
         queryClient.cancelQueries({ queryKey: ["questions"] }),
       ]);
 
-      const questionsCache = queryClient.getQueryCache();
-      const matchingQueries = questionsCache.findAll({
-        predicate: (query) => {
-          const key = query.queryKey;
-          return (
-            key[0] === "questions" ||
-            (key[0] === "question" && key[1] === questionId)
-          );
-        },
-      });
-
-      const previousData = matchingQueries.map((query) => ({
-        queryKey: query.queryKey,
-        data: query.state.data,
-      }));
-
-      matchingQueries.forEach((query) => {
-        const data = query.state.data;
-        if (!data) return;
-
-        if (query.queryKey[0] === "question" && query.queryKey[1] === questionId) {
-          queryClient.setQueryData(
-            query.queryKey,
-            applyOptimisticPollVote(data as QuestionItem, optionIndex),
-          );
-          return;
+      const applyVote = (old: unknown) => {
+        if (!old) return old;
+        if (queryClient.getQueryData(["question", questionId]) === old) {
+          return applyOptimisticPollVote(old as QuestionItem, optionIndex);
         }
-
-        if (typeof data === "object" && data !== null && "pages" in data) {
-          const infiniteData = data as { pages: QuestionItem[][]; pageParams: any[] };
-          const updatedPages = infiniteData.pages.map((page) =>
-            page.map((item) =>
-              item.question.uid === questionId
-                ? applyOptimisticPollVote(item, optionIndex)
-                : item,
+        if (typeof old === "object" && "pages" in old) {
+          const inf = old as { pages: QuestionItem[][]; pageParams: unknown[] };
+          return {
+            ...inf,
+            pages: inf.pages.map((page) =>
+              page.map((item) =>
+                item.question.uid === questionId
+                  ? applyOptimisticPollVote(item, optionIndex)
+                  : item,
+              ),
             ),
-          );
-          queryClient.setQueryData(query.queryKey, {
-            ...infiniteData,
-            pages: updatedPages,
-          });
-        } else if (Array.isArray(data)) {
-          const updatedData = data.map((item) =>
-            (item as QuestionItem).question.uid === questionId
-              ? applyOptimisticPollVote(item as QuestionItem, optionIndex)
+          };
+        }
+        if (Array.isArray(old)) {
+          return old.map((item: QuestionItem) =>
+            item.question.uid === questionId
+              ? applyOptimisticPollVote(item, optionIndex)
               : item,
           );
-          queryClient.setQueryData(query.queryKey, updatedData);
         }
-      });
+        return old;
+      };
 
-      return { previousData };
+      queryClient.setQueriesData({ queryKey: ["questions"] }, applyVote);
+      queryClient.setQueryData(["question", questionId], (old: QuestionItem | undefined) =>
+        old ? applyOptimisticPollVote(old, optionIndex) : old,
+      );
+
+      return {};
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previousData) {
-        context.previousData.forEach(({ queryKey, data }) => {
-          queryClient.setQueryData(queryKey, data);
-        });
-      }
-    },
+    onError: () => {},
     onSettled: (_data, _err, { questionId }) => {
       queryClient.invalidateQueries({ queryKey: ["question", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });

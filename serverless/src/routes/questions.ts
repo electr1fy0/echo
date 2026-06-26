@@ -6,6 +6,7 @@ import { ApiError } from "../lib/errors";
 import { requireAuth, optionalAuth } from "../middleware/auth";
 import { createNotification, notifyMentions } from "../services/notifications";
 import { trackEvent } from "../services/analytics";
+import { recomputeReputation } from "../services/users";
 import {
   ensurePostExists,
   getPostItems,
@@ -107,6 +108,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
   }
 
   await notifyMentions(c.get("db"), body.content ?? "", c.get("user"), created.uid, false, undefined, body.isAnonymous ?? false);
+  await recomputeReputation(c.get("db"), c.get("user"));
   return c.json({ message: "post created", uid: created.uid }, 201);
 });
 
@@ -137,17 +139,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       authorBio: schema.users.bio,
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
-      authorReputation: sql<number>`(
-        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
-        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
-        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
-        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
-        + coalesce((
-          select count(*)::int from "replies" r4
-          where r4.author = ${schema.users.username}
-            and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
-        ), 0) * 50
-      )`,
+      authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
       isAnonymous: schema.posts.isAnonymous,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
@@ -271,6 +263,7 @@ questionRoutes.delete("/:uid", requireAuth, async (c) => {
     ),
   );
   await db.delete(schema.posts).where(eq(schema.posts.uid, c.req.param("uid")));
+  await recomputeReputation(db, c.get("user"));
   return c.json({ message: "post deleted" });
 });
 
@@ -282,6 +275,8 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
   const [existingVote] = await db.select().from(schema.postUpvotes).where(
     and(eq(schema.postUpvotes.username, currentUser), eq(schema.postUpvotes.postUid, uid)),
   ).limit(1);
+
+  const [post] = await db.select({ author: schema.posts.author }).from(schema.posts).where(eq(schema.posts.uid, uid)).limit(1);
 
   if (existingVote) {
     await db.delete(schema.postUpvotes).where(
@@ -296,7 +291,6 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
       upvotesCount: sql`${schema.posts.upvotesCount} + 1`,
     }).where(eq(schema.posts.uid, uid));
 
-    const [post] = await db.select({ author: schema.posts.author }).from(schema.posts).where(eq(schema.posts.uid, uid)).limit(1);
     if (post?.author && post.author !== currentUser) {
       await createNotification(db, {
         userUsername: post.author,
@@ -310,6 +304,10 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
         properties: { postUid: uid, by: currentUser },
       });
     }
+  }
+
+  if (post?.author) {
+    await recomputeReputation(db, post.author);
   }
 
   return c.json({ message: "vote updated" });
@@ -376,6 +374,7 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
   }
 
   await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author, body.isAnonymous ?? false);
+  await recomputeReputation(db, currentUser);
 
   return c.json({
     uid: created.uid,
@@ -412,6 +411,7 @@ questionRoutes.delete("/:uid/replies/:ruid", requireAuth, async (c) => {
       eq(schema.replies.author, c.get("user")),
     ),
   );
+  await recomputeReputation(c.get("db"), c.get("user"));
   return c.json({ message: "reply deleted" });
 });
 
@@ -423,6 +423,8 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
   const [existingVote] = await db.select().from(schema.replyUpvotes).where(
     and(eq(schema.replyUpvotes.username, currentUser), eq(schema.replyUpvotes.replyUid, ruid)),
   ).limit(1);
+
+  const [reply] = await db.select({ author: schema.replies.author }).from(schema.replies).where(eq(schema.replies.uid, ruid)).limit(1);
 
   if (existingVote) {
     await db.delete(schema.replyUpvotes).where(
@@ -437,7 +439,6 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
       upvotesCount: sql`${schema.replies.upvotesCount} + 1`,
     }).where(eq(schema.replies.uid, ruid));
 
-    const [reply] = await db.select({ author: schema.replies.author }).from(schema.replies).where(eq(schema.replies.uid, ruid)).limit(1);
     if (reply?.author && reply.author !== currentUser) {
       await createNotification(db, {
         userUsername: reply.author,
@@ -453,6 +454,10 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
     }
   }
 
+  if (reply?.author) {
+    await recomputeReputation(db, reply.author);
+  }
+
   return c.json({ message: "vote updated" });
 });
 
@@ -463,6 +468,8 @@ questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   if (post.author !== c.get("user")) {
     throw new ApiError(403, "unauthorized");
   }
+
+  const [replyToAccept] = await c.get("db").select({ author: schema.replies.author }).from(schema.replies).where(eq(schema.replies.uid, ruid)).limit(1);
 
   const updated = await c.get("db").update(schema.posts).set({ acceptedAnswerUid: ruid }).where(
     and(
@@ -478,6 +485,10 @@ questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
     throw new ApiError(404, "reply not found");
   }
 
+  if (replyToAccept?.author) {
+    await recomputeReputation(c.get("db"), replyToAccept.author);
+  }
+
   return c.json({ message: "reply accepted" });
 });
 
@@ -489,12 +500,18 @@ questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
+  const [replyToUnaccept] = await c.get("db").select({ author: schema.replies.author }).from(schema.replies).where(eq(schema.replies.uid, ruid)).limit(1);
+
   const updated = await c.get("db").update(schema.posts).set({ acceptedAnswerUid: null }).where(
     and(eq(schema.posts.uid, uid), eq(schema.posts.acceptedAnswerUid, ruid)),
   ).returning({ uid: schema.posts.uid });
 
   if (!updated.length) {
     throw new ApiError(404, "reply not found");
+  }
+
+  if (replyToUnaccept?.author) {
+    await recomputeReputation(c.get("db"), replyToUnaccept.author);
   }
 
   return c.json({ message: "reply unaccepted" });

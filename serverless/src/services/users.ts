@@ -4,18 +4,6 @@ import type { DB } from "../db";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 
-const reputationSql = sql<number>`(
-  coalesce((select sum(${schema.posts.upvotesCount}) from ${schema.posts} where ${schema.posts.author} = ${schema.users.username}), 0) * 10
-  + coalesce((select sum(${schema.replies.upvotesCount}) from ${schema.replies} where ${schema.replies.author} = ${schema.users.username}), 0) * 15
-  + (select count(*)::int from ${schema.posts} where ${schema.posts.author} = ${schema.users.username}) * 5
-  + (select count(*)::int from ${schema.replies} where ${schema.replies.author} = ${schema.users.username}) * 5
-  + coalesce((
-    select count(*)::int from ${schema.replies} r
-    where r.author = ${schema.users.username}
-      and exists (select 1 from ${schema.posts} p where p."accepted_answer_uid" = r.uid)
-  ), 0) * 50
-)`;
-
 const profileSelect = {
   username: schema.users.username,
   email: schema.users.email,
@@ -23,7 +11,7 @@ const profileSelect = {
   avatar: sql<string>`coalesce(${schema.users.avatar}, '')`,
   link: sql<string>`coalesce(${schema.users.links}, '')`,
   deletedAt: schema.users.deletedAt,
-  reputation: reputationSql,
+  reputation: schema.users.reputation,
   posted: sql<number>`(
     select count(*)::int from ${schema.posts}
     where ${schema.posts.author} = ${schema.users.username}
@@ -207,6 +195,22 @@ export const getFollowing = async (db: DB, username: string, limit = 50, offset 
     .offset(offset);
 
   return rows;
+};
+
+export const recomputeReputation = async (db: DB, username: string) => {
+  await db.update(schema.users).set({
+    reputation: sql`(
+      coalesce((select sum(${schema.posts.upvotesCount}) from ${schema.posts} where ${schema.posts.author} = ${schema.users.username}), 0) * 10
+      + coalesce((select sum(${schema.replies.upvotesCount}) from ${schema.replies} where ${schema.replies.author} = ${schema.users.username}), 0) * 15
+      + (select count(*)::int from ${schema.posts} where ${schema.posts.author} = ${schema.users.username}) * 5
+      + (select count(*)::int from ${schema.replies} where ${schema.replies.author} = ${schema.users.username}) * 5
+      + coalesce((
+        select count(*)::int from ${schema.replies} r
+        where r.author = ${schema.users.username}
+          and exists (select 1 from ${schema.posts} p where p."accepted_answer_uid" = r.uid)
+      ), 0) * 50
+    )`,
+  }).where(eq(schema.users.username, username));
 };
 
 export const getFollowedUsernames = async (db: DB, username: string): Promise<string[]> => {

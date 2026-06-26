@@ -115,7 +115,6 @@ export const cleanupOrphanedNotifications = async (db: DB, currentUser: string) 
 };
 
 export const listNotifications = async (db: DB, currentUser: string, limit: number, offset: number) => {
-  await cleanupOrphanedNotifications(db, currentUser);
   const rows = await db
     .select({
       uid: schema.notifications.uid,
@@ -137,53 +136,78 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
     .limit(limit)
     .offset(offset);
 
-  return Promise.all(
-    rows.map(async (row) => {
-      let content = "";
-      let questionContent = "";
-      let postUid: string | null = null;
+  if (!rows.length) return [];
 
-      if (row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest" || row.type === "milestone") {
-        postUid = row.referenceUid;
-        const [post] = await db
-          .select({ content: schema.posts.content })
+  // Batch fetch all referenced posts and replies in two queries
+  const postRefUids = new Set<string>();
+  const replyRefUids = new Set<string>();
+
+  for (const row of rows) {
+    if (row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest" || row.type === "milestone") {
+      postRefUids.add(row.referenceUid);
+    } else {
+      replyRefUids.add(row.referenceUid);
+    }
+  }
+
+  const [posts, replies] = await Promise.all([
+    postRefUids.size
+      ? db
+          .select({ uid: schema.posts.uid, content: schema.posts.content })
           .from(schema.posts)
-          .where(eq(schema.posts.uid, row.referenceUid))
-          .limit(1);
-        content = post?.content ?? "";
-      } else {
-        const [reply] = await db
-          .select({ content: schema.replies.content, postUid: schema.replies.postUid })
+          .where(inArray(schema.posts.uid, [...postRefUids]))
+      : Promise.resolve([] as { uid: string; content: string | null }[]),
+    replyRefUids.size
+      ? db
+          .select({ uid: schema.replies.uid, content: schema.replies.content, postUid: schema.replies.postUid })
           .from(schema.replies)
-          .where(eq(schema.replies.uid, row.referenceUid))
-          .limit(1);
-        content = reply?.content ?? "";
+          .where(inArray(schema.replies.uid, [...replyRefUids]))
+      : Promise.resolve([] as { uid: string; content: string | null; postUid: string | null }[]),
+  ]);
 
-        if (reply?.postUid) {
-          postUid = reply.postUid;
-          const [post] = await db
-            .select({ content: schema.posts.content })
-            .from(schema.posts)
-            .where(eq(schema.posts.uid, reply.postUid))
-            .limit(1);
-          questionContent = post?.content ?? "";
-        }
+  const postMap = new Map(posts.map((p) => [p.uid, p.content ?? ""]));
+  const replyMap = new Map(replies.map((r) => [r.uid, r]));
+  const replyPostUids = new Set(replies.filter((r) => r.postUid).map((r) => r.postUid!));
+
+  // Batch fetch parent post content for replies
+  const parentPosts = replyPostUids.size
+    ? await db
+        .select({ uid: schema.posts.uid, content: schema.posts.content })
+        .from(schema.posts)
+        .where(inArray(schema.posts.uid, [...replyPostUids]))
+    : [];
+  const parentPostMap = new Map(parentPosts.map((p) => [p.uid, p.content ?? ""]));
+
+  return rows.map((row) => {
+    let content = "";
+    let questionContent = "";
+    let postUid: string | null = null;
+
+    if (row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest" || row.type === "milestone") {
+      postUid = row.referenceUid;
+      content = postMap.get(row.referenceUid) ?? "";
+    } else {
+      const reply = replyMap.get(row.referenceUid);
+      content = reply?.content ?? "";
+      if (reply?.postUid) {
+        postUid = reply.postUid;
+        questionContent = parentPostMap.get(reply.postUid) ?? "";
       }
+    }
 
-      return {
-        uid: row.uid,
-        user_username: row.userUsername,
-        actor_username: row.actorUsername ?? "",
-        actor_avatar: row.actorAvatar ?? "",
-        actor_is_anonymous: row.actorIsAnonymous ?? false,
-        type: row.type,
-        reference_uid: row.referenceUid,
-        post_uid: postUid ?? "",
-        content,
-        question_content: questionContent,
-        is_read: row.isRead ?? false,
-        created_at: row.createdAt?.toISOString() ?? null,
-      };
-    }),
-  );
+    return {
+      uid: row.uid,
+      user_username: row.userUsername,
+      actor_username: row.actorUsername ?? "",
+      actor_avatar: row.actorAvatar ?? "",
+      actor_is_anonymous: row.actorIsAnonymous ?? false,
+      type: row.type,
+      reference_uid: row.referenceUid,
+      post_uid: postUid ?? "",
+      content,
+      question_content: questionContent,
+      is_read: row.isRead ?? false,
+      created_at: row.createdAt?.toISOString() ?? null,
+    };
+  });
 };

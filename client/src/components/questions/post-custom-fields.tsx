@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
@@ -11,9 +12,17 @@ import {
   Route,
   Tag,
   Download,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toastManager } from "@/components/ui/toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import type { User } from "@/types";
 
 interface PostCustomFieldsProps {
@@ -38,6 +47,11 @@ export function PostCustomFields({
   sendInterestDM,
   openAuthModal,
 }: PostCustomFieldsProps) {
+  const [pendingDM, setPendingDM] = useState<{
+    authorUsername: string;
+    templateMessage: string;
+  } | null>(null);
+
   if (!customFields) return null;
 
   const entries = Object.entries(customFields).filter(
@@ -95,6 +109,7 @@ export function PostCustomFields({
   if (!hasMetadata && !hasImages && !hasFiles) return null;
 
   return (
+    <>
     <div className="mt-3.5 p-4 flex flex-col gap-4 bg-linear-to-br from-neutral-50/60 to-neutral-100/30 dark:from-neutral-900/40 dark:to-neutral-950/20 backdrop-blur-md border border-neutral-200/50 dark:border-neutral-800/60 rounded-2xl w-full shadow-xs">
       {/* Metadata fields list (excluding files/images) */}
       {hasMetadata && (
@@ -305,15 +320,11 @@ export function PostCustomFields({
                         openAuthModal?.("signin");
                         return;
                       }
-                      sendInterestDM?.({
+                      setPendingDM({
                         authorUsername: authorUsername!,
                         templateMessage:
                           btnVal.template ||
                           `Hey, I'm interested in your post!`,
-                      });
-                      toastManager.add({
-                        title: "Interest sent via DM!",
-                        type: "success",
                       });
                     }}
                     className="cursor-pointer text-xs font-semibold rounded-2xl h-8 px-4 bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white border-none shadow-xs hover:shadow-md active:scale-[0.98] transition-all duration-200 shrink-0"
@@ -500,5 +511,43 @@ export function PostCustomFields({
         </div>
       )}
     </div>
+
+      <Dialog open={!!pendingDM} onOpenChange={(o) => { if (!o) setPendingDM(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Send DM?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 px-6">
+            {pendingDM?.templateMessage}
+          </p>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPendingDM(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isDMPending}
+              onClick={() => {
+                if (!pendingDM) return;
+                sendInterestDM?.(pendingDM);
+                setPendingDM(null);
+                toastManager.add({
+                  title: "Interest sent via DM!",
+                  type: "success",
+                });
+              }}
+            >
+              <Send className="size-3.5 mr-1" />
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

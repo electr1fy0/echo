@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -68,9 +68,11 @@ export const getUserAnalytics = async (db: DB, username: string) => {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const dailyActivity = await db
+  // Combine daily activity and total event counts in one query
+  const activityRows = await db
     .select({
       date: sql<string>`DATE(${schema.analyticsEvents.createdAt})`,
+      events: sql<number>`count(*)::int`,
       posts: sql<number>`COALESCE(COUNT(*) FILTER (WHERE ${schema.analyticsEvents.event} = 'post_create'), 0)`,
       replies: sql<number>`COALESCE(COUNT(*) FILTER (WHERE ${schema.analyticsEvents.event} = 'reply_create'), 0)`,
       upvotesReceived: sql<number>`COALESCE(COUNT(*) FILTER (WHERE ${schema.analyticsEvents.event} = 'upvote_received'), 0)`,
@@ -85,69 +87,7 @@ export const getUserAnalytics = async (db: DB, username: string) => {
     .groupBy(sql`DATE(${schema.analyticsEvents.createdAt})`)
     .orderBy(sql`DATE(${schema.analyticsEvents.createdAt})`);
 
-  const [totals] = await db
-    .select({
-      posts: sql<number>`(select count(*)::int from ${schema.posts} where ${schema.posts.author} = ${username})`,
-      replies: sql<number>`(select count(*)::int from ${schema.replies} where ${schema.replies.author} = ${username})`,
-      upvotesReceived: sql<number>`(
-        coalesce((select sum(${schema.posts.upvotesCount}) from ${schema.posts} where ${schema.posts.author} = ${username}), 0)
-        + coalesce((select sum(${schema.replies.upvotesCount}) from ${schema.replies} where ${schema.replies.author} = ${username}), 0)
-      )`,
-      upvotesGiven: sql<number>`(
-        coalesce((select count(*)::int from ${schema.postUpvotes} where ${schema.postUpvotes.username} = ${username}), 0)
-        + coalesce((select count(*)::int from ${schema.replyUpvotes} where ${schema.replyUpvotes.username} = ${username}), 0)
-      )`,
-    })
-    .from(schema.users)
-    .where(eq(schema.users.username, username))
-    .limit(1);
-
-  const [profileViews] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(schema.analyticsEvents)
-    .where(
-      and(
-        eq(schema.analyticsEvents.event, "profile_view"),
-        eq(schema.analyticsEvents.properties, sql`(${JSON.stringify({ target: username })}::jsonb)`),
-      ),
-    );
-
-  const topPosts = await db
-    .select({
-      uid: schema.posts.uid,
-      content: schema.posts.content,
-      upvotes: schema.posts.upvotesCount,
-    })
-    .from(schema.posts)
-    .where(eq(schema.posts.author, username))
-    .orderBy(desc(schema.posts.upvotesCount))
-    .limit(5);
-
-  const topPostsWithViews = await Promise.all(
-    topPosts.map(async (post) => {
-      const [viewCount] = await db
-        .select({ count: sql<number>`count(*)::int` })
-        .from(schema.postViews)
-        .where(eq(schema.postViews.postUid, post.uid));
-      return { ...post, views: viewCount?.count ?? 0 };
-    }),
-  );
-
-  const activityRows = await db
-    .select({
-      date: sql<string>`DATE(${schema.analyticsEvents.createdAt})`,
-      events: sql<number>`count(*)::int`,
-    })
-    .from(schema.analyticsEvents)
-    .where(
-      and(
-        eq(schema.analyticsEvents.username, username),
-        gte(schema.analyticsEvents.createdAt, thirtyDaysAgo),
-      ),
-    )
-    .groupBy(sql`DATE(${schema.analyticsEvents.createdAt})`)
-    .orderBy(sql`DATE(${schema.analyticsEvents.createdAt})`);
-
+  // Build calendar and streaks from the single query result
   const dates = new Map<string, number>();
   for (let i = 0; i < 30; i++) {
     const d = new Date(thirtyDaysAgo);
@@ -165,22 +105,87 @@ export const getUserAnalytics = async (db: DB, username: string) => {
     else break;
   }
 
-  const replyRate = (totals?.posts ?? 0) > 0
-    ? Math.round(((totals?.replies ?? 0) / (totals?.posts ?? 1)) * 100)
+  // Fetch totals, profile views, and top posts in parallel
+  const [totals, profileViews, topPosts] = await Promise.all([
+    db
+      .select({
+        posts: sql<number>`(select count(*)::int from ${schema.posts} where ${schema.posts.author} = ${username})`,
+        replies: sql<number>`(select count(*)::int from ${schema.replies} where ${schema.replies.author} = ${username})`,
+        upvotesReceived: sql<number>`(
+          coalesce((select sum(${schema.posts.upvotesCount}) from ${schema.posts} where ${schema.posts.author} = ${username}), 0)
+          + coalesce((select sum(${schema.replies.upvotesCount}) from ${schema.replies} where ${schema.replies.author} = ${username}), 0)
+        )`,
+        upvotesGiven: sql<number>`(
+          coalesce((select count(*)::int from ${schema.postUpvotes} where ${schema.postUpvotes.username} = ${username}), 0)
+          + coalesce((select count(*)::int from ${schema.replyUpvotes} where ${schema.replyUpvotes.username} = ${username}), 0)
+        )`,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.username, username))
+      .limit(1),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.analyticsEvents)
+      .where(
+        and(
+          eq(schema.analyticsEvents.event, "profile_view"),
+          eq(schema.analyticsEvents.properties, sql`(${JSON.stringify({ target: username })}::jsonb)`),
+        ),
+      ),
+    db
+      .select({
+        uid: schema.posts.uid,
+        content: schema.posts.content,
+        upvotes: schema.posts.upvotesCount,
+      })
+      .from(schema.posts)
+      .where(eq(schema.posts.author, username))
+      .orderBy(desc(schema.posts.upvotesCount))
+      .limit(5),
+  ]);
+
+  // Batch fetch view counts for top posts
+  const topPostUids = topPosts.map((p) => p.uid);
+  const viewCountRows = topPostUids.length
+    ? await db
+        .select({
+          postUid: schema.postViews.postUid,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(schema.postViews)
+        .where(inArray(schema.postViews.postUid, topPostUids))
+        .groupBy(schema.postViews.postUid)
+    : [];
+  const viewCountMap = new Map(viewCountRows.map((r) => [r.postUid, r.count]));
+
+  const t = totals?.[0];
+  const pv = profileViews?.[0];
+  const topPostsWithViews = topPosts.map((post) => ({
+    ...post,
+    views: viewCountMap.get(post.uid) ?? 0,
+  }));
+
+  const replyRate = (t?.posts ?? 0) > 0
+    ? Math.round(((t?.replies ?? 0) / (t?.posts ?? 1)) * 100)
     : 0;
-  const avgUpvotesPerPost = (totals?.posts ?? 0) > 0
-    ? Math.round(((totals?.upvotesReceived ?? 0) / (totals?.posts ?? 1)) * 10) / 10
+  const avgUpvotesPerPost = (t?.posts ?? 0) > 0
+    ? Math.round(((t?.upvotesReceived ?? 0) / (t?.posts ?? 1)) * 10) / 10
     : 0;
 
   return {
-    activity: dailyActivity,
+    activity: activityRows.map((r) => ({
+      date: r.date,
+      posts: r.posts,
+      replies: r.replies,
+      upvotesReceived: r.upvotesReceived,
+    })),
     topPosts: topPostsWithViews,
     totals: {
-      posts: totals?.posts ?? 0,
-      replies: totals?.replies ?? 0,
-      upvotesReceived: totals?.upvotesReceived ?? 0,
-      upvotesGiven: totals?.upvotesGiven ?? 0,
-      profileViews: profileViews?.count ?? 0,
+      posts: t?.posts ?? 0,
+      replies: t?.replies ?? 0,
+      upvotesReceived: t?.upvotesReceived ?? 0,
+      upvotesGiven: t?.upvotesGiven ?? 0,
+      profileViews: pv?.count ?? 0,
     },
     streaks: {
       currentStreak,

@@ -10,8 +10,15 @@ import {
   timestamp,
   unique,
   uuid,
+  customType,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 export const users = pgTable("users", {
   username: text("username").primaryKey(),
@@ -33,6 +40,7 @@ export const users = pgTable("users", {
   emailChangeToken: text("email_change_token"),
   emailChangeExpiry: timestamp("email_change_expiry", { mode: "date" }),
   deletedAt: timestamp("deleted_at", { mode: "date" }),
+  searchVector: tsvector("search_vector"),
 }, (table) => [unique("users_email_key").on(table.email)]);
 
 export const chambers = pgTable("chambers", {
@@ -45,6 +53,7 @@ export const chambers = pgTable("chambers", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   colorIndex: integer("color_index").default(0),
   picture: text("picture"),
+  searchVector: tsvector("search_vector"),
 }, (table) => [unique("chambers_name_key").on(table.name)]);
 
 export const channels = pgTable("channels", {
@@ -113,6 +122,9 @@ export const posts = pgTable("posts", {
   taxiDatetime: text("taxi_datetime"),
   taxiSeatsAvailable: integer("taxi_seats_available"),
   taxiStatus: text("taxi_status").default("open"),
+
+  // Full-text search
+  searchVector: tsvector("search_vector"),
 });
 
 export const replies = pgTable("replies", {
@@ -129,6 +141,8 @@ export const replies = pgTable("replies", {
   upvotesCount: integer("upvotes_count").default(0),
   redditUpvotes: integer("reddit_upvotes").default(0),
   isAnonymous: boolean("is_anonymous").default(false).notNull(),
+
+  searchVector: tsvector("search_vector"),
 });
 
 export const postUpvotes = pgTable("post_upvotes", {

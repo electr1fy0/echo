@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, or, sql, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, or, sql, isNotNull, isNull } from "drizzle-orm";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -219,7 +219,7 @@ export const getPostItems = async (
   }
 
   if (params.query) {
-    conditions.push(ilike(schema.posts.content, `%${params.query}%`));
+    conditions.push(sql`${schema.posts.searchVector} @@ plainto_tsquery('english', ${params.query})`);
   }
 
   if (params.postType) {
@@ -259,17 +259,7 @@ export const getPostItems = async (
       authorBio: schema.users.bio,
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
-      authorReputation: sql<number>`(
-        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
-        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
-        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
-        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
-        + coalesce((
-          select count(*)::int from "replies" r4
-          where r4.author = ${schema.users.username}
-            and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
-        ), 0) * 50
-      )`,
+      authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
       isAnonymous: schema.posts.isAnonymous,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
@@ -377,17 +367,7 @@ export const getReplies = async (db: DB, currentUser: string | undefined | null,
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
       isAnonymous: schema.replies.isAnonymous,
-      authorReputation: sql<number>`(
-        coalesce((select sum(p2."upvotes_count") from "posts" p2 where p2.author = ${schema.users.username}), 0) * 10
-        + coalesce((select sum(r2."upvotes_count") from "replies" r2 where r2.author = ${schema.users.username}), 0) * 15
-        + (select count(*)::int from "posts" p3 where p3.author = ${schema.users.username}) * 5
-        + (select count(*)::int from "replies" r3 where r3.author = ${schema.users.username}) * 5
-        + coalesce((
-          select count(*)::int from "replies" r4
-          where r4.author = ${schema.users.username}
-            and exists (select 1 from "posts" p4 where p4."accepted_answer_uid" = r4.uid)
-        ), 0) * 50
-      )`,
+      authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
       upvotes: schema.replies.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from reply_upvotes rv
@@ -418,7 +398,7 @@ export const searchUsers = (db: DB, query: string) =>
       bio: sql<string>`coalesce(${schema.users.bio}, '')`,
     })
     .from(schema.users)
-    .where(and(ilike(schema.users.username, `%${query}%`), isNull(schema.users.deletedAt)))
+    .where(and(sql`${schema.users.searchVector} @@ plainto_tsquery('english', ${query})`, isNull(schema.users.deletedAt)))
     .limit(5);
 
 export const listChambers = (db: DB, currentUser: string | undefined | null, query = "") => {
@@ -456,10 +436,7 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
     .from(schema.chambers)
     .where(
       query
-        ? or(
-            ilike(schema.chambers.name, `%${query}%`),
-            ilike(schema.chambers.description, `%${query}%`),
-          )
+        ? sql`${schema.chambers.searchVector} @@ plainto_tsquery('english', ${query})`
         : undefined,
     )
     .orderBy(
