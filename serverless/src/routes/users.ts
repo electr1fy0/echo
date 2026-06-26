@@ -49,6 +49,7 @@ userRoutes.patch("/me", async (c) => {
   if (body.avatar !== undefined) updates.avatar = body.avatar;
   if (body.link !== undefined) updates.links = body.link;
   if (body.dmEnabled !== undefined) updates.dmEnabled = body.dmEnabled;
+  if (body.tourSeen !== undefined) updates.tourSeen = body.tourSeen;
 
   await c.get("db").update(schema.users).set(updates).where(eq(schema.users.username, currentUsername));
 

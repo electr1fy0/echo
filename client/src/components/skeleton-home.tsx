@@ -2,7 +2,7 @@ import { Skeleton } from "./ui/skeleton";
 
 function SkeletonSidebar() {
   return (
-    <aside className="hidden md:flex fixed top-0 left-0 h-screen flex-col items-center py-8 border-r border-neutral-200 dark:border-neutral-800 bg-background w-20">
+    <aside className="hidden md:flex fixed top-0 left-0 h-dvh flex-col items-center py-8 border-r border-neutral-200 dark:border-neutral-800 bg-background w-20">
       <div className="size-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
         <img
           src="/turnsoutlogo.svg"
@@ -55,7 +55,7 @@ function SkeletonMain() {
 
 export function SkeletonHome() {
   return (
-    <div className="flex min-h-screen opacity-70 pointer-events-none">
+    <div className="flex min-h-dvh opacity-70 pointer-events-none">
       <SkeletonSidebar />
       <main className="w-full flex flex-col items-center">
         <SkeletonMain />

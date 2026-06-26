@@ -120,8 +120,27 @@
       "when": 1782470074990,
       "tag": "0016_add_reports",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782481453880,
+      "tag": "0018_add_chamber_icon",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782481479206,
+      "tag": "0018_add_chamber_icon",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1782483512999,
+      "tag": "0019_sour_eternals",
+      "breakpoints": true
     }
-  ]
-}
   ]
 }

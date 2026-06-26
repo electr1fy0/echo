@@ -26,8 +26,8 @@ import {
 } from "@/hooks/use-chamber";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
-import { CHAMBER_COLORS } from "@/components/chambers/consts";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 import {
   useDeleteQuestion,
   useInfiniteQuestionsQuery,
@@ -518,8 +518,6 @@ export default function ChamberPage() {
     );
   }
 
-  const colorClass =
-    CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
   const handleToggleJoin = () => {
     if (!user) {
       openAuthModal("signin");
@@ -584,22 +582,13 @@ export default function ChamberPage() {
 
       {/* Header Info */}
       <div className="flex items-start gap-4 mb-8 pb-6 border-b border-neutral-100 dark:border-neutral-900">
-        {chamber.picture ? (
-          <img
-            src={chamber.picture}
-            alt={chamber.name}
-            className="size-16 rounded-2xl object-cover shrink-0"
-          />
-        ) : (
-          <div
-            className={cn(
-              "size-16 rounded-2xl flex items-center justify-center text-white text-xl shrink-0 ",
-              colorClass,
-            )}
-          >
-            {getInitials(chamber.name)}
-          </div>
-        )}
+        <ChamberAvatar
+          name={chamber.name}
+          picture={chamber.picture}
+          icon={chamber.icon}
+          colorIndex={chamber.colorIndex ?? 0}
+          size="lg"
+        />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl text-neutral-900 dark:text-neutral-100">
@@ -748,6 +737,7 @@ export default function ChamberPage() {
                           setIsEditChannelOpen(true);
                         }}
                         className="opacity-0 group-hover/chan:opacity-100 p-1 hover:bg-neutral-200 dark:hover:bg-neutral-800 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-all cursor-pointer size-5 flex items-center justify-center shrink-0"
+                        aria-label="Edit channel"
                       >
                         <HugeiconsIcon
                           icon={PencilEdit02Icon}

@@ -96,7 +96,7 @@ function AuthenticatedLayout() {
   return (
     <OnboardingTourProvider>
       <AutoStartTour />
-      <div className="flex min-h-screen">
+      <div className="flex min-h-dvh">
         <AppSidebar />
         <main className="w-full flex flex-col items-center md:pl-20 min-h-0">
           <Outlet />
@@ -134,7 +134,7 @@ function AccentThemeInitializer() {
 
 function ErrorFallback({ error, resetErrorBoundary }: { error: unknown; resetErrorBoundary: () => void }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 gap-4 bg-background text-foreground">
+    <div className="min-h-dvh flex flex-col items-center justify-center p-4 gap-4 bg-background text-foreground">
       <p className="text-sm text-muted-foreground text-center max-w-md">
         {error instanceof Error && error.message === "Loading chunk failed"
           ? "A page chunk failed to load. This can happen after an app update."

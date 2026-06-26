@@ -79,12 +79,14 @@ function MessageBubble({ msg, isMine, active, onToggle, onEdit, onDelete }: {
                   <button
                     onClick={(e) => { e.stopPropagation(); onEdit(msg.uid); }}
                     className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                    aria-label="Edit message"
                   >
                     <HugeiconsIcon icon={Edit01Icon} className="size-3" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onDelete(msg.uid); }}
                     className="p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+                    aria-label="Delete message"
                   >
                     <HugeiconsIcon icon={Delete01Icon} className="size-3" />
                   </button>

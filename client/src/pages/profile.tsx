@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { QuestionList } from "@/components/questions/question-list";
 import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
@@ -27,6 +28,7 @@ import {
   Link01Icon,
   Add01Icon,
   ArrowLeft02Icon,
+  Analytics02Icon,
 } from "@hugeicons/core-free-icons";
 import { Drawer, DrawerPopup, DrawerPanel, DrawerTrigger } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -52,9 +54,9 @@ import { useDeleteAccount, useSignout } from "@/hooks/use-auth";
 import type { User } from "@/types";
 import { useListChambers } from "@/hooks/use-chamber";
 import { CreateChamberDialog } from "@/components/chambers/create-chamber-dialog";
-import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { ChamberPillSkeleton } from "@/components/ui/skeletons";
@@ -211,6 +213,7 @@ export default function Profile() {
       observerRef.current = observer;
     }
   }, []);
+  const navigate = useNavigate();
   const { mutate: deleteQuestion } = useDeleteQuestion();
   const { mutate: deleteAccount } = useDeleteAccount();
   const isMobile = useIsMobile();
@@ -345,6 +348,17 @@ export default function Profile() {
             )}
 
             <div className="flex gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/analytics")}
+              >
+                <HugeiconsIcon
+                  icon={Analytics02Icon}
+                  className="mr-2 size-4"
+                />
+                Analytics
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -649,13 +663,13 @@ export default function Profile() {
                   href={`/chambers/${chamber.name}`}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
                 >
-                  <div
-                    className={cn(
-                      "size-4 rounded-md",
-                      CHAMBER_COLORS[
-                        (chamber.colorIndex || 0) % CHAMBER_COLORS.length
-                      ],
-                    )}
+                  <ChamberAvatar
+                    name={chamber.name}
+                    picture={chamber.picture}
+                    icon={chamber.icon}
+                    colorIndex={chamber.colorIndex ?? 0}
+                    size="sm"
+                    className="!size-4 !rounded-md"
                   />
                   <span className="text-sm text-neutral-900 dark:text-neutral-100">
                     {chamber.name}

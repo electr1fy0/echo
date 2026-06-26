@@ -160,6 +160,7 @@ export const mapChamber = (row: {
   memberCount: number;
   isJoined: boolean;
   picture: string | null;
+  icon: string | null;
 }) => ({
   uid: row.uid,
   name: row.name,
@@ -170,6 +171,7 @@ export const mapChamber = (row: {
   memberCount: row.memberCount,
   isJoined: row.isJoined,
   picture: row.picture,
+  icon: row.icon,
 });
 
 export const ensurePostExists = async (db: DB, uid: string) => {
@@ -442,6 +444,7 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
       colorIndex: schema.chambers.colorIndex,
       timeCreated: schema.chambers.createdAt,
       picture: schema.chambers.picture,
+      icon: schema.chambers.icon,
       memberCount: sql<number>`(
         select count(*)::int from chamber_members cm
         where cm.chamber_uid = ${schema.chambers.uid}

@@ -6,19 +6,26 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerPopup,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import type { Chamber } from "@/types";
 import { useUpdateChamber } from "@/hooks/use-chamber";
 import { CHAMBER_COLORS } from "@/components/chambers/consts";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { useImageUpload } from "@/hooks/use-image-upload";
 import { CropImageDialog } from "@/components/ui/crop-image-dialog";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
+import { ChamberIconPicker } from "@/components/chambers/chamber-icon-picker";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Delete02Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type EditChamberDialogProps = {
   open: boolean;
@@ -31,10 +38,12 @@ export function EditChamberDialog({
   onOpenChange,
   chamber,
 }: EditChamberDialogProps) {
+  const isMobile = useIsMobile();
   const { mutate: updateChamber, isPending } = useUpdateChamber();
-  const { upload: uploadImage, uploading: imageUploading } = useImageUpload();
+  const { upload: uploadImage } = useImageUpload();
   const [draft, setDraft] = useState<Chamber>(chamber);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [editPage, setEditPage] = useState<"main" | "icon">("main");
 
   useEffect(() => {
     setDraft(chamber);
@@ -55,6 +64,7 @@ export function EditChamberDialog({
           description: draft.description.trim(),
           colorIndex: draft.colorIndex ?? 0,
           picture: draft.picture,
+          icon: draft.icon,
         },
       },
       {
@@ -69,21 +79,38 @@ export function EditChamberDialog({
     );
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>Edit Chamber</DialogTitle>
-        </DialogHeader>
-        <form className="py-2" onSubmit={handleSubmit}>
-          <div className="px-6 space-y-5 pb-4">
+  const handleClose = (open: boolean) => {
+    onOpenChange(open);
+    if (!open) setEditPage("main");
+  };
+
+  const content = (
+    <div
+      className={cn("relative overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]", isMobile && "pt-1")}
+      style={{ maxHeight: editPage === "icon" ? "80vh" : "420px" }}
+    >
+      <div
+        className="flex transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] w-[200%]"
+        style={{
+          transform:
+            editPage === "icon"
+              ? "translateX(-50%)"
+              : "translateX(0)",
+        }}
+      >
+        {/* ───── Page 1: Main ───── */}
+        <div className="w-1/2">
+          <DialogHeader className={cn(isMobile ? "px-5 pt-6 pb-0" : "px-6 pt-6 pb-0")}>
+            <DialogTitle>Edit Chamber</DialogTitle>
+          </DialogHeader>
+          <form className={cn(isMobile ? "space-y-3 py-3 px-5" : "space-y-3 py-3 px-6")} onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <label className="text-sm text-neutral-700 dark:text-neutral-300">
                 Name
               </label>
               <Input
                 value={draft.name}
-                placeholder="e.g. Photography Enthusiasts"
+                placeholder="e.g. my-chamber"
                 onChange={(e) => updateDraft({ name: e.target.value })}
                 className="rounded-xl h-9 text-sm"
               />
@@ -101,61 +128,80 @@ export function EditChamberDialog({
             </div>
             <div className="space-y-1.5">
               <label className="text-sm text-neutral-700 dark:text-neutral-300">
-                Picture
+                Avatar
               </label>
-              <div className="flex items-center gap-3">
-                {draft.picture ? (
-                  <div className="relative size-14 rounded-xl overflow-hidden shrink-0">
-                    <img
-                      src={draft.picture}
-                      alt="Chamber"
-                      className="size-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => updateDraft({ picture: null })}
-                      className="absolute top-0.5 right-0.5 size-4 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80 transition-colors cursor-pointer"
-                    >
-                      <HugeiconsIcon icon={Delete02Icon} className="size-2.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    className={cn(
-                      "size-14 rounded-xl flex items-center justify-center text-white text-sm shrink-0",
-                      CHAMBER_COLORS[(draft.colorIndex ?? 0) % CHAMBER_COLORS.length],
-                    )}
-                  >
-                    {getInitials(draft.name)}
-                  </div>
-                )}
-                <label className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer transition-colors">
-                  {imageUploading ? (
-                    <span className="inline-block size-3.5 rounded-full border-2 border-neutral-300 border-t-neutral-800 animate-spin" />
-                  ) : null}
-                  {imageUploading ? "Uploading..." : "Upload"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={imageUploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setCropImageSrc(reader.result as string);
-                      };
-                      reader.readAsDataURL(file);
-                      e.target.value = "";
-                    }}
+              <button
+                type="button"
+                onClick={() => setEditPage("icon")}
+                className="flex items-center justify-between w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <ChamberAvatar
+                    name={draft.name}
+                    picture={draft.picture}
+                    icon={draft.icon}
+                    colorIndex={draft.colorIndex ?? 0}
+                    size="md"
+                    className="size-10"
                   />
-                </label>
-              </div>
+                  <div className="text-left">
+                    <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      Icon & Theme
+                    </span>
+                    <p className="text-xs text-neutral-500">
+                      Choose icon style and color
+                    </p>
+                  </div>
+                </div>
+                <HugeiconsIcon
+                  icon={ArrowLeft02Icon}
+                  className="size-4 text-neutral-400 rotate-180 group-hover:-translate-x-0.5 transition-transform"
+                />
+              </button>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm text-neutral-700 dark:text-neutral-300">
-                Theme
+          </form>
+            <DialogFooter className={cn(isMobile ? "!flex-row !justify-end !px-5" : "!px-6")}>
+              <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
+                className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
+              >
+                Save
+              </Button>
+            </DialogFooter>
+        </div>
+
+        {/* ───── Page 2: Icon & Theme ───── */}
+        <div className="w-1/2 flex flex-col max-h-[80vh]">
+          <div className={cn("flex items-center gap-3", isMobile ? "px-5 pt-4 pb-3" : "px-6 pt-6 pb-3")}>
+            <button
+              type="button"
+              onClick={() => setEditPage("main")}
+              className="size-8 rounded-lg flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer -ml-1.5"
+            >
+              <HugeiconsIcon
+                icon={ArrowLeft02Icon}
+                className="size-4 text-neutral-600 dark:text-neutral-400"
+              />
+            </button>
+            <DialogTitle>Icon & Theme</DialogTitle>
+          </div>
+
+          <div className={cn("flex-1 overflow-y-auto scrollbar-modern space-y-5", isMobile ? "px-5" : "px-6")}>
+            <ChamberIconPicker
+              value={draft.icon}
+              colorIndex={draft.colorIndex ?? 0}
+              onChange={(seed) => {
+                updateDraft({ icon: seed, picture: seed ? null : draft.picture });
+              }}
+            />
+
+            <div className="pb-8">
+              <label className="text-sm text-neutral-700 dark:text-neutral-300 mb-3 block">
+                Color
               </label>
               <div className="flex gap-2 flex-wrap">
                 {CHAMBER_COLORS.map((color, index) => (
@@ -164,7 +210,7 @@ export function EditChamberDialog({
                     type="button"
                     onClick={() => updateDraft({ colorIndex: index })}
                     className={cn(
-                      "size-6 rounded-full transition-all ring-2 ring-offset-2 ring-transparent ring-offset-transparent",
+                      "size-6 rounded-full transition-all ring-2 ring-offset-2 ring-transparent ring-offset-transparent cursor-pointer",
                       color,
                       {
                         "ring-neutral-900 dark:ring-neutral-100 ring-offset-white dark:ring-offset-neutral-900":
@@ -176,20 +222,51 @@ export function EditChamberDialog({
               </div>
             </div>
           </div>
-          <DialogFooter className="pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
-              Cancel
-            </Button>
+
+          <div className={cn("py-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end", isMobile ? "px-5" : "px-6")}>
             <Button
-              type="submit"
-              disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
-              className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
+              type="button"
+              className="min-w-[100px]"
+              onClick={() => setEditPage("main")}
             >
-              Save
+              Done
             </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <Drawer open={open} onOpenChange={handleClose}>
+          <DrawerPopup className="p-0" showCloseButton={editPage === "main"}>
+            {content}
+          </DrawerPopup>
+        </Drawer>
+        <CropImageDialog
+          open={!!cropImageSrc}
+          onOpenChange={() => setCropImageSrc(null)}
+          imageSrc={cropImageSrc || ""}
+          onCropComplete={async (blob) => {
+            const file = new File([blob], "chamber.jpg", { type: "image/jpeg" });
+            const url = await uploadImage(file);
+            if (url) updateDraft({ picture: url });
+            setCropImageSrc(null);
+          }}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-[500px] overflow-hidden p-0" showCloseButton={editPage === "main"}>
+          {content}
+        </DialogContent>
+      </Dialog>
       <CropImageDialog
         open={!!cropImageSrc}
         onOpenChange={() => setCropImageSrc(null)}
@@ -201,6 +278,6 @@ export function EditChamberDialog({
           setCropImageSrc(null);
         }}
       />
-    </Dialog>
+    </>
   );
 }

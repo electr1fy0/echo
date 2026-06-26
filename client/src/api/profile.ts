@@ -11,7 +11,7 @@ export async function fetchProfile(): Promise<User> {
   if (!res.ok) await parseApiError(res);
   return res.json() as Promise<User>;
 }
-export async function updateProfile(user: User): Promise<void> {
+export async function updateProfile(user: Partial<User>): Promise<void> {
   const res = await fetch(`${API_URL}/users/me`, {
     headers: {
       ...getAuthHeaders(),

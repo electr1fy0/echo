@@ -49,7 +49,7 @@ export default function ResetPassword() {
 
  if (success) {
  return (
- <div className="min-h-screen flex items-center justify-center bg-background p-4">
+ <div className="min-h-dvh flex items-center justify-center bg-background p-4">
  <Card className="w-full max-w-md text-center">
  <CardHeader>
  <div className="mx-auto size-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2">
@@ -75,7 +75,7 @@ export default function ResetPassword() {
  }
 
  return (
- <div className="min-h-screen flex items-center justify-center bg-background p-4">
+ <div className="min-h-dvh flex items-center justify-center bg-background p-4">
  <Card className="w-full max-w-md ">
  <CardHeader className="text-center pb-2">
  <div className="my-2">

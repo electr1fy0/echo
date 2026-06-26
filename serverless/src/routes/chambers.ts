@@ -54,6 +54,7 @@ chamberRoutes.post("/", async (c) => {
     creatorUsername: c.get("user"),
     colorIndex: body.colorIndex ?? 0,
     picture: body.picture ?? null,
+    icon: body.icon ?? null,
   }).returning({ uid: schema.chambers.uid, createdAt: schema.chambers.createdAt });
 
   await c.get("db").insert(schema.chamberMembers).values({
@@ -122,6 +123,7 @@ chamberRoutes.post("/", async (c) => {
     isJoined: true,
     colorIndex: body.colorIndex ?? 0,
     picture: body.picture ?? null,
+    icon: body.icon ?? null,
     timeCreated: created.createdAt?.toISOString() ?? null,
   }, 201);
 });
@@ -160,6 +162,7 @@ chamberRoutes.patch("/:uid", async (c) => {
     colorIndex: body.colorIndex ?? 0,
   };
   if (body.picture !== undefined) updates.picture = body.picture;
+  if (body.icon !== undefined) updates.icon = body.icon;
 
   try {
     await c.get("db").update(schema.chambers).set(updates).where(eq(schema.chambers.uid, uid));

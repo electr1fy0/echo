@@ -20,6 +20,7 @@ const profileSelect = {
     select count(*)::int from ${schema.replies}
     where ${schema.replies.author} = ${schema.users.username}
   )`,
+  tourSeen: schema.users.tourSeen,
   followersCount: sql<number>`(
     select count(*)::int from ${schema.follows}
     where ${schema.follows.followingUsername} = ${schema.users.username}
@@ -110,6 +111,7 @@ export const getProfileByUsername = async (db: DB, username: string, includeEmai
         answered: profile.answered,
         followersCount: profile.followersCount,
         followingCount: profile.followingCount,
+        tourSeen: profile.tourSeen,
       };
 };
 

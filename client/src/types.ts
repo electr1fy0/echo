@@ -56,6 +56,7 @@ export interface User {
   answered: number;
   posted: number;
   dmEnabled?: boolean;
+  tourSeen?: boolean;
   badges?: Badge[];
   isFollowing?: boolean;
   followersCount?: number;
@@ -157,6 +158,7 @@ export interface Chamber {
   timeCreated?: string;
   creatorUsername?: string;
   picture?: string | null;
+  icon?: string | null;
 }
 
 export interface SchemaField {

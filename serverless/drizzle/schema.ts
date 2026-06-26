@@ -59,6 +59,7 @@ export const chambers = pgTable("chambers", {
 	creatorUsername: text("creator_username"),
 	createdAt: timestamp("created_at", { mode: 'string' }).defaultNow(),
 	colorIndex: integer("color_index").default(0),
+	icon: text(),
 }, (table) => [
 	foreignKey({
 			columns: [table.creatorUsername],

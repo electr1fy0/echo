@@ -10,6 +10,7 @@ import {
   InformationCircleIcon,
   UserMultiple02Icon,
 } from "@hugeicons/core-free-icons";
+import { Award, Crosshair } from "lucide-react";
 import type { Notification } from "@/api/notifications";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -136,7 +137,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
     >
       {isMilestone ? (
         <div className="size-9 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-1">
-          <span className="text-lg">🎉</span>
+          <Award className="size-5 text-amber-600 dark:text-amber-400" />
         </div>
       ) : notification.actor_is_anonymous ? (
         <div className="shrink-0 mt-1">
@@ -162,7 +163,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm text-neutral-900 dark:text-neutral-100 leading-snug">
           {isMilestone ? (
-            <span className="font-medium">Milestone Unlocked 🎯</span>
+            <span className="font-medium">Milestone Unlocked</span>
           ) : (
             <>
               <span className={cn(notification.actor_is_anonymous ? "" : "hover:underline")}>
@@ -269,7 +270,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
 
         <span className="text-xs text-neutral-400 dark:text-neutral-500 mt-1.5 flex items-center gap-1.5">
           {isMilestone ? (
-            <span className="text-amber-500">🎯</span>
+            <Crosshair className="size-3 text-amber-500" />
           ) : isInterest ? (
             <HugeiconsIcon
               icon={UserMultiple02Icon}

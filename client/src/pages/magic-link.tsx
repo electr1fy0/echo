@@ -59,7 +59,7 @@ export default function MagicLink() {
   }, [status, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
+    <div className="min-h-dvh flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="mx-auto size-12 rounded-full flex items-center justify-center mb-2 bg-neutral-100 dark:bg-neutral-800">

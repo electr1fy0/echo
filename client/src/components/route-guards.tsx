@@ -18,7 +18,7 @@ export function ProtectedRoute() {
   if (isError || !user) {
     if (error instanceof Error && error.message === "rate-limit") {
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center bg-background text-foreground">
+        <div className="flex flex-col items-center justify-center min-h-dvh p-4 text-center bg-background text-foreground">
           <div className="max-w-md space-y-3">
             <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Too many requests</h1>
             <p className="text-sm text-neutral-500">

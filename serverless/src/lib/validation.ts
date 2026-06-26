@@ -52,6 +52,7 @@ export const createChamberSchema = z.object({
   description: z.string().max(2000).default(""),
   colorIndex: z.number().int().min(0).max(20).default(0),
   picture: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
 });
 
 export const updateChamberSchema = z.object({
@@ -62,6 +63,7 @@ export const updateChamberSchema = z.object({
   description: z.string().max(2000),
   colorIndex: z.number().int().min(0).max(20).optional(),
   picture: z.string().nullable().optional(),
+  icon: z.string().nullable().optional(),
 });
 
 export const createChannelSchema = z.object({
@@ -132,6 +134,7 @@ export const updateProfileSchema = z.object({
   avatar: z.string().optional(),
   link: z.string().optional(),
   dmEnabled: z.boolean().optional(),
+  tourSeen: z.boolean().optional(),
 });
 
 export const createMessageSchema = z.object({

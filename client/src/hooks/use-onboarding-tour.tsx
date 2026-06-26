@@ -2,15 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useState,
   type ReactNode,
 } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const TOUR_KEY = "turnsout_onboarding_seen";
+import { useAuth } from "@/hooks/use-auth";
+import { useUpdateProfile } from "@/hooks/use-profile";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface OnboardingTourContextValue {
   hasSeen: boolean;
@@ -22,17 +21,23 @@ const OnboardingTourContext = createContext<OnboardingTourContextValue | null>(
 );
 
 export function OnboardingTourProvider({ children }: { children: ReactNode }) {
-  const [hasSeen, setHasSeen] = useState(true);
+  const { data: user } = useAuth();
+  const { mutate: updateProfile } = useUpdateProfile();
+  const queryClient = useQueryClient();
   const isMobile = useIsMobile();
 
-  useEffect(() => {
-    setHasSeen(localStorage.getItem(TOUR_KEY) === "true");
-  }, []);
+  const hasSeen = user?.tourSeen ?? true;
 
   const start = useCallback(() => {
     const markSeen = () => {
-      localStorage.setItem(TOUR_KEY, "true");
-      setHasSeen(true);
+      updateProfile(
+        { tourSeen: true },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["auth"] });
+          },
+        },
+      );
     };
 
     const allSteps = [

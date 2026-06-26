@@ -11,7 +11,7 @@ const viewsConfig = {
   },
 } satisfies ChartConfig;
 
-export function PostAnalytics({ postUid, onClose }: { postUid: string; onClose: () => void }) {
+export function PostAnalytics({ postUid }: { postUid: string }) {
   const { data: analytics, isLoading } = usePostAnalytics(postUid);
 
   if (isLoading) {
@@ -40,16 +40,6 @@ export function PostAnalytics({ postUid, onClose }: { postUid: string; onClose: 
 
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium">Post Analytics</h3>
-        <button
-          onClick={onClose}
-          className="text-xs text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 cursor-pointer"
-        >
-          Close
-        </button>
-      </div>
-
       <div className="grid grid-cols-3 gap-3 mb-4">
         <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
           <p className="text-[11px] text-neutral-500 mb-1">Views</p>

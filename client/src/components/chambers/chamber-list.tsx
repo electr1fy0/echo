@@ -7,7 +7,7 @@ import {
   PencilEdit02Icon,
   Delete02Icon,
 } from "@hugeicons/core-free-icons";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router";
 import type { Chamber } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,7 +36,7 @@ import {
   useLeaveChamber,
   useDeleteChamber,
 } from "@/hooks/use-chamber";
-import { CHAMBER_COLORS } from "./consts";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
@@ -46,8 +46,6 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
   const isPending = joinMutation.isPending || leaveMutation.isPending;
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const colorClass =
-    CHAMBER_COLORS[(chamber.colorIndex ?? 0) % CHAMBER_COLORS.length];
   const canEdit = !!user?.username && user.username === chamber.creatorUsername;
   const handleToggleJoin = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -77,22 +75,14 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
         to={`/chambers/${chamber.name}`}
         className="flex items-center gap-3 flex-1 min-w-0 group"
       >
-        {chamber.picture ? (
-          <img
-            src={chamber.picture}
-            alt={chamber.name}
-            className="size-10 rounded-xl object-cover shrink-0"
-          />
-        ) : (
-          <div
-            className={cn(
-              "size-10 rounded-xl flex items-center justify-center text-white text-sm shrink-0 transition-opacity group-hover:opacity-90",
-              colorClass,
-            )}
-          >
-            {getInitials(chamber.name)}
-          </div>
-        )}
+        <ChamberAvatar
+          name={chamber.name}
+          picture={chamber.picture}
+          icon={chamber.icon}
+          colorIndex={chamber.colorIndex ?? 0}
+          size="md"
+          className="transition-opacity group-hover:opacity-90"
+        />
         <div className="flex-1 min-w-0">
           <h3 className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
             {chamber.name}

@@ -29,12 +29,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   clearGoogleOnboardingToken,
   getGoogleOnboardingToken,
-  getInitials,
-  cn,
 } from "@/lib/utils";
 import { completeOnboarding, checkUsername } from "@/api/auth";
 import { useListChambers, useJoinChamber } from "@/hooks/use-chamber";
-import { CHAMBER_COLORS } from "@/components/chambers/consts";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 
 const RESERVED_USERNAMES = ["anonymous", "admin", "moderator", "system", "opencode"];
 
@@ -212,21 +210,20 @@ export default function Onboarding() {
             </p>
           ) : (
             <div className="space-y-2 max-h-72 overflow-y-auto scrollbar-modern">
-              {chambers.map((chamber, i) => {
-                const colorClass = CHAMBER_COLORS[(chamber.colorIndex ?? i) % CHAMBER_COLORS.length];
+              {chambers.map((chamber) => {
                 return (
                   <div
                     key={chamber.uid}
                     className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800"
                   >
-                    <div
-                      className={cn(
-                        "size-9 rounded-lg flex items-center justify-center text-white text-xs shrink-0 select-none",
-                        colorClass,
-                      )}
-                    >
-                      {getInitials(chamber.name)}
-                    </div>
+                    <ChamberAvatar
+                      name={chamber.name}
+                      picture={chamber.picture}
+                      icon={chamber.icon}
+                      colorIndex={chamber.colorIndex ?? 0}
+                      size="sm"
+                      className="!size-9 !rounded-lg"
+                    />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
                         {chamber.name}
@@ -264,7 +261,7 @@ export default function Onboarding() {
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-dvh bg-background">
         <Drawer open={true} onOpenChange={() => {}}>
           <DrawerPopup
             showCloseButton={false}
@@ -345,21 +342,20 @@ export default function Onboarding() {
                       </p>
                     ) : (
                       <div className="space-y-2">
-                        {chambers.map((chamber, i) => {
-                          const colorClass = CHAMBER_COLORS[(chamber.colorIndex ?? i) % CHAMBER_COLORS.length];
+                        {chambers.map((chamber) => {
                           return (
                             <div
                               key={chamber.uid}
                               className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800"
                             >
-                              <div
-                                className={cn(
-                                  "size-9 rounded-lg flex items-center justify-center text-white text-xs shrink-0 select-none",
-                                  colorClass,
-                                )}
-                              >
-                                {getInitials(chamber.name)}
-                              </div>
+                              <ChamberAvatar
+                                name={chamber.name}
+                                picture={chamber.picture}
+                                icon={chamber.icon}
+                                colorIndex={chamber.colorIndex ?? 0}
+                                size="sm"
+                                className="!size-9 !rounded-lg"
+                              />
                               <div className="flex-1 min-w-0">
                                 <h4 className="text-sm text-neutral-900 dark:text-neutral-100 truncate">
                                   {chamber.name}
@@ -401,7 +397,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden p-4">
+    <div className="relative min-h-dvh flex items-center justify-center bg-background overflow-hidden p-4">
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.15]"
         style={{

@@ -215,37 +215,39 @@ export function AppSidebar() {
         )}
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-[max(2rem,env(safe-area-inset-bottom,0px))] px-2">
           <div data-tour="nav-shortcuts" className="flex items-center justify-around">
-            {navItems.map((item) => (
-              <div
-                key={item.label}
-                data-tour={
-                  item.path === "/explore" ? "explore" :
-                  item.path === "/notifications" ? "activity" :
-                  undefined
-                }
-              >
-                <NavButton
-                  icon={item.icon}
-                  isActive={isActive(item.path)}
-                  hasBadge={item.path ? badgeMap[item.path] : false}
-                  isMobile={true}
-                  onClick={() => handleNavClick(item)}
-                />
-              </div>
-            ))}
-            <ProfileButton
-              user={user}
-              isLoading={isLoading}
-              isMobile={true}
-              isActive={isActive("/profile")}
-              onClick={() => {
-                if (!user) {
-                  openAuthModal("signin");
-                } else {
-                  navigateTo("/profile");
-                }
-              }}
-            />
+              {navItems.map((item) => (
+                <div
+                  key={item.label}
+                  data-tour={
+                    item.path === "/explore" ? "explore" :
+                    item.path === "/notifications" ? "activity" :
+                    undefined
+                  }
+                >
+                  <NavButton
+                    icon={item.icon}
+                    isActive={isActive(item.path)}
+                    hasBadge={item.path ? badgeMap[item.path] : false}
+                    isMobile={true}
+                    onClick={() => handleNavClick(item)}
+                    aria-label={item.label}
+                  />
+                </div>
+              ))}
+              <ProfileButton
+                user={user}
+                isLoading={isLoading}
+                isMobile={true}
+                isActive={isActive("/profile")}
+                onClick={() => {
+                  if (!user) {
+                    openAuthModal("signin");
+                  } else {
+                    navigateTo("/profile");
+                  }
+                }}
+                aria-label="Profile"
+              />
           </div>
         </nav>
       </>
@@ -253,7 +255,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="fixed top-0 left-0 h-screen flex flex-col items-center py-6 border-r border-neutral-200 dark:border-neutral-800 bg-background z-40 w-16">
+    <aside className="fixed top-0 left-0 h-dvh flex flex-col items-center py-6 border-r border-neutral-200 dark:border-neutral-800 bg-background z-40 w-16">
       <Link to="/" className="size-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center cursor-pointer mb-6 shrink-0">
         <img
             src="/turnsoutlogo.svg"
@@ -279,6 +281,7 @@ export function AppSidebar() {
                       hasBadge={item.path ? badgeMap[item.path] : false}
                       isMobile={false}
                       onClick={() => handleNavClick(item)}
+                      aria-label={item.label}
                     />
                   }
                 />
@@ -365,6 +368,7 @@ export function AppSidebar() {
                       navigateTo("/profile");
                     }
                   }}
+                  aria-label="Profile"
                 />
               }
             />

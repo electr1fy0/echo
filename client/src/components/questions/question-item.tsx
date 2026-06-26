@@ -37,6 +37,7 @@ import {
   PinOffIcon,
   BookOpen01Icon,
   Share01Icon,
+  Analytics02Icon,
 } from "@hugeicons/core-free-icons";
 import { UpvoteButton } from "../upvote-button";
 import { ThreadedReplies } from "./threaded-replies";
@@ -58,6 +59,8 @@ import { PostContent } from "@/components/post-content";
 import { PollVoter } from "@/components/poll-voter";
 import { PostCustomFields } from "@/components/questions/post-custom-fields";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
+import { PostAnalytics } from "@/components/analytics/post-analytics";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type QuestionItemProps = {
   questionItem: QuestionItem;
@@ -195,6 +198,7 @@ export function QuestionItem({
   const { mutate: report } = useReportContent();
 
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   if (!question || !questionId) return null;
   const isPinned = !!question.isPinned;
@@ -451,6 +455,15 @@ export function QuestionItem({
                     {user?.username === question.authorUsername && (
                       <>
                         <DropdownMenuItem
+                          onClick={() => setShowAnalytics(true)}
+                        >
+                          <HugeiconsIcon
+                            icon={Analytics02Icon}
+                            className="mr-2 size-4"
+                          />
+                          Post Analytics
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => openEditModal(question)}
                         >
                           <HugeiconsIcon
@@ -559,6 +572,12 @@ export function QuestionItem({
         )}
         <ReplyForm questionId={questionId} />
       </AccordionContent>
+
+      <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <DialogContent className="sm:max-w-[420px]" aria-label="Post Analytics">
+          <PostAnalytics postUid={questionId} />
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogPopup portalProps={{}}>

@@ -22,12 +22,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
 import type { AnswerItem, Chamber } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 import { useNavigate } from "react-router";
 import { PageTransition } from "@/components/page-transition";
 import { formatDistanceToNowStrict } from "date-fns";
 import { MentionText } from "@/components/mentions/mention-text";
-import { cn, getInitials } from "@/lib/utils";
-import { CHAMBER_COLORS } from "@/components/chambers/consts";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 
 function ReplyResult({ item }: { item: AnswerItem }) {
@@ -72,22 +71,20 @@ function DirectoryChamberCard({
   onJoinClick: (chamber: Chamber) => void;
 }) {
   const navigate = useNavigate();
-  const colorClass =
-    CHAMBER_COLORS[(chamber.colorIndex || 0) % CHAMBER_COLORS.length];
   return (
     <div className="p-3 border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] rounded-xl flex items-center justify-between gap-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-950">
       <div
         className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
         onClick={() => navigate(`/chambers/${chamber.name}`)}
       >
-        <div
-          className={cn(
-            "size-9 rounded-lg flex items-center justify-center text-white text-xs shrink-0 select-none",
-            colorClass,
-          )}
-        >
-          {getInitials(chamber.name)}
-        </div>
+        <ChamberAvatar
+          name={chamber.name}
+          picture={chamber.picture}
+          icon={chamber.icon}
+          colorIndex={chamber.colorIndex ?? 0}
+          size="sm"
+          className="!size-9 !rounded-lg"
+        />
         <div className="flex-1 min-w-0">
           <h4 className=" text-sm text-neutral-900 dark:text-neutral-100 truncate">
             {chamber.name}
