@@ -10,6 +10,10 @@ import { CreatePostModalProvider } from "./hooks/use-create-post-modal.tsx";
 import { EditPostModalProvider } from "./hooks/use-edit-post-modal.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js", { scope: "/" });
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
