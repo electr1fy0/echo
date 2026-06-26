@@ -350,14 +350,10 @@ export default function Profile() {
             <div className="flex gap-1.5">
               <Button
                 variant="outline"
-                size="sm"
+                size="icon-sm"
                 onClick={() => navigate("/analytics")}
               >
-                <HugeiconsIcon
-                  icon={Analytics02Icon}
-                  className="mr-2 size-4"
-                />
-                Analytics
+                <HugeiconsIcon icon={Analytics02Icon} className="size-4" />
               </Button>
               <Button
                 variant="outline"
@@ -669,7 +665,6 @@ export default function Profile() {
                     icon={chamber.icon}
                     colorIndex={chamber.colorIndex ?? 0}
                     size="sm"
-                    className="!size-4 !rounded-md"
                   />
                   <span className="text-sm text-neutral-900 dark:text-neutral-100">
                     {chamber.name}

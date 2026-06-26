@@ -1,18 +1,16 @@
-import { useTheme } from "next-themes";
 import { cn, getInitials } from "@/lib/utils";
 import { CHAMBER_COLORS, CHAMBER_COLOR_HEX } from "@/components/chambers/consts";
 
 export const DICEBEAR_ICONS_URL = "https://api.dicebear.com/10.x/icons/svg";
 
-export function buildChamberIconUrl(seed: string, backgroundColor?: string, strokeColor?: string) {
+export function buildChamberIconUrl(seed: string, backgroundColor?: string, iconColor?: string) {
   const params = new URLSearchParams({ seed: encodeURIComponent(seed) });
   if (backgroundColor) params.set("backgroundColor", backgroundColor);
-  if (strokeColor) params.set("strokeColor", strokeColor);
+  if (iconColor) params.set("iconColor", iconColor);
   return `${DICEBEAR_ICONS_URL}?${params}`;
 }
 
-const STROKE_LIGHT = "d4d4d4";
-const STROKE_DARK = "1a1a1a";
+const ICON_COLOR = "ffffff";
 
 export function ChamberAvatar({
   name,
@@ -29,18 +27,15 @@ export function ChamberAvatar({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
-  const { resolvedTheme } = useTheme();
-
   const sizeClasses = {
-    sm: "size-8 rounded-lg text-xs",
-    md: "size-10 rounded-xl text-sm",
-    lg: "size-16 rounded-2xl text-xl",
+    sm: "size-8 rounded-lg text-base",
+    md: "size-10 rounded-xl text-lg",
+    lg: "size-16 rounded-2xl text-3xl",
   };
 
   const idx = (colorIndex ?? 0) % CHAMBER_COLORS.length;
-  const colorClass = CHAMBER_COLORS[idx];
   const bgHex = CHAMBER_COLOR_HEX[idx];
-  const strokeColor = resolvedTheme === "dark" ? STROKE_DARK : STROKE_LIGHT;
+  const iconColor = ICON_COLOR;
 
   if (picture) {
     return (
@@ -62,7 +57,7 @@ export function ChamberAvatar({
         )}
       >
         <img
-          src={buildChamberIconUrl(icon, bgHex, strokeColor)}
+          src={buildChamberIconUrl(icon, bgHex, iconColor)}
           alt={name}
           className="size-full"
         />
@@ -73,11 +68,11 @@ export function ChamberAvatar({
   return (
     <div
       className={cn(
-        "flex items-center justify-center text-white font-medium shrink-0",
+        "flex items-center justify-center text-white/80 font-medium shrink-0",
         sizeClasses[size],
-        colorClass,
         className,
       )}
+      style={{ backgroundColor: `#${bgHex}cc` }}
     >
       {getInitials(name)}
     </div>

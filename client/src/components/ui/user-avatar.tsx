@@ -41,7 +41,7 @@ export function UserAvatar({
   return (
     <Avatar className={className}>
       <AvatarImage src={effectiveSrc} alt={name} />
-      <AvatarFallback className={cn(colorClass, "text-white font-medium")}>
+      <AvatarFallback className={cn(colorClass, "text-white/80 font-medium text-sm")}>
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>

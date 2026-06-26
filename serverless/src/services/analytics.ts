@@ -65,8 +65,8 @@ export const trackPostView = async (
 };
 
 export const getUserAnalytics = async (db: DB, username: string) => {
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const oneYearAgo = new Date();
+  oneYearAgo.setDate(oneYearAgo.getDate() - 365);
 
   // Combine daily activity and total event counts in one query
   const activityRows = await db
@@ -81,7 +81,7 @@ export const getUserAnalytics = async (db: DB, username: string) => {
     .where(
       and(
         eq(schema.analyticsEvents.username, username),
-        gte(schema.analyticsEvents.createdAt, thirtyDaysAgo),
+        gte(schema.analyticsEvents.createdAt, oneYearAgo),
       ),
     )
     .groupBy(sql`DATE(${schema.analyticsEvents.createdAt})`)
@@ -89,8 +89,8 @@ export const getUserAnalytics = async (db: DB, username: string) => {
 
   // Build calendar and streaks from the single query result
   const dates = new Map<string, number>();
-  for (let i = 0; i < 30; i++) {
-    const d = new Date(thirtyDaysAgo);
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(oneYearAgo);
     d.setDate(d.getDate() + i);
     dates.set(d.toISOString().split("T")[0], 0);
   }

@@ -17,7 +17,7 @@ function getIntensity(count: number, maxCount: number): number {
   return 4;
 }
 
-export function CalendarHeatmap({ data, months = 6 }: CalendarHeatmapProps) {
+export function CalendarHeatmap({ data, months = 12 }: CalendarHeatmapProps) {
   const weeks = useMemo(() => {
     const countByDate = new Map(data.map((d) => [d.date, d.count]));
     const allCounts = data.map((d) => d.count);

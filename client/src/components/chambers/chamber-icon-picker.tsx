@@ -6,8 +6,7 @@ import { CHAMBER_COLOR_HEX } from "@/components/chambers/consts";
 
 const NEUTRAL_BG_LIGHT = "e5e5e5";
 const NEUTRAL_BG_DARK = "333333";
-const NEUTRAL_STROKE_LIGHT = "d4d4d4";
-const NEUTRAL_STROKE_DARK = "1a1a1a";
+const NEUTRAL_ICON_COLOR = "ffffff";
 
 const ICON_SEEDS = [
   "acorn", "alarm", "alien", "anchor", "apple", "award", "backpack", "bag",
@@ -75,7 +74,6 @@ export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIc
 
   const isDark = resolvedTheme === "dark";
   const neutralBg = isDark ? NEUTRAL_BG_DARK : NEUTRAL_BG_LIGHT;
-  const neutralStroke = isDark ? NEUTRAL_STROKE_DARK : NEUTRAL_STROKE_LIGHT;
   const themeHex = CHAMBER_COLOR_HEX[colorIndex % CHAMBER_COLOR_HEX.length];
 
   return (
@@ -84,7 +82,7 @@ export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIc
         {value ? (
           <>
             <img
-              src={buildChamberIconUrl(value, themeHex)}
+              src={buildChamberIconUrl(value, themeHex, NEUTRAL_ICON_COLOR)}
               alt={value}
               className="size-16 rounded-lg"
             />
@@ -122,7 +120,7 @@ export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIc
             title={seed}
           >
             <img
-              src={buildChamberIconUrl(seed, value === seed ? themeHex : neutralBg, value === seed ? undefined : neutralStroke)}
+              src={buildChamberIconUrl(seed, value === seed ? themeHex : neutralBg, NEUTRAL_ICON_COLOR)}
               alt={seed}
               className="size-full"
             />
