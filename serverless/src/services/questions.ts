@@ -186,7 +186,7 @@ export const ensurePostExists = async (db: DB, identifier: string) => {
   const [post] = await db
     .select({ uid: schema.posts.uid, author: schema.posts.author, slug: schema.posts.slug })
     .from(schema.posts)
-    .where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier)))
+    .where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)))
     .limit(1);
 
   if (!post) {
@@ -232,7 +232,7 @@ export const resolveChamber = async (db: DB, identifier: string) => {
       creatorUsername: schema.chambers.creatorUsername,
     })
     .from(schema.chambers)
-    .where(or(eq(schema.chambers.uid, identifier), eq(schema.chambers.slug, identifier)))
+    .where(or(sql`${schema.chambers.uid}::text = ${identifier}`, eq(schema.chambers.slug, identifier)))
     .limit(1);
 
   if (!chamber) {

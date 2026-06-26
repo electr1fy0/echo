@@ -210,7 +210,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
     .leftJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid))
     .leftJoin(schema.channels, eq(schema.channels.uid, schema.posts.channelUid))
     .leftJoin(schema.polls, eq(schema.polls.postUid, schema.posts.uid))
-    .where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier)))
+    .where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)))
     .limit(1);
 
   if (!row) {
@@ -243,7 +243,7 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
   if (body.taxiStatus !== undefined) updateData.taxiStatus = body.taxiStatus;
 
   const updated = await c.get("db").update(schema.posts).set(updateData).where(
-    and(or(eq(schema.posts.uid, c.req.param("uid")), eq(schema.posts.slug, c.req.param("uid"))), eq(schema.posts.author, c.get("user"))),
+    and(or(sql`${schema.posts.uid}::text = ${c.req.param("uid")}`, eq(schema.posts.slug, c.req.param("uid"))), eq(schema.posts.author, c.get("user"))),
   ).returning({ uid: schema.posts.uid });
 
   if (!updated.length) {
@@ -327,7 +327,7 @@ questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
   const db = c.get("db");
   const [post] = await db.select({
     creatorUsername: schema.chambers.creatorUsername,
-  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier))).limit(1);
+  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier))).limit(1);
 
   if (!post) {
     throw new ApiError(404, "post not found");
@@ -336,7 +336,7 @@ questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
-  await db.update(schema.posts).set({ pinnedAt: new Date() }).where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier)));
+  await db.update(schema.posts).set({ pinnedAt: new Date() }).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)));
   return c.json({ message: "post pinned" });
 });
 
@@ -345,7 +345,7 @@ questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
   const db = c.get("db");
   const [post] = await db.select({
     creatorUsername: schema.chambers.creatorUsername,
-  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier))).limit(1);
+  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier))).limit(1);
 
   if (!post) {
     throw new ApiError(404, "post not found");
@@ -354,7 +354,7 @@ questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
-  await db.update(schema.posts).set({ pinnedAt: null }).where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier)));
+  await db.update(schema.posts).set({ pinnedAt: null }).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)));
   return c.json({ message: "post unpinned" });
 });
 
