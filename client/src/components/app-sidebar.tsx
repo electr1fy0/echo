@@ -345,6 +345,7 @@ export function AppSidebar() {
                           icon={c.icon}
                           colorIndex={c.colorIndex ?? 0}
                           size="sm"
+                          className="text-xs size-9 rounded-lg flex items-center justify-center [&>img]:size-[80%]"
                         />
                       </Link>
                     }

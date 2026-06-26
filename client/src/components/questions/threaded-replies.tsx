@@ -89,6 +89,7 @@ function TreeNodeComponent({
             canAccept={canAccept}
             isOp={
               !isAnonymousPost &&
+              !node.item.answer.isAnonymous &&
               node.item.author?.username !== "[deleted]" &&
               authorUsername !== "[deleted]" &&
               node.item.author?.username === authorUsername

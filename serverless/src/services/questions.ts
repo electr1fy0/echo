@@ -130,7 +130,8 @@ export const mapReplyItem = (row: {
 }) => {
   const isDeletedReply = row.content === "[deleted]";
   const isDeletedUser = !!row.authorDeletedAt;
-  const displayName = (isDeletedReply || isDeletedUser) ? "[deleted]" : row.authorUsername;
+  const isAnonymous = row.isAnonymous || isDeletedReply || isDeletedUser;
+  const displayName = isAnonymous ? "Anonymous" : (isDeletedReply || isDeletedUser) ? "[deleted]" : row.authorUsername;
 
   return {
     answer: {
@@ -140,21 +141,23 @@ export const mapReplyItem = (row: {
       parentReplyUid: row.parentReplyUid ?? undefined,
       timeCreated: row.timeCreated?.toISOString() ?? null,
       authorUsername: displayName,
-      isAnonymous: row.isAnonymous || isDeletedReply || isDeletedUser,
+      isAnonymous,
       upvotes: row.upvotes ?? 0,
       isUpvoted: row.isUpvoted,
       isAccepted: row.acceptedAnswerUid === row.uid,
     },
-    author: (isDeletedReply || isDeletedUser)
-      ? { username: "[deleted]", avatar: "" }
-      : {
-          username: row.authorUsername,
-          avatar: row.authorAvatar,
-          bio: row.authorBio ?? undefined,
-          posted: row.authorPosted ?? 0,
-          answered: row.authorAnswered ?? 0,
-          reputation: row.authorReputation,
-        },
+    author: isAnonymous
+      ? { username: "Anonymous", avatar: "" }
+      : (isDeletedReply || isDeletedUser)
+        ? { username: "[deleted]", avatar: "" }
+        : {
+            username: row.authorUsername,
+            avatar: row.authorAvatar,
+            bio: row.authorBio ?? undefined,
+            posted: row.authorPosted ?? 0,
+            answered: row.authorAnswered ?? 0,
+            reputation: row.authorReputation,
+          },
   };
 };
 

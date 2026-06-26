@@ -790,7 +790,7 @@ export default function Home() {
           isMobile
             ? "flex flex-col gap-4 px-4 pb-24"
             : "flex-1 flex overflow-x-auto gap-8 pb-2 px-4 md:px-8 min-h-0 scrollbar-modern scroll-smooth",
-          !isMobile && columns.length === 1 && !user && "sm:justify-center",
+          !isMobile && columns.length === 1 && "sm:justify-center",
         )}
       >
         {visibleColumns.map((col) => (
@@ -800,7 +800,6 @@ export default function Home() {
               isMobile
                 ? "w-full"
                 : "flex-shrink-0 w-full sm:w-[36rem] flex flex-col min-h-0",
-              !isMobile && columns.length === 1 && user && "sm:mx-auto",
             )}
           >
             <ColumnFeed
