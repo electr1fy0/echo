@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
@@ -194,7 +194,12 @@ userRoutes.post("/resolve", async (c) => {
     .get("db")
     .select({ username: schema.users.username })
     .from(schema.users)
-    .where(inArray(schema.users.username, usernames));
+    .where(
+      and(
+        inArray(schema.users.username, usernames),
+        isNull(schema.users.deletedAt),
+      ),
+    );
 
   return c.json({ existing: users.map((user) => user.username) });
 });

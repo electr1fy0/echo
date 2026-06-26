@@ -122,6 +122,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       actorUsername: schema.notifications.actorUsername,
       actorAvatar: schema.users.avatar,
       actorIsAnonymous: schema.notifications.actorIsAnonymous,
+      actorDeletedAt: schema.users.deletedAt,
       type: schema.notifications.type,
       referenceUid: schema.notifications.referenceUid,
       content: sql<string>`''`,
@@ -195,12 +196,14 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       }
     }
 
+    const isActorDeleted = !!row.actorDeletedAt;
+
     return {
       uid: row.uid,
       user_username: row.userUsername,
-      actor_username: row.actorUsername ?? "",
-      actor_avatar: row.actorAvatar ?? "",
-      actor_is_anonymous: row.actorIsAnonymous ?? false,
+      actor_username: isActorDeleted ? "[deleted]" : (row.actorUsername ?? ""),
+      actor_avatar: isActorDeleted ? "" : (row.actorAvatar ?? ""),
+      actor_is_anonymous: isActorDeleted ? true : (row.actorIsAnonymous ?? false),
       type: row.type,
       reference_uid: row.referenceUid,
       post_uid: postUid ?? "",

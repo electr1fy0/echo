@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/menu";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useRepliesQuery, useDeleteReply } from "@/hooks/use-replies";
 import { useUpdateVote } from "@/hooks/use-upvote";
 import { useAuth } from "@/hooks/use-auth";
@@ -208,9 +209,13 @@ export function QuestionItem({
     >
       <TriggerWrapper>
         <div className="flex items-start gap-3 w-full">
-          {isAnonymous ? (
+          {isAnonymous || author?.username === "[deleted]" ? (
             <div className="shrink-0 mt-1 relative">
-              <UserAvatar src={undefined} name="Anonymous" className="size-7" />
+              <UserAvatar
+                src={undefined}
+                name={author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
+                className={cn("size-7", author?.username === "[deleted]" && "opacity-40")}
+              />
               {question.expiresAt && question.timeCreated && (
                 <CountdownRing
                   expiresAt={question.expiresAt as string}
@@ -256,9 +261,9 @@ export function QuestionItem({
           <div className="flex flex-col gap-1.5 flex-1 min-w-0">
             <div className="flex items-start sm:items-center justify-between gap-2">
               <div className="flex pt-1 items-center gap-2.5 flex-wrap min-w-0">
-                {isAnonymous ? (
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Anonymous
+                {isAnonymous || question.authorUsername === "[deleted]" ? (
+                  <span className={cn("text-xs", question.authorUsername === "[deleted]" ? "text-neutral-400 dark:text-neutral-500 italic" : "text-neutral-500 dark:text-neutral-400")}>
+                    {question.authorUsername === "[deleted]" ? "[deleted]" : "Anonymous"}
                   </span>
                 ) : (
                   <Link

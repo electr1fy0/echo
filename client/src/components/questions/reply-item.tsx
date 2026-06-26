@@ -65,6 +65,7 @@ export function ReplyItem({
   const { mutate: report } = useReportContent();
 
   const reply = answerItem.answer;
+  const isDeleted = reply.content === "[deleted]";
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(reply.content);
@@ -80,6 +81,31 @@ export function ReplyItem({
           handleApiError(err, "Failed to update reply");
         },
       },
+    );
+  }
+
+  if (isDeleted) {
+    return (
+      <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
+        <div className="shrink-0 pt-1">
+          <UserAvatar src={undefined} name="[deleted]" className="size-5 opacity-40" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">
+            [deleted]
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+              [deleted]
+            </span>
+            {reply.timeCreated && (
+              <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
+                {formatTimeAgo(reply.timeCreated)}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -106,12 +132,12 @@ export function ReplyItem({
             className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"
           />
         </div>
-        {reply.isAnonymous ? (
+        {reply.isAnonymous || answerItem.author?.username === "[deleted]" ? (
           <div className="shrink-0 pt-1">
             <UserAvatar
               src={undefined}
-              name="Anonymous"
-              className="size-5"
+              name={answerItem.author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
+              className={cn("size-5", answerItem.author?.username === "[deleted]" && "opacity-40")}
             />
           </div>
         ) : answerItem.author ? (
@@ -144,12 +170,14 @@ export function ReplyItem({
         <div className="flex-1 min-w-0">
           <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
             <span className="flex items-center gap-2 w-full">
-              {reply.isAnonymous ? (
-                <span>Anonymous</span>
+              {reply.isAnonymous || answerItem.author?.username === "[deleted]" ? (
+                <span className={cn(answerItem.author?.username === "[deleted]" && "text-neutral-400 dark:text-neutral-500")}>
+                  {answerItem.author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
+                </span>
               ) : (
                 <span>{reply.authorUsername || "Anonymous"}</span>
               )}
-              {isOp && (
+              {isOp && !answerItem.author?.username?.includes("[deleted]") && (
                 <span className="text-[10px] uppercase tracking-wide bg-[var(--brand-15)] text-[var(--brand)] px-1.5 py-0.5 rounded font-semibold">
                   OP
                 </span>
@@ -188,7 +216,7 @@ export function ReplyItem({
   <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
   Report
 </DropdownMenuItem>
-                    {user?.username === reply.authorUsername && (
+                    {user?.username === reply.authorUsername && !answerItem.author?.username?.includes("[deleted]") && (
                       <>
                         <DropdownMenuItem onClick={() => setIsEditing(true)}>
                           <HugeiconsIcon

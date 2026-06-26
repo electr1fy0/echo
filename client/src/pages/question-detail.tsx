@@ -153,7 +153,7 @@ export default function QuestionDetailPage() {
   };
 
   return (
-    <PageTransition className="max-w-[40rem] w-full md:mt-24 mt-16 pb-36 md:pb-16 relative px-4">
+    <PageTransition className="max-w-[40rem] w-full md:mt-8 mt-4 pb-36 md:pb-16 relative px-4">
       <button
         onClick={() => navigate(-1)}
         className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 mb-6 transition-colors cursor-pointer"
@@ -167,8 +167,12 @@ export default function QuestionDetailPage() {
         {/* Author details */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {question.isAnonymous ? (
-              <UserAvatar src={undefined} name="Anonymous" className="size-9" />
+            {question.isAnonymous || author?.username === "[deleted]" ? (
+              <UserAvatar
+                src={undefined}
+                name={author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
+                className={cn("size-9", author?.username === "[deleted]" && "opacity-40")}
+              />
             ) : (
               <Link to={`/u/${question.authorUsername}`}>
                 <UserAvatar
@@ -180,8 +184,8 @@ export default function QuestionDetailPage() {
             )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-neutral-800 dark:text-neutral-200">
-                  {question.isAnonymous ? "Anonymous" : question.authorUsername}
+                <span className={cn("text-sm", question.isAnonymous ? "text-neutral-800 dark:text-neutral-200" : author?.username === "[deleted]" ? "text-neutral-400 dark:text-neutral-500 italic" : "text-neutral-800 dark:text-neutral-200")}>
+                  {question.isAnonymous ? "Anonymous" : author?.username === "[deleted]" ? "[deleted]" : question.authorUsername}
                 </span>
                 {isPinned && (
                   <span className="text-[9px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">

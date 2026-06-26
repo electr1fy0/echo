@@ -89,12 +89,12 @@ dmRoutes.post("/conversations", async (c) => {
 
   const [otherUser] = await c
     .get("db")
-    .select({ username: schema.users.username, dmEnabled: schema.users.dmEnabled })
+    .select({ username: schema.users.username, dmEnabled: schema.users.dmEnabled, deletedAt: schema.users.deletedAt })
     .from(schema.users)
     .where(eq(schema.users.username, otherUsername))
     .limit(1);
 
-  if (!otherUser) {
+  if (!otherUser || otherUser.deletedAt) {
     throw new ApiError(404, "user not found");
   }
 

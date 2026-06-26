@@ -47,52 +47,60 @@ export const mapPostItem = (row: {
   pollVotes: { optionIndex: number; count: number }[] | null;
   userPollVote: number | null;
   repliesCount: number;
-}) => ({
-  question: {
-    uid: row.uid,
-    content: row.content ?? "",
-    timeCreated: row.timeCreated?.toISOString() ?? null,
-    expiresAt: row.expiresAt?.toISOString() ?? null,
-    authorUsername: row.authorUsername,
-    isAnonymous: row.isAnonymous,
-    upvotes: row.upvotes ?? 0,
-    isUpvoted: row.isUpvoted,
-    chamberUid: row.chamberUid,
-    chamberName: row.chamberName,
-    channelUid: row.channelUid,
-    channelSchema: row.channelSchema ?? [],
-    customFields: row.customFields ?? {},
-    acceptedAnswerUid: row.acceptedAnswerUid ?? undefined,
-    isPinned: row.pinnedAt !== null,
-    postType: row.postType,
-    partnerTargetGrade: row.partnerTargetGrade,
-    partnerWorkstyle: row.partnerWorkstyle,
-    partnerSlotsNeeded: row.partnerSlotsNeeded,
-    partnerStatus: row.partnerStatus,
-    tradePrice: row.tradePrice,
-    tradeCondition: row.tradeCondition,
-    tradeBookIsbn: row.tradeBookIsbn,
-    tradeStatus: row.tradeStatus,
-    taxiDeparture: row.taxiDeparture,
-    taxiDestination: row.taxiDestination,
-    taxiDatetime: row.taxiDatetime,
-    taxiSeatsAvailable: row.taxiSeatsAvailable,
-    taxiStatus: row.taxiStatus,
-    pollUid: row.pollUid ?? undefined,
-    pollQuestion: row.pollQuestion ?? undefined,
-    pollOptions: row.pollOptions ?? undefined,
-    pollExpiresAt: row.pollExpiresAt?.toISOString() ?? null,
-    pollIsClosed: row.pollIsClosed ?? false,
-    pollVotes: row.pollVotes ?? [],
-    userPollVote: row.userPollVote ?? null,
-    repliesCount: row.repliesCount,
-  },
-  author: {
-    username: row.authorUsername,
-    avatar: row.authorAvatar,
-    reputation: row.authorReputation,
-  },
-});
+  authorDeletedAt: Date | null;
+}) => {
+  const isDeletedUser = !!row.authorDeletedAt;
+  const displayName = isDeletedUser ? "[deleted]" : row.authorUsername;
+
+  return {
+    question: {
+      uid: row.uid,
+      content: row.content ?? "",
+      timeCreated: row.timeCreated?.toISOString() ?? null,
+      expiresAt: row.expiresAt?.toISOString() ?? null,
+      authorUsername: displayName,
+      isAnonymous: row.isAnonymous || isDeletedUser,
+      upvotes: row.upvotes ?? 0,
+      isUpvoted: row.isUpvoted,
+      chamberUid: row.chamberUid,
+      chamberName: row.chamberName,
+      channelUid: row.channelUid,
+      channelSchema: row.channelSchema ?? [],
+      customFields: row.customFields ?? {},
+      acceptedAnswerUid: row.acceptedAnswerUid ?? undefined,
+      isPinned: row.pinnedAt !== null,
+      postType: row.postType,
+      partnerTargetGrade: row.partnerTargetGrade,
+      partnerWorkstyle: row.partnerWorkstyle,
+      partnerSlotsNeeded: row.partnerSlotsNeeded,
+      partnerStatus: row.partnerStatus,
+      tradePrice: row.tradePrice,
+      tradeCondition: row.tradeCondition,
+      tradeBookIsbn: row.tradeBookIsbn,
+      tradeStatus: row.tradeStatus,
+      taxiDeparture: row.taxiDeparture,
+      taxiDestination: row.taxiDestination,
+      taxiDatetime: row.taxiDatetime,
+      taxiSeatsAvailable: row.taxiSeatsAvailable,
+      taxiStatus: row.taxiStatus,
+      pollUid: row.pollUid ?? undefined,
+      pollQuestion: row.pollQuestion ?? undefined,
+      pollOptions: row.pollOptions ?? undefined,
+      pollExpiresAt: row.pollExpiresAt?.toISOString() ?? null,
+      pollIsClosed: row.pollIsClosed ?? false,
+      pollVotes: row.pollVotes ?? [],
+      userPollVote: row.userPollVote ?? null,
+      repliesCount: row.repliesCount,
+    },
+    author: isDeletedUser
+      ? { username: "[deleted]", avatar: "" }
+      : {
+          username: row.authorUsername,
+          avatar: row.authorAvatar,
+          reputation: row.authorReputation,
+        },
+  };
+};
 
 export const mapReplyItem = (row: {
   uid: string;
@@ -110,28 +118,37 @@ export const mapReplyItem = (row: {
   upvotes: number | null;
   isUpvoted: boolean;
   acceptedAnswerUid: string | null;
-}) => ({
-  answer: {
-    uid: row.uid,
-    content: row.content,
-    questionUid: row.postUid,
-    parentReplyUid: row.parentReplyUid ?? undefined,
-    timeCreated: row.timeCreated?.toISOString() ?? null,
-    authorUsername: row.authorUsername,
-    isAnonymous: row.isAnonymous,
-    upvotes: row.upvotes ?? 0,
-    isUpvoted: row.isUpvoted,
-    isAccepted: row.acceptedAnswerUid === row.uid,
-  },
-  author: {
-    username: row.authorUsername,
-    avatar: row.authorAvatar,
-    bio: row.authorBio ?? undefined,
-    posted: row.authorPosted ?? 0,
-    answered: row.authorAnswered ?? 0,
-    reputation: row.authorReputation,
-  },
-});
+  authorDeletedAt: Date | null;
+}) => {
+  const isDeletedReply = row.content === "[deleted]";
+  const isDeletedUser = !!row.authorDeletedAt;
+  const displayName = (isDeletedReply || isDeletedUser) ? "[deleted]" : row.authorUsername;
+
+  return {
+    answer: {
+      uid: row.uid,
+      content: row.content,
+      questionUid: row.postUid,
+      parentReplyUid: row.parentReplyUid ?? undefined,
+      timeCreated: row.timeCreated?.toISOString() ?? null,
+      authorUsername: displayName,
+      isAnonymous: row.isAnonymous || isDeletedReply || isDeletedUser,
+      upvotes: row.upvotes ?? 0,
+      isUpvoted: row.isUpvoted,
+      isAccepted: row.acceptedAnswerUid === row.uid,
+    },
+    author: (isDeletedReply || isDeletedUser)
+      ? { username: "[deleted]", avatar: "" }
+      : {
+          username: row.authorUsername,
+          avatar: row.authorAvatar,
+          bio: row.authorBio ?? undefined,
+          posted: row.authorPosted ?? 0,
+          answered: row.authorAnswered ?? 0,
+          reputation: row.authorReputation,
+        },
+  };
+};
 
 export const mapChamber = (row: {
   uid: string;
@@ -260,6 +277,7 @@ export const getPostItems = async (
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
       authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
+      authorDeletedAt: schema.users.deletedAt,
       isAnonymous: schema.posts.isAnonymous,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
@@ -368,6 +386,7 @@ export const getReplies = async (db: DB, currentUser: string | undefined | null,
       authorAnswered: schema.users.answered,
       isAnonymous: schema.replies.isAnonymous,
       authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
+      authorDeletedAt: schema.users.deletedAt,
       upvotes: schema.replies.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from reply_upvotes rv

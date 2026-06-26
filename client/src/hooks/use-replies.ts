@@ -106,7 +106,15 @@ export function useDeleteReply() {
         ["replies", questionId],
         (old) => {
           if (!old) return undefined;
-          return old.filter((item) => item.answer.uid !== replyId);
+          return old.map((item) =>
+            item.answer.uid === replyId
+              ? {
+                  ...item,
+                  answer: { ...item.answer, content: "[deleted]", isAnonymous: true },
+                  author: { ...item.author, username: "[deleted]", avatar: "" },
+                }
+              : item,
+          );
         }
       );
       return { previousReplies };

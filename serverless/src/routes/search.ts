@@ -36,6 +36,7 @@ searchRoutes.get("/", async (c) => {
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
       authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
+      authorDeletedAt: schema.users.deletedAt,
       upvotes: schema.replies.upvotesCount,
       isUpvoted: sql<boolean>`exists (
         select 1 from reply_upvotes rv

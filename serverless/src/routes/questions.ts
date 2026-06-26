@@ -140,6 +140,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       authorPosted: schema.users.posted,
       authorAnswered: schema.users.answered,
       authorReputation: sql<number>`coalesce(${schema.users.reputation}, 0)`,
+      authorDeletedAt: schema.users.deletedAt,
       isAnonymous: schema.posts.isAnonymous,
       upvotes: schema.posts.upvotesCount,
       isUpvoted: sql<boolean>`exists (
@@ -404,7 +405,11 @@ questionRoutes.patch("/:uid/replies/:ruid", requireAuth, async (c) => {
 });
 
 questionRoutes.delete("/:uid/replies/:ruid", requireAuth, async (c) => {
-  await c.get("db").delete(schema.replies).where(
+  const db = c.get("db");
+  const result = await db.update(schema.replies).set({
+    content: "[deleted]",
+    isAnonymous: true,
+  }).where(
     and(
       eq(schema.replies.uid, c.req.param("ruid")),
       eq(schema.replies.postUid, c.req.param("uid")),

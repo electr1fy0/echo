@@ -79,7 +79,7 @@ function TreeNodeComponent({
             answerItem={node.item}
             onDelete={() => onDelete(node.item.answer.uid)}
             canAccept={false}
-            isOp={!isAnonymousPost && node.item.author?.username === authorUsername}
+            isOp={!isAnonymousPost && node.item.author?.username !== "[deleted]" && authorUsername !== "[deleted]" && node.item.author?.username === authorUsername}
             onReply={() => setIsReplying(true)}
           />
         </div>

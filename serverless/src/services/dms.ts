@@ -26,6 +26,7 @@ export const getConversations = async (db: DB, username: string) => {
       avatar: schema.users.avatar,
       bio: schema.users.bio,
       dmEnabled: schema.users.dmEnabled,
+      deletedAt: schema.users.deletedAt,
     })
     .from(schema.users)
     .where(inArray(schema.users.username, otherUsernames));
@@ -73,17 +74,18 @@ export const getConversations = async (db: DB, username: string) => {
   return convs.map((c) => {
     const other = c.participantA === username ? c.participantB : c.participantA;
     const u = userMap.get(other);
+    const isDeletedUser = !!u?.deletedAt;
     return {
       uid: c.uid,
       lastMessageAt: c.lastMessageAt ? c.lastMessageAt.toISOString() : null,
       lastMessagePreview: c.lastMessagePreview,
       lastMessageSender: c.lastMessageSender,
-      participantA: c.participantA,
-      participantB: c.participantB,
-      otherUsername: other,
-      otherAvatar: u?.avatar ?? "",
-      otherBio: u?.bio ?? "",
-      otherDmEnabled: u?.dmEnabled ?? true,
+      participantA: isDeletedUser ? "[deleted]" : c.participantA,
+      participantB: isDeletedUser ? "[deleted]" : c.participantB,
+      otherUsername: isDeletedUser ? "[deleted]" : other,
+      otherAvatar: isDeletedUser ? "" : (u?.avatar ?? ""),
+      otherBio: isDeletedUser ? "" : (u?.bio ?? ""),
+      otherDmEnabled: isDeletedUser ? false : (u?.dmEnabled ?? true),
       unreadCount: unreadMap.get(c.uid) ?? 0,
     };
   });

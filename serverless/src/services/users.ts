@@ -171,8 +171,13 @@ export const getFollowers = async (db: DB, username: string, limit = 50, offset 
       bio: sql<string>`coalesce(${schema.users.bio}, '')`,
     })
     .from(schema.follows)
-    .leftJoin(schema.users, eq(schema.users.username, schema.follows.followerUsername))
-    .where(eq(schema.follows.followingUsername, username))
+    .innerJoin(schema.users, eq(schema.users.username, schema.follows.followerUsername))
+    .where(
+      and(
+        eq(schema.follows.followingUsername, username),
+        isNull(schema.users.deletedAt),
+      ),
+    )
     .orderBy(desc(schema.follows.createdAt))
     .limit(limit)
     .offset(offset);
@@ -188,8 +193,13 @@ export const getFollowing = async (db: DB, username: string, limit = 50, offset 
       bio: sql<string>`coalesce(${schema.users.bio}, '')`,
     })
     .from(schema.follows)
-    .leftJoin(schema.users, eq(schema.users.username, schema.follows.followingUsername))
-    .where(eq(schema.follows.followerUsername, username))
+    .innerJoin(schema.users, eq(schema.users.username, schema.follows.followingUsername))
+    .where(
+      and(
+        eq(schema.follows.followerUsername, username),
+        isNull(schema.users.deletedAt),
+      ),
+    )
     .orderBy(desc(schema.follows.createdAt))
     .limit(limit)
     .offset(offset);
