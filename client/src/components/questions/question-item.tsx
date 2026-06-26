@@ -181,6 +181,7 @@ export function QuestionItem({
   const question = questionItem?.question;
   const author = (questionItem as QuestionItem | undefined)?.author ?? null;
   const questionId = question?.uid;
+  const postUrlId = question?.slug || question?.uid;
   const navigate = useNavigate();
   const { data: replies = [], isLoading: isRepliesLoading } = useRepliesQuery(
     questionId || undefined,
@@ -279,7 +280,7 @@ export function QuestionItem({
                 )}
                 {showChamberName && question.chamberName && (
                   <Link
-                    to={`/chambers/${question.chamberUid}`}
+                    to={`/chambers/${question.slug || question.chamberUid}`}
                     className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                   >
                     in {question.chamberName}
@@ -406,7 +407,7 @@ export function QuestionItem({
                   />
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => navigate(`/p/${questionId}`)}
+                      onClick={() => navigate(`/p/${postUrlId}`)}
                     >
                       <HugeiconsIcon
                         icon={BookOpen01Icon}
@@ -431,7 +432,7 @@ export function QuestionItem({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
-                        const url = `${window.location.origin}/p/${questionId}`;
+                        const url = `${window.location.origin}/p/${postUrlId}`;
                         navigator.clipboard.writeText(url);
                         toastManager.add({
                           title: "Link copied to clipboard",
@@ -553,7 +554,7 @@ export function QuestionItem({
               />
             </div>
             <Link
-              to={`/p/${questionId}`}
+              to={`/p/${postUrlId}`}
               className="ml-10 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors block pt-2 pb-1"
               onClick={(e) => e.stopPropagation()}
             >

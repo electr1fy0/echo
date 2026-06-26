@@ -51,10 +51,11 @@ export function ChamberAvatar({
     return (
       <div
         className={cn(
-          "shrink-0 overflow-hidden",
+          "shrink-0 overflow-hidden border border-white dark:border-0",
           sizeClasses[size],
           className,
         )}
+        style={{ backgroundColor: `#${bgHex}` }}
       >
         <img
           src={buildChamberIconUrl(icon, bgHex, iconColor)}
@@ -68,11 +69,11 @@ export function ChamberAvatar({
   return (
     <div
       className={cn(
-        "flex items-center justify-center text-white/80 font-medium shrink-0",
+        "flex items-center justify-center text-white font-medium shrink-0 border border-white dark:border-0",
         sizeClasses[size],
         className,
       )}
-      style={{ backgroundColor: `#${bgHex}cc` }}
+      style={{ backgroundColor: `#${bgHex}` }}
     >
       {getInitials(name)}
     </div>

@@ -656,7 +656,7 @@ export default function Profile() {
               {JOINED_CHAMBERS.map((chamber, i) => (
                 <a
                   key={chamber.uid || i}
-                  href={`/chambers/${chamber.name}`}
+                  href={`/chambers/${chamber.slug || chamber.uid}`}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors"
                 >
                   <ChamberAvatar

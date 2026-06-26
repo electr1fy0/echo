@@ -72,7 +72,7 @@ export function ChamberCard({ chamber, compact = false }: ChamberCardProps) {
       )}
     >
       <Link
-        to={`/chambers/${chamber.name}`}
+        to={`/chambers/${chamber.slug || chamber.uid || chamber.name}`}
         className="flex items-center gap-3 flex-1 min-w-0 group"
       >
         <ChamberAvatar

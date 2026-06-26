@@ -71,3 +71,17 @@ export const extractMentions = (content: string) => {
 
   return [...usernames];
 };
+
+export const slugify = (text: string): string => {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/<[^>]*>/g, "")  // strip HTML tags
+    .replace(/[^\w\s-]/g, "") // remove non-word chars (except whitespace/hyphen)
+    .replace(/[\s_]+/g, "-")  // spaces/underscores to hyphens
+    .replace(/-+/g, "-")      // collapse hyphens
+    .replace(/^-+|-+$/g, "")  // trim hyphens
+    .slice(0, 80)             // limit length
+    .replace(/-+$/, "")       // trim trailing hyphens again after slicing
+    || "untitled";
+};

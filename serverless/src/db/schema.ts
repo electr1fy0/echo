@@ -46,6 +46,7 @@ export const users = pgTable("users", {
 
 export const chambers = pgTable("chambers", {
   uid: uuid("uid").defaultRandom().primaryKey(),
+  slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
   description: text("description"),
   creatorUsername: text("creator_username").references(() => users.username, {
@@ -83,6 +84,7 @@ export const chamberMembers = pgTable("chamber_members", {
 
 export const posts = pgTable("posts", {
   uid: uuid("uid").defaultRandom().primaryKey(),
+  slug: text("slug").notNull().unique(),
   timeCreated: timestamp("time_created", { mode: "date" }).defaultNow(),
   content: text("content"),
   author: text("author")

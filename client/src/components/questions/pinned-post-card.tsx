@@ -30,6 +30,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
   const question = questionItem?.question;
   const author = (questionItem as QuestionItem | undefined)?.author ?? null;
   const questionId = question?.uid;
+  const postUrlId = question?.slug || question?.uid;
 
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
@@ -41,7 +42,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
   if (!question || !questionId) return null;
 
   const handleCardClick = () => {
-    navigate(`/p/${questionId}`);
+    navigate(`/p/${postUrlId}`);
   };
 
   const handleUnpin = (e: React.MouseEvent) => {

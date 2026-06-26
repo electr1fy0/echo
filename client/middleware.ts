@@ -115,7 +115,7 @@ export default async function middleware(
 
     if (res.ok) {
       const data = (await res.json()) as {
-        question: { content: string; isAnonymous?: boolean; authorUsername: string };
+        question: { content: string; slug?: string; isAnonymous?: boolean; authorUsername: string };
         author: { username: string };
       };
 
@@ -125,7 +125,15 @@ export default async function middleware(
 
       const description = stripHtml(data.question.content);
 
-      return new Response(buildPage(displayName, description, pageUrl, ogImage), {
+      // Use canonical slug URL if available (handles old UUID URLs gracefully)
+      const slug = data.question.slug;
+      const canonicalPath = slug ? `/p/${slug}` : `/p/${questionId}`;
+      const canonicalUrl = `${url.protocol}//${url.host}${canonicalPath}`;
+      const canonicalOgImage = slug
+        ? `${url.protocol}//${url.host}/api/og?questionId=${encodeURIComponent(slug)}`
+        : ogImage;
+
+      return new Response(buildPage(displayName, description, canonicalUrl, canonicalOgImage), {
         headers: { "content-type": "text/html;charset=utf-8" },
       });
     }

@@ -1,5 +1,8 @@
 import { and, asc, desc, eq, or, sql, isNotNull, isNull } from "drizzle-orm";
 
+// eslint-disable-next-line no-restricted-imports
+import { slugify } from "../lib/utils";
+
 import type { DB } from "../db";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
@@ -7,6 +10,7 @@ import { algorithmScore } from "./algorithm";
 
 export const mapPostItem = (row: {
   uid: string;
+  slug: string;
   content: string | null;
   timeCreated: Date | null;
   authorUsername: string;
@@ -56,6 +60,7 @@ export const mapPostItem = (row: {
   return {
     question: {
       uid: row.uid,
+      slug: row.slug,
       content: row.content ?? "",
       timeCreated: row.timeCreated?.toISOString() ?? null,
       expiresAt: row.expiresAt?.toISOString() ?? null,
@@ -153,6 +158,7 @@ export const mapReplyItem = (row: {
 
 export const mapChamber = (row: {
   uid: string;
+  slug: string;
   name: string;
   description: string;
   creatorUsername: string | null;
@@ -164,6 +170,7 @@ export const mapChamber = (row: {
   icon: string | null;
 }) => ({
   uid: row.uid,
+  slug: row.slug,
   name: row.name,
   description: row.description,
   creatorUsername: row.creatorUsername ?? "",
@@ -175,11 +182,11 @@ export const mapChamber = (row: {
   icon: row.icon,
 });
 
-export const ensurePostExists = async (db: DB, uid: string) => {
+export const ensurePostExists = async (db: DB, identifier: string) => {
   const [post] = await db
-    .select({ uid: schema.posts.uid, author: schema.posts.author })
+    .select({ uid: schema.posts.uid, author: schema.posts.author, slug: schema.posts.slug })
     .from(schema.posts)
-    .where(eq(schema.posts.uid, uid))
+    .where(or(eq(schema.posts.uid, identifier), eq(schema.posts.slug, identifier)))
     .limit(1);
 
   if (!post) {
@@ -187,6 +194,74 @@ export const ensurePostExists = async (db: DB, uid: string) => {
   }
 
   return post;
+};
+
+export const resolvePostUid = async (db: DB, identifier: string): Promise<string> => {
+  const post = await ensurePostExists(db, identifier);
+  return post.uid;
+};
+
+export const generatePostSlug = async (db: DB, content: string): Promise<string> => {
+  const base = slugify(content);
+  const existing = await db
+    .select({ slug: schema.posts.slug })
+    .from(schema.posts)
+    .where(eq(schema.posts.slug, base))
+    .limit(1);
+  if (!existing.length) return base;
+
+  let counter = 1;
+  while (true) {
+    const slug = `${base}-${counter}`;
+    const [row] = await db
+      .select({ slug: schema.posts.slug })
+      .from(schema.posts)
+      .where(eq(schema.posts.slug, slug))
+      .limit(1);
+    if (!row) return slug;
+    counter++;
+  }
+};
+
+export const resolveChamber = async (db: DB, identifier: string) => {
+  const [chamber] = await db
+    .select({
+      uid: schema.chambers.uid,
+      slug: schema.chambers.slug,
+      name: schema.chambers.name,
+      creatorUsername: schema.chambers.creatorUsername,
+    })
+    .from(schema.chambers)
+    .where(or(eq(schema.chambers.uid, identifier), eq(schema.chambers.slug, identifier)))
+    .limit(1);
+
+  if (!chamber) {
+    throw new ApiError(404, "chamber not found");
+  }
+
+  return chamber;
+};
+
+export const generateChamberSlug = async (db: DB, name: string, excludeUid?: string): Promise<string> => {
+  const base = slugify(name);
+  const existing = await db
+    .select({ slug: schema.chambers.slug, uid: schema.chambers.uid })
+    .from(schema.chambers)
+    .where(eq(schema.chambers.slug, base))
+    .limit(1);
+  if (!existing.length || (excludeUid && existing[0].uid === excludeUid)) return base;
+
+  let counter = 1;
+  while (true) {
+    const slug = `${base}-${counter}`;
+    const [row] = await db
+      .select({ slug: schema.chambers.slug })
+      .from(schema.chambers)
+      .where(eq(schema.chambers.slug, slug))
+      .limit(1);
+    if (!row) return slug;
+    counter++;
+  }
 };
 
 export const ensureReplyExists = async (db: DB, uid: string) => {
@@ -272,6 +347,7 @@ export const getPostItems = async (
   const rows = await db
     .select({
       uid: schema.posts.uid,
+      slug: schema.posts.slug,
       content: schema.posts.content,
       timeCreated: schema.posts.timeCreated,
       authorUsername: schema.posts.author,
@@ -440,6 +516,7 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
   return db
     .select({
       uid: schema.chambers.uid,
+      slug: schema.chambers.slug,
       name: schema.chambers.name,
       description: sql<string>`coalesce(${schema.chambers.description}, '')`,
       creatorUsername: schema.chambers.creatorUsername,
@@ -457,7 +534,7 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
           and cm.username = ${currentUser || ""}
       )`,
     })
-    .from(schema.chambers)
+    .from(schema.chambers
     .where(
       query
         ? sql`${schema.chambers.searchVector} @@ plainto_tsquery('english', ${query})`

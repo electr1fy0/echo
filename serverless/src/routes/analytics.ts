@@ -13,6 +13,7 @@ import {
 import { safeParse, trackEventsSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 import { ApiError } from "../lib/errors";
+import { resolvePostUid } from "../services/questions";
 
 export const analyticsRoutes = new Hono<AppEnv>();
 
@@ -129,8 +130,9 @@ analyticsRoutes.get("/me", async (c) => {
 });
 
 analyticsRoutes.get("/questions/:uid", async (c) => {
-  const uid = c.req.param("uid");
-  const data = await getPostAnalytics(c.get("db"), uid, c.get("user"));
+  const db = c.get("db");
+  const uid = await resolvePostUid(db, c.req.param("uid"));
+  const data = await getPostAnalytics(db, uid, c.get("user"));
 
   if (data === null) {
     throw new ApiError(404, "post not found or not authorized");
@@ -140,22 +142,12 @@ analyticsRoutes.get("/questions/:uid", async (c) => {
 });
 
 analyticsRoutes.post("/questions/:uid/view", optionalAuth, async (c) => {
-  const uid = c.req.param("uid");
-
-  const [post] = await c
-    .get("db")
-    .select({ uid: schema.posts.uid })
-    .from(schema.posts)
-    .where(eq(schema.posts.uid, uid))
-    .limit(1);
-
-  if (!post) {
-    throw new ApiError(404, "post not found");
-  }
+  const db = c.get("db");
+  const uid = await resolvePostUid(db, c.req.param("uid"));
 
   let username: string | null = null;
   try { username = c.get("user"); } catch {}
 
-  await trackPostView(c.get("db"), uid, username);
+  await trackPostView(db, uid, username);
   return c.json({ message: "view tracked" });
 });

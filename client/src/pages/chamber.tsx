@@ -271,7 +271,7 @@ export default function ChamberPage() {
   const { setActiveChamberId, setActiveChannelId } = useCreatePostModal();
   const chambers = chambersData || [];
   const chamber = chambers.find(
-    (c) => c.name.toLowerCase() === chamberId?.toLowerCase() || c.uid === chamberId,
+    (c) => c.slug === chamberId || c.name.toLowerCase() === chamberId?.toLowerCase() || c.uid === chamberId,
   );
   const { mutate: deleteQn } = useDeleteQuestion();
   const deleteChamberMutation = useDeleteChamber();

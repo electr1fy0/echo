@@ -323,14 +323,15 @@ export function AppSidebar() {
         {user && joinedChambers.length > 0 && (
           <div data-tour="chambers" className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-none">
             {joinedChambers.map((c) => {
-              const active = isActive(`/chambers/${c.name}`) || isActive(`/chambers/${c.uid}`);
+              const chamberPath = c.slug || c.uid || c.name;
+              const active = isActive(`/chambers/${chamberPath}`) || isActive(`/chambers/${c.uid}`);
 
               return (
                 <Tooltip key={c.uid}>
                   <TooltipTrigger
                     render={
                       <Link
-                        to={`/chambers/${c.name}`}
+                        to={`/chambers/${chamberPath}`}
                         className={cn(
                           "shrink-0 transition-all duration-300 hover:rounded-lg select-none cursor-pointer",
                           active

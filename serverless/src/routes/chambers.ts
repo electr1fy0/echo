@@ -4,7 +4,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth, optionalAuth } from "../middleware/auth";
-import { listChambers, mapChamber } from "../services/questions";
+import { listChambers, mapChamber, resolveChamber, generateChamberSlug } from "../services/questions";
 import { safeParse, createChamberSchema, updateChamberSchema, createChannelSchema, updateChannelSchema, deleteChamberSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
@@ -48,14 +48,17 @@ chamberRoutes.use("*", requireAuth);
 
 chamberRoutes.post("/", async (c) => {
   const body = safeParse(createChamberSchema, await c.req.json());
-  const [created] = await c.get("db").insert(schema.chambers).values({
+  const db = c.get("db");
+  const slug = await generateChamberSlug(db, body.name);
+  const [created] = await db.insert(schema.chambers).values({
+    slug,
     name: body.name,
     description: body.description,
     creatorUsername: c.get("user"),
     colorIndex: body.colorIndex ?? 0,
     picture: body.picture ?? null,
     icon: body.icon ?? null,
-  }).returning({ uid: schema.chambers.uid, createdAt: schema.chambers.createdAt });
+  }).returning({ uid: schema.chambers.uid, slug: schema.chambers.slug, createdAt: schema.chambers.createdAt });
 
   await c.get("db").insert(schema.chamberMembers).values({
     chamberUid: created.uid,
@@ -116,6 +119,7 @@ chamberRoutes.post("/", async (c) => {
 
   return c.json({
     uid: created.uid,
+    slug: created.slug,
     name: body.name ?? "",
     description: body.description ?? "",
     creatorUsername: c.get("user"),
@@ -142,16 +146,11 @@ chamberRoutes.delete("/", async (c) => {
 });
 
 chamberRoutes.patch("/:uid", async (c) => {
-  const uid = c.req.param("uid");
+  const identifier = c.req.param("uid");
   const body = safeParse(updateChamberSchema, await c.req.json());
+  const db = c.get("db");
 
-  const [chamber] = await c.get("db").select({
-    creatorUsername: schema.chambers.creatorUsername,
-  }).from(schema.chambers).where(eq(schema.chambers.uid, uid)).limit(1);
-
-  if (!chamber) {
-    throw new ApiError(404, "chamber not found");
-  }
+  const chamber = await resolveChamber(db, identifier);
   if (chamber.creatorUsername !== c.get("user")) {
     throw new ApiError(403, "unauthorized");
   }
@@ -164,8 +163,13 @@ chamberRoutes.patch("/:uid", async (c) => {
   if (body.picture !== undefined) updates.picture = body.picture;
   if (body.icon !== undefined) updates.icon = body.icon;
 
+  // Regenerate slug if name changed
+  if (body.name && body.name !== chamber.name) {
+    updates.slug = await generateChamberSlug(db, body.name, chamber.uid);
+  }
+
   try {
-    await c.get("db").update(schema.chambers).set(updates).where(eq(schema.chambers.uid, uid));
+    await db.update(schema.chambers).set(updates).where(eq(schema.chambers.uid, chamber.uid));
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
       throw new ApiError(409, "chamber name already exists");
@@ -177,8 +181,10 @@ chamberRoutes.patch("/:uid", async (c) => {
 });
 
 chamberRoutes.post("/:uid/join", async (c) => {
-  await c.get("db").insert(schema.chamberMembers).values({
-    chamberUid: c.req.param("uid"),
+  const db = c.get("db");
+  const chamber = await resolveChamber(db, c.req.param("uid"));
+  await db.insert(schema.chamberMembers).values({
+    chamberUid: chamber.uid,
     username: c.get("user"),
   }).onConflictDoNothing();
 
@@ -186,44 +192,38 @@ chamberRoutes.post("/:uid/join", async (c) => {
 });
 
 chamberRoutes.post("/:uid/leave", async (c) => {
-  await c.get("db").delete(schema.chamberMembers).where(
-    and(eq(schema.chamberMembers.chamberUid, c.req.param("uid")), eq(schema.chamberMembers.username, c.get("user"))),
+  const db = c.get("db");
+  const chamber = await resolveChamber(db, c.req.param("uid"));
+  await db.delete(schema.chamberMembers).where(
+    and(eq(schema.chamberMembers.chamberUid, chamber.uid), eq(schema.chamberMembers.username, c.get("user"))),
   );
   return c.json({ message: "left chamber" });
 });
 
 // Channels endpoints
 chamberRoutes.get("/:uid/channels", async (c) => {
-  const uid = c.req.param("uid");
-  const rows = await c.get("db")
+  const db = c.get("db");
+  const chamber = await resolveChamber(db, c.req.param("uid"));
+  const rows = await db
     .select()
     .from(schema.channels)
-    .where(eq(schema.channels.chamberUid, uid))
+    .where(eq(schema.channels.chamberUid, chamber.uid))
     .orderBy(asc(schema.channels.createdAt));
   return c.json(rows);
 });
 
 chamberRoutes.post("/:uid/channels", async (c) => {
-  const uid = c.req.param("uid");
+  const db = c.get("db");
+  const chamber = await resolveChamber(db, c.req.param("uid"));
 
-  // Check if user is the creator of the chamber
-  const [chamber] = await c.get("db")
-    .select({ creatorUsername: schema.chambers.creatorUsername })
-    .from(schema.chambers)
-    .where(eq(schema.chambers.uid, uid))
-    .limit(1);
-
-  if (!chamber) {
-    throw new ApiError(404, "chamber not found");
-  }
   if (chamber.creatorUsername !== c.get("user")) {
     throw new ApiError(403, "only chamber creator can create channels");
   }
 
   const body = safeParse(createChannelSchema, await c.req.json());
 
-  const [created] = await c.get("db").insert(schema.channels).values({
-    chamberUid: uid,
+  const [created] = await db.insert(schema.channels).values({
+    chamberUid: chamber.uid,
     name: body.name.toLowerCase().replace(/\s+/g, "-"),
     icon: body.icon ?? "hash",
     schema: body.schema ?? [],
@@ -233,19 +233,11 @@ chamberRoutes.post("/:uid/channels", async (c) => {
 });
 
 chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
-  const uid = c.req.param("uid");
   const channelUid = c.req.param("channelUid");
+  const db = c.get("db");
 
-  // Check if user is the creator of the chamber
-  const [chamber] = await c.get("db")
-    .select({ creatorUsername: schema.chambers.creatorUsername })
-    .from(schema.chambers)
-    .where(eq(schema.chambers.uid, uid))
-    .limit(1);
+  const chamber = await resolveChamber(db, c.req.param("uid"));
 
-  if (!chamber) {
-    throw new ApiError(404, "chamber not found");
-  }
   if (chamber.creatorUsername !== c.get("user")) {
     throw new ApiError(403, "only chamber creator can edit channels");
   }
@@ -257,10 +249,10 @@ chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
   if (body.icon) updates.icon = body.icon;
   if (body.schema !== undefined) updates.schema = body.schema;
 
-  const [updated] = await c.get("db")
+  const [updated] = await db
     .update(schema.channels)
     .set(updates)
-    .where(and(eq(schema.channels.uid, channelUid), eq(schema.channels.chamberUid, uid)))
+    .where(and(eq(schema.channels.uid, channelUid), eq(schema.channels.chamberUid, chamber.uid)))
     .returning();
 
   if (!updated) {
@@ -271,25 +263,17 @@ chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
 });
 
 chamberRoutes.delete("/:uid/channels/:channelUid", async (c) => {
-  const uid = c.req.param("uid");
   const channelUid = c.req.param("channelUid");
+  const db = c.get("db");
 
-  // Check if user is the creator of the chamber
-  const [chamber] = await c.get("db")
-    .select({ creatorUsername: schema.chambers.creatorUsername })
-    .from(schema.chambers)
-    .where(eq(schema.chambers.uid, uid))
-    .limit(1);
+  const chamber = await resolveChamber(db, c.req.param("uid"));
 
-  if (!chamber) {
-    throw new ApiError(404, "chamber not found");
-  }
   if (chamber.creatorUsername !== c.get("user")) {
     throw new ApiError(403, "only chamber creator can delete channels");
   }
 
   // Prevent deleting the default 'discussion' channel
-  const [channel] = await c.get("db")
+  const [channel] = await db
     .select()
     .from(schema.channels)
     .where(eq(schema.channels.uid, channelUid))
@@ -299,9 +283,9 @@ chamberRoutes.delete("/:uid/channels/:channelUid", async (c) => {
     throw new ApiError(400, "cannot delete default discussion channel");
   }
 
-  await c.get("db")
+  await db
     .delete(schema.channels)
-    .where(and(eq(schema.channels.uid, channelUid), eq(schema.channels.chamberUid, uid)));
+    .where(and(eq(schema.channels.uid, channelUid), eq(schema.channels.chamberUid, chamber.uid)));
 
   return c.json({ message: "channel deleted" });
 });

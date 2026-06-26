@@ -2,6 +2,7 @@ export type QuestionId = string;
 export type ReplyId = string;
 export interface Question {
   uid?: QuestionId;
+  slug?: string;
   content: string;
   timeCreated?: Date;
   expiresAt?: string | null;
@@ -150,6 +151,7 @@ export interface Message {
 
 export interface Chamber {
   uid?: string;
+  slug?: string;
   name: string;
   description: string;
   isJoined?: boolean;
