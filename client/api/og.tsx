@@ -119,7 +119,7 @@ function Avatar({ name, size }: { name: string; size: number }) {
         width: size,
         height: size,
         borderRadius: "50%",
-        background: "oklch(0.371 0 0)",
+        background: "#555555",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -173,7 +173,7 @@ function MetadataCard({ question }: { question: QuestionData }) {
           marginTop: 16,
           padding: 16,
           borderRadius: 12,
-          background: "oklch(0.269 0 0)",
+          background: "#2a2a2a",
           display: "flex",
           gap: 24,
           fontSize: 14,
@@ -201,7 +201,7 @@ function MetadataCard({ question }: { question: QuestionData }) {
           marginTop: 16,
           padding: 16,
           borderRadius: 12,
-          background: "oklch(0.269 0 0)",
+          background: "#2a2a2a",
           display: "flex",
           gap: 24,
           fontSize: 14,
@@ -227,7 +227,7 @@ function MetadataCard({ question }: { question: QuestionData }) {
           marginTop: 16,
           padding: 16,
           borderRadius: 12,
-          background: "oklch(0.269 0 0)",
+          background: "#2a2a2a",
           display: "flex",
           gap: 24,
           fontSize: 14,
@@ -314,7 +314,7 @@ function PostCard({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "oklch(0.185 0 0)",
+        background: "#111111",
         fontFamily: "Inter",
       }}
     >
@@ -323,9 +323,9 @@ function PostCard({
           width: CARD_W,
           display: "flex",
           flexDirection: "column",
-          background: "oklch(0.205 0 0)",
+          background: "#1c1c1c",
           borderRadius: 16,
-          border: "1px solid oklch(1 0 0 / 10%)",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
           padding: PAD,
           position: "relative",
           overflow: "hidden",
@@ -395,10 +395,7 @@ function PostCard({
               fontSize: 15,
               color: "#e5e5e5",
               lineHeight: 1.55,
-              display: "-webkit-box",
-              WebkitLineClamp: 5,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
+              lineClamp: 5,
             }}
           >
             {truncatedContent}
@@ -424,7 +421,7 @@ function PostCard({
           style={{
             marginTop: 20,
             height: 1,
-            background: "oklch(1 0 0 / 8%)",
+            background: "rgba(255, 255, 255, 0.08)",
           }}
         />
 

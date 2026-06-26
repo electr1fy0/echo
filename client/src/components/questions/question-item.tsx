@@ -406,7 +406,7 @@ export function QuestionItem({
                   />
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => navigate(`/q/${questionId}`)}
+                      onClick={() => navigate(`/p/${questionId}`)}
                     >
                       <HugeiconsIcon
                         icon={BookOpen01Icon}
@@ -431,7 +431,7 @@ export function QuestionItem({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => {
-                        const url = `${window.location.origin}/q/${questionId}`;
+                        const url = `${window.location.origin}/p/${questionId}`;
                         navigator.clipboard.writeText(url);
                         toastManager.add({
                           title: "Link copied to clipboard",
@@ -553,7 +553,7 @@ export function QuestionItem({
               />
             </div>
             <Link
-              to={`/q/${questionId}`}
+              to={`/p/${questionId}`}
               className="ml-10 text-xs font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-colors block pt-2 pb-1"
               onClick={(e) => e.stopPropagation()}
             >

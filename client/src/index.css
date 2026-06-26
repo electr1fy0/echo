@@ -681,10 +681,6 @@ a.bg-destructive:active {
     line-height: 1 !important;
 }
 
-.driver-popover-close-btn::before {
-    content: "×" !important;
-}
-
 .driver-popover-close-btn:hover {
     opacity: 1 !important;
     background: transparent !important;

@@ -180,7 +180,7 @@ export default function App() {
               <Route path="/home" element={<Navigate to="/" replace />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/chambers/:chamberId" element={<ChamberPage />} />
-              <Route path="/q/:questionId" element={<QuestionDetailPage />} />
+              <Route path="/p/:questionId" element={<QuestionDetailPage />} />
               <Route path="/u/:username" element={<PublicProfile />} />
               <Route path="/auth" element={<LoadingSpinner />} />
             </Route>

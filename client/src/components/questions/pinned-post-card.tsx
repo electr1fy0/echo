@@ -41,7 +41,7 @@ export function PinnedPostCard({ questionItem, canPin }: PinnedPostCardProps) {
   if (!question || !questionId) return null;
 
   const handleCardClick = () => {
-    navigate(`/q/${questionId}`);
+    navigate(`/p/${questionId}`);
   };
 
   const handleUnpin = (e: React.MouseEvent) => {

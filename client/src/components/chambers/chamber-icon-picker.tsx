@@ -1,7 +1,4 @@
-import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon } from "@hugeicons/core-free-icons";
 import { useTheme } from "next-themes";
 import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 import { buildChamberIconUrl } from "@/components/ui/chamber-avatar";
@@ -44,7 +41,7 @@ const ICON_SEEDS = [
   "plane", "planet", "plant", "play", "plug", "plus", "pointer", "post",
   "power", "present", "print", "puzzle", "qr", "question", "quote",
   "radio", "rain", "random", "receipt", "record", "recycle", "repeat",
-  "reply", "report", "ribbon", "rocket", "rocket", "roll", "roof",
+  "reply", "report", "ribbon", "rocket", "roll", "roof",
   "root", "router", "rss", "ruler", "safe", "sail", "save", "scanner",
   "scissors", "screen", "screwdriver", "sd", "search", "send", "server",
   "settings", "share", "shield", "ship", "shirt", "shoe", "shop",
@@ -72,14 +69,7 @@ interface ChamberIconPickerProps {
 }
 
 export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIconPickerProps) {
-  const [search, setSearch] = useState("");
   const { resolvedTheme } = useTheme();
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return ICON_SEEDS;
-    const q = search.toLowerCase();
-    return ICON_SEEDS.filter((s) => s.includes(q));
-  }, [search]);
 
   const neutralBg = resolvedTheme === "dark" ? NEUTRAL_BG_DARK : NEUTRAL_BG_LIGHT;
   const themeHex = CHAMBER_COLOR_HEX[colorIndex % CHAMBER_COLOR_HEX.length];
@@ -105,19 +95,6 @@ export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIc
           />
         )}
       </div>
-      <div className="relative">
-        <HugeiconsIcon
-          icon={Search01Icon}
-          className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-neutral-400"
-        />
-        <input
-          type="text"
-          placeholder="Search icons..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full h-8 pl-8 pr-3 rounded-lg text-xs border border-neutral-200 dark:border-neutral-700 bg-transparent outline-none focus:border-neutral-400 dark:focus:border-neutral-500 transition-colors"
-        />
-      </div>
       <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto scrollbar-modern pt-1">
         <button
           type="button"
@@ -127,7 +104,7 @@ export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIc
         >
           <span className="text-[10px] text-neutral-400 font-medium">x</span>
         </button>
-        {filtered.map((seed) => (
+        {ICON_SEEDS.map((seed) => (
           <button
             key={seed}
             type="button"
@@ -147,9 +124,6 @@ export function ChamberIconPicker({ value, onChange, colorIndex = 0 }: ChamberIc
             />
           </button>
         ))}
-        {filtered.length === 0 && (
-          <p className="text-xs text-neutral-400 py-2">No icons found</p>
-        )}
       </div>
     </div>
   );
