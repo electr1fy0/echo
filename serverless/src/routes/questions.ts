@@ -96,7 +96,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
     taxiDatetime: body.taxiDatetime ?? null,
     taxiSeatsAvailable: body.taxiSeatsAvailable ?? null,
     taxiStatus: body.postType === "taxi" ? "open" : null,
-    acceptsAnswers: body.acceptsAnswers ?? true,
+    acceptsAnswers: body.acceptsAnswers ?? false,
   }).returning({ uid: schema.posts.uid });
 
   if (!created) {

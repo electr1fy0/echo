@@ -374,6 +374,16 @@ function GroupedNotificationItem({ group }: { group: GroupedNotification }) {
   );
 }
 
+const KNOWN_TYPES = new Set([
+  "upvote_post",
+  "reply_post",
+  "upvote_reply",
+  "mention_post",
+  "mention_reply",
+  "express_interest",
+  "milestone",
+]);
+
 const GROUPABLE_TYPES = new Set([
   "upvote_post",
   "upvote_reply",
@@ -470,7 +480,13 @@ export default function Notifications() {
     isFetchingNextPage,
     isLoading,
   } = useInfiniteNotificationsQuery();
-  const notifications = notificationsData ? notificationsData.pages.flat() : [];
+  const notifications = useMemo(
+    () =>
+      notificationsData
+        ? notificationsData.pages.flat().filter((n) => KNOWN_TYPES.has(n.type))
+        : [],
+    [notificationsData],
+  );
 
   const { mutate: markRead } = useMarkNotificationsRead();
 

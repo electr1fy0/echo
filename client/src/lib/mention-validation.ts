@@ -7,7 +7,7 @@ export async function validateMentions(content: string) {
     return { mentions, missing: [] as string[] };
   }
   const existing = await resolveUsers(mentions);
-  const existingSet = new Set(existing);
-  const missing = mentions.filter((username) => !existingSet.has(username));
+  const existingSet = new Set<string>(existing);
+  const missing = mentions.filter((username: string) => !existingSet.has(username));
   return { mentions, missing };
 }

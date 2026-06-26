@@ -98,7 +98,7 @@ export const createPostSchema = z.object({
   taxiSeatsAvailable: z.number().int().optional(),
   pollQuestion: z.string().optional(),
   pollOptions: z.array(z.string().min(1)).min(2, "poll must have at least 2 options").optional(),
-  acceptsAnswers: z.boolean().optional().default(true),
+  acceptsAnswers: z.boolean().optional().default(false),
 });
 
 export const updatePostSchema = z.object({

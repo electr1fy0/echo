@@ -99,7 +99,7 @@ export const posts = pgTable("posts", {
   redditUpvotes: integer("reddit_upvotes").default(0),
   isAnonymous: boolean("is_anonymous").default(false).notNull(),
   acceptedAnswerUid: uuid("accepted_answer_uid"), // Will reference replies.uid in relations
-  acceptsAnswers: boolean("accepts_answers").default(true).notNull(),
+  acceptsAnswers: boolean("accepts_answers").default(false).notNull(),
   pinnedAt: timestamp("pinned_at", { mode: "date" }),
   expiresAt: timestamp("expires_at", { mode: "date" }),
 
