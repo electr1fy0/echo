@@ -1,3 +1,4 @@
+import { useTheme } from "next-themes";
 import { cn, getInitials } from "@/lib/utils";
 import { CHAMBER_COLORS, CHAMBER_COLOR_HEX } from "@/components/chambers/consts";
 
@@ -9,6 +10,9 @@ export function buildChamberIconUrl(seed: string, backgroundColor?: string, stro
   if (strokeColor) params.set("strokeColor", strokeColor);
   return `${DICEBEAR_ICONS_URL}?${params}`;
 }
+
+const STROKE_LIGHT = "d4d4d4";
+const STROKE_DARK = "1a1a1a";
 
 export function ChamberAvatar({
   name,
@@ -25,6 +29,8 @@ export function ChamberAvatar({
   size?: "sm" | "md" | "lg";
   className?: string;
 }) {
+  const { resolvedTheme } = useTheme();
+
   const sizeClasses = {
     sm: "size-8 rounded-lg text-xs",
     md: "size-10 rounded-xl text-sm",
@@ -34,6 +40,7 @@ export function ChamberAvatar({
   const idx = (colorIndex ?? 0) % CHAMBER_COLORS.length;
   const colorClass = CHAMBER_COLORS[idx];
   const bgHex = CHAMBER_COLOR_HEX[idx];
+  const strokeColor = resolvedTheme === "dark" ? STROKE_DARK : STROKE_LIGHT;
 
   if (picture) {
     return (
@@ -55,7 +62,7 @@ export function ChamberAvatar({
         )}
       >
         <img
-          src={buildChamberIconUrl(icon, bgHex)}
+          src={buildChamberIconUrl(icon, bgHex, strokeColor)}
           alt={name}
           className="size-full"
         />

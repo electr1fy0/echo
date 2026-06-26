@@ -28,13 +28,13 @@ export const algorithmScore = (currentUser: string | undefined | null) => {
   const personalization = sql<number>`
     (case when exists (
       select 1 from ${schema.chamberMembers} cm
-      where cm.chamberUid = ${schema.posts.chamberUid}
+      where cm.chamber_uid = ${schema.posts.chamberUid}
         and cm.username = ${currentUser || ""}
     ) then 15.0 else 0.0 end)
     + (case when exists (
       select 1 from ${schema.follows} f
-      where f.followerUsername = ${currentUser || ""}
-        and f.followingUsername = ${schema.posts.author}
+      where f.follower_username = ${currentUser || ""}
+        and f.following_username = ${schema.posts.author}
     ) then 10.0 else 0.0 end)
   `;
 
@@ -43,7 +43,7 @@ export const algorithmScore = (currentUser: string | undefined | null) => {
     + (case when (
       select coalesce(avg(length(r.content)), 0)
       from ${schema.replies} r
-      where r.postUid = ${schema.posts.uid}
+      where r.post_uid = ${schema.posts.uid}
     ) > 80 then 3.0 else 0.0 end)
   `;
 

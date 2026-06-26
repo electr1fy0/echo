@@ -10,10 +10,10 @@ import {
   Edit01Icon,
 
 } from "@hugeicons/core-free-icons";
-import { CHAMBER_COLORS } from "@/components/chambers/consts";
+import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 import { useListChambers } from "@/hooks/use-chamber";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnreadNotificationCount } from "@/hooks/use-notifications";
@@ -323,9 +323,7 @@ export function AppSidebar() {
         {user && joinedChambers.length > 0 && (
           <div data-tour="chambers" className="flex-1 w-full flex flex-col items-center gap-3.5 my-5 pt-5 pb-2 border-t border-neutral-200 dark:border-neutral-800 overflow-y-auto scrollbar-none">
             {joinedChambers.map((c) => {
-              const color = CHAMBER_COLORS[(c.colorIndex || 0) % CHAMBER_COLORS.length];
               const active = isActive(`/chambers/${c.name}`) || isActive(`/chambers/${c.uid}`);
-              const displayInitials = getInitials(c.name);
 
               return (
                 <Tooltip key={c.uid}>
@@ -334,14 +332,19 @@ export function AppSidebar() {
                       <Link
                         to={`/chambers/${c.name}`}
                         className={cn(
-                          "size-8 rounded-xl flex items-center justify-center text-white font-bold text-[10px] shrink-0 transition-all duration-300 hover:rounded-lg select-none shadow-sm cursor-pointer",
-                          color,
-                          active 
-                            ? "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-background scale-105" 
-                            : "opacity-85 hover:opacity-100"
+                          "shrink-0 transition-all duration-300 hover:rounded-lg select-none cursor-pointer",
+                          active
+                            ? "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-background scale-105 rounded-lg"
+                            : "opacity-85 hover:opacity-100 rounded-xl",
                         )}
                       >
-                        {displayInitials}
+                        <ChamberAvatar
+                          name={c.name}
+                          picture={c.picture}
+                          icon={c.icon}
+                          colorIndex={c.colorIndex ?? 0}
+                          size="sm"
+                        />
                       </Link>
                     }
                   />
