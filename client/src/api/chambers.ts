@@ -6,6 +6,7 @@ export async function createChamber(chamber: Chamber): Promise<Chamber> {
   const res = await fetch(`${API_URL}/chambers`, {
     method: "POST",
     headers: {
+      "Content-Type": "application/json",
       ...getAuthHeaders(),
     },
     body: JSON.stringify(chamber),

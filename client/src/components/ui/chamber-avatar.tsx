@@ -3,9 +3,10 @@ import { CHAMBER_COLORS, CHAMBER_COLOR_HEX } from "@/components/chambers/consts"
 
 export const DICEBEAR_ICONS_URL = "https://api.dicebear.com/10.x/icons/svg";
 
-export function buildChamberIconUrl(seed: string, backgroundColor?: string) {
+export function buildChamberIconUrl(seed: string, backgroundColor?: string, strokeColor?: string) {
   const params = new URLSearchParams({ seed: encodeURIComponent(seed) });
   if (backgroundColor) params.set("backgroundColor", backgroundColor);
+  if (strokeColor) params.set("strokeColor", strokeColor);
   return `${DICEBEAR_ICONS_URL}?${params}`;
 }
 

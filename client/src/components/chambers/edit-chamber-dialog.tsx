@@ -160,18 +160,33 @@ export function EditChamberDialog({
               </button>
             </div>
           </form>
-            <DialogFooter className={cn(isMobile ? "!flex-row !justify-end !px-5" : "!px-6")}>
-              <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
-                className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
-              >
-                Save
-              </Button>
-            </DialogFooter>
+            {isMobile ? (
+              <div className="flex justify-end gap-2 px-5 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
+                >
+                  Save
+                </Button>
+              </div>
+            ) : (
+              <DialogFooter className="!px-6">
+                <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
+                >
+                  Save
+                </Button>
+              </DialogFooter>
+            )}
         </div>
 
         {/* ───── Page 2: Icon & Theme ───── */}

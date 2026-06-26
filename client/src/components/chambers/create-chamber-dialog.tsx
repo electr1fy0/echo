@@ -104,7 +104,7 @@ export function CreateChamberDialog({
           <DialogHeader className={cn(isMobile ? "px-5 pt-6 pb-0" : "px-6 pt-6 pb-0")}>
             <DialogTitle>Create a Chamber</DialogTitle>
           </DialogHeader>
-          <form className={cn(isMobile ? "space-y-3 py-3 px-5" : "space-y-3 py-3 px-6")} onSubmit={(e) => handleSubmit(e)}>
+          <form id="create-chamber-form" className={cn(isMobile ? "space-y-3 py-3 px-5" : "space-y-3 py-3 px-6")} onSubmit={(e) => handleSubmit(e)}>
             <div className="space-y-1.5">
               <label className="text-sm text-neutral-700 dark:text-neutral-300">
                 Name
@@ -160,26 +160,26 @@ export function CreateChamberDialog({
                 />
               </button>
             </div>
-
           </form>
-            <DialogFooter variant="bare" className={cn(isMobile ? "!flex-row !justify-end !px-5 !pb-0" : "!px-6")}>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="default"
-                type="submit"
-                disabled={
-                  isPending || !chamber.name.trim() || !chamber.description.trim()
-                }
-              >
-                Create Chamber
-              </Button>
-            </DialogFooter>
+          <DialogFooter variant="bare">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              type="submit"
+              form="create-chamber-form"
+              disabled={
+                isPending || !chamber.name.trim() || !chamber.description.trim()
+              }
+            >
+              Create Chamber
+            </Button>
+          </DialogFooter>
         </div>
 
         {/* ───── Page 2: Icon & Theme ───── */}

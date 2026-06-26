@@ -32,16 +32,6 @@ function isCrawler(ua: string): boolean {
   return CRAWLERS.some((c) => lower.includes(c));
 }
 
-function extractImage(html: string): string | null {
-  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (imgMatch) return imgMatch[1];
-
-  const mdMatch = html.match(/!\[.*?\]\(([^)]+)\)/);
-  if (mdMatch) return mdMatch[1];
-
-  return null;
-}
-
 function stripHtml(html: string): string {
   return html
     .replace(/<[^>]*>/g, " ")
@@ -107,6 +97,8 @@ export default async function middleware(
   const questionId = url.pathname.replace(/^\/q\//, "");
   if (!questionId) return;
 
+  const ogImage = `${url.protocol}//${url.host}/api/og?questionId=${encodeURIComponent(questionId)}`;
+  const pageUrl = `${url.protocol}//${url.host}/q/${questionId}`;
   const apiUrl =
     (typeof process !== "undefined" && process.env?.VITE_ECHO_URL) ||
     "http://localhost:8787";
@@ -121,28 +113,27 @@ export default async function middleware(
     });
     clearTimeout(timeout);
 
-    if (!res.ok) return;
+    if (res.ok) {
+      const data = (await res.json()) as {
+        question: { content: string; isAnonymous?: boolean; authorUsername: string };
+        author: { username: string };
+      };
 
-    const data = (await res.json()) as {
-      question: { content: string; isAnonymous?: boolean; authorUsername: string };
-      author: { username: string };
-    };
+      const displayName = data.question.isAnonymous
+        ? "Anonymous"
+        : data.author?.username || data.question.authorUsername;
 
-    const content = data.question.content;
+      const description = stripHtml(data.question.content);
 
-    const displayName = data.question.isAnonymous
-      ? "Anonymous"
-      : data.author?.username || data.question.authorUsername;
-
-    const ogImage = `${url.protocol}//${url.host}/api/og?questionId=${encodeURIComponent(questionId)}`;
-    const description = stripHtml(content);
-
-    const pageUrl = `${url.protocol}//${url.host}/q/${questionId}`;
-
-    return new Response(buildPage(displayName, description, pageUrl, ogImage), {
-      headers: { "content-type": "text/html;charset=utf-8" },
-    });
+      return new Response(buildPage(displayName, description, pageUrl, ogImage), {
+        headers: { "content-type": "text/html;charset=utf-8" },
+      });
+    }
   } catch {
-    return;
+    // API fetch failed — fall through to fallback below
   }
+
+  return new Response(buildPage("Post on TurnsOut", "Join the conversation on TurnsOut", pageUrl, ogImage), {
+    headers: { "content-type": "text/html;charset=utf-8" },
+  });
 }
