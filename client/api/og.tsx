@@ -108,10 +108,10 @@ function PostCard({
       }}
     >
       {/* Header: Username + Chamber inline */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <span
           style={{
-            fontSize: 20,
+            fontSize: 26,
             fontWeight: 600,
             color: "#171717",
           }}
@@ -119,7 +119,7 @@ function PostCard({
           {displayName}
         </span>
         {question.chamberName && (
-          <span style={{ fontSize: 16, color: "#a3a3a3" }}>
+          <span style={{ fontSize: 26, color: "#a3a3a3" }}>
             in {question.chamberName}
           </span>
         )}
@@ -136,10 +136,10 @@ function PostCard({
       >
         <span
           style={{
-            fontSize: 26,
+            fontSize: 36,
             fontWeight: 500,
             color: "#171717",
-            lineHeight: 1.5,
+            lineHeight: 1.4,
           }}
         >
           {truncatedContent}
@@ -147,9 +147,9 @@ function PostCard({
         {hasMore && (
           <span
             style={{
-              fontSize: 15,
+              fontSize: 18,
               color: "#a3a3a3",
-              marginTop: 12,
+              marginTop: 14,
             }}
           >
             Continue reading…
@@ -161,21 +161,21 @@ function PostCard({
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <div
           style={{
-            width: 32,
-            height: 32,
+            width: 56,
+            height: 56,
             background: "#F54900",
-            borderRadius: 7,
+            borderRadius: 12,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            gap: 3,
+            gap: 5,
           }}
         >
-          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
-          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
-          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1 }} />
-          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1 }} />
+          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2, opacity: 0.3 }} />
+          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2, opacity: 0.3 }} />
+          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2 }} />
+          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2 }} />
         </div>
       </div>
     </div>
