@@ -42,6 +42,7 @@ import {
   Edit01Icon,
   Delete02Icon,
   HourglassIcon,
+  CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
 import { uploadImagePresigned } from "@/api/upload";
 import {
@@ -112,6 +113,7 @@ export function CreatePostDialog() {
   const { draft, updateDraft, resetDraft } = useQuestionDraft();
   const [ttlHours, setTtlHours] = useState<number | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [acceptsAnswers, setAcceptsAnswers] = useState(false);
 
   const { data: chambersData } = useListChambers();
   const chambers = chambersData || [];
@@ -135,6 +137,7 @@ export function CreatePostDialog() {
       setActiveFields([]);
       setTtlHours(null);
       setIsAnonymous(false);
+      setAcceptsAnswers(false);
       return;
     }
     const chamberToSelect = defaultChamberId || activeChamberId;
@@ -371,6 +374,7 @@ export function CreatePostDialog() {
         postType,
         ...(ttlHours != null ? { ttlHours } : {}),
         isAnonymous,
+        acceptsAnswers,
       };
 
       if (postType === "poll") {
@@ -1098,6 +1102,27 @@ export function CreatePostDialog() {
                   render={
                     <button
                       type="button"
+                      onClick={() => setAcceptsAnswers((p) => !p)}
+                      className={cn(
+                        "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
+                        acceptsAnswers
+                          ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                          : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                      )}
+                    >
+                      <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="top">
+                  {acceptsAnswers ? "Accepting answers enabled" : "Accepting answers disabled"}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
                       onClick={() => setIsAnonymous((p) => !p)}
                       className={cn(
                         "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
@@ -1172,6 +1197,27 @@ export function CreatePostDialog() {
 
         <DialogFooter className="justify-between">
           <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    onClick={() => setAcceptsAnswers((p) => !p)}
+                    className={cn(
+                      "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
+                      acceptsAnswers
+                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                        : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                    )}
+                  >
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
+                  </button>
+                }
+              />
+              <TooltipContent side="top">
+                {acceptsAnswers ? "Accepting answers enabled" : "Accepting answers disabled"}
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger
                 render={

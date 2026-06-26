@@ -8,6 +8,7 @@ type ThreadedRepliesProps = {
   questionId: string;
   authorUsername: string;
   isAnonymousPost?: boolean;
+  canAccept?: boolean;
   onDelete: (replyId: string) => void;
 };
 
@@ -55,6 +56,7 @@ function TreeNodeComponent({
   questionId,
   authorUsername,
   isAnonymousPost,
+  canAccept,
   onDelete,
 }: {
   node: TreeNode;
@@ -62,6 +64,7 @@ function TreeNodeComponent({
   questionId: string;
   authorUsername: string;
   isAnonymousPost?: boolean;
+  canAccept?: boolean;
   onDelete: (replyId: string) => void;
 }) {
   const [isReplying, setIsReplying] = useState(false);
@@ -78,7 +81,7 @@ function TreeNodeComponent({
           <ReplyItem
             answerItem={node.item}
             onDelete={() => onDelete(node.item.answer.uid)}
-            canAccept={false}
+            canAccept={canAccept}
             isOp={!isAnonymousPost && node.item.author?.username !== "[deleted]" && authorUsername !== "[deleted]" && node.item.author?.username === authorUsername}
             onReply={() => setIsReplying(true)}
           />
@@ -105,6 +108,7 @@ function TreeNodeComponent({
                 questionId={questionId}
                 authorUsername={authorUsername}
                 isAnonymousPost={isAnonymousPost}
+                canAccept={canAccept}
                 onDelete={onDelete}
               />
             ))}
@@ -120,6 +124,7 @@ export function ThreadedReplies({
   questionId,
   authorUsername,
   isAnonymousPost,
+  canAccept,
   onDelete,
 }: ThreadedRepliesProps) {
   const tree = useMemo(() => buildTree(replies), [replies]);
@@ -134,6 +139,7 @@ export function ThreadedReplies({
           questionId={questionId}
           authorUsername={authorUsername}
           isAnonymousPost={isAnonymousPost}
+          canAccept={canAccept}
           onDelete={onDelete}
         />
       ))}

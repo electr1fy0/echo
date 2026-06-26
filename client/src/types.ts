@@ -16,6 +16,7 @@ export interface Question {
   channelSchema?: SchemaField[];
   customFields?: Record<string, any>;
   acceptedAnswerUid?: string;
+  acceptsAnswers?: boolean;
   isPinned?: boolean;
   postType?: "qna" | "partner" | "trade" | "taxi" | "poll";
   partnerTargetGrade?: string;
@@ -107,6 +108,7 @@ export interface QuestionDraft {
   taxiSeatsAvailable?: number;
   pollQuestion?: string;
   pollOptions?: string[];
+  acceptsAnswers?: boolean;
 }
 export interface Reply {
   uid: ReplyId;

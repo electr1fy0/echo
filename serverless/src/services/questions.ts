@@ -28,6 +28,7 @@ export const mapPostItem = (row: {
   channelSchema: any[] | null;
   customFields: Record<string, any> | null;
   acceptedAnswerUid: string | null;
+  acceptsAnswers: boolean;
   pinnedAt: Date | null;
   expiresAt: Date | null;
   postType: string;
@@ -74,6 +75,7 @@ export const mapPostItem = (row: {
       channelSchema: row.channelSchema ?? [],
       customFields: row.customFields ?? {},
       acceptedAnswerUid: row.acceptedAnswerUid ?? undefined,
+      acceptsAnswers: row.acceptsAnswers,
       isPinned: row.pinnedAt !== null,
       postType: row.postType,
       partnerTargetGrade: row.partnerTargetGrade,
@@ -184,7 +186,7 @@ export const mapChamber = (row: {
 
 export const ensurePostExists = async (db: DB, identifier: string) => {
   const [post] = await db
-    .select({ uid: schema.posts.uid, author: schema.posts.author, slug: schema.posts.slug })
+    .select({ uid: schema.posts.uid, author: schema.posts.author, slug: schema.posts.slug, acceptsAnswers: schema.posts.acceptsAnswers })
     .from(schema.posts)
     .where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)))
     .limit(1);
@@ -370,6 +372,7 @@ export const getPostItems = async (
       channelSchema: schema.channels.schema,
       customFields: schema.posts.customFields,
       acceptedAnswerUid: schema.posts.acceptedAnswerUid,
+      acceptsAnswers: schema.posts.acceptsAnswers,
       pinnedAt: schema.posts.pinnedAt,
       expiresAt: schema.posts.expiresAt,
       joinedByCurrentUser: sql<string | null>`${schema.chamberMembers.username}`,

@@ -118,6 +118,7 @@ export default function QuestionDetailPage() {
   const { question, author } = questionItem;
   const isPinned = !!question.isPinned;
   const isSolved = !!question.acceptedAnswerUid;
+  const canAccept = user?.username === question.authorUsername && !question.isAnonymous && question.acceptsAnswers !== false;
 
   const handlePartnerApply = (e: React.FormEvent) => {
     e.preventDefault();
@@ -763,6 +764,7 @@ export default function QuestionDetailPage() {
               questionId={questionId!}
               authorUsername={question.authorUsername}
               isAnonymousPost={!!question.isAnonymous}
+              canAccept={canAccept}
               onDelete={(replyId) =>
                 deleteReply({ questionId: questionId!, replyId })
               }

@@ -96,6 +96,7 @@ questionRoutes.post("/", requireAuth, async (c) => {
     taxiDatetime: body.taxiDatetime ?? null,
     taxiSeatsAvailable: body.taxiSeatsAvailable ?? null,
     taxiStatus: body.postType === "taxi" ? "open" : null,
+    acceptsAnswers: body.acceptsAnswers ?? true,
   }).returning({ uid: schema.posts.uid });
 
   if (!created) {
@@ -160,6 +161,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       channelSchema: schema.channels.schema,
       customFields: schema.posts.customFields,
       acceptedAnswerUid: schema.posts.acceptedAnswerUid,
+      acceptsAnswers: schema.posts.acceptsAnswers,
       pinnedAt: schema.posts.pinnedAt,
       expiresAt: schema.posts.expiresAt,
       postType: schema.posts.postType,
@@ -488,6 +490,10 @@ questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   const post = await ensurePostExists(c.get("db"), identifier);
   if (post.author !== c.get("user")) {
     throw new ApiError(403, "unauthorized");
+  }
+
+  if (post.acceptsAnswers === false) {
+    throw new ApiError(400, "this post does not accept answers");
   }
 
   const [replyToAccept] = await c.get("db").select({ author: schema.replies.author }).from(schema.replies).where(eq(schema.replies.uid, ruid)).limit(1);

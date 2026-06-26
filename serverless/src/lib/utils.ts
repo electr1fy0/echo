@@ -6,7 +6,15 @@ export const MAX_POST_WORDS = 5000;
 export const countWords = (text: string) =>
   text.trim().split(/\s+/).filter(Boolean).length;
 
-export const mentionPattern = /@([a-zA-Z0-9_]+)/g;
+const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+
+export const extractMentions = (content: string): string[] => {
+  const usernames = new Set<string>();
+  for (const match of content.matchAll(mentionRegex)) {
+    if (match[1]) usernames.add(match[1]);
+  }
+  return [...usernames];
+};
 
 export const parsePagination = (query: Record<string, string | undefined>) => {
   const limitValue = Number.parseInt(query.limit ?? "500", 10);
@@ -57,19 +65,6 @@ export const ensureValidUsername = (username: string) => {
   if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(username)) {
     throw new ApiError(400, "username must start with a letter and contain only letters, numbers, underscores, and hyphens");
   }
-};
-
-export const extractMentions = (content: string) => {
-  const usernames = new Set<string>();
-
-  for (const match of content.matchAll(mentionPattern)) {
-    const username = match[1]?.trim();
-    if (username) {
-      usernames.add(username);
-    }
-  }
-
-  return [...usernames];
 };
 
 export const slugify = (text: string): string => {

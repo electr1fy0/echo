@@ -6,6 +6,14 @@ export type MentionContext = {
 
 const mentionRegex = /@([a-zA-Z0-9_]+)/g;
 
+export function extractMentions(content: string): string[] {
+  const usernames = new Set<string>();
+  for (const match of content.matchAll(mentionRegex)) {
+    if (match[1]) usernames.add(match[1]);
+  }
+  return [...usernames];
+}
+
 export function getMentionContext(
   value: string,
   cursor: number | null,
@@ -38,13 +46,4 @@ export function applyMention(
     value: `${before}${mentionText}${after}`,
     cursor: before.length + mentionText.length,
   };
-}
-
-export function extractMentions(content: string) {
-  const matches = content.matchAll(mentionRegex);
-  const out = new Set<string>();
-  for (const match of matches) {
-    if (match[1]) out.add(match[1]);
-  }
-  return Array.from(out);
 }
