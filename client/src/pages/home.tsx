@@ -686,7 +686,7 @@ export default function Home() {
       {
         id: "default-feed",
         title: "Main Feed",
-        sortBy: hasToken ? "time_created" : "hot",
+        sortBy: "hot",
         postTypeFilter: "all",
         chamberSource: hasToken ? "joined" : "global",
         postScope: "all",

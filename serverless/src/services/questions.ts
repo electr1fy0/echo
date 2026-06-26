@@ -3,6 +3,7 @@ import { and, asc, desc, eq, or, sql, isNotNull, isNull } from "drizzle-orm";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
+import { algorithmScore } from "./algorithm";
 
 export const mapPostItem = (row: {
   uid: string;
@@ -363,7 +364,8 @@ export const getPostItems = async (
       desc(sql<number>`case when ${schema.posts.pinnedAt} is not null then 1 else 0 end`),
       desc(schema.posts.pinnedAt),
       ...(params.sort === "votes" ? [desc(schema.posts.upvotesCount)] : []),
-      desc(schema.posts.timeCreated),
+      ...(params.sort === "hot" ? [desc(algorithmScore(currentUser)), desc(schema.posts.timeCreated)] : []),
+      ...(params.sort !== "votes" && params.sort !== "hot" ? [desc(schema.posts.timeCreated)] : []),
     )
     .limit(params.limit)
     .offset(params.offset);

@@ -95,8 +95,6 @@ function PostCard({
   const truncatedContent = truncate(cleanContent, 250);
   const hasMore = cleanContent.length > 250;
 
-  const showAvatar = !question.isAnonymous && !isDeleted;
-
   return (
     <div
       style={{
@@ -109,47 +107,22 @@ function PostCard({
         padding: PAD,
       }}
     >
-      {/* Header: Avatar + Username + Chamber */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <div
+      {/* Header: Username + Chamber inline */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <span
           style={{
-            width: 48,
-            height: 48,
-            borderRadius: "50%",
-            background: showAvatar ? "#f0f0f0" : "#f5f5f5",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            fontSize: 20,
+            fontWeight: 600,
+            color: "#171717",
           }}
         >
-          <span
-            style={{
-              fontSize: 20,
-              fontWeight: 600,
-              color: showAvatar ? "#525252" : "#a3a3a3",
-              lineHeight: 1,
-            }}
-          >
-            {(displayName || "?").charAt(0).toUpperCase()}
+          {displayName}
+        </span>
+        {question.chamberName && (
+          <span style={{ fontSize: 16, color: "#a3a3a3" }}>
+            in {question.chamberName}
           </span>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <span
-            style={{
-              fontSize: 18,
-              fontWeight: 600,
-              color: "#171717",
-            }}
-          >
-            {displayName}
-          </span>
-          {question.chamberName && (
-            <span style={{ fontSize: 14, color: "#a3a3a3" }}>
-              in {question.chamberName}
-            </span>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Content */}
@@ -163,10 +136,10 @@ function PostCard({
       >
         <span
           style={{
-            fontSize: 22,
+            fontSize: 26,
             fontWeight: 500,
             color: "#171717",
-            lineHeight: 1.55,
+            lineHeight: 1.5,
           }}
         >
           {truncatedContent}
@@ -174,9 +147,9 @@ function PostCard({
         {hasMore && (
           <span
             style={{
-              fontSize: 14,
+              fontSize: 15,
               color: "#a3a3a3",
-              marginTop: 10,
+              marginTop: 12,
             }}
           >
             Continue reading…
@@ -188,10 +161,10 @@ function PostCard({
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
         <div
           style={{
-            width: 28,
-            height: 28,
+            width: 32,
+            height: 32,
             background: "#F54900",
-            borderRadius: 6,
+            borderRadius: 7,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -199,10 +172,10 @@ function PostCard({
             gap: 3,
           }}
         >
-          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
-          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
-          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1 }} />
-          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1 }} />
+          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
+          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
+          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1 }} />
+          <div style={{ width: 16, height: 3, background: "#fff", borderRadius: 1 }} />
         </div>
       </div>
     </div>
