@@ -181,7 +181,7 @@ export default function DMConversationPage() {
 
   return (
     <MessageScrollerProvider autoScroll>
-      <PageTransition className="max-w-[40rem] w-full md:mt-16 mt-6 px-4 pb-4 flex flex-col md:h-[calc(100vh-4rem)] h-[calc(100vh-6rem)]">
+      <PageTransition className="max-w-[40rem] w-full md:mt-16 mt-6 px-4 pb-4 flex flex-col md:h-[calc(100vh-4rem)] h-[calc(100dvh-7.5rem)]">
         <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
           <AlertDialogContent>
             <AlertDialogHeader>
