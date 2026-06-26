@@ -118,7 +118,10 @@ export default function QuestionDetailPage() {
   const { question, author } = questionItem;
   const isPinned = !!question.isPinned;
   const isSolved = !!question.acceptedAnswerUid;
-  const canAccept = user?.username === question.authorUsername && !question.isAnonymous && question.acceptsAnswers !== false;
+  const canAccept =
+    user?.username === question.authorUsername &&
+    !question.isAnonymous &&
+    question.acceptsAnswers !== false;
 
   const handlePartnerApply = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,8 +174,13 @@ export default function QuestionDetailPage() {
             {question.isAnonymous || author?.username === "[deleted]" ? (
               <UserAvatar
                 src={undefined}
-                name={author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
-                className={cn("size-9", author?.username === "[deleted]" && "opacity-40")}
+                name={
+                  author?.username === "[deleted]" ? "[deleted]" : "Anonymous"
+                }
+                className={cn(
+                  "size-9",
+                  author?.username === "[deleted]" && "opacity-40",
+                )}
               />
             ) : (
               <Link to={`/u/${question.authorUsername}`}>
@@ -185,8 +193,21 @@ export default function QuestionDetailPage() {
             )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={cn("text-sm", question.isAnonymous ? "text-neutral-800 dark:text-neutral-200" : author?.username === "[deleted]" ? "text-neutral-400 dark:text-neutral-500 italic" : "text-neutral-800 dark:text-neutral-200")}>
-                  {question.isAnonymous ? "Anonymous" : author?.username === "[deleted]" ? "[deleted]" : question.authorUsername}
+                <span
+                  className={cn(
+                    "text-sm",
+                    question.isAnonymous
+                      ? "text-neutral-800 dark:text-neutral-200"
+                      : author?.username === "[deleted]"
+                        ? "text-neutral-400 dark:text-neutral-500 italic"
+                        : "text-neutral-800 dark:text-neutral-200",
+                  )}
+                >
+                  {question.isAnonymous
+                    ? "Anonymous"
+                    : author?.username === "[deleted]"
+                      ? "[deleted]"
+                      : question.authorUsername}
                 </span>
                 {isPinned && (
                   <span className="text-[9px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1.5 py-0.5 rounded">
@@ -637,7 +658,6 @@ export default function QuestionDetailPage() {
         )}
       </div>
 
-      {/* PARTNER APPLICATIONS MANAGEMENT (Visible to Author only) */}
       {question.postType === "partner" &&
         user?.username === question.authorUsername && (
           <div className="space-y-3 mb-6">

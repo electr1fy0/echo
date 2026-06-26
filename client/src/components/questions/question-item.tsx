@@ -550,6 +550,7 @@ export function QuestionItem({
                 questionId={questionId}
                 authorUsername={question.authorUsername}
                 isAnonymousPost={isAnonymous}
+                canAccept={user?.username === question.authorUsername && !isAnonymous && question.acceptsAnswers !== false}
                 onDelete={(replyId) => deleteReply({ questionId, replyId })}
               />
             </div>

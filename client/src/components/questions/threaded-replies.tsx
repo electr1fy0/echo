@@ -69,11 +69,16 @@ function TreeNodeComponent({
 }) {
   const [isReplying, setIsReplying] = useState(false);
   const showIndent = depth > 0 && depth <= INDENT_CAP;
-  const lineColor = depth > 0 ? depthColors[(depth - 1) % depthColors.length] : "";
+  const lineColor =
+    depth > 0 ? depthColors[(depth - 1) % depthColors.length] : "";
 
   return (
     <div>
-      <div style={{ marginLeft: showIndent ? `${INDENT_PER_LEVEL}rem` : undefined }}>
+      <div
+        style={{
+          marginLeft: showIndent ? `${INDENT_PER_LEVEL}rem` : undefined,
+        }}
+      >
         <div
           className={depth > 0 ? `border-l ${lineColor}` : ""}
           style={{ paddingLeft: depth > 0 ? "0.5rem" : undefined }}
@@ -82,7 +87,12 @@ function TreeNodeComponent({
             answerItem={node.item}
             onDelete={() => onDelete(node.item.answer.uid)}
             canAccept={canAccept}
-            isOp={!isAnonymousPost && node.item.author?.username !== "[deleted]" && authorUsername !== "[deleted]" && node.item.author?.username === authorUsername}
+            isOp={
+              !isAnonymousPost &&
+              node.item.author?.username !== "[deleted]" &&
+              authorUsername !== "[deleted]" &&
+              node.item.author?.username === authorUsername
+            }
             onReply={() => setIsReplying(true)}
           />
         </div>
@@ -91,7 +101,11 @@ function TreeNodeComponent({
             <ReplyForm
               questionId={questionId}
               parentReplyUid={node.item.answer.uid}
-              replyingToUsername={node.item.answer.isAnonymous ? "Anonymous" : node.item.author?.username}
+              replyingToUsername={
+                node.item.answer.isAnonymous
+                  ? "Anonymous"
+                  : node.item.author?.username
+              }
               compact
               onSubmitSuccess={() => setIsReplying(false)}
               onCancel={() => setIsReplying(false)}
@@ -128,7 +142,6 @@ export function ThreadedReplies({
   onDelete,
 }: ThreadedRepliesProps) {
   const tree = useMemo(() => buildTree(replies), [replies]);
-
   return (
     <div className="space-y-0">
       {tree.map((node) => (

@@ -63,7 +63,6 @@ export function ReplyItem({
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const { mutate: report } = useReportContent();
-
   const reply = answerItem.answer;
   const isDeleted = reply.content === "[deleted]";
 
@@ -88,7 +87,11 @@ export function ReplyItem({
     return (
       <div className="flex items-start gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 group">
         <div className="shrink-0 pt-1">
-          <UserAvatar src={undefined} name="[deleted]" className="size-5 opacity-40" />
+          <UserAvatar
+            src={undefined}
+            name="[deleted]"
+            className="size-5 opacity-40"
+          />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs text-neutral-400 dark:text-neutral-500 italic">
@@ -136,8 +139,15 @@ export function ReplyItem({
           <div className="shrink-0 pt-1">
             <UserAvatar
               src={undefined}
-              name={answerItem.author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
-              className={cn("size-5", answerItem.author?.username === "[deleted]" && "opacity-40")}
+              name={
+                answerItem.author?.username === "[deleted]"
+                  ? "[deleted]"
+                  : "Anonymous"
+              }
+              className={cn(
+                "size-5",
+                answerItem.author?.username === "[deleted]" && "opacity-40",
+              )}
             />
           </div>
         ) : answerItem.author ? (
@@ -170,9 +180,17 @@ export function ReplyItem({
         <div className="flex-1 min-w-0">
           <p className="text-xs flex flex-col gap-1 text-neutral-500 dark:text-neutral-400 leading-none mt-1 mb-0 pb-0">
             <span className="flex items-center gap-2 w-full">
-              {reply.isAnonymous || answerItem.author?.username === "[deleted]" ? (
-                <span className={cn(answerItem.author?.username === "[deleted]" && "text-neutral-400 dark:text-neutral-500")}>
-                  {answerItem.author?.username === "[deleted]" ? "[deleted]" : "Anonymous"}
+              {reply.isAnonymous ||
+              answerItem.author?.username === "[deleted]" ? (
+                <span
+                  className={cn(
+                    answerItem.author?.username === "[deleted]" &&
+                      "text-neutral-400 dark:text-neutral-500",
+                  )}
+                >
+                  {answerItem.author?.username === "[deleted]"
+                    ? "[deleted]"
+                    : "Anonymous"}
                 </span>
               ) : (
                 <span>{reply.authorUsername || "Anonymous"}</span>
@@ -199,44 +217,61 @@ export function ReplyItem({
                       size="icon-xs"
                       aria-label="More options"
                     >
-                      <HugeiconsIcon icon={MoreHorizontalIcon} className="size-4" />
+                      <HugeiconsIcon
+                        icon={MoreHorizontalIcon}
+                        className="size-4"
+                      />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
                       onClick={() => {
                         navigator.clipboard.writeText(reply.content);
-                        toastManager.add({ title: "Copied to clipboard", type: "success" });
+                        toastManager.add({
+                          title: "Copied to clipboard",
+                          type: "success",
+                        });
                       }}
                     >
-                      <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
+                      <HugeiconsIcon
+                        icon={Copy01Icon}
+                        className="mr-2 size-4"
+                      />
                       Copy Text
                     </DropdownMenuItem>
-<DropdownMenuItem onClick={() => report({ targetType: "reply", targetUid: reply.uid })}>
-  <HugeiconsIcon icon={Alert01Icon} className="mr-2 size-4" />
-  Report
-</DropdownMenuItem>
-                    {user?.username === reply.authorUsername && !answerItem.author?.username?.includes("[deleted]") && (
-                      <>
-                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                          <HugeiconsIcon
-                            icon={PencilEdit02Icon}
-                            className="mr-2 size-4"
-                          />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setShowDeleteAlert(true)}
-                        >
-                          <HugeiconsIcon
-                            icon={Delete02Icon}
-                            className="mr-2 size-4"
-                          />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
+                    <DropdownMenuItem
+                      onClick={() =>
+                        report({ targetType: "reply", targetUid: reply.uid })
+                      }
+                    >
+                      <HugeiconsIcon
+                        icon={Alert01Icon}
+                        className="mr-2 size-4"
+                      />
+                      Report
+                    </DropdownMenuItem>
+                    {user?.username === reply.authorUsername &&
+                      !answerItem.author?.username?.includes("[deleted]") && (
+                        <>
+                          <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                            <HugeiconsIcon
+                              icon={PencilEdit02Icon}
+                              className="mr-2 size-4"
+                            />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setShowDeleteAlert(true)}
+                          >
+                            <HugeiconsIcon
+                              icon={Delete02Icon}
+                              className="mr-2 size-4"
+                            />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     {canAccept && (
                       <DropdownMenuItem
                         onClick={() =>
