@@ -207,6 +207,7 @@ export function CreatePostDialog() {
   const addFieldType = (type: SchemaField["type"]) => {
     if (!ALLOWED_FIELD_TYPES.includes(type as any)) return;
     if (activeFields.some((f) => f.type === type)) return;
+    if (!allowedSchemaTypes.has(type)) return;
 
     const defaultLabels: Record<string, string> = {
       text: "Text Field",
@@ -405,11 +406,11 @@ export function CreatePostDialog() {
 
   if (!hasToken || !user) return null;
 
-  // Compute restricted types from channel schema
-  const restrictedTypes = new Set(
-    selectedChannelData?.schema
-      ?.filter((f: any) => f.disabled === true)
-      ?.map((f: any) => f.type) || [],
+  // Only allow field types present in the channel schema (and not disabled)
+  const allowedSchemaTypes = new Set(
+    (selectedChannelData?.schema || [])
+      .filter((f: any) => f.disabled !== true && ALLOWED_FIELD_TYPES.includes(f.type))
+      .map((f: any) => f.type),
   );
 
   const renderFormContent = () => (
@@ -536,7 +537,7 @@ export function CreatePostDialog() {
               <div className="flex items-center gap-1.5 flex-wrap">
                 {FIELD_TYPES.map((ft) => {
                   const Icon = ft.icon;
-                  const disabled = !selectedChamber || restrictedTypes.has(ft.value) || activeFields.some((f) => f.type === ft.value);
+                  const disabled = !selectedChamber || !allowedSchemaTypes.has(ft.value) || activeFields.some((f) => f.type === ft.value);
 
                   return (
                     <button

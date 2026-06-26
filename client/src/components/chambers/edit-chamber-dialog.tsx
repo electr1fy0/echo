@@ -6,10 +6,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerPopup,
-} from "@/components/ui/drawer";
+import { Drawer, DrawerPopup } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -86,25 +83,32 @@ export function EditChamberDialog({
 
   const content = (
     <div
-      className={cn("relative overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]", isMobile && "pt-1")}
+      className={cn(
+        "relative overflow-hidden transition-[max-height] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        isMobile && "pt-1",
+      )}
       style={{ maxHeight: editPage === "icon" ? "80vh" : "420px" }}
     >
       <div
         className="flex transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] w-[200%]"
         style={{
-          transform:
-            editPage === "icon"
-              ? "translateX(-50%)"
-              : "translateX(0)",
+          transform: editPage === "icon" ? "translateX(-50%)" : "translateX(0)",
         }}
       >
         {/* ───── Page 1: Main ───── */}
         <div className="w-1/2">
-          <DialogHeader className={cn(isMobile ? "px-5 pt-6 pb-0" : "px-6 pt-6 pb-0")}>
+          <DialogHeader
+            className={cn(isMobile ? "px-5 pt-4 pb-0" : "px-6 pt-6 pb-0")}
+          >
             <DialogTitle>Edit Chamber</DialogTitle>
           </DialogHeader>
-          <form className={cn(isMobile ? "space-y-3 py-3 px-5" : "space-y-3 py-3 px-6")} onSubmit={handleSubmit}>
-            <div className="space-y-1.5">
+          <form
+            className={cn(
+              isMobile ? "space-y-2 py-2 px-5" : "space-y-4 py-0 px-0",
+            )}
+            onSubmit={handleSubmit}
+          >
+            <div className="space-y-1.5 pt-3 px-6">
               <label className="text-sm text-neutral-700 dark:text-neutral-300">
                 Name
               </label>
@@ -115,7 +119,7 @@ export function EditChamberDialog({
                 className="rounded-xl h-9 text-sm"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5  px-6">
               <label className="text-sm text-neutral-700 dark:text-neutral-300">
                 Description
               </label>
@@ -126,7 +130,7 @@ export function EditChamberDialog({
                 className="resize-none min-h-20 rounded-xl text-sm"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 px-6">
               <label className="text-sm text-neutral-700 dark:text-neutral-300">
                 Avatar
               </label>
@@ -159,15 +163,22 @@ export function EditChamberDialog({
                 />
               </button>
             </div>
-          </form>
             {isMobile ? (
-              <div className="flex justify-end gap-2 px-5 pt-4 border-t border-neutral-200 dark:border-neutral-800">
-                <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
+              <div className="flex justify-end  gap-2 px-5 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-xl cursor-pointer h-9 text-xs "
+                >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
+                  disabled={
+                    !draft.name?.trim() ||
+                    !draft.description?.trim() ||
+                    isPending
+                  }
                   className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
                 >
                   Save
@@ -175,23 +186,37 @@ export function EditChamberDialog({
               </div>
             ) : (
               <DialogFooter className="!px-6">
-                <Button variant="outline" onClick={() => onOpenChange(false)} className="rounded-xl cursor-pointer h-9 text-xs">
+                <Button
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                  className="rounded-xl cursor-pointer h-9 text-xs"
+                >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!draft.name?.trim() || !draft.description?.trim() || isPending}
+                  disabled={
+                    !draft.name?.trim() ||
+                    !draft.description?.trim() ||
+                    isPending
+                  }
                   className="bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white rounded-xl cursor-pointer h-9 text-xs border-none"
                 >
                   Save
                 </Button>
               </DialogFooter>
             )}
+          </form>
         </div>
 
         {/* ───── Page 2: Icon & Theme ───── */}
         <div className="w-1/2 flex flex-col max-h-[80vh]">
-          <div className={cn("flex items-center gap-3", isMobile ? "px-5 pt-4 pb-3" : "px-6 pt-6 pb-3")}>
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              isMobile ? "px-5 pt-4 pb-3" : "px-6 pt-6 pb-3",
+            )}
+          >
             <button
               type="button"
               onClick={() => setEditPage("main")}
@@ -205,12 +230,20 @@ export function EditChamberDialog({
             <DialogTitle>Icon & Theme</DialogTitle>
           </div>
 
-          <div className={cn("flex-1 overflow-y-auto scrollbar-modern space-y-5", isMobile ? "px-5" : "px-6")}>
+          <div
+            className={cn(
+              "flex-1 overflow-y-auto scrollbar-modern space-y-5",
+              isMobile ? "px-5" : "px-6",
+            )}
+          >
             <ChamberIconPicker
               value={draft.icon}
               colorIndex={draft.colorIndex ?? 0}
               onChange={(seed) => {
-                updateDraft({ icon: seed, picture: seed ? null : draft.picture });
+                updateDraft({
+                  icon: seed,
+                  picture: seed ? null : draft.picture,
+                });
               }}
             />
 
@@ -238,7 +271,12 @@ export function EditChamberDialog({
             </div>
           </div>
 
-          <div className={cn("py-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end", isMobile ? "px-5" : "px-6")}>
+          <div
+            className={cn(
+              "py-4 border-t border-neutral-200 dark:border-neutral-800 flex justify-end",
+              isMobile ? "px-5" : "px-6",
+            )}
+          >
             <Button
               type="button"
               className="min-w-[100px]"
@@ -265,7 +303,9 @@ export function EditChamberDialog({
           onOpenChange={() => setCropImageSrc(null)}
           imageSrc={cropImageSrc || ""}
           onCropComplete={async (blob) => {
-            const file = new File([blob], "chamber.jpg", { type: "image/jpeg" });
+            const file = new File([blob], "chamber.jpg", {
+              type: "image/jpeg",
+            });
             const url = await uploadImage(file);
             if (url) updateDraft({ picture: url });
             setCropImageSrc(null);
@@ -278,7 +318,10 @@ export function EditChamberDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[500px] overflow-hidden p-0" showCloseButton={editPage === "main"}>
+        <DialogContent
+          className="sm:max-w-[500px] overflow-hidden p-0"
+          showCloseButton={editPage === "main"}
+        >
           {content}
         </DialogContent>
       </Dialog>

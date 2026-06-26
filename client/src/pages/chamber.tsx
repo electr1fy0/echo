@@ -810,43 +810,42 @@ export default function ChamberPage() {
           <DialogHeader>
             <DialogTitle>Create a Channel</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreateChannelSubmit}>
-            <DialogPanel className="space-y-5">
-              {/* General Properties */}
-              <div className="space-y-3 pt-2 border-t border-neutral-100 dark:border-neutral-900">
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
-                    Channel Name
-                  </label>
-                  <Input
-                    placeholder="e.g. textbook-swap"
-                    value={newChannelName}
-                    onChange={(e) => setNewChannelName(e.target.value)}
-                  />
-                </div>
+          <DialogPanel className="space-y-5 px-6">
+            {/* General Properties */}
+            <div className="space-y-3 pt-2 border-t border-neutral-100 dark:border-neutral-900">
+              <div>
+                <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
+                  Channel Name
+                </label>
+                <Input
+                  placeholder="e.g. textbook-swap"
+                  value={newChannelName}
+                  onChange={(e) => setNewChannelName(e.target.value)}
+                />
               </div>
+            </div>
 
-              <SchemaEditor
-                fields={newChannelSchema}
-                onChange={setNewChannelSchema}
-              />
-            </DialogPanel>
+            <SchemaEditor
+              fields={newChannelSchema}
+              onChange={setNewChannelSchema}
+            />
+          </DialogPanel>
 
-            <DialogFooter>
-              <DialogClose
-                render={<Button variant="outline" type="button" />}
-              >
-                Cancel
-              </DialogClose>
-              <Button
-                variant="default"
-                type="submit"
-                disabled={isCreateChanPending || !newChannelName.trim()}
-              >
-                {isCreateChanPending ? "Creating..." : "Create Channel"}
-              </Button>
-            </DialogFooter>
-          </form>
+          <DialogFooter variant="bare">
+            <DialogClose
+              render={<Button variant="outline" type="button" />}
+            >
+              Cancel
+            </DialogClose>
+            <Button
+              variant="default"
+              type="submit"
+              onClick={handleCreateChannelSubmit}
+              disabled={isCreateChanPending || !newChannelName.trim()}
+            >
+              {isCreateChanPending ? "Creating..." : "Create Channel"}
+            </Button>
+          </DialogFooter>
         </DialogPopup>
       </Dialog>
 
@@ -856,62 +855,61 @@ export default function ChamberPage() {
           <DialogHeader>
             <DialogTitle>Edit Channel: #{editingChannel?.name}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleEditChannelSubmit} className="flex flex-col min-h-0">
-            <DialogPanel className="space-y-5">
-              {/* General Properties */}
-              <div className="space-y-3">
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
-                    Channel Name
-                  </label>
-                  <Input
-                    placeholder="e.g. textbook-swap"
-                    value={editChannelName}
-                    onChange={(e) => setEditChannelName(e.target.value)}
-                  />
-                </div>
+          <DialogPanel className="space-y-5 px-6">
+            {/* General Properties */}
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] text-neutral-400 uppercase tracking-wide">
+                  Channel Name
+                </label>
+                <Input
+                  placeholder="e.g. textbook-swap"
+                  value={editChannelName}
+                  onChange={(e) => setEditChannelName(e.target.value)}
+                />
               </div>
+            </div>
 
-              <SchemaEditor
-                fields={editChannelSchema}
-                onChange={setEditChannelSchema}
-              />
-            </DialogPanel>
+            <SchemaEditor
+              fields={editChannelSchema}
+              onChange={setEditChannelSchema}
+            />
+          </DialogPanel>
 
-            <DialogFooter className="sm:justify-between">
-              {editingChannel?.name !== "discussion" &&
-              editingChannel?.name !== "discussions" ? (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleDeleteChannel}
-                  disabled={deleteChannelMutation.isPending}
-                >
-                  {deleteChannelMutation.isPending
-                    ? "Deleting..."
-                    : "Delete Channel"}
-                </Button>
-              ) : null}
-              <div className="flex gap-2">
-                <DialogClose
-                  render={<Button variant="outline" type="button" />}
-                >
-                  Cancel
-                </DialogClose>
-                <Button
-                  variant="default"
-                  type="submit"
-                  disabled={
-                    updateChannelMutation.isPending || !editChannelName.trim()
-                  }
-                >
-                  {updateChannelMutation.isPending
-                    ? "Saving..."
-                    : "Save Changes"}
-                </Button>
-              </div>
-            </DialogFooter>
-          </form>
+          <DialogFooter className="sm:justify-between" variant="bare">
+            {editingChannel?.name !== "discussion" &&
+            editingChannel?.name !== "discussions" ? (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteChannel}
+                disabled={deleteChannelMutation.isPending}
+              >
+                {deleteChannelMutation.isPending
+                  ? "Deleting..."
+                  : "Delete Channel"}
+              </Button>
+            ) : null}
+            <div className="flex gap-2">
+              <DialogClose
+                render={<Button variant="outline" type="button" />}
+              >
+                Cancel
+              </DialogClose>
+              <Button
+                variant="default"
+                type="submit"
+                onClick={handleEditChannelSubmit}
+                disabled={
+                  updateChannelMutation.isPending || !editChannelName.trim()
+                }
+              >
+                {updateChannelMutation.isPending
+                  ? "Saving..."
+                  : "Save Changes"}
+              </Button>
+            </div>
+          </DialogFooter>
         </DialogPopup>
       </Dialog>
     </PageTransition>
