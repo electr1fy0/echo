@@ -534,7 +534,7 @@ export const listChambers = (db: DB, currentUser: string | undefined | null, que
           and cm.username = ${currentUser || ""}
       )`,
     })
-    .from(schema.chambers
+    .from(schema.chambers)
     .where(
       query
         ? sql`${schema.chambers.searchVector} @@ plainto_tsquery('english', ${query})`

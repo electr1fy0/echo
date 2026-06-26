@@ -154,10 +154,10 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
   const [posts, replies] = await Promise.all([
     postRefUids.size
       ? db
-          .select({ uid: schema.posts.uid, content: schema.posts.content })
+          .select({ uid: schema.posts.uid, slug: schema.posts.slug, content: schema.posts.content })
           .from(schema.posts)
           .where(inArray(schema.posts.uid, [...postRefUids]))
-      : Promise.resolve([] as { uid: string; content: string | null }[]),
+      : Promise.resolve([] as { uid: string; slug: string; content: string | null }[]),
     replyRefUids.size
       ? db
           .select({ uid: schema.replies.uid, content: schema.replies.content, postUid: schema.replies.postUid })
@@ -167,31 +167,36 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
   ]);
 
   const postMap = new Map(posts.map((p) => [p.uid, p.content ?? ""]));
+  const postSlugMap = new Map(posts.map((p) => [p.uid, p.slug]));
   const replyMap = new Map(replies.map((r) => [r.uid, r]));
   const replyPostUids = new Set(replies.filter((r) => r.postUid).map((r) => r.postUid!));
 
   // Batch fetch parent post content for replies
   const parentPosts = replyPostUids.size
     ? await db
-        .select({ uid: schema.posts.uid, content: schema.posts.content })
+        .select({ uid: schema.posts.uid, slug: schema.posts.slug, content: schema.posts.content })
         .from(schema.posts)
         .where(inArray(schema.posts.uid, [...replyPostUids]))
     : [];
   const parentPostMap = new Map(parentPosts.map((p) => [p.uid, p.content ?? ""]));
+  const parentPostSlugMap = new Map(parentPosts.map((p) => [p.uid, p.slug]));
 
   return rows.map((row) => {
     let content = "";
     let questionContent = "";
     let postUid: string | null = null;
+    let postSlug: string | null = null;
 
     if (row.type === "upvote_post" || row.type === "mention_post" || row.type === "express_interest" || row.type === "milestone") {
       postUid = row.referenceUid;
+      postSlug = postSlugMap.get(row.referenceUid) ?? null;
       content = postMap.get(row.referenceUid) ?? "";
     } else {
       const reply = replyMap.get(row.referenceUid);
       content = reply?.content ?? "";
       if (reply?.postUid) {
         postUid = reply.postUid;
+        postSlug = parentPostSlugMap.get(reply.postUid) ?? null;
         questionContent = parentPostMap.get(reply.postUid) ?? "";
       }
     }
@@ -207,6 +212,7 @@ export const listNotifications = async (db: DB, currentUser: string, limit: numb
       type: row.type,
       reference_uid: row.referenceUid,
       post_uid: postUid ?? "",
+      post_slug: postSlug ?? "",
       content,
       question_content: questionContent,
       is_read: row.isRead ?? false,

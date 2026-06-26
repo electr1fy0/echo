@@ -333,10 +333,10 @@ export function AppSidebar() {
                       <Link
                         to={`/chambers/${chamberPath}`}
                         className={cn(
-                          "shrink-0 transition-all duration-300 hover:rounded-lg select-none cursor-pointer",
+                          "shrink-0 transition-all duration-300 select-none cursor-pointer",
                           active
                             ? "ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-background scale-105 rounded-lg"
-                            : "opacity-85 hover:opacity-100 rounded-xl",
+                            : "opacity-85 hover:opacity-100 rounded-lg",
                         )}
                       >
                         <ChamberAvatar

@@ -10,6 +10,7 @@ export interface Notification {
     type: string;
     reference_uid: string;
     post_uid: string;
+    post_slug?: string;
     content: string;
     question_content?: string;
     is_read: boolean;

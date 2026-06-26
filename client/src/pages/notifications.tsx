@@ -26,6 +26,7 @@ interface GroupedNotification {
   key: string;
   type: string;
   post_uid: string;
+  post_slug?: string;
   reference_uid: string;
   content: string;
   question_content: string;
@@ -119,7 +120,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
   const threadLink = isMilestone
     ? "/analytics"
     : notification.post_uid
-      ? `/p/${notification.post_uid}`
+      ? `/p/${notification.post_slug || notification.post_uid}`
       : null;
 
   const handleClick = () => {
@@ -299,7 +300,7 @@ function GroupedNotificationItem({ group }: { group: GroupedNotification }) {
   const isUpvoteReply = group.type === "upvote_reply";
   const isInterest = group.type === "express_interest";
 
-  const threadLink = group.post_uid ? `/p/${group.post_uid}` : null;
+  const threadLink = group.post_uid ? `/p/${group.post_slug || group.post_uid}` : null;
   const first = group.actors[0];
   const restCount = group.actors.length - 1;
 
@@ -400,6 +401,7 @@ function partitionNotifications(list: Notification[]) {
       key: `${first.uid}::group`,
       type: first.type,
       post_uid: first.post_uid,
+      post_slug: first.post_slug,
       reference_uid: first.reference_uid,
       content: first.content,
       question_content: first.question_content ?? "",

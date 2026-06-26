@@ -28,9 +28,9 @@ export function ChamberAvatar({
   className?: string;
 }) {
   const sizeClasses = {
-    sm: "size-8 rounded-lg text-base",
-    md: "size-10 rounded-xl text-lg",
-    lg: "size-16 rounded-2xl text-3xl",
+    sm: "size-8 rounded-lg text-sm",
+    md: "size-10 rounded-xl text-base",
+    lg: "size-16 rounded-2xl text-2xl",
   };
 
   const idx = (colorIndex ?? 0) % CHAMBER_COLORS.length;

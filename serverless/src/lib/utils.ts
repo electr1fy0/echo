@@ -81,7 +81,7 @@ export const slugify = (text: string): string => {
     .replace(/[\s_]+/g, "-")  // spaces/underscores to hyphens
     .replace(/-+/g, "-")      // collapse hyphens
     .replace(/^-+|-+$/g, "")  // trim hyphens
-    .slice(0, 80)             // limit length
+    .slice(0, 40)             // limit length
     .replace(/-+$/, "")       // trim trailing hyphens again after slicing
     || "untitled";
 };
