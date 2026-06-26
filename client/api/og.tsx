@@ -10,7 +10,7 @@ async function loadFonts(): Promise<
   { name: string; data: ArrayBuffer; weight: number; style: "normal" }[]
 > {
   const css = await fetch(
-    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap",
   ).then((r) => r.text());
 
   const urls = [...css.matchAll(/url\(([^)]+)\)/g)].map((m) => m[1]);
@@ -96,11 +96,6 @@ function PostCard({
   const hasMore = cleanContent.length > 250;
 
   const showAvatar = !question.isAnonymous && !isDeleted;
-  const avatarSrc = showAvatar
-    ? author?.avatar && !author.avatar.startsWith("https://github.com/")
-      ? author.avatar
-      : `https://api.dicebear.com/10.x/dylan/svg?seed=${encodeURIComponent(displayName)}`
-    : null;
 
   return (
     <div
@@ -116,41 +111,29 @@ function PostCard({
     >
       {/* Header: Avatar + Username + Chamber */}
       <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        {avatarSrc ? (
-          <img
-            src={avatarSrc}
-            alt={displayName}
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            background: showAvatar ? "#f0f0f0" : "#f5f5f5",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <span
             style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-            }}
-          />
-        ) : (
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              background: "#f0f0f0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
+              fontSize: 20,
+              fontWeight: 600,
+              color: showAvatar ? "#525252" : "#a3a3a3",
+              lineHeight: 1,
             }}
           >
-            <span
-              style={{
-                fontSize: 20,
-                fontWeight: 600,
-                color: "#a3a3a3",
-                lineHeight: 1,
-              }}
-            >
-              {(displayName || "?").charAt(0).toUpperCase()}
-            </span>
-          </div>
-        )}
+            {(displayName || "?").charAt(0).toUpperCase()}
+          </span>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <span
             style={{
@@ -203,14 +186,24 @@ function PostCard({
 
       {/* Logo at bottom right */}
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <img
-          src="https://turnsout.xyz/turnsout.svg"
-          alt=""
+        <div
           style={{
             width: 28,
             height: 28,
+            background: "#F54900",
+            borderRadius: 6,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 3,
           }}
-        />
+        >
+          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
+          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1, opacity: 0.3 }} />
+          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1 }} />
+          <div style={{ width: 14, height: 2.5, background: "#fff", borderRadius: 1 }} />
+        </div>
       </div>
     </div>
   );
