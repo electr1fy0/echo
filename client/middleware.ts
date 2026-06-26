@@ -1,5 +1,5 @@
 export const config = {
-  matcher: "/q/:path*",
+  matcher: "/p/:path*",
 };
 
 const CRAWLERS = [
@@ -94,11 +94,11 @@ export default async function middleware(
   if (!isCrawler(userAgent)) return;
 
   const url = new URL(request.url);
-  const questionId = url.pathname.replace(/^\/q\//, "");
+  const questionId = url.pathname.replace(/^\/p\//, "");
   if (!questionId) return;
 
   const ogImage = `${url.protocol}//${url.host}/api/og?questionId=${encodeURIComponent(questionId)}`;
-  const pageUrl = `${url.protocol}//${url.host}/q/${questionId}`;
+  const pageUrl = `${url.protocol}//${url.host}/p/${questionId}`;
   const apiUrl =
     (typeof process !== "undefined" && process.env?.VITE_ECHO_URL) ||
     "http://localhost:8787";
