@@ -98,11 +98,9 @@ async function ensureDeps(url: URL) {
   if (!resvgInitPromise) {
     resvgInitPromise = (async () => {
       const wasmUrl = `${url.protocol}//${url.host}/resvg.wasm`;
-      const wasmBytes = await fetchWithTimeout(wasmUrl, 15000).then((r) => {
-        if (!r.ok) throw new Error(`WASM fetch failed: ${r.status}`);
-        return r.arrayBuffer();
-      });
-      await resvgMod.initWasm(wasmBytes);
+      const res = await fetchWithTimeout(wasmUrl, 15000);
+      if (!res.ok) throw new Error(`WASM fetch failed: ${res.status}`);
+      await resvgMod.initWasm(res);
     })();
   }
 
