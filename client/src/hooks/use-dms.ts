@@ -9,15 +9,15 @@ import {
   markConversationRead,
   getUnreadMessageCount,
 } from "@/api/dms";
-import { useToken } from "@/hooks/use-auth";
+import { useAuth, useToken } from "@/hooks/use-auth";
 import type { Conversation, Message } from "@/types";
 
 export function useConversations() {
   return useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: 10_000,
-    staleTime: 5_000,
+    refetchInterval: 6_000,
+    staleTime: 3_000,
   });
 }
 
@@ -36,8 +36,8 @@ export function useMessages(conversationUid: string | undefined) {
     queryKey: ["messages", conversationUid],
     queryFn: () => fetchMessages(conversationUid!),
     enabled: !!conversationUid,
-    refetchInterval: 8_000,
-    staleTime: 5_000,
+    refetchInterval: 3_000,
+    staleTime: 1_500,
   });
 }
 
@@ -122,12 +122,34 @@ export function useUnreadMessageCount() {
 
 export function useSendMessage(conversationUid: string | undefined) {
   const queryClient = useQueryClient();
+  const { data: user } = useAuth();
   return useMutation({
     mutationFn: (content: string) => sendMessage(conversationUid!, content),
-    onSuccess: (newMsg) => {
+    onMutate: async (content) => {
+      await queryClient.cancelQueries({ queryKey: ["messages", conversationUid] });
+
+      const previousMessages = queryClient.getQueryData<Message[]>(["messages", conversationUid]);
+
+      const optimisticMessage: Message = {
+        uid: `optimistic-${crypto.randomUUID()}`,
+        conversationUid: conversationUid!,
+        sender: user?.username ?? "",
+        content,
+        timeCreated: new Date().toISOString(),
+      };
+
       queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
-        old ? [...old, newMsg] : [newMsg],
+        old ? [...old, optimisticMessage] : [optimisticMessage],
       );
+
+      return { previousMessages };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["messages", conversationUid], context.previousMessages);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["messages", conversationUid] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
