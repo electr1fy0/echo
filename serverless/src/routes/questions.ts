@@ -155,6 +155,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
       )`,
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
+      chamberSlug: sql<string>`coalesce(${schema.chambers.slug}, '')`,
       channelUid: schema.posts.channelUid,
       channelSchema: schema.channels.schema,
       customFields: schema.posts.customFields,

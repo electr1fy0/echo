@@ -292,7 +292,7 @@ export function QuestionItem({
                 )}
                 {showChamberName && question.chamberName && (
                   <Link
-                    to={`/chambers/${question.slug || question.chamberUid}`}
+                    to={`/chambers/${question.chamberSlug || question.chamberUid}`}
                     className="text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
                   >
                     in {question.chamberName}

@@ -25,6 +25,7 @@ export const mapPostItem = (row: {
   isSaved: boolean;
   chamberUid: string;
   chamberName: string;
+  chamberSlug: string;
   channelUid: string | null;
   channelSchema: any[] | null;
   customFields: Record<string, any> | null;
@@ -73,6 +74,7 @@ export const mapPostItem = (row: {
       isSaved: row.isSaved,
       chamberUid: row.chamberUid,
       chamberName: row.chamberName,
+      chamberSlug: row.chamberSlug,
       channelUid: row.channelUid,
       channelSchema: row.channelSchema ?? [],
       customFields: row.customFields ?? {},
@@ -383,6 +385,7 @@ export const getPostItems = async (
       )`,
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
+      chamberSlug: sql<string>`coalesce(${schema.chambers.slug}, '')`,
       channelUid: schema.posts.channelUid,
       channelSchema: schema.channels.schema,
       customFields: schema.posts.customFields,

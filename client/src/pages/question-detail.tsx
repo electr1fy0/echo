@@ -331,7 +331,7 @@ export default function QuestionDetailPage() {
                 )}
                 {question.chamberName && (
                   <Link
-                    to={`/chambers/${question.slug || question.chamberUid}`}
+                    to={`/chambers/${question.chamberSlug || question.chamberUid}`}
                     className="text-xs bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 px-2 py-0.5 rounded-full text-neutral-500 transition-colors"
                   >
                     in {question.chamberName}

@@ -13,6 +13,7 @@ export interface Question {
   isSaved?: boolean;
   chamberUid?: string;
   chamberName?: string;
+  chamberSlug?: string;
   channelUid?: string;
   channelSchema?: SchemaField[];
   customFields?: Record<string, any>;
