@@ -8,7 +8,7 @@ import {
   Message01Icon,
   UserIcon,
   Edit01Icon,
-
+  Bookmark01Icon,
 } from "@hugeicons/core-free-icons";
 import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -156,6 +156,12 @@ export function AppSidebar() {
       label: "Notifications",
       shortcut: "4",
     },
+    {
+      icon: Bookmark01Icon,
+      path: "/bookmarks",
+      label: "Saved",
+      shortcut: "5",
+    },
   ];
 
   const navigateTo = (path: string) => {
@@ -186,6 +192,10 @@ export function AppSidebar() {
       if (!user) { openAuthModal("signin"); return; }
       navigate("/notifications");
     },
+    5: () => {
+      if (!user) { openAuthModal("signin"); return; }
+      navigate("/bookmarks");
+    },
     p: () => {
       if (!user) { openAuthModal("signin"); return; }
       navigate("/profile");
@@ -215,7 +225,7 @@ export function AppSidebar() {
         )}
         <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 dark:border-neutral-800 bg-background pt-3 pb-[max(2rem,env(safe-area-inset-bottom,0px))] px-2">
           <div data-tour="nav-shortcuts" className="flex items-center justify-around">
-              {navItems.map((item) => (
+              {navItems.filter((i) => i.path !== "/bookmarks").map((item) => (
                 <div
                   key={item.label}
                   data-tour={

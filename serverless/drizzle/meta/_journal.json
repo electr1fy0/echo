@@ -162,6 +162,13 @@
       "when": 1782493756131,
       "tag": "0022_dry_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782540738807,
+      "tag": "0023_add_bookmarks",
+      "breakpoints": true
     }
   ]
 }

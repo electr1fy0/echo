@@ -59,16 +59,20 @@
       },
     },
   ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
-  // "ai": {
-  //   "binding": "AI"
-  // },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "USER_ROOM",
+        "class_name": "UserRoom"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["UserRoom"]
+    }
+  ],
   // "observability": {
   //   "enabled": true,
   //   "head_sampling_rate": 1

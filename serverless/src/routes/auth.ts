@@ -21,6 +21,7 @@ import {
 import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, sendOtpSchema, verifyOtpSchema, googleOnboardingSchema, usernameSchema } from "../lib/validation";
 import { z } from "zod";
 import type { AppEnv } from "../types/app";
+import { Events, eventBus } from "../lib/events";
 
 export const authRoutes = new Hono<AppEnv>();
 
@@ -202,7 +203,15 @@ authRoutes.post("/verify-email", async (c) => {
     throw new ApiError(400, "invalid or expired token");
   }
 
-  const authToken = await issueAuthToken(c.env.SECRET_KEY, result[0].username);
+  const username = result[0].username;
+  const authToken = await issueAuthToken(c.env.SECRET_KEY, username);
+
+  eventBus.emit(Events.UserRegistered, { username }, {
+    db: c.get("db"),
+    env: c.env,
+    waitUntil: (p) => c.executionCtx.waitUntil(p),
+  });
+
   return c.json({ token: authToken, message: "Email verified successfully" });
 });
 
@@ -349,6 +358,13 @@ authRoutes.post("/google/onboarding", async (c) => {
   }
 
   await c.get("db").insert(schema.users).values({ username, email, isVerified: true });
+
+  eventBus.emit(Events.UserRegistered, { username }, {
+    db: c.get("db"),
+    env: c.env,
+    waitUntil: (p) => c.executionCtx.waitUntil(p),
+  });
+
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, username) });
 });
 
@@ -380,6 +396,13 @@ authRoutes.post("/onboarding", async (c) => {
   }
 
   await c.get("db").insert(schema.users).values({ username, email, isVerified: true });
+
+  eventBus.emit(Events.UserRegistered, { username }, {
+    db: c.get("db"),
+    env: c.env,
+    waitUntil: (p) => c.executionCtx.waitUntil(p),
+  });
+
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, username) });
 });
 

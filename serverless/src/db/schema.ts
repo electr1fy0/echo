@@ -320,6 +320,18 @@ export const userSessions = pgTable("user_sessions", {
   duration: integer("duration"),
 });
 
+export const bookmarks = pgTable("bookmarks", {
+  username: text("username")
+    .notNull()
+    .references(() => users.username, { onUpdate: "cascade", onDelete: "cascade" }),
+  postUid: uuid("post_uid")
+    .notNull()
+    .references(() => posts.uid, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.username, table.postUid], name: "bookmarks_pkey" }),
+]);
+
 export const reports = pgTable("reports", {
   uid: uuid("uid").defaultRandom().primaryKey(),
   reporterUsername: text("reporter_username")

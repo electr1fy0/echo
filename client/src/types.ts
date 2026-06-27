@@ -10,6 +10,7 @@ export interface Question {
   isAnonymous?: boolean;
   upvotes: number;
   isUpvoted: boolean;
+  isSaved?: boolean;
   chamberUid?: string;
   chamberName?: string;
   channelUid?: string;

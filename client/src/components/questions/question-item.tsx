@@ -24,6 +24,10 @@ import {
   useUnpinQuestion,
   useExpressInterestViaDM,
 } from "@/hooks/use-questions";
+import {
+  useBookmarkPost,
+  useUnbookmarkPost,
+} from "@/hooks/use-bookmarks";
 import { useReportContent } from "@/hooks/use-reports";
 import type { QuestionItem } from "@/types";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -39,6 +43,7 @@ import {
   Share01Icon,
   Analytics02Icon,
 } from "@hugeicons/core-free-icons";
+import { BookmarkIcon } from "lucide-react";
 import { UpvoteButton } from "../upvote-button";
 import { ThreadedReplies } from "./threaded-replies";
 import { ReplyForm } from "./reply-form";
@@ -197,9 +202,16 @@ export function QuestionItem({
   const { mutate: sendInterestDM, isPending: isDMPending } =
     useExpressInterestViaDM();
   const { mutate: report } = useReportContent();
+  const { mutate: bookmarkPost } = useBookmarkPost();
+  const { mutate: unbookmarkPost } = useUnbookmarkPost();
 
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [isSaved, setIsSaved] = useState(!!question.isSaved);
+
+  useEffect(() => {
+    setIsSaved(!!question.isSaved);
+  }, [question.isSaved]);
 
   if (!question || !questionId) return null;
   const isPinned = !!question.isPinned;
@@ -445,6 +457,23 @@ export function QuestionItem({
                         className="mr-2 size-4"
                       />
                       Share
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (!user) { openAuthModal("signin"); return; }
+                        const newSaved = !isSaved;
+                        setIsSaved(newSaved);
+                        if (newSaved) {
+                          bookmarkPost(questionId);
+                          toastManager.add({ title: "Post saved", type: "success" });
+                        } else {
+                          unbookmarkPost(questionId);
+                          toastManager.add({ title: "Post unsaved", type: "success" });
+                        }
+                      }}
+                    >
+                      <BookmarkIcon className="mr-2 size-4" />
+                      {isSaved ? "Unsave" : "Save"}
                     </DropdownMenuItem>
 <DropdownMenuItem onClick={() => report({ targetType: "post", targetUid: questionId })}>
   <HugeiconsIcon

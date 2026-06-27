@@ -29,6 +29,7 @@ import {
   Add01Icon,
   ArrowLeft02Icon,
   Analytics02Icon,
+  Bookmark01Icon,
 } from "@hugeicons/core-free-icons";
 import { Drawer, DrawerPopup, DrawerPanel, DrawerTrigger } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -348,6 +349,13 @@ export default function Profile() {
             )}
 
             <div className="flex gap-1.5">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={() => navigate("/bookmarks")}
+              >
+                <HugeiconsIcon icon={Bookmark01Icon} className="size-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="icon-sm"

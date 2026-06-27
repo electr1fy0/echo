@@ -18,6 +18,8 @@ import {
 import { parsePagination, countWords, MAX_POST_WORDS } from "../lib/utils";
 import { safeParse, createPostSchema, updatePostSchema, createReplySchema, updateReplySchema, pollVoteSchema, partnerApplySchema, updateApplicationSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
+import { getHandler } from "../services/post-types";
+import { Events, eventBus } from "../lib/events";
 
 export const questionRoutes = new Hono<AppEnv>();
 
@@ -72,6 +74,10 @@ questionRoutes.post("/", requireAuth, async (c) => {
 
   const slug = await generatePostSlug(c.get("db"), body.content ?? "");
 
+  const postType = body.postType ?? "qna";
+  const handler = getHandler(postType);
+  const typeValues = handler.getCreateValues(body, new Date());
+
   const [created] = await c.get("db").insert(schema.posts).values({
     slug,
     content: body.content ?? "",
@@ -81,40 +87,27 @@ questionRoutes.post("/", requireAuth, async (c) => {
     customFields: body.customFields ?? {},
     timeCreated: new Date(),
     expiresAt,
-    postType: body.postType ?? "qna",
     isAnonymous: body.isAnonymous ?? false,
-    partnerTargetGrade: body.partnerTargetGrade ?? null,
-    partnerWorkstyle: body.partnerWorkstyle ?? null,
-    partnerSlotsNeeded: body.partnerSlotsNeeded ?? null,
-    partnerStatus: body.postType === "partner" ? "open" : null,
-    tradePrice: body.tradePrice ?? null,
-    tradeCondition: body.tradeCondition ?? null,
-    tradeBookIsbn: body.tradeBookIsbn ?? null,
-    tradeStatus: body.postType === "trade" ? "available" : null,
-    taxiDeparture: body.taxiDeparture ?? null,
-    taxiDestination: body.taxiDestination ?? null,
-    taxiDatetime: body.taxiDatetime ?? null,
-    taxiSeatsAvailable: body.taxiSeatsAvailable ?? null,
-    taxiStatus: body.postType === "taxi" ? "open" : null,
-    acceptsAnswers: body.acceptsAnswers ?? false,
+    ...typeValues,
   }).returning({ uid: schema.posts.uid });
 
   if (!created) {
     throw new ApiError(500, "failed to create post");
   }
 
-  // Create poll if postType is "poll"
-  if (body.postType === "poll" && body.pollQuestion && body.pollOptions && body.pollOptions.length >= 2) {
-    await c.get("db").insert(schema.polls).values({
-      postUid: created.uid,
-      question: body.pollQuestion,
-      options: body.pollOptions,
-      expiresAt,
-    });
+  if (handler.afterCreate) {
+    await handler.afterCreate(c.get("db"), created.uid, body, c.get("user"));
   }
 
   await notifyMentions(c.get("db"), body.content ?? "", c.get("user"), created.uid, false, undefined, body.isAnonymous ?? false);
   await recomputeReputation(c.get("db"), c.get("user"));
+
+  eventBus.emit(Events.PostCreated, { postUid: created.uid, author: c.get("user"), chamberUid: body.chamberUid }, {
+    db: c.get("db"),
+    env: c.env,
+    waitUntil: (p) => c.executionCtx.waitUntil(p),
+  });
+
   return c.json({ message: "post created", uid: created.uid, slug }, 201);
 });
 
@@ -154,6 +147,11 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
         select 1 from post_upvotes pv
         where pv.post_uid = ${schema.posts.uid}
           and pv.username = ${c.get("user") || ""}
+      )`,
+      isSaved: sql<boolean>`exists (
+        select 1 from bookmarks b
+        where b.post_uid = ${schema.posts.uid}
+          and b.username = ${c.get("user") || ""}
       )`,
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,
@@ -227,22 +225,21 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
   if (body.content !== undefined && countWords(body.content) > MAX_POST_WORDS) {
     throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
   }
+
+  const [existing] = await c.get("db")
+    .select({ postType: schema.posts.postType })
+    .from(schema.posts)
+    .where(or(sql`${schema.posts.uid}::text = ${c.req.param("uid")}`, eq(schema.posts.slug, c.req.param("uid"))))
+    .limit(1);
+
   const updateData: Record<string, any> = {};
   if (body.content !== undefined) updateData.content = body.content;
   if (body.customFields !== undefined) updateData.customFields = body.customFields;
-  if (body.tradeStatus !== undefined) updateData.tradeStatus = body.tradeStatus;
-  if (body.partnerSlotsNeeded !== undefined) updateData.partnerSlotsNeeded = body.partnerSlotsNeeded;
-  if (body.partnerStatus !== undefined) updateData.partnerStatus = body.partnerStatus;
-  if (body.tradePrice !== undefined) updateData.tradePrice = body.tradePrice;
-  if (body.tradeCondition !== undefined) updateData.tradeCondition = body.tradeCondition;
-  if (body.tradeBookIsbn !== undefined) updateData.tradeBookIsbn = body.tradeBookIsbn;
-  if (body.partnerTargetGrade !== undefined) updateData.partnerTargetGrade = body.partnerTargetGrade;
-  if (body.partnerWorkstyle !== undefined) updateData.partnerWorkstyle = body.partnerWorkstyle;
-  if (body.taxiDeparture !== undefined) updateData.taxiDeparture = body.taxiDeparture;
-  if (body.taxiDestination !== undefined) updateData.taxiDestination = body.taxiDestination;
-  if (body.taxiDatetime !== undefined) updateData.taxiDatetime = body.taxiDatetime;
-  if (body.taxiSeatsAvailable !== undefined) updateData.taxiSeatsAvailable = body.taxiSeatsAvailable;
-  if (body.taxiStatus !== undefined) updateData.taxiStatus = body.taxiStatus;
+
+  if (existing) {
+    const handler = getHandler(existing.postType);
+    Object.assign(updateData, handler.getUpdateValues(body));
+  }
 
   const updated = await c.get("db").update(schema.posts).set(updateData).where(
     and(or(sql`${schema.posts.uid}::text = ${c.req.param("uid")}`, eq(schema.posts.slug, c.req.param("uid"))), eq(schema.posts.author, c.get("user"))),
@@ -308,11 +305,17 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
         actorUsername: currentUser,
         type: "upvote_post",
         referenceUid: uid,
-      });
+      }, c.env);
       await trackEvent(db, {
         username: post.author,
         event: "upvote_received",
         properties: { postUid: uid, by: currentUser },
+      });
+
+      eventBus.emit(Events.PostUpvoted, { postUid: uid, voter: currentUser, author: post.author }, {
+        db,
+        env: c.env,
+        waitUntil: (p) => c.executionCtx.waitUntil(p),
       });
     }
   }
@@ -389,11 +392,17 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
       type: "reply_post",
       referenceUid: created.uid,
       actorIsAnonymous: body.isAnonymous ?? false,
-    });
+    }, c.env);
   }
 
-  await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author, body.isAnonymous ?? false);
+  await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author, body.isAnonymous ?? false, c.env);
   await recomputeReputation(db, currentUser);
+
+  eventBus.emit(Events.ReplyCreated, { replyUid: created.uid, postUid: uid, author: currentUser, postAuthor: post?.author }, {
+    db,
+    env: c.env,
+    waitUntil: (p) => c.executionCtx.waitUntil(p),
+  });
 
   return c.json({
     uid: created.uid,
@@ -468,7 +477,7 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
         actorUsername: currentUser,
         type: "upvote_reply",
         referenceUid: ruid,
-      });
+      }, c.env);
       await trackEvent(db, {
         username: reply.author,
         event: "upvote_received",
@@ -637,7 +646,7 @@ questionRoutes.post("/:uid/apply", requireAuth, async (c) => {
       actorUsername: applicantUsername,
       type: "partner_application",
       referenceUid: application.uid,
-    });
+    }, c.env);
   }
 
   return c.json({ message: "application submitted", uid: application.uid }, 201);
@@ -701,7 +710,7 @@ questionRoutes.patch("/:uid/applications/:appUid", requireAuth, async (c) => {
     actorUsername: currentUser,
     type: `partner_${body.status}`,
     referenceUid: appUid,
-  });
+  }, c.env);
 
   return c.json({ message: `application ${body.status}` });
 });

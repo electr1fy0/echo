@@ -16,6 +16,7 @@ import {
 import { parsePagination } from "../lib/utils";
 import { safeParse, createMessageSchema, createConversationSchema, updateMessageSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
+import { pushToUser } from "../lib/push";
 
 export const dmRoutes = new Hono<AppEnv>();
 
@@ -60,6 +61,24 @@ dmRoutes.post("/conversations/:uid/messages", async (c) => {
 
   if (!msg) {
     throw new ApiError(404, "conversation not found or access denied");
+  }
+
+  const conv = await c.get("db")
+    .select({ participantA: schema.conversations.participantA, participantB: schema.conversations.participantB })
+    .from(schema.conversations)
+    .where(eq(schema.conversations.uid, c.req.param("uid")))
+    .limit(1)
+    .then((r) => r[0]);
+
+  if (conv) {
+    const recipient = conv.participantA === c.get("user") ? conv.participantB : conv.participantA;
+    c.executionCtx.waitUntil(
+      pushToUser(c.env, recipient, "new_message", {
+        conversationUid: c.req.param("uid"),
+        message: msg,
+        sender: c.get("user"),
+      }),
+    );
   }
 
   return c.json(msg, 201);

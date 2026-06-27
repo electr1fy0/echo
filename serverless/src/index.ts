@@ -1,5 +1,7 @@
 import { cors } from "hono/cors";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
+import { verify } from "hono/jwt";
 
 import { createDb } from "./db";
 import { handleAppError } from "./lib/http";
@@ -13,8 +15,32 @@ import { uploadRoutes, imageRoutes } from "./routes/upload";
 import { analyticsRoutes } from "./routes/analytics";
 import { linkPreviewRoutes } from "./routes/link-previews";
 import { reportRoutes } from "./routes/reports";
-import type { AppEnv } from "./types/app";
+import { bookmarkRoutes } from "./routes/bookmarks";
+import type { AppEnv, Bindings } from "./types/app";
 import { rateLimit } from "./middleware/rateLimit";
+import { cacheControl } from "./middleware/cache";
+import { registerWelcomeDmHandler } from "./events/welcome-dm";
+import { ensureTurnsOutUser } from "./db/seed";
+import { UserRoom } from "./durable-objects/room";
+
+export { UserRoom };
+
+registerWelcomeDmHandler();
+
+let seedDone = false;
+
+const seedOnStartup = createMiddleware<AppEnv>(async (c, next) => {
+  if (!seedDone) {
+    seedDone = true;
+    try {
+      await ensureTurnsOutUser(c.get("db"));
+    } catch (error) {
+      console.error("[seed] failed to ensure turnsout user:", error);
+      seedDone = false;
+    }
+  }
+  await next();
+});
 
 export const app = new Hono<AppEnv>();
 
@@ -34,7 +60,9 @@ app.use(
   }),
 );
 
+app.use("*", seedOnStartup);
 app.use("*", rateLimit("API_LIMITER"));
+app.use("*", cacheControl);
 
 app.onError(handleAppError);
 
@@ -56,5 +84,38 @@ app.route("/images", imageRoutes);
 app.route("/analytics", analyticsRoutes);
 app.route("/link-previews", linkPreviewRoutes);
 app.route("/reports", reportRoutes);
+app.route("/bookmarks", bookmarkRoutes);
 
-export default app;
+export default {
+  fetch(request: Request, env: Bindings, ctx: ExecutionContext) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/ws" && request.headers.get("Upgrade") === "websocket") {
+      return handleWebSocketUpgrade(request, env);
+    }
+
+    return app.fetch(request, env as Record<string, unknown>, ctx);
+  },
+};
+
+async function handleWebSocketUpgrade(request: Request, env: Bindings): Promise<Response> {
+  const token = new URL(request.url).searchParams.get("token");
+  if (!token) {
+    return new Response("Missing token", { status: 401 });
+  }
+
+  try {
+    const payload = await verify(token, env.SECRET_KEY, "HS256");
+    const username = typeof payload.sub === "string" ? payload.sub : "";
+    if (!username) {
+      return new Response("Invalid token", { status: 401 });
+    }
+
+    const doId = env.USER_ROOM.idFromName(`user-${username}`);
+    const stub = env.USER_ROOM.get(doId);
+    return stub.fetch(request);
+  } catch {
+    return new Response("Invalid token", { status: 401 });
+  }
+}
+

@@ -3,6 +3,7 @@ import { desc, eq, inArray, and, or, notInArray, sql } from "drizzle-orm";
 import type { DB } from "../db";
 import { schema } from "../db";
 import { extractMentions } from "../lib/utils";
+import type { Bindings } from "../types/app";
 
 export const createNotification = async (
   db: DB,
@@ -13,6 +14,7 @@ export const createNotification = async (
     referenceUid: string;
     actorIsAnonymous?: boolean;
   },
+  env?: Bindings,
 ) => {
   await db
     .insert(schema.notifications)
@@ -24,6 +26,20 @@ export const createNotification = async (
       actorIsAnonymous: payload.actorIsAnonymous ?? false,
     })
     .onConflictDoNothing();
+
+  if (env) {
+    try {
+      const { pushToUser } = await import("../lib/push");
+      await pushToUser(env, payload.userUsername, "notification", {
+        type: payload.type,
+        referenceUid: payload.referenceUid,
+        actorUsername: payload.actorUsername,
+        actorIsAnonymous: payload.actorIsAnonymous ?? false,
+      });
+    } catch (err) {
+      console.error("[notifications] push failed:", err);
+    }
+  }
 };
 
 export const notifyMentions = async (
@@ -34,6 +50,7 @@ export const notifyMentions = async (
   isReply: boolean,
   skipUser?: string,
   isAnonymous?: boolean,
+  env?: Bindings,
 ) => {
   const mentions = extractMentions(content);
   if (!mentions.length) {
@@ -52,13 +69,17 @@ export const notifyMentions = async (
       .map((user) => user.username)
       .filter((username) => username !== actor && username !== skipUser)
       .map((username) =>
-        createNotification(db, {
-          userUsername: username,
-          actorUsername: actor,
-          type: notificationType,
-          referenceUid,
-          actorIsAnonymous: isAnonymous,
-        }),
+        createNotification(
+          db,
+          {
+            userUsername: username,
+            actorUsername: actor,
+            type: notificationType,
+            referenceUid,
+            actorIsAnonymous: isAnonymous,
+          },
+          env,
+        ),
       ),
   );
 };

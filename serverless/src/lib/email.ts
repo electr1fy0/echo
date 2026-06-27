@@ -122,6 +122,8 @@ const getTemplate = (
 </body>
 </html>`;
 
+import { circuitBreakerWrapper } from "./circuit-breaker";
+
 const sendEmail = async (
   env: EmailEnv,
   to: string,
@@ -134,23 +136,30 @@ const sendEmail = async (
 
   const from = `TurnsOut <hello@${toSenderDomain(env.ECHO_DOMAIN)}>`;
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [to],
-      subject,
-      html,
-    }),
-  });
+  await circuitBreakerWrapper(
+    "resend-email",
+    async () => {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from,
+          to: [to],
+          subject,
+          html,
+        }),
+      });
 
-  if (!response.ok) {
-    throw new Error(`failed to send email: ${response.status}`);
-  }
+      if (!response.ok) {
+        throw new Error(`failed to send email: ${response.status}`);
+      }
+    },
+    undefined,
+    { name: "resend-email", failureThreshold: 3, timeoutMs: 60000 },
+  );
 };
 
 export const sendVerificationEmail = async (

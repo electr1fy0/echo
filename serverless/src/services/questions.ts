@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, or, sql, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, or, sql, isNotNull, isNull } from "drizzle-orm";
 
 // eslint-disable-next-line no-restricted-imports
 import { slugify } from "../lib/utils";
@@ -22,6 +22,7 @@ export const mapPostItem = (row: {
   isAnonymous: boolean;
   upvotes: number | null;
   isUpvoted: boolean;
+  isSaved: boolean;
   chamberUid: string;
   chamberName: string;
   channelUid: string | null;
@@ -69,6 +70,7 @@ export const mapPostItem = (row: {
       isAnonymous: row.isAnonymous || isDeletedUser,
       upvotes: row.upvotes ?? 0,
       isUpvoted: row.isUpvoted,
+      isSaved: row.isSaved,
       chamberUid: row.chamberUid,
       chamberName: row.chamberName,
       channelUid: row.channelUid,
@@ -298,9 +300,14 @@ export const getPostItems = async (
     query?: string;
     postType?: string;
     pinned?: boolean;
+    uids?: string[];
   },
 ) => {
   const conditions = [];
+
+  if (params.uids && params.uids.length > 0) {
+    conditions.push(inArray(schema.posts.uid, params.uids));
+  }
 
   if (params.chamberUid) {
     conditions.push(eq(schema.posts.chamberUid, params.chamberUid));
@@ -368,6 +375,11 @@ export const getPostItems = async (
         select 1 from post_upvotes pv
         where pv.post_uid = ${schema.posts.uid}
           and pv.username = ${currentUser || ""}
+      )`,
+      isSaved: sql<boolean>`exists (
+        select 1 from bookmarks b
+        where b.post_uid = ${schema.posts.uid}
+          and b.username = ${currentUser || ""}
       )`,
       chamberUid: schema.posts.chamberUid,
       chamberName: sql<string>`coalesce(${schema.chambers.name}, '')`,

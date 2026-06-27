@@ -1,3 +1,4 @@
+import { useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchConversations,
@@ -10,13 +11,106 @@ import {
   getUnreadMessageCount,
 } from "@/api/dms";
 import { useToken } from "@/hooks/use-auth";
+import { API_URL } from "@/config";
 import type { Conversation } from "@/types";
 
+function wsUrl() {
+  return API_URL.replace(/^http/, "ws") + "/ws";
+}
+
+type WsHandler = (data: unknown) => void;
+let ws: WebSocket | null = null;
+let wsHandlers = new Map<string, Set<WsHandler>>();
+let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+let reconnectDelay = 1000;
+let handlerCount = 0;
+
+function connectWs(token: string) {
+  if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) return;
+
+  ws = new WebSocket(`${wsUrl()}?token=${token}`);
+
+  ws.onopen = () => {
+    reconnectDelay = 1000;
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      const handlers = wsHandlers.get(msg.type);
+      if (handlers) {
+        for (const handler of handlers) {
+          try { handler(msg.data); } catch (e) { console.error("[dm-ws] handler error:", e); }
+        }
+      }
+    } catch { }
+  };
+
+  ws.onclose = () => {
+    ws = null;
+    if (handlerCount === 0) return;
+    reconnectTimeout = setTimeout(() => {
+      const token = localStorage.getItem("token");
+      if (token) connectWs(token);
+    }, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+  };
+
+  ws.onerror = () => {
+    ws?.close();
+  };
+}
+
+function disconnectWs() {
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+  ws?.close();
+  ws = null;
+  reconnectDelay = 1000;
+}
+
+function useWsEvent(type: string, handler: WsHandler) {
+  const token = useToken();
+  const handlerRef = useRef(handler);
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    if (!token) return;
+
+    handlerCount++;
+    connectWs(token);
+
+    if (!wsHandlers.has(type)) {
+      wsHandlers.set(type, new Set());
+    }
+    wsHandlers.get(type)!.add(handlerRef.current);
+
+    return () => {
+      wsHandlers.get(type)?.delete(handlerRef.current);
+      if (wsHandlers.get(type)?.size === 0) {
+        wsHandlers.delete(type);
+      }
+      handlerCount--;
+      if (handlerCount === 0) {
+        disconnectWs();
+      }
+    };
+  }, [type, token]);
+}
+
 export function useConversations() {
+  const queryClient = useQueryClient();
+
+  useWsEvent("new_message", useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["messages", "unread-count"] });
+  }, [queryClient]));
+
   return useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversations,
-    refetchInterval: 30_000,
     staleTime: 30_000,
   });
 }
@@ -32,11 +126,19 @@ export function useCreateConversation() {
 }
 
 export function useMessages(conversationUid: string | undefined) {
+  const queryClient = useQueryClient();
+
+  useWsEvent("new_message", useCallback((data) => {
+    const ev = data as { conversationUid?: string };
+    if (ev.conversationUid === conversationUid) {
+      queryClient.invalidateQueries({ queryKey: ["messages", conversationUid] });
+    }
+  }, [conversationUid, queryClient]));
+
   return useQuery({
     queryKey: ["messages", conversationUid],
     queryFn: () => fetchMessages(conversationUid!),
     enabled: !!conversationUid,
-    refetchInterval: 8_000,
     staleTime: 5_000,
   });
 }
@@ -110,10 +212,15 @@ export function useDeleteMessage(conversationUid: string | undefined) {
 
 export function useUnreadMessageCount() {
   const token = useToken();
+  const queryClient = useQueryClient();
+
+  useWsEvent("new_message", useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["messages", "unread-count"] });
+  }, [queryClient]));
+
   return useQuery({
     queryKey: ["messages", "unread-count"],
     queryFn: getUnreadMessageCount,
-    refetchInterval: 60_000,
     staleTime: 30_000,
     retry: false,
     enabled: !!token,
