@@ -1,4 +1,5 @@
 import * as resvgMod from "@resvg/resvg-wasm";
+import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
 
 function stripHtml(html: string): string {
   return html
@@ -97,10 +98,8 @@ function fetchWithTimeout(url: string, ms: number): Promise<Response> {
 async function ensureDeps(url: URL) {
   if (!resvgInitPromise) {
     resvgInitPromise = (async () => {
-      const wasmUrl = `${url.protocol}//${url.host}/resvg.wasm`;
-      const res = await fetchWithTimeout(wasmUrl, 15000);
-      if (!res.ok) throw new Error(`WASM fetch failed: ${res.status}`);
-      await resvgMod.initWasm(res);
+      // resvgWasm is a pre-compiled WebAssembly.Module from the static import
+      await resvgMod.initWasm(resvgWasm);
     })();
   }
 
