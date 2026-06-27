@@ -175,6 +175,6 @@ export async function onRequest(context: EventContext<unknown, unknown, Record<s
     });
   } catch (err) {
     console.error("OG image error:", err);
-    return new Response("Failed to generate OG image", { status: 500 });
+    return new Response("OG error: " + String(err), { status: 500 });
   }
 }
