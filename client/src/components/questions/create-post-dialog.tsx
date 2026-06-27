@@ -181,9 +181,30 @@ export function CreatePostDialog() {
         (f: any) =>
           f.disabled !== true &&
           ALLOWED_FIELD_TYPES.includes(f.type) &&
-          f.required,
+          f.required > 0,
       );
       setActiveFields(schemaFields);
+
+      // Pre-fill default values for auto-loaded fields
+      const defaults: Record<string, any> = {};
+      for (const f of schemaFields) {
+        if (f.type === "key_value") {
+          const count = Math.max(1, f.required);
+          defaults[f.id] = Array.from({ length: count }, (_, i) => ({
+            key: f.defaultKeys?.[i] || "",
+            value: "",
+          }));
+        } else if (f.type === "button") {
+          const count = Math.max(1, f.required);
+          defaults[f.id] = Array.from({ length: count }, (_, i) => ({
+            label: "",
+            template: f.defaultTemplates?.[i] || "I'm interested",
+          }));
+        }
+      }
+      if (Object.keys(defaults).length > 0) {
+        setCustomFields(defaults);
+      }
     } else {
       setActiveFields([]);
     }
@@ -234,13 +255,17 @@ export function CreatePostDialog() {
       button: "DM Button",
     };
 
+    // Copy any extra properties from the channel schema (e.g. defaultKey)
+    const schemaField = (selectedChannelData?.schema || []).find((f: any) => f.type === type);
+
     const id = `user_${type}_${Date.now()}`;
     const newField: SchemaField & { isUserAdded?: boolean } = {
       id,
       type,
-      label: defaultLabels[type] || "Field",
-      required: false,
+      label: schemaField?.label || defaultLabels[type] || "Field",
+      required: 0,
       isUserAdded: true,
+      ...(schemaField ? { defaultKeys: schemaField.defaultKeys, defaultTemplates: schemaField.defaultTemplates } : {}),
     };
 
     setActiveFields((prev) => [...prev, newField]);
@@ -254,9 +279,19 @@ export function CreatePostDialog() {
     } else if (type === "source_destination") {
       setCustomFields((p) => ({ ...p, [id]: { source: "", destination: "" } }));
     } else if (type === "key_value") {
-      setCustomFields((p) => ({ ...p, [id]: { key: "", value: "" } }));
+      const count = Math.max(1, newField.required);
+      const entries = Array.from({ length: count }, (_, i) => ({
+        key: newField.defaultKeys?.[i] || "",
+        value: "",
+      }));
+      setCustomFields((p) => ({ ...p, [id]: entries }));
     } else if (type === "button") {
-      setCustomFields((p) => ({ ...p, [id]: { label: "", template: "" } }));
+      const count = Math.max(1, newField.required);
+      const entries = Array.from({ length: count }, (_, i) => ({
+        label: "",
+        template: newField.defaultTemplates?.[i] || "I'm interested",
+      }));
+      setCustomFields((p) => ({ ...p, [id]: entries }));
     } else {
       setCustomFields((p) => ({ ...p, [id]: "" }));
     }
@@ -299,26 +334,45 @@ export function CreatePostDialog() {
       for (const field of activeFields) {
         if (field.disabled) continue;
         const val = customFields[field.id];
+        if (field.required === 0) continue;
+
+        let filled = false;
         if (field.type === "poll") {
-          const pollVal = val as
-            | { question: string; options: string[] }
-            | undefined;
-          if (
-            field.required &&
-            (!pollVal?.question?.trim() ||
-              pollVal.options.filter((o) => o.trim()).length < 2)
-          ) {
+          const pollVal = val as { question: string; options: string[] } | undefined;
+          filled = !!pollVal?.question?.trim() && (pollVal.options?.filter((o) => o.trim()).length || 0) >= 2;
+          if (!filled) {
             toastManager.add({ title: `"${field.label}" requires a question and at least 2 options`, type: "error" });
-            setIsValidating(false);
-            return;
+          }
+        } else if (field.type === "key_value") {
+          const entries = (val as { key: string; value: string }[]) || [];
+          const reqCount = field.required;
+          filled = entries.length >= reqCount && entries.slice(0, reqCount).every((e) => e?.key?.trim());
+          if (!filled) {
+            toastManager.add({ title: `"${field.label}" requires ${reqCount} key-value pair(s)`, type: "error" });
+          }
+        } else if (field.type === "button") {
+          const entries = (val as { label: string; template: string }[]) || [];
+          const reqCount = field.required;
+          filled = entries.length >= reqCount && entries.slice(0, reqCount).every((e) => e?.label?.trim() && e?.template?.trim());
+          if (!filled) {
+            toastManager.add({ title: `"${field.label}" requires ${reqCount} button(s) with label and template`, type: "error" });
+          }
+        } else if (field.type === "source_destination") {
+          const routeVal = val as { source?: string; destination?: string } | undefined;
+          filled = !!routeVal?.source?.trim() && !!routeVal?.destination?.trim();
+          if (!filled) {
+            toastManager.add({ title: `"${field.label}" requires source and destination`, type: "error" });
           }
         } else {
-          const isEmpty = val === undefined || val === null || val === "";
-          if (field.required && isEmpty) {
+          filled = val !== undefined && val !== null && val !== "";
+          if (!filled) {
             toastManager.add({ title: `"${field.label}" is required`, type: "error" });
-            setIsValidating(false);
-            return;
           }
+        }
+
+        if (!filled) {
+          setIsValidating(false);
+          return;
         }
       }
 
@@ -619,14 +673,14 @@ export function CreatePostDialog() {
                             <Icon className="size-3.5 text-neutral-500 dark:text-neutral-400 shrink-0" />
                             <span className="text-xs font-bold text-neutral-850 dark:text-neutral-100 truncate">
                               {field.label}{" "}
-                              {field.required && (
+                              {field.required > 0 && (
                                 <span className="text-red-500">*</span>
                               )}
                             </span>
                           </div>
 
                           {/* Remove field button */}
-                          {(!field.required || field.isUserAdded) && (
+                          {(field.required === 0 || field.isUserAdded) && (
                             <button
                               type="button"
                               onClick={() => removeField(field.id)}
@@ -1008,66 +1062,86 @@ export function CreatePostDialog() {
 
                         {field.type === "key_value" &&
                           (() => {
-                            const kvVal = (val as
-                              | { key: string; value: string }
-                              | undefined) || { key: "", value: "" };
-                            const setKv = (update: {
-                              key?: string;
-                              value?: string;
-                            }) => setVal({ ...kvVal, ...update });
+                            const entries = (val as
+                              | { key: string; value: string }[]
+                              | undefined) || [{ key: field.defaultKeys?.[0] || "", value: "" }];
+                            const count = Math.max(1, field.required, entries.length);
                             return (
-                              <div className="grid grid-cols-2 gap-2 w-full">
-                                <input
-                                  type="text"
-                                  placeholder="Property..."
-                                  value={kvVal.key}
-                                  onChange={(e) =>
-                                    setKv({ key: e.target.value })
-                                  }
-                                  className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Value..."
-                                  value={kvVal.value}
-                                  onChange={(e) =>
-                                    setKv({ value: e.target.value })
-                                  }
-                                  className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                                />
+                              <div className="space-y-2 w-full">
+                                {Array.from({ length: count }, (_, i) => {
+                                  const entry = entries[i] || { key: field.defaultKeys?.[i] || "", value: "" };
+                                  return (
+                                    <div key={i} className="grid grid-cols-2 gap-2">
+                                      <input
+                                        type="text"
+                                        placeholder={field.defaultKeys?.[i] || "Property..."}
+                                        value={entry.key}
+                                        onChange={(e) => {
+                                          const next = [...entries];
+                                          if (!next[i]) next[i] = { key: "", value: "" };
+                                          next[i] = { ...next[i], key: e.target.value };
+                                          setVal(next);
+                                        }}
+                                        className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="Value..."
+                                        value={entry.value}
+                                        onChange={(e) => {
+                                          const next = [...entries];
+                                          if (!next[i]) next[i] = { key: "", value: "" };
+                                          next[i] = { ...next[i], value: e.target.value };
+                                          setVal(next);
+                                        }}
+                                        className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
                             );
                           })()}
 
                         {field.type === "button" &&
                           (() => {
-                            const btnVal = (val as
-                              | { label: string; template: string }
-                              | undefined) || { label: "", template: "" };
-                            const setBtn = (update: {
-                              label?: string;
-                              template?: string;
-                            }) => setVal({ ...btnVal, ...update });
+                            const entries = (val as
+                              | { label: string; template: string }[]
+                              | undefined) || [{ label: "", template: field.defaultTemplates?.[0] || "I'm interested" }];
+                            const count = Math.max(1, field.required, entries.length);
                             return (
-                              <div className="grid grid-cols-2 gap-2 w-full">
-                                <input
-                                  type="text"
-                                  placeholder="Label..."
-                                  value={btnVal.label}
-                                  onChange={(e) =>
-                                    setBtn({ label: e.target.value })
-                                  }
-                                  className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                                />
-                                <input
-                                  type="text"
-                                  placeholder="Template..."
-                                  value={btnVal.template}
-                                  onChange={(e) =>
-                                    setBtn({ template: e.target.value })
-                                  }
-                                  className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                                />
+                              <div className="space-y-2 w-full">
+                                {Array.from({ length: count }, (_, i) => {
+                                  const entry = entries[i] || { label: "", template: field.defaultTemplates?.[i] || "I'm interested" };
+                                  return (
+                                    <div key={i} className="grid grid-cols-2 gap-2">
+                                      <input
+                                        type="text"
+                                        placeholder="Label..."
+                                        value={entry.label}
+                                        onChange={(e) => {
+                                          const next = [...entries];
+                                          if (!next[i]) next[i] = { label: "", template: "" };
+                                          next[i] = { ...next[i], label: e.target.value };
+                                          setVal(next);
+                                        }}
+                                        className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                      />
+                                      <input
+                                        type="text"
+                                        placeholder="Template..."
+                                        value={entry.template}
+                                        onChange={(e) => {
+                                          const next = [...entries];
+                                          if (!next[i]) next[i] = { label: "", template: "" };
+                                          next[i] = { ...next[i], template: e.target.value };
+                                          setVal(next);
+                                        }}
+                                        className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                      />
+                                    </div>
+                                  );
+                                })}
                               </div>
                             );
                           })()}

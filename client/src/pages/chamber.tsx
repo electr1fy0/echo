@@ -78,15 +78,15 @@ import {
 } from "lucide-react";
 
 const DEFAULT_CHANNEL_SCHEMA = [
-  { id: "standard_image", type: "image", label: "Image Photo", required: false },
-  { id: "standard_poll", type: "poll", label: "Poll", required: false },
-  { id: "standard_currency", type: "currency", label: "Price", required: false },
-  { id: "standard_datetime", type: "datetime", label: "Date-Time", required: false },
-  { id: "standard_file", type: "file", label: "File", required: false },
-  { id: "standard_location", type: "location", label: "Location", required: false },
-  { id: "standard_source_destination", type: "source_destination", label: "Source → Destination", required: false },
-  { id: "standard_key_value", type: "key_value", label: "Key:Value", required: false },
-  { id: "standard_button", type: "button", label: "DM Button", required: false },
+  { id: "standard_image", type: "image", label: "Image Photo", required: 0 },
+  { id: "standard_poll", type: "poll", label: "Poll", required: 0 },
+  { id: "standard_currency", type: "currency", label: "Price", required: 0 },
+  { id: "standard_datetime", type: "datetime", label: "Date-Time", required: 0 },
+  { id: "standard_file", type: "file", label: "File", required: 0 },
+  { id: "standard_location", type: "location", label: "Location", required: 0 },
+  { id: "standard_source_destination", type: "source_destination", label: "Source → Destination", required: 0 },
+  { id: "standard_key_value", type: "key_value", label: "Key:Value", required: 0 },
+  { id: "standard_button", type: "button", label: "DM Button", required: 0 },
 ];
 
 function formatMemberCount(count: number): string {

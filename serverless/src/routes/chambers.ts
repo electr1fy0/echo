@@ -78,7 +78,7 @@ chamberRoutes.post("/", async (c) => {
       name: "marketplace",
       icon: "shopping-bag",
       schema: [
-        { id: "price", type: "currency", label: "Price", required: true }
+        { id: "price", type: "currency", label: "Price", required: 1 }
       ],
     },
     {
@@ -86,9 +86,9 @@ chamberRoutes.post("/", async (c) => {
       name: "carpools",
       icon: "car",
       schema: [
-        { id: "datetime", type: "datetime", label: "Departure Time", required: true },
-        { id: "pickup", type: "location", label: "Pickup From", required: true },
-        { id: "dropoff", type: "location", label: "Dropoff To", required: true }
+        { id: "datetime", type: "datetime", label: "Departure Time", required: 1 },
+        { id: "pickup", type: "location", label: "Pickup From", required: 1 },
+        { id: "dropoff", type: "location", label: "Dropoff To", required: 1 }
       ],
     },
     {
@@ -102,7 +102,7 @@ chamberRoutes.post("/", async (c) => {
       name: "lost-and-found",
       icon: "search",
       schema: [
-        { id: "location", type: "location", label: "Location", required: false }
+        { id: "location", type: "location", label: "Location", required: 0 }
       ],
     },
     {
@@ -110,7 +110,7 @@ chamberRoutes.post("/", async (c) => {
       name: "resources",
       icon: "book-open",
       schema: [
-        { id: "file", type: "file", label: "Resource File", required: true }
+        { id: "file", type: "file", label: "Resource File", required: 1 }
       ],
     }
   ];

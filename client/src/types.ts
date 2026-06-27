@@ -170,9 +170,11 @@ export interface SchemaField {
   id: string;
   type: "text" | "number" | "currency" | "select" | "datetime" | "url" | "file" | "poll" | "image" | "location" | "source_destination" | "key_value" | "button";
   label: string;
-  required: boolean;
+  required: number;
   disabled?: boolean;
   options?: string[];
+  defaultKeys?: string[];
+  defaultTemplates?: string[];
 }
 
 export const ALLOWED_FIELD_TYPES = [

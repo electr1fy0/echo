@@ -87,7 +87,7 @@ export function EditPostDialog() {
         id,
         type: type as SchemaField["type"],
         label: fieldLabelsMeta[id] || id,
-        required: false,
+        required: 0,
         options: fieldOptionsMeta[id],
       }));
     setActiveFields(fields);
@@ -294,47 +294,81 @@ export function EditPostDialog() {
                       })()}
 
                       {field.type === "key_value" && (() => {
-                        const kvVal = (fieldVal as { key: string; value: string } | undefined) || { key: "", value: "" };
-                        const setKv = (update: { key?: string; value?: string }) => setFieldVal({ ...kvVal, ...update });
+                        const entries = (fieldVal as { key: string; value: string }[] | undefined) || [{ key: field.defaultKeys?.[0] || "", value: "" }];
+                        const count = Math.max(1, field.required, entries.length);
                         return (
-                          <div className="grid grid-cols-2 gap-2 w-full">
-                            <input
-                              type="text"
-                              placeholder="Property..."
-                              value={kvVal.key}
-                              onChange={(e) => setKv({ key: e.target.value })}
-                              className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Value..."
-                              value={kvVal.value}
-                              onChange={(e) => setKv({ value: e.target.value })}
-                              className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                            />
+                          <div className="space-y-2 w-full">
+                            {Array.from({ length: count }, (_, i) => {
+                              const entry = entries[i] || { key: field.defaultKeys?.[i] || "", value: "" };
+                              return (
+                                <div key={i} className="grid grid-cols-2 gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder={field.defaultKeys?.[i] || "Property..."}
+                                    value={entry.key}
+                                    onChange={(e) => {
+                                      const next = [...entries];
+                                      if (!next[i]) next[i] = { key: "", value: "" };
+                                      next[i] = { ...next[i], key: e.target.value };
+                                      setFieldVal(next);
+                                    }}
+                                    className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Value..."
+                                    value={entry.value}
+                                    onChange={(e) => {
+                                      const next = [...entries];
+                                      if (!next[i]) next[i] = { key: "", value: "" };
+                                      next[i] = { ...next[i], value: e.target.value };
+                                      setFieldVal(next);
+                                    }}
+                                    className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })()}
 
                       {field.type === "button" && (() => {
-                        const btnVal = (fieldVal as { label: string; template: string } | undefined) || { label: "", template: "" };
-                        const setBtn = (update: { label?: string; template?: string }) => setFieldVal({ ...btnVal, ...update });
+                        const entries = (fieldVal as { label: string; template: string }[] | undefined) || [{ label: "", template: field.defaultTemplates?.[0] || "I'm interested" }];
+                        const count = Math.max(1, field.required, entries.length);
                         return (
-                          <div className="grid grid-cols-2 gap-2 w-full">
-                            <input
-                              type="text"
-                              placeholder="Label..."
-                              value={btnVal.label}
-                              onChange={(e) => setBtn({ label: e.target.value })}
-                              className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Template..."
-                              value={btnVal.template}
-                              onChange={(e) => setBtn({ template: e.target.value })}
-                              className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
-                            />
+                          <div className="space-y-2 w-full">
+                            {Array.from({ length: count }, (_, i) => {
+                              const entry = entries[i] || { label: "", template: field.defaultTemplates?.[i] || "I'm interested" };
+                              return (
+                                <div key={i} className="grid grid-cols-2 gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Label..."
+                                    value={entry.label}
+                                    onChange={(e) => {
+                                      const next = [...entries];
+                                      if (!next[i]) next[i] = { label: "", template: "" };
+                                      next[i] = { ...next[i], label: e.target.value };
+                                      setFieldVal(next);
+                                    }}
+                                    className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                  />
+                                  <input
+                                    type="text"
+                                    placeholder="Template..."
+                                    value={entry.template}
+                                    onChange={(e) => {
+                                      const next = [...entries];
+                                      if (!next[i]) next[i] = { label: "", template: "" };
+                                      next[i] = { ...next[i], template: e.target.value };
+                                      setFieldVal(next);
+                                    }}
+                                    className="w-full h-9 px-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/10 dark:bg-neutral-900/25 text-xs text-neutral-850 dark:text-neutral-200 placeholder:text-neutral-455 focus:outline-none focus:ring-1 focus:ring-[var(--brand)]/35"
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
                         );
                       })()}
