@@ -98,9 +98,12 @@ async function ensureDeps(url: URL) {
   if (!resvgInitPromise) {
     resvgInitPromise = (async () => {
       const wasmUrl = `${url.protocol}//${url.host}/resvg.wasm`;
-      const wasmBytes = await fetchWithTimeout(wasmUrl, 15000).then((r) => r.arrayBuffer());
+      const wasmBytes = await fetchWithTimeout(wasmUrl, 15000).then((r) => {
+        if (!r.ok) throw new Error(`WASM fetch failed: ${r.status}`);
+        return r.arrayBuffer();
+      });
       await resvgMod.initWasm(wasmBytes);
-    })().catch(() => { resvgInitPromise = null; });
+    })();
   }
 
   if (!fontBase64) {
@@ -118,9 +121,7 @@ async function ensureDeps(url: URL) {
     }
   }
 
-  if (resvgInitPromise) {
-    await resvgInitPromise;
-  }
+  await resvgInitPromise;
 
   return { fontBase64 };
 }
