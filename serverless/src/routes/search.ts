@@ -3,7 +3,7 @@ import { eq, sql } from "drizzle-orm";
 
 import { schema } from "../db";
 import { optionalAuth } from "../middleware/auth";
-import { getPostItems, getReplies, listChambers, mapChamber, mapReplyItem } from "../services/questions";
+import { getPostItems, listChambers, mapChamber, mapReplyItem } from "../services/questions";
 import { searchUsers } from "../services/questions";
 import type { AppEnv } from "../types/app";
 

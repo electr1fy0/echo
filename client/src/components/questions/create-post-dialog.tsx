@@ -434,7 +434,7 @@ export function CreatePostDialog() {
           <MentionField
             placeholder="What's on your mind?"
             ariaLabel="Post content"
-            className="resize-none min-h-[160px] border-none shadow-none focus-visible:ring-2 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-700 bg-transparent px-4 py-3 text-sm focus:outline-none rounded-xl"
+            className="resize-none min-h-[160px] border-none shadow-none before:shadow-none focus-visible:ring-2 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-700 bg-transparent px-4 py-3 text-sm focus:outline-none rounded-xl"
             value={draft.content}
             onValueChange={(value) => updateDraft({ content: value })}
             multiline
@@ -1110,7 +1110,7 @@ export function CreatePostDialog() {
                   render={
                     <button
                       type="button"
-                      onClick={() => setAcceptsAnswers((p) => !p)}
+                      onClick={() => { setAcceptsAnswers(p => !p); setIsAnonymous(false); }}
                       className={cn(
                         "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
                         acceptsAnswers
@@ -1131,7 +1131,7 @@ export function CreatePostDialog() {
                   render={
                     <button
                       type="button"
-                      onClick={() => setIsAnonymous((p) => !p)}
+                      onClick={() => { setIsAnonymous(p => !p); setAcceptsAnswers(false); }}
                       className={cn(
                         "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
                         isAnonymous
@@ -1210,28 +1210,28 @@ export function CreatePostDialog() {
                 render={
                   <button
                     type="button"
-                    onClick={() => setAcceptsAnswers((p) => !p)}
-                    className={cn(
-                      "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
-                      acceptsAnswers
-                        ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
-                        : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
-                    )}
-                  >
-                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
-                  </button>
-                }
-              />
-              <TooltipContent side="top">
-                {acceptsAnswers ? "Accepting answers enabled" : "Accepting answers disabled"}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type="button"
-                    onClick={() => setIsAnonymous((p) => !p)}
+                    onClick={() => { setAcceptsAnswers(p => !p); setIsAnonymous(false); }}
+                      className={cn(
+                        "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
+                        acceptsAnswers
+                          ? "bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 border-neutral-900 dark:border-neutral-100"
+                          : "bg-transparent text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:text-neutral-600 dark:hover:text-neutral-300",
+                      )}
+                    >
+                      <HugeiconsIcon icon={CheckmarkCircle02Icon} className="size-3.5" />
+                    </button>
+                  }
+                />
+                <TooltipContent side="top">
+                  {acceptsAnswers ? "Accepting answers enabled" : "Accepting answers disabled"}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      onClick={() => { setIsAnonymous(p => !p); setAcceptsAnswers(false); }}
                     className={cn(
                       "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer shrink-0 border",
                       isAnonymous

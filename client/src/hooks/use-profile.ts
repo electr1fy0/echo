@@ -2,6 +2,7 @@ import { fetchProfile, updateProfile, fetchPublicProfile, followUser, unfollowUs
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@/types";
 import { useToken } from "./use-auth";
+import { getToken } from "@/lib/utils";
 
 export function useFetchProfile() {
   const token = useToken();
@@ -16,7 +17,7 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (user: Partial<User>) => updateProfile(user),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile", getToken()] });
       queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
   });

@@ -15,7 +15,7 @@ import {
   getReplies,
   mapPostItem,
 } from "../services/questions";
-import { parsePagination, countWords, MAX_POST_WORDS } from "../lib/utils";
+import { parsePagination, countWords, MAX_POST_WORDS, matchesIdentifier } from "../lib/utils";
 import { safeParse, createPostSchema, updatePostSchema, createReplySchema, updateReplySchema, pollVoteSchema, partnerApplySchema, updateApplicationSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 import { getHandler } from "../services/post-types";
@@ -210,7 +210,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
     .leftJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid))
     .leftJoin(schema.channels, eq(schema.channels.uid, schema.posts.channelUid))
     .leftJoin(schema.polls, eq(schema.polls.postUid, schema.posts.uid))
-    .where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)))
+    .where(matchesIdentifier(schema.posts.uid, schema.posts.slug, identifier))
     .limit(1);
 
   if (!row) {
@@ -229,7 +229,7 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
   const [existing] = await c.get("db")
     .select({ postType: schema.posts.postType })
     .from(schema.posts)
-    .where(or(sql`${schema.posts.uid}::text = ${c.req.param("uid")}`, eq(schema.posts.slug, c.req.param("uid"))))
+    .where(matchesIdentifier(schema.posts.uid, schema.posts.slug, c.req.param("uid")))
     .limit(1);
 
   const updateData: Record<string, any> = {};
@@ -242,7 +242,7 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
   }
 
   const updated = await c.get("db").update(schema.posts).set(updateData).where(
-    and(or(sql`${schema.posts.uid}::text = ${c.req.param("uid")}`, eq(schema.posts.slug, c.req.param("uid"))), eq(schema.posts.author, c.get("user"))),
+    and(matchesIdentifier(schema.posts.uid, schema.posts.slug, c.req.param("uid")), eq(schema.posts.author, c.get("user"))),
   ).returning({ uid: schema.posts.uid });
 
   if (!updated.length) {
@@ -332,7 +332,7 @@ questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
   const db = c.get("db");
   const [post] = await db.select({
     creatorUsername: schema.chambers.creatorUsername,
-  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier))).limit(1);
+  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(matchesIdentifier(schema.posts.uid, schema.posts.slug, identifier)).limit(1);
 
   if (!post) {
     throw new ApiError(404, "post not found");
@@ -341,7 +341,7 @@ questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
-  await db.update(schema.posts).set({ pinnedAt: new Date() }).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)));
+  await db.update(schema.posts).set({ pinnedAt: new Date() }).where(matchesIdentifier(schema.posts.uid, schema.posts.slug, identifier));
   return c.json({ message: "post pinned" });
 });
 
@@ -350,7 +350,7 @@ questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
   const db = c.get("db");
   const [post] = await db.select({
     creatorUsername: schema.chambers.creatorUsername,
-  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier))).limit(1);
+  }).from(schema.posts).innerJoin(schema.chambers, eq(schema.chambers.uid, schema.posts.chamberUid)).where(matchesIdentifier(schema.posts.uid, schema.posts.slug, identifier)).limit(1);
 
   if (!post) {
     throw new ApiError(404, "post not found");
@@ -359,14 +359,15 @@ questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
     throw new ApiError(403, "unauthorized");
   }
 
-  await db.update(schema.posts).set({ pinnedAt: null }).where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)));
+  await db.update(schema.posts).set({ pinnedAt: null }).where(matchesIdentifier(schema.posts.uid, schema.posts.slug, identifier));
   return c.json({ message: "post unpinned" });
 });
 
 questionRoutes.get("/:uid/replies", optionalAuth, async (c) => {
   const db = c.get("db");
   const uid = await resolvePostUid(db, c.req.param("uid"));
-  return c.json(await getReplies(db, c.get("user"), uid));
+  const { limit, offset } = parsePagination(c.req.query());
+  return c.json(await getReplies(db, c.get("user"), uid, limit, offset));
 });
 
 questionRoutes.post("/:uid/replies", requireAuth, async (c) => {

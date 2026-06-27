@@ -36,6 +36,11 @@ describe("getMentionContext", () => {
     expect(ctx?.query).toBe("ali");
     expect(ctx?.start).toBe(15);
   });
+
+  it("allows hyphens in query", () => {
+    const ctx = getMentionContext("hello @john-do", 15);
+    expect(ctx).toEqual({ query: "john-do", start: 6, end: 15 });
+  });
 });
 
 describe("applyMention", () => {
@@ -70,5 +75,9 @@ describe("extractMentions", () => {
 
   it("handles underscores", () => {
     expect(extractMentions("hello @alice_smith")).toEqual(["alice_smith"]);
+  });
+
+  it("handles hyphens", () => {
+    expect(extractMentions("hello @john-doe")).toEqual(["john-doe"]);
   });
 });

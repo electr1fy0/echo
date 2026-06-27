@@ -32,9 +32,31 @@ export function useCreateConversation() {
 }
 
 export function useMessages(conversationUid: string | undefined) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: ["messages", conversationUid],
-    queryFn: () => fetchMessages(conversationUid!),
+    queryFn: async () => {
+      const existing = queryClient.getQueryData<Message[]>(["messages", conversationUid]);
+      const lastNonOptimistic = existing?.reduce<Message | undefined>((latest, m) => {
+        if (!m.uid.startsWith("optimistic-") && (!latest || new Date(m.timeCreated) > new Date(latest.timeCreated))) return m;
+        return latest;
+      }, undefined);
+      const since = lastNonOptimistic?.timeCreated;
+      const fresh = await fetchMessages(conversationUid!, 50, 0, since);
+      if (!existing) return fresh;
+
+      const seen = new Map<string, Message>();
+      for (const m of existing) {
+        seen.set(m.uid, m);
+      }
+      for (const m of fresh) {
+        seen.set(m.uid, m);
+      }
+
+      return Array.from(seen.values()).sort(
+        (a, b) => new Date(a.timeCreated).getTime() - new Date(b.timeCreated).getTime(),
+      );
+    },
     enabled: !!conversationUid,
     refetchInterval: 3_000,
     staleTime: 1_500,
@@ -90,9 +112,21 @@ export function useEditMessage(conversationUid: string | undefined) {
   return useMutation({
     mutationFn: ({ messageUid, content }: { messageUid: string; content: string }) =>
       editMessage(conversationUid!, messageUid, content),
-    onSuccess: () => {
+    onMutate: async ({ messageUid, content }) => {
+      await queryClient.cancelQueries({ queryKey: ["messages", conversationUid] });
+      const previousMessages = queryClient.getQueryData<Message[]>(["messages", conversationUid]);
+      queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
+        old?.map((m) => (m.uid === messageUid ? { ...m, content } : m)),
+      );
+      return { previousMessages };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["messages", conversationUid], context.previousMessages);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["messages", conversationUid] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }
@@ -101,8 +135,20 @@ export function useDeleteMessage(conversationUid: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (messageUid: string) => deleteMessage(conversationUid!, messageUid),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", conversationUid] });
+    onMutate: async (messageUid) => {
+      await queryClient.cancelQueries({ queryKey: ["messages", conversationUid] });
+      const previousMessages = queryClient.getQueryData<Message[]>(["messages", conversationUid]);
+      queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
+        old?.filter((m) => m.uid !== messageUid),
+      );
+      return { previousMessages };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["messages", conversationUid], context.previousMessages);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
@@ -127,9 +173,7 @@ export function useSendMessage(conversationUid: string | undefined) {
     mutationFn: (content: string) => sendMessage(conversationUid!, content),
     onMutate: async (content) => {
       await queryClient.cancelQueries({ queryKey: ["messages", conversationUid] });
-
       const previousMessages = queryClient.getQueryData<Message[]>(["messages", conversationUid]);
-
       const optimisticMessage: Message = {
         uid: `optimistic-${crypto.randomUUID()}`,
         conversationUid: conversationUid!,
@@ -137,21 +181,24 @@ export function useSendMessage(conversationUid: string | undefined) {
         content,
         timeCreated: new Date().toISOString(),
       };
-
       queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
         old ? [...old, optimisticMessage] : [optimisticMessage],
       );
-
       return { previousMessages };
+    },
+    onSuccess: (newMsg) => {
+      queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) => {
+        if (!old) return [newMsg];
+        const filtered = old.filter((m) => !m.uid.startsWith("optimistic-"));
+        if (filtered.some((m) => m.uid === newMsg.uid)) return filtered;
+        return [...filtered, newMsg];
+      });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (_err, _vars, context) => {
       if (context?.previousMessages) {
         queryClient.setQueryData(["messages", conversationUid], context.previousMessages);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["messages", conversationUid] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
 }

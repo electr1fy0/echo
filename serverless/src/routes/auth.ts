@@ -16,6 +16,7 @@ import {
   getClientUrl,
   getGoogleRedirectUrl,
   randomToken,
+  randomOtp,
   requireEnv,
 } from "../lib/utils";
 import { safeParse, signupSchema, signinSchema, verifyEmailSchema, resendVerificationSchema, requestPasswordResetSchema, resetPasswordSchema, sendOtpSchema, verifyOtpSchema, googleOnboardingSchema, usernameSchema } from "../lib/validation";
@@ -437,7 +438,7 @@ authRoutes.post("/send-otp", async (c) => {
 
   const username = user?.username ?? email.split("@")[0];
 
-  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const otp = randomOtp();
   const magicLinkToken = randomToken(32);
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 

@@ -28,7 +28,6 @@ import {
   Link01Icon,
   Add01Icon,
   ArrowLeft02Icon,
-  Analytics02Icon,
   Bookmark01Icon,
 } from "@hugeicons/core-free-icons";
 import { Drawer, DrawerPopup, DrawerPanel, DrawerTrigger } from "@/components/ui/drawer";
@@ -355,13 +354,6 @@ export default function Profile() {
                 onClick={() => navigate("/bookmarks")}
               >
                 <HugeiconsIcon icon={Bookmark01Icon} className="size-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                onClick={() => navigate("/analytics")}
-              >
-                <HugeiconsIcon icon={Analytics02Icon} className="size-4" />
               </Button>
               <Button
                 variant="outline"

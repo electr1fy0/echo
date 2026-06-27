@@ -20,7 +20,8 @@ import {
   CheckmarkCircle02Icon,
   CancelCircleIcon,
 } from "@hugeicons/core-free-icons";
-import { useReplyUpdateVote } from "@/hooks/use-upvote";
+import { useReplyUpdateVote, REPLY_UPVOTE_MUTATION_KEY } from "@/hooks/use-upvote";
+import { useIsMutating } from "@tanstack/react-query";
 import { useAcceptReply, useUpdateReply } from "@/hooks/use-replies";
 import { useAuth } from "@/hooks/use-auth";
 import { useAuthModal } from "@/hooks/use-auth-modal";
@@ -48,6 +49,7 @@ type ReplyItemProps = {
   canAccept?: boolean;
   isOp?: boolean;
   onReply?: () => void;
+  questionId?: string;
 };
 
 export function ReplyItem({
@@ -56,8 +58,10 @@ export function ReplyItem({
   canAccept,
   isOp,
   onReply,
+  questionId,
 }: ReplyItemProps) {
-  const { mutate: updateUpvote, isPending } = useReplyUpdateVote();
+  const { mutate: updateUpvote } = useReplyUpdateVote();
+  const isReplyUpvotePending = useIsMutating({ mutationKey: REPLY_UPVOTE_MUTATION_KEY }) > 0;
   const { mutate: updateReply, isPending: isUpdatePending } = useUpdateReply();
   const { mutate: toggleAccept, isPending: isAcceptPending } = useAcceptReply();
   const { data: user } = useAuth();
@@ -124,12 +128,12 @@ export function ReplyItem({
           <UpvoteButton
             count={reply.upvotes}
             isUpvoted={reply.isUpvoted}
-            isPending={isPending}
+            isPending={isReplyUpvotePending}
             onToggle={() => {
               if (!user) {
                 openAuthModal("signin");
               } else {
-                updateUpvote({ qid: reply.questionUid, rid: reply.uid });
+                updateUpvote({ qid: reply.questionUid, rid: reply.uid, queryKey: questionId });
               }
             }}
             className="h-3 py-0 px-0 text-xs text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300"

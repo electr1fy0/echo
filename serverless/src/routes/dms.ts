@@ -38,12 +38,14 @@ dmRoutes.post("/conversations/:uid/read", async (c) => {
 
 dmRoutes.get("/conversations/:uid/messages", async (c) => {
   const { limit, offset } = parsePagination(c.req.query());
+  const since = c.req.query("since");
   const messages = await getMessages(
     c.get("db"),
     c.req.param("uid"),
     c.get("user"),
     limit,
     offset,
+    since,
   );
   return c.json(messages);
 });

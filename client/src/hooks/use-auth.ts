@@ -44,6 +44,9 @@ export function useAuth() {
       if (error instanceof Error && error.message === "rate-limit") {
         return failureCount < 3;
       }
+      if (error instanceof TypeError) {
+        return failureCount < 2;
+      }
       return false;
     },
     staleTime: 5 * 60 * 1000,

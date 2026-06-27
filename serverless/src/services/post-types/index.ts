@@ -15,4 +15,4 @@ export const getHandler = (type: string): PostTypeHandler => {
   return registry.get(type) ?? qnaHandler;
 };
 
-export { PostTypeHandler } from "./handler";
+export type { PostTypeHandler } from "./handler";

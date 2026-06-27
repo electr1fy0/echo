@@ -11,7 +11,7 @@ type PostContentProps = {
   compactImages?: boolean;
 };
 
-const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+const mentionRegex = /@([a-zA-Z0-9_-]+)/g;
 
 function renderMentions(text: string, keyPrefix: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];

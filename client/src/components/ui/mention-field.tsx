@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +37,7 @@ export function MentionField({
 }: MentionFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [cursor, setCursor] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -47,10 +50,18 @@ export function MentionField({
   const { data: suggestions = [], isFetching } = useMentionUsers(query);
 
   useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (mentionContext && suggestions.length > 0) {
       setIsOpen(true);
-      setActiveIndex(0);
-    } else {
+      setActiveIndex((prev) =>
+        prev >= suggestions.length ? 0 : prev,
+      );
+    } else if (!mentionContext) {
       setIsOpen(false);
     }
   }, [mentionContext, suggestions.length]);
@@ -59,6 +70,7 @@ export function MentionField({
 
   const handleSelect = (username: string) => {
     if (!mentionContext) return;
+    if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
     const next = applyMention(value, mentionContext, username);
     onValueChange(next.value);
     setIsOpen(false);
@@ -104,7 +116,7 @@ export function MentionField({
       }
     },
     onBlur() {
-      setTimeout(() => setIsOpen(false), 100);
+      blurTimeoutRef.current = setTimeout(() => setIsOpen(false), 100);
     },
   };
 

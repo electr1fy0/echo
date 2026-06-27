@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, or, sql, isNotNull, isNull } from "drizzle-orm";
 
 // eslint-disable-next-line no-restricted-imports
-import { slugify } from "../lib/utils";
+import { slugify, matchesIdentifier } from "../lib/utils";
 
 import type { DB } from "../db";
 import { schema } from "../db";
@@ -193,7 +193,7 @@ export const ensurePostExists = async (db: DB, identifier: string) => {
   const [post] = await db
     .select({ uid: schema.posts.uid, author: schema.posts.author, slug: schema.posts.slug, acceptsAnswers: schema.posts.acceptsAnswers })
     .from(schema.posts)
-    .where(or(sql`${schema.posts.uid}::text = ${identifier}`, eq(schema.posts.slug, identifier)))
+    .where(matchesIdentifier(schema.posts.uid, schema.posts.slug, identifier))
     .limit(1);
 
   if (!post) {
@@ -217,8 +217,8 @@ export const generatePostSlug = async (db: DB, content: string): Promise<string>
     .limit(1);
   if (!existing.length) return base;
 
-  let counter = 1;
-  while (true) {
+  const MAX_ATTEMPTS = 100;
+  for (let counter = 1; counter <= MAX_ATTEMPTS; counter++) {
     const slug = `${base}-${counter}`;
     const [row] = await db
       .select({ slug: schema.posts.slug })
@@ -226,8 +226,8 @@ export const generatePostSlug = async (db: DB, content: string): Promise<string>
       .where(eq(schema.posts.slug, slug))
       .limit(1);
     if (!row) return slug;
-    counter++;
   }
+  return `${base}-${Date.now()}`;
 };
 
 export const resolveChamber = async (db: DB, identifier: string) => {
@@ -239,7 +239,7 @@ export const resolveChamber = async (db: DB, identifier: string) => {
       creatorUsername: schema.chambers.creatorUsername,
     })
     .from(schema.chambers)
-    .where(or(sql`${schema.chambers.uid}::text = ${identifier}`, eq(schema.chambers.slug, identifier)))
+    .where(matchesIdentifier(schema.chambers.uid, schema.chambers.slug, identifier))
     .limit(1);
 
   if (!chamber) {
@@ -258,8 +258,8 @@ export const generateChamberSlug = async (db: DB, name: string, excludeUid?: str
     .limit(1);
   if (!existing.length || (excludeUid && existing[0].uid === excludeUid)) return base;
 
-  let counter = 1;
-  while (true) {
+  const MAX_ATTEMPTS = 100;
+  for (let counter = 1; counter <= MAX_ATTEMPTS; counter++) {
     const slug = `${base}-${counter}`;
     const [row] = await db
       .select({ slug: schema.chambers.slug })
@@ -267,8 +267,8 @@ export const generateChamberSlug = async (db: DB, name: string, excludeUid?: str
       .where(eq(schema.chambers.slug, slug))
       .limit(1);
     if (!row) return slug;
-    counter++;
   }
+  return `${base}-${Date.now()}`;
 };
 
 export const ensureReplyExists = async (db: DB, uid: string) => {
@@ -469,7 +469,7 @@ export const getPostItems = async (
   );
 };
 
-export const getReplies = async (db: DB, currentUser: string | undefined | null, postUid: string) => {
+export const getReplies = async (db: DB, currentUser: string | undefined | null, postUid: string, limit = 100, offset = 0) => {
   const rows = await db
     .select({
       uid: schema.replies.uid,
@@ -501,8 +501,8 @@ export const getReplies = async (db: DB, currentUser: string | undefined | null,
       desc(sql<number>`case when ${schema.posts.acceptedAnswerUid} = ${schema.replies.uid} then 1 else 0 end`),
       asc(schema.replies.timeCreated),
     )
-    .limit(200)
-    .offset(0);
+    .limit(limit)
+    .offset(offset);
 
   return rows.map(mapReplyItem);
 };
@@ -515,7 +515,16 @@ export const searchUsers = (db: DB, query: string) =>
       bio: sql<string>`coalesce(${schema.users.bio}, '')`,
     })
     .from(schema.users)
-    .where(and(sql`${schema.users.searchVector} @@ plainto_tsquery('english', ${query})`, isNull(schema.users.deletedAt)))
+    .where(
+      and(
+        sql`(
+          ${schema.users.searchVector} @@ to_tsquery('english', ${query} || ':*')
+          OR
+          ${schema.users.username} ILIKE ${query || ''} || '%'
+        )`,
+        isNull(schema.users.deletedAt),
+      ),
+    )
     .limit(5);
 
 export const listChambers = (db: DB, currentUser: string | undefined | null, query = "") => {

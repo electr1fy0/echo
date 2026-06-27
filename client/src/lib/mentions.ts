@@ -4,7 +4,7 @@ export type MentionContext = {
   end: number;
 };
 
-const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+const mentionRegex = /@([a-zA-Z0-9_-]+)/g;
 
 export function extractMentions(content: string): string[] {
   const usernames = new Set<string>();
@@ -26,7 +26,7 @@ export function getMentionContext(
   const fragment = uptoCursor.slice(atIndex + 1);
   if (/\s/.test(fragment)) return null;
   if (fragment.length === 0) return null;
-  if (!/^[a-zA-Z0-9_]+$/.test(fragment)) return null;
+  if (!/^[a-zA-Z0-9_-]+$/.test(fragment)) return null;
   return {
     query: fragment,
     start: atIndex,

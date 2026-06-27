@@ -185,7 +185,7 @@ export function EditPostDialog() {
           <MentionField
             placeholder="Edit your post..."
             ariaLabel="Edit post content"
-            className="resize-none min-h-[120px] border-none shadow-none focus-visible:ring-2 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-700 bg-transparent px-4 py-3 text-sm focus:outline-none rounded-xl"
+            className="resize-none min-h-[120px] border-none shadow-none before:shadow-none focus-visible:ring-2 focus-visible:ring-neutral-200 dark:focus-visible:ring-neutral-700 bg-transparent px-4 py-3 text-sm focus:outline-none rounded-xl"
             value={content}
             onValueChange={setContent}
             multiline

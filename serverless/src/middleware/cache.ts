@@ -19,5 +19,5 @@ export const cacheControl = createMiddleware<AppEnv>(async (c, next) => {
     return;
   }
 
-  cachePrivate(c, 30);
+  cacheNone(c);
 });

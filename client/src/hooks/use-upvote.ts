@@ -4,6 +4,8 @@ import { updateReplyVotes } from "@/api/replies";
 import { track } from "@/lib/analytics";
 import type { QuestionItem, AnswerItem } from "@/types";
 
+export const REPLY_UPVOTE_MUTATION_KEY = ["reply-upvote"];
+
 function toggleQuestionItem(item: QuestionItem): QuestionItem {
   return {
     ...item,
@@ -39,7 +41,6 @@ function makeUpdater(qid: string) {
 export function useUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationKey: ["upvote"],
     mutationFn: (qid: string) => updateVotes(qid),
     onMutate: async (qid) => {
       await Promise.all([
@@ -49,6 +50,11 @@ export function useUpdateVote() {
         queryClient.cancelQueries({ queryKey: ["question", qid] }),
       ]);
 
+      const previousQuestions = queryClient.getQueriesData({ queryKey: ["questions"] });
+      const previousUserQuestions = queryClient.getQueriesData({ queryKey: ["user-questions"] });
+      const previousSearchQuestions = queryClient.getQueriesData({ queryKey: ["search-questions"] });
+      const previousQuestion = queryClient.getQueryData<QuestionItem>(["question", qid]);
+
       const updater = makeUpdater(qid);
       queryClient.setQueriesData({ queryKey: ["questions"] }, updater);
       queryClient.setQueriesData({ queryKey: ["user-questions"] }, updater);
@@ -57,9 +63,23 @@ export function useUpdateVote() {
         old ? toggleQuestionItem(old) : old,
       );
 
-      return {};
+      return { previousQuestions, previousUserQuestions, previousSearchQuestions, previousQuestion };
     },
-    onError: () => {},
+    onError: (_err, qid, context) => {
+      if (!context) return;
+      for (const [key, data] of context.previousQuestions ?? []) {
+        if (data !== undefined) queryClient.setQueryData(key, data);
+      }
+      for (const [key, data] of context.previousUserQuestions ?? []) {
+        if (data !== undefined) queryClient.setQueryData(key, data);
+      }
+      for (const [key, data] of context.previousSearchQuestions ?? []) {
+        if (data !== undefined) queryClient.setQueryData(key, data);
+      }
+      if (context.previousQuestion !== undefined) {
+        queryClient.setQueryData(["question", qid], context.previousQuestion);
+      }
+    },
     onSettled: (_data, err, qid) => {
       if (!err) {
         track("post_upvote");
@@ -75,15 +95,17 @@ export function useUpdateVote() {
 export function useReplyUpdateVote() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ qid, rid }: { qid: string; rid: string }) =>
+    mutationKey: REPLY_UPVOTE_MUTATION_KEY,
+    mutationFn: ({ qid, rid }: { qid: string; rid: string; queryKey?: string }) =>
       updateReplyVotes(qid, rid),
-    onMutate: async ({ qid, rid }) => {
-      await queryClient.cancelQueries({ queryKey: ["replies", qid] });
+    onMutate: async ({ qid, rid, queryKey }: { qid: string; rid: string; queryKey?: string }) => {
+      const key = queryKey ?? qid;
+      await queryClient.cancelQueries({ queryKey: ["replies", key] });
       const previousReplies = queryClient.getQueryData<AnswerItem[]>([
         "replies",
-        qid,
+        key,
       ]);
-      queryClient.setQueryData<AnswerItem[]>(["replies", qid], (old) => {
+      queryClient.setQueryData<AnswerItem[]>(["replies", key], (old) => {
         if (!old) return undefined;
         return old.map((item) => {
           if (item.answer.uid === rid) {
@@ -102,18 +124,21 @@ export function useReplyUpdateVote() {
           return item;
         });
       });
-      return { previousReplies };
+      return { previousReplies, queryKey: key };
     },
-    onError: (_err, { qid }, context) => {
+    onError: (_err, _vars, context) => {
       if (context?.previousReplies) {
-        queryClient.setQueryData(["replies", qid], context.previousReplies);
+        queryClient.setQueryData(
+          ["replies", context.queryKey],
+          context.previousReplies,
+        );
       }
     },
-    onSettled: (_data, err, { qid }) => {
+    onSettled: (_data, err, vars) => {
       if (!err) {
         track("reply_upvote");
       }
-      queryClient.invalidateQueries({ queryKey: ["replies", qid] });
+      queryClient.invalidateQueries({ queryKey: ["replies", vars.queryKey ?? vars.qid] });
     },
   });
 }

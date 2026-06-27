@@ -13,7 +13,7 @@ import { handleApiError } from "@/lib/api-error";
 import { toastManager } from "@/components/ui/toast";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowLeft01Icon, Edit01Icon, Delete01Icon, ImageAdd02Icon } from "@hugeicons/core-free-icons";
-import { formatDistanceToNowStrict, isToday, isYesterday, format } from "date-fns";
+import { isToday, isYesterday, format } from "date-fns";
 
 import { uploadImagePresigned } from "@/api/upload";
 import {
@@ -91,6 +91,22 @@ function getDateLabel(date: Date): string {
   return format(date, "MMMM d, yyyy");
 }
 
+function formatMessageTime(date: Date): string {
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return "now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d`;
+  const diffWeek = Math.floor(diffDay / 7);
+  if (diffWeek < 5) return `${diffWeek}w`;
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth}mo`;
+  return `${Math.floor(diffMonth / 12)}y`;
+}
+
 function toDateKey(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }
@@ -116,14 +132,18 @@ export default function DMConversationPage() {
 
   const conversation = conversations?.find((c) => c.uid === conversationId);
   const otherUser = conversation?.otherUsername;
+  const lastMarkedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (conversationId) markRead(conversationId);
-  }, [conversationId, markRead]);
-
-  useEffect(() => {
-    if (messages && messages.length > 0 && conversationId) markRead(conversationId);
-  }, [messages, conversationId, markRead]);
+    if (!conversationId || !messages?.length) return;
+    const otherMsgs = messages.filter((m) => m.sender !== user?.username);
+    if (!otherMsgs.length) return;
+    const latestOther = otherMsgs[otherMsgs.length - 1];
+    if (latestOther.uid !== lastMarkedRef.current) {
+      lastMarkedRef.current = latestOther.uid;
+      markRead(conversationId);
+    }
+  }, [messages, conversationId, markRead, user?.username]);
 
   useEffect(() => {
     if (editingId) editInputRef.current?.focus();
@@ -312,16 +332,18 @@ export default function DMConversationPage() {
                                 </div>
                               )}
                               <MessageFooter>
-                                <span>
-                                  {formatDistanceToNowStrict(new Date(msg.timeCreated), { addSuffix: true })}
-                                </span>
                                 {isMine && (
-                                  <ActionsPopover
-                                    msgUid={msg.uid}
-                                    onEdit={startEdit}
-                                    onDelete={setDeleteTarget}
-                                  />
+                                  <span className="flex md:opacity-0 md:group-hover/message:opacity-100 md:transition-opacity mr-2">
+                                    <ActionsPopover
+                                      msgUid={msg.uid}
+                                      onEdit={startEdit}
+                                      onDelete={setDeleteTarget}
+                                    />
+                                  </span>
                                 )}
+                                <span className="ml-auto">
+                                  {formatMessageTime(new Date(msg.timeCreated))}
+                                </span>
                               </MessageFooter>
                             </MessageContent>
                           </Message>

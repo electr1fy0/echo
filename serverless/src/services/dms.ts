@@ -1,6 +1,7 @@
 import { and, desc, eq, gt, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import type { DB } from "../db";
 import { schema } from "../db";
+import { ApiError } from "../lib/errors";
 
 export const getConversations = async (db: DB, username: string) => {
   const convs = await db
@@ -128,6 +129,7 @@ export const getMessages = async (
   currentUsername: string,
   limit = 50,
   offset = 0,
+  since?: string,
 ) => {
   const [conv] = await db
     .select()
@@ -135,9 +137,14 @@ export const getMessages = async (
     .where(eq(schema.conversations.uid, conversationUid))
     .limit(1);
 
-  if (!conv) return [];
+  if (!conv) throw new ApiError(404, "conversation not found");
   if (conv.participantA !== currentUsername && conv.participantB !== currentUsername) {
-    return [];
+    throw new ApiError(403, "access denied");
+  }
+
+  const conditions = [eq(schema.messages.conversationUid, conversationUid)];
+  if (since) {
+    conditions.push(gt(schema.messages.timeCreated, new Date(since)));
   }
 
   const rows = await db
@@ -149,7 +156,7 @@ export const getMessages = async (
       timeCreated: schema.messages.timeCreated,
     })
     .from(schema.messages)
-    .where(eq(schema.messages.conversationUid, conversationUid))
+    .where(and(...conditions))
     .orderBy(desc(schema.messages.timeCreated))
     .limit(limit)
     .offset(offset);
@@ -163,7 +170,7 @@ export const createMessage = async (
   sender: string,
   content: string,
 ) => {
-  if (!content.trim()) return null;
+  if (!content.trim()) throw new ApiError(400, "message content cannot be empty");
 
   const [conv] = await db
     .select()
@@ -171,8 +178,10 @@ export const createMessage = async (
     .where(eq(schema.conversations.uid, conversationUid))
     .limit(1);
 
-  if (!conv) return null;
-  if (conv.participantA !== sender && conv.participantB !== sender) return null;
+  if (!conv) throw new ApiError(404, "conversation not found");
+  if (conv.participantA !== sender && conv.participantB !== sender) {
+    throw new ApiError(403, "access denied");
+  }
 
   const [msg] = await db
     .insert(schema.messages)
@@ -225,7 +234,7 @@ export const editMessage = async (
   currentUser: string,
   content: string,
 ) => {
-  if (!content.trim()) return null;
+  if (!content.trim()) throw new ApiError(400, "message content cannot be empty");
 
   const [conv] = await db
     .select()
@@ -233,8 +242,10 @@ export const editMessage = async (
     .where(eq(schema.conversations.uid, conversationUid))
     .limit(1);
 
-  if (!conv) return null;
-  if (conv.participantA !== currentUser && conv.participantB !== currentUser) return null;
+  if (!conv) throw new ApiError(404, "conversation not found");
+  if (conv.participantA !== currentUser && conv.participantB !== currentUser) {
+    throw new ApiError(403, "access denied");
+  }
 
   const [existing] = await db
     .select()
@@ -242,7 +253,7 @@ export const editMessage = async (
     .where(and(eq(schema.messages.uid, messageUid), eq(schema.messages.conversationUid, conversationUid)))
     .limit(1);
 
-  if (!existing || existing.sender !== currentUser) return null;
+  if (!existing || existing.sender !== currentUser) throw new ApiError(404, "message not found");
 
   const [updated] = await db
     .update(schema.messages)
@@ -265,8 +276,10 @@ export const deleteMessage = async (
     .where(eq(schema.conversations.uid, conversationUid))
     .limit(1);
 
-  if (!conv) return false;
-  if (conv.participantA !== currentUser && conv.participantB !== currentUser) return false;
+  if (!conv) throw new ApiError(404, "conversation not found");
+  if (conv.participantA !== currentUser && conv.participantB !== currentUser) {
+    throw new ApiError(403, "access denied");
+  }
 
   const [existing] = await db
     .select()
@@ -274,7 +287,7 @@ export const deleteMessage = async (
     .where(and(eq(schema.messages.uid, messageUid), eq(schema.messages.conversationUid, conversationUid)))
     .limit(1);
 
-  if (!existing || existing.sender !== currentUser) return false;
+  if (!existing || existing.sender !== currentUser) throw new ApiError(404, "message not found");
 
   await db
     .delete(schema.messages)

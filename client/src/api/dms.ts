@@ -21,11 +21,12 @@ export async function createConversation(username: string) {
   return res.json() as Promise<Conversation>;
 }
 
-export async function fetchMessages(conversationUid: string, limit = 50, offset = 0) {
+export async function fetchMessages(conversationUid: string, limit = 50, offset = 0, since?: string) {
   const params = new URLSearchParams({
     limit: limit.toString(),
     offset: offset.toString(),
   });
+  if (since) params.set("since", since);
   const res = await fetch(`${API_URL}/dms/conversations/${conversationUid}/messages?${params}`, {
     headers: { ...getAuthHeaders() },
   });

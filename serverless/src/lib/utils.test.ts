@@ -40,19 +40,19 @@ describe("parsePagination", () => {
   });
 
   it("uses defaults when no params provided", () => {
-    expect(parsePagination({})).toEqual({ limit: 500, offset: 0 });
+    expect(parsePagination({})).toEqual({ limit: 50, offset: 0 });
   });
 
   it("falls back to defaults for NaN values", () => {
     expect(parsePagination({ limit: "abc", offset: "xyz" })).toEqual({
-      limit: 500,
+      limit: 50,
       offset: 0,
     });
   });
 
   it("handles partial params", () => {
     expect(parsePagination({ limit: "20" })).toEqual({ limit: 20, offset: 0 });
-    expect(parsePagination({ offset: "10" })).toEqual({ limit: 500, offset: 10 });
+    expect(parsePagination({ offset: "10" })).toEqual({ limit: 50, offset: 10 });
   });
 });
 

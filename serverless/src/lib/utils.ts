@@ -1,3 +1,4 @@
+import { eq, or, sql, type SQL } from "drizzle-orm";
 import { ApiError } from "./errors";
 import type { Bindings } from "../types/app";
 
@@ -6,7 +7,7 @@ export const MAX_POST_WORDS = 5000;
 export const countWords = (text: string) =>
   text.trim().split(/\s+/).filter(Boolean).length;
 
-const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+const mentionRegex = /@([a-zA-Z0-9_-]+)/g;
 
 export const extractMentions = (content: string): string[] => {
   const usernames = new Set<string>();
@@ -16,12 +17,23 @@ export const extractMentions = (content: string): string[] => {
   return [...usernames];
 };
 
+/**
+ * Matches a UUID column OR a slug column against a user-provided identifier.
+ * The identifier can be either a UUID or a slug string.
+ * Uses ::text cast on the UUID column so PostgreSQL can compare against a string.
+ */
+export const matchesIdentifier = (
+  uidColumn: any,
+  slugColumn: any,
+  identifier: string,
+): SQL => or(sql`${uidColumn}::text = ${identifier}`, eq(slugColumn, identifier))!;
+
 export const parsePagination = (query: Record<string, string | undefined>) => {
-  const limitValue = Number.parseInt(query.limit ?? "500", 10);
+  const limitValue = Number.parseInt(query.limit ?? "50", 10);
   const offsetValue = Number.parseInt(query.offset ?? "0", 10);
 
   return {
-    limit: Number.isFinite(limitValue) ? limitValue : 500,
+    limit: Number.isFinite(limitValue) ? limitValue : 50,
     offset: Number.isFinite(offsetValue) ? offsetValue : 0,
   };
 };
@@ -29,6 +41,12 @@ export const parsePagination = (query: Record<string, string | undefined>) => {
 export const randomToken = (byteLength: number) => {
   const bytes = crypto.getRandomValues(new Uint8Array(byteLength));
   return Array.from(bytes, (byte: number) => byte.toString(16).padStart(2, "0")).join("");
+};
+
+export const randomOtp = (): string => {
+  const bytes = crypto.getRandomValues(new Uint8Array(3));
+  const num = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
+  return String(100000 + (num % 900000));
 };
 
 export const getClientUrl = (env: Bindings) => {

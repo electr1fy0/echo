@@ -99,7 +99,19 @@ export const getUserAnalytics = async (db: DB, username: string) => {
   }
 
   let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
   const sortedDates = [...dates.entries()].sort(([a], [b]) => b.localeCompare(a));
+  for (const [, count] of sortedDates) {
+    if (count > 0) {
+      tempStreak++;
+      if (tempStreak > longestStreak) longestStreak = tempStreak;
+    } else {
+      tempStreak = 0;
+    }
+  }
+  // currentStreak is the streak ending today (consecutive active days from most recent)
+  currentStreak = 0;
   for (const [, count] of sortedDates) {
     if (count > 0) currentStreak++;
     else break;
@@ -189,7 +201,7 @@ export const getUserAnalytics = async (db: DB, username: string) => {
     },
     streaks: {
       currentStreak,
-      longestStreak: currentStreak,
+      longestStreak,
     },
     engagement: {
       replyRate,

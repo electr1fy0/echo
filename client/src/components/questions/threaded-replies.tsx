@@ -95,6 +95,7 @@ function TreeNodeComponent({
               node.item.author?.username === authorUsername
             }
             onReply={() => setIsReplying(true)}
+            questionId={questionId}
           />
         </div>
         {isReplying && (

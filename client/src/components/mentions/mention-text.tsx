@@ -6,7 +6,7 @@ type MentionTextProps = {
   className?: string;
 };
 
-const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+const mentionRegex = /@([a-zA-Z0-9_-]+)/g;
 
 function renderPlainText(text: string, keyPrefix: string) {
   if (text.length === 0) return [];

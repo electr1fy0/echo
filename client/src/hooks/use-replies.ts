@@ -77,8 +77,10 @@ export function useCreateReply() {
         );
       }
     },
-    onSettled: (_, __, { questionId }) => {
+    onSuccess: () => {
       track("reply_create");
+    },
+    onSettled: (_, __, { questionId }) => {
       queryClient.invalidateQueries({
         queryKey: ["replies", questionId],
       });

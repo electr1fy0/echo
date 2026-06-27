@@ -183,10 +183,104 @@ export default function QuestionDetailPage() {
       </button>
 
       {/* Main Post Container */}
-      <div className="border border-neutral-200 dark:border-neutral-800 bg-background rounded-2xl p-5 mb-6 space-y-4">
+      <div className="relative border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] rounded-2xl p-5 mb-6 space-y-4">
+        {/* Action options */}
+        <div className="absolute top-3 right-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={(props: any) => (
+                <Button
+                  {...props}
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="More options"
+                >
+                  <HugeiconsIcon
+                    icon={MoreHorizontalIcon}
+                    className="size-5"
+                  />
+                </Button>
+              )}
+            />
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(question.content);
+                  toastManager.add({
+                    title: "Copied to clipboard",
+                    type: "success",
+                  });
+                }}
+              >
+                <HugeiconsIcon
+                  icon={Copy01Icon}
+                  className="mr-2 size-4"
+                />
+                Copy Text
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toastManager.add({
+                    title: "Link copied to clipboard",
+                    type: "success",
+                  });
+                }}
+              >
+                <HugeiconsIcon
+                  icon={Share01Icon}
+                  className="mr-2 size-4"
+                />
+                Share
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  report({ targetType: "post", targetUid: questionId! })
+                }
+              >
+                <HugeiconsIcon
+                  icon={Alert01Icon}
+                  className="mr-2 size-4"
+                />
+                Report
+              </DropdownMenuItem>
+              {user?.username === question.authorUsername && (
+                <>
+                  <DropdownMenuItem
+                    onClick={() => setShowAnalytics(true)}
+                  >
+                    <HugeiconsIcon
+                      icon={Analytics02Icon}
+                      className="mr-2 size-4"
+                    />
+                    Post Analytics
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => openEditModal(question)}
+                  >
+                    <HugeiconsIcon
+                      icon={PencilEdit02Icon}
+                      className="mr-2 size-4"
+                    />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => setShowDeleteAlert(true)}
+                  >
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      className="mr-2 size-4"
+                    />
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         {/* Author details */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
             {question.isAnonymous || author?.username === "[deleted]" ? (
               <UserAvatar
                 src={undefined}
@@ -252,103 +346,6 @@ export default function QuestionDetailPage() {
               </span>
             </div>
           </div>
-
-          {/* Action options */}
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={(props: any) => (
-                  <Button
-                    {...props}
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="More options"
-                  >
-                    <HugeiconsIcon
-                      icon={MoreHorizontalIcon}
-                      className="size-5"
-                    />
-                  </Button>
-                )}
-              />
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    navigator.clipboard.writeText(question.content);
-                    toastManager.add({
-                      title: "Copied to clipboard",
-                      type: "success",
-                    });
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={Copy01Icon}
-                    className="mr-2 size-4"
-                  />
-                  Copy Text
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    toastManager.add({
-                      title: "Link copied to clipboard",
-                      type: "success",
-                    });
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={Share01Icon}
-                    className="mr-2 size-4"
-                  />
-                  Share
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    report({ targetType: "post", targetUid: questionId! })
-                  }
-                >
-                  <HugeiconsIcon
-                    icon={Alert01Icon}
-                    className="mr-2 size-4"
-                  />
-                  Report
-                </DropdownMenuItem>
-                {user?.username === question.authorUsername && (
-                  <>
-                    <DropdownMenuItem
-                      onClick={() => setShowAnalytics(true)}
-                    >
-                      <HugeiconsIcon
-                        icon={Analytics02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Post Analytics
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => openEditModal(question)}
-                    >
-                      <HugeiconsIcon
-                        icon={PencilEdit02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => setShowDeleteAlert(true)}
-                    >
-                      <HugeiconsIcon
-                        icon={Delete02Icon}
-                        className="mr-2 size-4"
-                      />
-                      Delete
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
 
         {/* Content body */}
         <PostContent

@@ -129,6 +129,9 @@ export function useDeleteQuestion() {
         queryClient.cancelQueries({ queryKey: ["user-questions"] }),
       ]);
 
+      const previousQuestions = queryClient.getQueriesData({ queryKey: ["questions"] });
+      const previousUserQuestions = queryClient.getQueriesData({ queryKey: ["user-questions"] });
+
       const removeItem = (old: unknown) => {
         if (!old) return old;
         if (typeof old === "object" && "pages" in old) {
@@ -149,9 +152,17 @@ export function useDeleteQuestion() {
       queryClient.setQueriesData({ queryKey: ["questions"] }, removeItem);
       queryClient.setQueriesData({ queryKey: ["user-questions"] }, removeItem);
 
-      return {};
+      return { previousQuestions, previousUserQuestions };
     },
-    onError: () => {},
+    onError: (_err, _questionId, context) => {
+      if (!context) return;
+      for (const [key, data] of context.previousQuestions ?? []) {
+        if (data !== undefined) queryClient.setQueryData(key, data);
+      }
+      for (const [key, data] of context.previousUserQuestions ?? []) {
+        if (data !== undefined) queryClient.setQueryData(key, data);
+      }
+    },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       queryClient.invalidateQueries({ queryKey: ["user-questions"] });
@@ -339,11 +350,11 @@ export function useVotePoll() {
         queryClient.cancelQueries({ queryKey: ["questions"] }),
       ]);
 
+      const previousQuestions = queryClient.getQueriesData({ queryKey: ["questions"] });
+      const previousQuestion = queryClient.getQueryData<QuestionItem>(["question", questionId]);
+
       const applyVote = (old: unknown) => {
         if (!old) return old;
-        if (queryClient.getQueryData(["question", questionId]) === old) {
-          return applyOptimisticPollVote(old as QuestionItem, optionIndex);
-        }
         if (typeof old === "object" && "pages" in old) {
           const inf = old as { pages: QuestionItem[][]; pageParams: unknown[] };
           return {
@@ -372,9 +383,17 @@ export function useVotePoll() {
         old ? applyOptimisticPollVote(old, optionIndex) : old,
       );
 
-      return {};
+      return { previousQuestions, previousQuestion };
     },
-    onError: () => {},
+    onError: (_err, _vars, context) => {
+      if (!context) return;
+      for (const [key, data] of context.previousQuestions ?? []) {
+        if (data !== undefined) queryClient.setQueryData(key, data);
+      }
+      if (context.previousQuestion !== undefined) {
+        queryClient.setQueryData(["question", _vars.questionId], context.previousQuestion);
+      }
+    },
     onSettled: (_data, _err, { questionId }) => {
       queryClient.invalidateQueries({ queryKey: ["question", questionId] });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
