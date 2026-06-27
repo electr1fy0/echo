@@ -305,7 +305,7 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
         actorUsername: currentUser,
         type: "upvote_post",
         referenceUid: uid,
-      }, c.env);
+      });
       await trackEvent(db, {
         username: post.author,
         event: "upvote_received",
@@ -392,10 +392,10 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
       type: "reply_post",
       referenceUid: created.uid,
       actorIsAnonymous: body.isAnonymous ?? false,
-    }, c.env);
+    });
   }
 
-  await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author, body.isAnonymous ?? false, c.env);
+  await notifyMentions(db, body.content ?? "", currentUser, created.uid, true, post?.author, body.isAnonymous ?? false);
   await recomputeReputation(db, currentUser);
 
   eventBus.emit(Events.ReplyCreated, { replyUid: created.uid, postUid: uid, author: currentUser, postAuthor: post?.author }, {
@@ -477,7 +477,7 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
         actorUsername: currentUser,
         type: "upvote_reply",
         referenceUid: ruid,
-      }, c.env);
+      });
       await trackEvent(db, {
         username: reply.author,
         event: "upvote_received",
@@ -646,7 +646,7 @@ questionRoutes.post("/:uid/apply", requireAuth, async (c) => {
       actorUsername: applicantUsername,
       type: "partner_application",
       referenceUid: application.uid,
-    }, c.env);
+    });
   }
 
   return c.json({ message: "application submitted", uid: application.uid }, 201);
@@ -710,7 +710,7 @@ questionRoutes.patch("/:uid/applications/:appUid", requireAuth, async (c) => {
     actorUsername: currentUser,
     type: `partner_${body.status}`,
     referenceUid: appUid,
-  }, c.env);
+  });
 
   return c.json({ message: `application ${body.status}` });
 });

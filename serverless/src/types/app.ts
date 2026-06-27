@@ -20,7 +20,6 @@ export type Bindings = {
   R2_SECRET_ACCESS_KEY: string;
   API_LIMITER?: RateLimit;
   AUTH_LIMITER?: RateLimit;
-  USER_ROOM: DurableObjectNamespace;
 };
 
 export type Variables = {

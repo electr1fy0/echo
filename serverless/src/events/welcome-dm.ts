@@ -1,7 +1,6 @@
 import { Events, eventBus } from "../lib/events";
 import { getOrCreateConversation, createMessage } from "../services/dms";
 import { TURNSOUT_USERNAME } from "../db/seed";
-import { pushToUser } from "../lib/push";
 
 export const registerWelcomeDmHandler = () => {
   eventBus.on<{ username: string }>(Events.UserRegistered, async (data, ctx) => {
@@ -27,16 +26,7 @@ export const registerWelcomeDmHandler = () => {
         "— The TurnsOut Team",
       ].join("\n");
 
-      const msg = await createMessage(ctx.db, conv.uid, TURNSOUT_USERNAME, welcomeMessage);
-      if (msg) {
-        ctx.waitUntil(
-          pushToUser(ctx.env, data.username, "new_message", {
-            conversationUid: conv.uid,
-            message: msg,
-            sender: TURNSOUT_USERNAME,
-          }),
-        );
-      }
+      await createMessage(ctx.db, conv.uid, TURNSOUT_USERNAME, welcomeMessage);
     } catch (error) {
       console.error("[welcome-dm] failed to send welcome message:", error);
     }

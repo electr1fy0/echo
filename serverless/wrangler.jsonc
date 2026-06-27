@@ -20,11 +20,6 @@
       "binding": "IMAGES_BUCKET",
       "bucket_name": "echo-images",
     },
-    {
-      "bucket_name": "echo-images",
-      "binding": "echo_images",
-      "remote": true,
-    },
   ],
   "observability": {
     "enabled": false,
@@ -58,20 +53,6 @@
         "period": 60,
       },
     },
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "USER_ROOM",
-        "class_name": "UserRoom"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_classes": ["UserRoom"]
-    }
   ],
   // "observability": {
   //   "enabled": true,

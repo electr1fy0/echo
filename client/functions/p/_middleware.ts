@@ -75,13 +75,12 @@ export async function onRequest(context: EventContext<unknown, string, { slug: s
   if (!questionId) return next();
 
   const apiUrl = (env as Record<string, string | undefined>).VITE_ECHO_URL || "http://localhost:8787";
-  const ogImage = `${url.protocol}//${url.host}/api/og?questionId=${encodeURIComponent(questionId)}`;
   const pageUrl = `${url.protocol}//${url.host}/p/${questionId}`;
 
   let title = "Post on TurnsOut";
   let description = "Join the conversation on TurnsOut";
   let canonicalUrl = pageUrl;
-  let canonicalImage = ogImage;
+  let canonicalImage = `${url.protocol}//${url.host}/thumb.jpg`;
 
   try {
     const controller = new AbortController();
