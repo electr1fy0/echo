@@ -40,7 +40,6 @@ function generateSvg(
   displayName: string,
   chamberName: string | undefined,
   content: string,
-  fontDataBase64: string,
 ): string {
   const lines = wrapText(content, 55);
   const hasMore = content.length > lines.join(" ").length;
@@ -62,15 +61,6 @@ function generateSvg(
     : "";
 
   return `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <style>
-      @font-face {
-        font-family: 'Inter';
-        src: url(data:font/woff2;base64,${fontDataBase64}) format('woff2');
-        font-weight: 400 700;
-      }
-    </style>
-  </defs>
   <rect width="1200" height="630" fill="#FFFFFF"/>
   <text x="64" y="110" font-family="Inter, sans-serif" font-size="26" font-weight="600" fill="#171717">${escapeXml(displayName)}</text>
   ${chamberXml}
@@ -89,7 +79,7 @@ ${linesXml}
 }
 
 let resvgInitPromise: Promise<void> | null = null;
-let fontBase64: string | null = null;
+let fontBuffer: ArrayBuffer | null = null;
 
 function fetchWithTimeout(url: string, ms: number): Promise<Response> {
   return fetch(url, { signal: AbortSignal.timeout(ms) });
@@ -102,24 +92,18 @@ async function ensureDeps(url: URL) {
     })();
   }
 
-  if (!fontBase64) {
+  if (!fontBuffer) {
     try {
       const fontUrl = `${url.protocol}//${url.host}/fonts/inter.woff2`;
-      const fontData = await fetchWithTimeout(fontUrl, 10000).then((r) => r.arrayBuffer());
-      const bytes = new Uint8Array(fontData);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-      fontBase64 = btoa(binary);
+      fontBuffer = await fetchWithTimeout(fontUrl, 10000).then((r) => r.arrayBuffer());
     } catch {
-      fontBase64 = "";
+      fontBuffer = new ArrayBuffer(0);
     }
   }
 
   await resvgInitPromise;
 
-  return { fontBase64 };
+  return { fontBuffer };
 }
 
 export async function onRequest(context: EventContext<unknown, unknown, Record<string, string>>) {
@@ -148,8 +132,8 @@ export async function onRequest(context: EventContext<unknown, unknown, Record<s
       author?: { username: string };
     };
 
-    const { fontBase64: fontData } = await ensureDeps(url);
-    if (!fontData) {
+    const { fontBuffer: font } = await ensureDeps(url);
+    if (!font || font.byteLength === 0) {
       return new Response("Font loading failed", { status: 500 });
     }
 
@@ -159,9 +143,12 @@ export async function onRequest(context: EventContext<unknown, unknown, Record<s
       : isDeleted ? "[deleted]" : (data.author?.username || data.question.authorUsername);
 
     const cleanContent = stripHtml(data.question.content);
-    const svg = generateSvg(displayName, data.question.chamberName, cleanContent, fontData);
+    const svg = generateSvg(displayName, data.question.chamberName, cleanContent);
 
-    const r = new resvgMod.Resvg(svg, { fitTo: { mode: "width", value: 1200 } });
+    const r = new resvgMod.Resvg(svg, {
+      fitTo: { mode: "width", value: 1200 },
+      font: { fontBuffers: [new Uint8Array(font)] },
+    });
     const pngBuffer = r.render().asPng();
 
     return new Response(pngBuffer, {
