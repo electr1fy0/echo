@@ -16,21 +16,21 @@ export function PostAnalytics({ postUid }: { postUid: string }) {
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        <Skeleton className="h-6 w-32" />
-        <div className="grid grid-cols-3 gap-3">
+      <div className="p-2.5 sm:p-4 space-y-3 sm:space-y-4">
+        <Skeleton className="h-5 sm:h-6 w-28 sm:w-32" />
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-lg" />
+            <Skeleton key={i} className="h-12 sm:h-16 rounded-lg" />
           ))}
         </div>
-        <Skeleton className="h-32 rounded-lg" />
+        <Skeleton className="h-28 sm:h-32 rounded-lg" />
       </div>
     );
   }
 
   if (!analytics) {
     return (
-      <div className="p-4 text-sm text-neutral-500">Analytics not available.</div>
+      <div className="p-2.5 sm:p-4 text-xs sm:text-sm text-neutral-500">Analytics not available.</div>
     );
   }
 
@@ -39,29 +39,29 @@ export function PostAnalytics({ postUid }: { postUid: string }) {
     : [{ date: new Date().toISOString().split("T")[0], count: 0 }];
 
   return (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
-          <p className="text-[11px] text-neutral-500 mb-1">Views</p>
-          <p className="text-lg font-semibold tabular-nums">
+    <div className="p-2.5 sm:p-4">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-3 mb-3 sm:mb-4">
+        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-2 sm:p-3">
+          <p className="text-[10px] sm:text-[11px] text-neutral-500 mb-0.5 sm:mb-1 leading-tight">Views</p>
+          <p className="text-sm sm:text-lg font-semibold tabular-nums leading-none">
             <NumberFlow value={analytics.totalViews} />
           </p>
         </div>
-        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
-          <p className="text-[11px] text-neutral-500 mb-1">Unique</p>
-          <p className="text-lg font-semibold tabular-nums">
+        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-2 sm:p-3">
+          <p className="text-[10px] sm:text-[11px] text-neutral-500 mb-0.5 sm:mb-1 leading-tight">Unique</p>
+          <p className="text-sm sm:text-lg font-semibold tabular-nums leading-none">
             <NumberFlow value={analytics.uniqueViewers} />
           </p>
         </div>
-        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3">
-          <p className="text-[11px] text-neutral-500 mb-1">Replies</p>
-          <p className="text-lg font-semibold tabular-nums">
+        <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-2 sm:p-3">
+          <p className="text-[10px] sm:text-[11px] text-neutral-500 mb-0.5 sm:mb-1 leading-tight">Replies</p>
+          <p className="text-sm sm:text-lg font-semibold tabular-nums leading-none">
             <NumberFlow value={analytics.replyCount} />
           </p>
         </div>
       </div>
 
-      <div className="h-32">
+      <div className="h-28 sm:h-32">
         <EvilAreaChart data={viewData} config={viewsConfig}>
           <Area dataKey="count" variant="gradient" />
           <XAxis dataKey="date" tickFormatter={(v: string) => v.slice(5)} />

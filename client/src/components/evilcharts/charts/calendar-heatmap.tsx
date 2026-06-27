@@ -45,15 +45,15 @@ export function CalendarHeatmap({ data, months = 12 }: CalendarHeatmapProps) {
   }, [data, months]);
 
   return (
-    <div className="overflow-x-auto">
-      <div className="flex gap-[3px]">
+    <div className="overflow-x-auto pb-1 min-w-0">
+      <div className="flex gap-[2px] sm:gap-[3px]">
         {weeks.map((week, wi) => (
-          <div key={wi} className="flex flex-col gap-[3px]">
+          <div key={wi} className="flex flex-col gap-[2px] sm:gap-[3px]">
             {week.map((day) => (
               <div
                 key={day.date}
                 className={cn(
-                  "size-3 rounded-sm",
+                  "size-[8px] sm:size-3 rounded-sm",
                   day.intensity === 0 && "bg-neutral-100 dark:bg-neutral-800",
                   day.intensity === 1 && "bg-blue-200 dark:bg-blue-900/40",
                   day.intensity === 2 && "bg-blue-400 dark:bg-blue-700/60",

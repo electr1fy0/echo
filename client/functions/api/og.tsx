@@ -1,71 +1,25 @@
-/** @jsxImportSource satori/jsx */
-import satori from "satori";
-import { initWasm, Resvg } from "@resvg/resvg-wasm";
-import initYoga from "yoga-wasm-web";
-
-let yogaPromise: Promise<unknown> | null = null;
-async function getYoga() {
-  if (!yogaPromise) {
-    yogaPromise = initYoga().catch((err) => {
-      yogaPromise = null;
-      throw err;
-    });
-  }
-  return yogaPromise;
+if (typeof process === "undefined") {
+  (globalThis as any).process = { env: {} };
 }
 
-let resvgInitPromise: Promise<void> | null = null;
-async function ensureResvg(url: URL) {
-  if (!resvgInitPromise) {
-    resvgInitPromise = (async () => {
-      const wasmUrl = `${url.protocol}//${url.host}/resvg.wasm`;
-      const wasmBytes = await fetch(wasmUrl).then((r) => r.arrayBuffer());
-      await initWasm(wasmBytes);
-    })().catch((err) => {
-      resvgInitPromise = null;
-      throw err;
-    });
-  }
-  return resvgInitPromise;
+function h(type: string, props: Record<string, unknown> | null, ...children: unknown[]) {
+  return {
+    type,
+    props: { ...props, children: children.flat().filter((c) => c != null) },
+    key: null,
+  };
 }
 
-let fontsPromise: Promise<{ name: string; data: ArrayBuffer; weight: number; style: "normal" }[]> | null = null;
-async function loadFonts() {
-  if (!fontsPromise) {
-    fontsPromise = (async () => {
-      const css = await fetch(
-        "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap",
-      ).then((r) => r.text());
+interface QuestionData {
+  content: string;
+  isAnonymous?: boolean;
+  authorUsername: string;
+  chamberName?: string;
+}
 
-      const urls = [...css.matchAll(/url\(([^)]+)\)/g)].map((m) => m[1]);
-      const seen = new Set<string>();
-
-      const results = await Promise.all(
-        urls.map(async (url) => {
-          const fullUrl = url.startsWith("https")
-            ? url
-            : url.startsWith("//")
-              ? `https:${url}`
-              : `https://fonts.gstatic.com/${url.replace(/^\/\//, "")}`;
-
-          if (seen.has(fullUrl)) return null;
-          seen.add(fullUrl);
-
-          const data = await fetch(fullUrl).then((r) => r.arrayBuffer());
-          const weightMatch = fullUrl.match(/wght@(\d{3})/);
-          return {
-            name: "Inter",
-            data,
-            weight: weightMatch ? Number(weightMatch[1]) : 400,
-            style: "normal" as const,
-          };
-        }),
-      );
-
-      return results.filter(Boolean) as { name: string; data: ArrayBuffer; weight: number; style: "normal" }[];
-    })();
-  }
-  return fontsPromise;
+interface AuthorData {
+  username: string;
+  avatar?: string;
 }
 
 function truncate(text: string, maxLen: number): string {
@@ -87,21 +41,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-const PAD = 64;
-
-interface QuestionData {
-  content: string;
-  isAnonymous?: boolean;
-  authorUsername: string;
-  chamberName?: string;
-}
-
-interface AuthorData {
-  username: string;
-  avatar?: string;
-}
-
-function PostCard({ question, author }: { question: QuestionData; author?: AuthorData }) {
+function PostCard(question: QuestionData, author?: AuthorData) {
   const isDeleted = author?.username === "[deleted]";
   const displayName = question.isAnonymous
     ? "Anonymous"
@@ -111,54 +51,88 @@ function PostCard({ question, author }: { question: QuestionData; author?: Autho
   const truncatedContent = truncate(cleanContent, 250);
   const hasMore = cleanContent.length > 250;
 
-  return (
-    <div
-      style={{
-        width: 1200,
-        height: 630,
-        display: "flex",
-        flexDirection: "column",
-        background: "#FFFFFF",
-        fontFamily: "Inter",
-        padding: PAD,
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        <span style={{ fontSize: 26, fontWeight: 600, color: "#171717" }}>
-          {displayName}
-        </span>
-        {question.chamberName && (
-          <span style={{ fontSize: 26, color: "#a3a3a3" }}>
-            in {question.chamberName}
-          </span>
-        )}
-      </div>
-
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <span style={{ fontSize: 36, fontWeight: 500, color: "#171717", lineHeight: 1.4 }}>
-          {truncatedContent}
-        </span>
-        {hasMore && (
-          <span style={{ fontSize: 18, color: "#a3a3a3", marginTop: 14 }}>
-            Continue reading…
-          </span>
-        )}
-      </div>
-
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <div style={{
-          width: 56, height: 56, background: "#F54900", borderRadius: 12,
-          display: "flex", flexDirection: "column", alignItems: "center",
-          justifyContent: "center", gap: 5,
-        }}>
-          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2, opacity: 0.3 }} />
-          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2, opacity: 0.3 }} />
-          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2 }} />
-          <div style={{ width: 30, height: 5, background: "#fff", borderRadius: 2 }} />
-        </div>
-      </div>
-    </div>
+  return h("div",
+    { style: { width: 1200, height: 630, display: "flex", flexDirection: "column", background: "#FFFFFF", fontFamily: "Inter", padding: 64 } },
+    h("div", { style: { display: "flex", alignItems: "center", gap: 6 } },
+      h("span", { style: { fontSize: 26, fontWeight: 600, color: "#171717" } }, displayName),
+      question.chamberName
+        ? h("span", { style: { fontSize: 26, color: "#a3a3a3" } }, `in ${question.chamberName}`)
+        : null,
+    ),
+    h("div", { style: { flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" } },
+      h("span", { style: { fontSize: 36, fontWeight: 500, color: "#171717", lineHeight: 1.4 } }, truncatedContent),
+      hasMore
+        ? h("span", { style: { fontSize: 18, color: "#a3a3a3", marginTop: 14 } }, "Continue reading…")
+        : null,
+    ),
+    h("div", { style: { display: "flex", justifyContent: "flex-end" } },
+      h("div", { style: { width: 56, height: 56, background: "#F54900", borderRadius: 12, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5 } },
+        h("div", { style: { width: 30, height: 5, background: "#fff", borderRadius: 2, opacity: 0.3 } }),
+        h("div", { style: { width: 30, height: 5, background: "#fff", borderRadius: 2, opacity: 0.3 } }),
+        h("div", { style: { width: 30, height: 5, background: "#fff", borderRadius: 2 } }),
+        h("div", { style: { width: 30, height: 5, background: "#fff", borderRadius: 2 } }),
+      ),
+    ),
   );
+}
+
+let yogaPromise: Promise<unknown> | null = null;
+let resvgReady: Promise<void> | null = null;
+let fontsCache: { name: string; data: ArrayBuffer; weight: number; style: "normal" }[] | null = null;
+
+async function ensureDeps(url: URL) {
+  const [satoriMod, resvgMod, initYoga] = await Promise.all([
+    import("satori").then((m) => m.default),
+    import("@resvg/resvg-wasm"),
+    import("yoga-wasm-web").then((m) => m.default),
+  ]);
+
+  if (!yogaPromise) {
+    yogaPromise = initYoga().catch(() => { yogaPromise = null; });
+  }
+
+  if (!resvgReady) {
+    resvgReady = (async () => {
+      const wasmUrl = `${url.protocol}//${url.host}/resvg.wasm`;
+      const wasmBytes = await fetch(wasmUrl).then((r) => r.arrayBuffer());
+      await resvgMod.initWasm(wasmBytes);
+    })().catch(() => { resvgReady = null; });
+  }
+
+  if (!fontsCache) {
+    const css = await fetch(
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap",
+    ).then((r) => r.text());
+
+    const urls = [...css.matchAll(/url\(([^)]+)\)/g)].map((m) => m[1]);
+    const seen = new Set<string>();
+
+    fontsCache = (
+      await Promise.all(
+        urls.map(async (url) => {
+          const fullUrl = url.startsWith("https")
+            ? url
+            : `https://fonts.gstatic.com/${url.replace(/^\/\//, "")}`;
+
+          if (seen.has(fullUrl)) return null;
+          seen.add(fullUrl);
+
+          const data = await fetch(fullUrl).then((r) => r.arrayBuffer());
+          const weightMatch = fullUrl.match(/wght@(\d{3})/);
+          return {
+            name: "Inter",
+            data,
+            weight: weightMatch ? Number(weightMatch[1]) : 400,
+            style: "normal" as const,
+          };
+        }),
+      )
+    ).filter(Boolean) as { name: string; data: ArrayBuffer; weight: number; style: "normal" }[];
+  }
+
+  await Promise.all([yogaPromise, resvgReady]);
+
+  return { satori: satoriMod, resvg: resvgMod, yoga: await yogaPromise, fonts: fontsCache };
 }
 
 export async function onRequest(context: EventContext<unknown, unknown, Record<string, string>>) {
@@ -187,22 +161,15 @@ export async function onRequest(context: EventContext<unknown, unknown, Record<s
       author?: AuthorData;
     };
 
-    const [fonts, yoga] = await Promise.all([loadFonts(), getYoga(), ensureResvg(url)]);
+    const { satori, resvg, yoga, fonts } = await ensureDeps(url);
 
     const svg = await satori(
-      <PostCard question={data.question} author={data.author} />,
-      {
-        width: 1200,
-        height: 630,
-        fonts,
-        yogaModule: yoga,
-      },
+      PostCard(data.question, data.author),
+      { width: 1200, height: 630, fonts, yogaModule: yoga },
     );
 
-    const resvg = new Resvg(svg, {
-      fitTo: { mode: "width", value: 1200 },
-    });
-    const pngBuffer = resvg.render().asPng();
+    const r = new resvg.Resvg(svg, { fitTo: { mode: "width", value: 1200 } });
+    const pngBuffer = r.render().asPng();
 
     return new Response(pngBuffer, {
       headers: {
