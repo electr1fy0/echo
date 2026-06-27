@@ -98,7 +98,6 @@ function fetchWithTimeout(url: string, ms: number): Promise<Response> {
 async function ensureDeps(url: URL) {
   if (!resvgInitPromise) {
     resvgInitPromise = (async () => {
-      // resvgWasm is a pre-compiled WebAssembly.Module from the static import
       await resvgMod.initWasm(resvgWasm);
     })();
   }
@@ -173,6 +172,6 @@ export async function onRequest(context: EventContext<unknown, unknown, Record<s
     });
   } catch (err) {
     console.error("OG image error:", err);
-    return new Response("OG error: " + String(err), { status: 500 });
+    return new Response("Failed to generate OG image", { status: 500 });
   }
 }
