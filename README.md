@@ -2,56 +2,57 @@
 
 ![TurnsOut Thumbnail](https://turnsout.xyz/thumb.jpg)
 
-
 An open community platform built for communities. Ask questions, share knowledge, and curate your feed through isolated chambers.
 
 TurnsOut is a modern social platform that separates content into dedicated spaces, keeping your feed focused and minimal.
 
-
-
-## Screenshots
-<img width="1920" height="1440" alt="296_1x_shots_so" src="https://github.com/user-attachments/assets/34e52ca5-4bf7-473e-a652-08649227b62b" />
-<img width="1920" height="1440" alt="416_1x_shots_so" src="https://github.com/user-attachments/assets/584200bc-ad65-464b-9b93-f4391133521c" />
-<img width="1920" height="1440" alt="106_1x_shots_so" src="https://github.com/user-attachments/assets/0500035e-a02a-4e19-b515-1b5110114cda" />
-
-
 ## Background
 
-Community platforms are often noisy and disorganized. TurnsOut solves this by using **Chambers**. Isolated spaces for specific topics. Join what matters to you, ignore the rest.
-A question remains a question. An answer an answer. No nested replies. No algorithms.
+Community platforms are often noisy and disorganized. TurnsOut solves this by using **Chambers** — isolated spaces for specific topics. Join what matters to you, ignore the rest. A question remains a question. An answer an answer. No nested replies. No algorithms.
 
 ## Features
 
-### Core
-- **Chambers**: Dedicated topic spaces to organize content
-- **Q&A**: Structured Question and Answer format
-- **Voting**: Community upvotes to surface helpful content
-- **Social Proof**: Facepiles showing active participants
+- **Chambers** — Dedicated topic spaces to organize content, each with custom channels and schemas
+- **Multiple Post Types** — Q&A, partner-finder, campus trade, taxi-sharing, and polls with custom field schemas per channel
+- **Threaded Replies** — Nested comments with upvoting and accepted answer marking
+- **Direct Messages** — Private conversations between users
+- **Reputation, Badges & Levels** — Gamified engagement system
+- **Google OAuth** — Social login with email, magic link, and OTP authentication
+- **Full-Text Search** — Across posts, replies, chambers, and users
+- **Notifications** — Real-time alerts for replies, upvotes, follows, and mentions
+- **Bookmarks** — Save and organize posts
+- **Analytics** — Track page views, sessions, and custom events
+- **Feed Ranking** — Custom algorithm for sorting and ranking content
+- **Dark Mode** — System-aware theme with multiple accent colors
+- **PWA** — Offline caching and installable web app
+- **Onboarding Tour** — Interactive first-time user walkthrough
 
-### Interface
-Has dark mode, PWA, Responsiveness and tons of microinteractions.
+## Tech Stack
 
-### Tech Stack
-React, TailwindCSS, Vite, TypeScript, Tanstack Query, Hono, Cloudflare Workers, Drizzle ORM, Neon
+| Layer | Technology |
+|---|---|
+| Frontend | React, TypeScript, TailwindCSS, Vite, TanStack Query |
+| Backend | Hono, Cloudflare Workers, Drizzle ORM, Zod |
+| Database | PostgreSQL (Neon) |
+| Hosting | Cloudflare Pages, Cloudflare Workers, Cloudflare R2 |
 
 ## Development
 
-It's a monorepo containing both client and serverless backend.
+This is a monorepo containing both client and serverless backend.
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/electr1fy0/echo.git
-   cd echo
-   ```
+```bash
+git clone https://github.com/electr1fy0/echo.git
+cd echo
+```
 
 ### Backend (Hono)
 
- Located in `serverless/`.
+Located in `serverless/`.
 
 ```bash
 cd serverless
-# Set up your .dev.vars with DATABASE_URL
 npm install
+# Set up .dev.vars with DATABASE_URL
 npm run dev
 ```
 
@@ -67,6 +68,6 @@ pnpm dev
 
 ## Requirements
 
-- **Node.js**: (or Bun)
-- **Wrangler CLI**: For Cloudflare Workers development
-- **Neon/PostgreSQL**: Database provider
+- **Node.js** (or Bun)
+- **Wrangler CLI** — For Cloudflare Workers development
+- **Neon/PostgreSQL** — Database provider

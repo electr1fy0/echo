@@ -679,7 +679,6 @@ export default function Home() {
         });
         return migrated;
       } catch {
-        // Fallback
       }
     }
     return [

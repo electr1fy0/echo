@@ -117,7 +117,6 @@ export const getUserAnalytics = async (db: DB, username: string) => {
     else break;
   }
 
-  // Fetch totals, profile views, and top posts in parallel
   const [totals, profileViews, topPosts] = await Promise.all([
     db
       .select({

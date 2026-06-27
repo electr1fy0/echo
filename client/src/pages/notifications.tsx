@@ -34,36 +34,7 @@ interface GroupedNotification {
   actors: { username: string; avatar: string }[];
 }
 
-// function groupNotifications(list: Notification[]): GroupedNotification[] {
-//   const groups = new Map<string, GroupedNotification>();
 
-//   for (const n of list) {
-//     const groupable =
-//       n.type === "upvote_post" ||
-//       n.type === "upvote_reply" ||
-//       n.type === "express_interest";
-//     const key = groupable ? `${n.type}::${n.post_uid}` : n.uid;
-
-//     if (groupable && groups.has(key)) {
-//       const g = groups.get(key)!;
-//       g.actors.push({ username: n.actor_username, avatar: n.actor_avatar });
-//       if (n.created_at > g.created_at) g.created_at = n.created_at;
-//     } else {
-//       groups.set(key, {
-//         key,
-//         type: n.type,
-//         post_uid: n.post_uid,
-//         reference_uid: n.reference_uid,
-//         content: n.content,
-//         question_content: n.question_content ?? "",
-//         created_at: n.created_at,
-//         actors: [{ username: n.actor_username, avatar: n.actor_avatar }],
-//       });
-//     }
-//   }
-
-//   return Array.from(groups.values());
-// }
 
 function Avatars({
   actors,

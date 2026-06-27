@@ -76,7 +76,6 @@ function ChartTooltipContent({
   }, [label, labelFormatter, payload, hideLabel, labelClassName, config, labelKey]);
 
   if (!active || !payload?.length) {
-    // Empty tooltip - to prevent position getting 0.0 so it doesnt animate tooltip every time from 0.0 origin
     return <span className="p-4" />;
   }
 
@@ -96,9 +95,7 @@ function ChartTooltipContent({
         {payload
           .filter((item) => item.type !== "none")
           .map((item, index) => {
-            // For pie charts, item.name contains the sector name (e.g., "chrome")
-            // For radial charts, the name is in item.payload[nameKey]
-            // For other charts, item.name or item.dataKey contains the series name
+
             const payloadName =
               nameKey && item.payload
                 ? (item.payload as Record<string, unknown>)[nameKey]
@@ -106,7 +103,7 @@ function ChartTooltipContent({
             const key = `${payloadName ?? item.name ?? item.dataKey ?? "value"}`;
             const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
-            // Get colors count for this item to determine gradient vs solid
+
             const colorsCount = itemConfig ? getColorsCount(itemConfig) : 1;
 
             return (
@@ -173,7 +170,7 @@ function getIndicatorColorStyle(dataKey: string, colorsCount: number): React.CSS
     return { background: `var(--color-${dataKey}-0)` };
   }
 
-  // Multiple colors: create linear gradient with evenly distributed stops
+
   const stops = Array.from({ length: colorsCount }, (_, index) => {
     const offset = (index / (colorsCount - 1)) * 100;
     return `var(--color-${dataKey}-${index}) ${offset}%`;

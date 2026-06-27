@@ -3,12 +3,6 @@
 import { ZIndexLayer } from "recharts";
 import { useId } from "react";
 
-// ── Background Variant Types ─────────────────────────────────────────────────
-// To add a new variant:
-// 1. Add its name to the BackgroundVariant union type below
-// 2. Create a pattern component with PatternProps
-// 3. Register it in PATTERN_MAP
-
 export type BackgroundVariant =
   | "dots"
   | "grid"
@@ -21,8 +15,6 @@ export type BackgroundVariant =
   | "overlapping-circles"
   | "wiggle-lines"
   | "bubbles";
-
-// ── Pattern Components ───────────────────────────────────────────────────────
 
 type PatternProps = { id: string };
 
@@ -178,9 +170,6 @@ const BubblesPattern = ({ id }: PatternProps) => (
   </pattern>
 );
 
-// ── Pattern Registry ─────────────────────────────────────────────────────────
-// Map variant names to pattern components
-
 const PATTERN_MAP: Record<BackgroundVariant, React.FC<PatternProps>> = {
   dots: DotsPattern,
   grid: GridPattern,
@@ -194,10 +183,6 @@ const PATTERN_MAP: Record<BackgroundVariant, React.FC<PatternProps>> = {
   "overlapping-circles": OverlappingCirclesPattern,
   "wiggle-lines": WiggleLinesPattern,
 };
-
-// ── Main Component ───────────────────────────────────────────────────────────
-// Usage: Place <ChartBackground variant="dots" /> inside any Recharts chart component.
-// ZIndexLayer with zIndex={-1} ensures the background renders behind all chart content.
 
 interface ChartBackgroundProps {
   variant: BackgroundVariant;

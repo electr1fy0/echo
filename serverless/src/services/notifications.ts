@@ -85,7 +85,6 @@ export const cleanupOrphanedNotifications = async (db: DB, currentUser: string) 
     .where(eq(schema.notifications.userUsername, currentUser))
     .as("user_notifications");
 
-  // Delete post-type notifications where the post no longer exists
   await db
     .delete(schema.notifications)
     .where(
@@ -99,7 +98,6 @@ export const cleanupOrphanedNotifications = async (db: DB, currentUser: string) 
       ),
     );
 
-  // Delete reply-type notifications where the reply no longer exists
   await db
     .delete(schema.notifications)
     .where(

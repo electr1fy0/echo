@@ -103,7 +103,6 @@ export const posts = pgTable("posts", {
   pinnedAt: timestamp("pinned_at", { mode: "date" }),
   expiresAt: timestamp("expires_at", { mode: "date" }),
 
-  // Custom metadata elements JSON
   customFields: json("custom_fields").$type<Record<string, any>>().default({}),
 
   // Pivot columns (deprecated but kept for compatibility)

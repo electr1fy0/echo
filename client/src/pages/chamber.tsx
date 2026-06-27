@@ -117,13 +117,11 @@ export default function ChamberPage() {
   const [selectedChannelUid, setSelectedChannelUid] = useState<string>("");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
-  // Create Channel Form State
   const [newChannelName, setNewChannelName] = useState("");
   const [newChannelSchema, setNewChannelSchema] = useState<any[]>(DEFAULT_CHANNEL_SCHEMA);
   const { mutate: createChan, isPending: isCreateChanPending } =
     useCreateChannel(chamber?.uid || "");
 
-  // Edit Channel Form State
   const [editingChannel, setEditingChannel] = useState<any | null>(null);
   const [isEditChannelOpen, setIsEditChannelOpen] = useState(false);
   const [editChannelName, setEditChannelName] = useState("");

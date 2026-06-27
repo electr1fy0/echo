@@ -50,7 +50,6 @@ export const rateLimit = (
   } = options;
 
   return createMiddleware<AppEnv>(async (c, next) => {
-    // Exclude OPTIONS requests and non-rate-limited paths
     if (c.req.method === "OPTIONS") {
       return next();
     }
@@ -65,8 +64,7 @@ export const rateLimit = (
       return next();
     }
 
-    // Generate rate limit key
-    // Identify by auth header if present, otherwise fallback to IP
+
     const authHeader = c.req.header("Authorization");
     let identifier = "";
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -77,7 +75,6 @@ export const rateLimit = (
 
     const key = `${keyPrefix}:${limiterName}:${identifier}`;
     
-    // Check if Cloudflare Rate Limiting binding is available
     const binding = c.env ? c.env[limiterName] : undefined;
     if (binding && typeof binding.limit === "function") {
       try {

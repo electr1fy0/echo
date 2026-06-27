@@ -270,7 +270,6 @@ export function CreatePostDialog() {
 
     setActiveFields((prev) => [...prev, newField]);
 
-    // Set default value in customFields
     if (type === "poll") {
       setCustomFields((p) => ({
         ...p,

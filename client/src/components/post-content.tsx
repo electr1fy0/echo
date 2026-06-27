@@ -235,7 +235,6 @@ export function PostContent({ content, className, showPreviews = true, compactIm
     nodes.push(<ImageCarousel key={`img-${keyIndex++}`} urls={imageGroup} className="my-2" compact={compactImages} />);
   }
 
-  // Generate unique URL bookmarks at the bottom
   const uniqueUrls = Array.from(
     new Set(
       segments

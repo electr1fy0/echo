@@ -60,7 +60,6 @@ export function PostCustomFields({
 
   if (entries.length === 0) return null;
 
-  // Helper to resolve field label, type, disabled state, and whether it's an image or file
   const getFieldInfo = (key: string, val: any) => {
     const fieldDef = channelSchema?.find((f: any) => f.id === key);
     const label =
