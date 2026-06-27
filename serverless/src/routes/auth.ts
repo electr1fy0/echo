@@ -160,7 +160,7 @@ authRoutes.post("/signup", async (c) => {
 
 authRoutes.post("/signin", async (c) => {
   const body = safeParse(signinSchema, await c.req.json());
-  const username = body.username;
+  const username = body.username.toLowerCase();
 
   const [user] = await c
     .get("db")

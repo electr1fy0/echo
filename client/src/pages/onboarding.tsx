@@ -36,10 +36,10 @@ import { ChamberAvatar } from "@/components/ui/chamber-avatar";
 
 const RESERVED_USERNAMES = ["anonymous", "admin", "moderator", "system", "opencode"];
 
-const USERNAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+const USERNAME_REGEX = /^[a-z][a-z0-9_-]*$/;
 
 function normalizeUsername(value: string) {
-  return value.trim().replace(/\s+/g, "_");
+  return value.trim().replace(/\s+/g, "_").toLowerCase();
 }
 
 function validateClientSide(username: string): string | null {

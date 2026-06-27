@@ -244,7 +244,7 @@ export const pollVotes = pgTable("poll_votes", {
   optionIndex: integer("option_index").notNull(),
   username: text("username")
     .notNull()
-    .references(() => users.username, { onDelete: "cascade" }),
+    .references(() => users.username, { onDelete: "cascade", onUpdate: "cascade" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 }, (table) => [
   unique("poll_votes_poll_user_unique").on(table.pollUid, table.username),

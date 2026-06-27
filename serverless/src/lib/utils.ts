@@ -71,7 +71,7 @@ export const requireEnv = (value: string | undefined, name: string) => {
   return value;
 };
 
-export const normalizeUsername = (username: string) => username.trim();
+export const normalizeUsername = (username: string) => username.trim().toLowerCase();
 
 export const ensureValidUsername = (username: string) => {
   if (!username) {
@@ -80,8 +80,8 @@ export const ensureValidUsername = (username: string) => {
   if (username.length < 3 || username.length > 20) {
     throw new ApiError(400, "username must be between 3 and 20 characters");
   }
-  if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(username)) {
-    throw new ApiError(400, "username must start with a letter and contain only letters, numbers, underscores, and hyphens");
+  if (!/^[a-z][a-z0-9_-]*$/.test(username)) {
+    throw new ApiError(400, "username must start with a letter and contain only lowercase letters, numbers, underscores, and hyphens");
   }
 };
 

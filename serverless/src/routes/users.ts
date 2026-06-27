@@ -30,7 +30,7 @@ userRoutes.get("/me", async (c) => {
 userRoutes.patch("/me", async (c) => {
   const body = safeParse(updateProfileSchema, await c.req.json());
   const currentUsername = c.get("user");
-  const requestedUsername = body.username?.trim();
+  const requestedUsername = body.username?.trim()?.toLowerCase();
   const nextUsername = requestedUsername && requestedUsername !== currentUsername
     ? requestedUsername
     : currentUsername;

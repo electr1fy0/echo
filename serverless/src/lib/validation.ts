@@ -7,7 +7,8 @@ export const usernameSchema = z.string()
   .min(3, "username must be at least 3 characters")
   .max(20, "username must be at most 20 characters")
   .regex(/^[a-zA-Z][a-zA-Z0-9_-]*$/, "username must start with a letter and contain only letters, numbers, underscores, and hyphens")
-  .refine((v) => !RESERVED_USERNAMES.includes(v.toLowerCase()), "this username is reserved");
+  .refine((v) => !RESERVED_USERNAMES.includes(v.toLowerCase()), "this username is reserved")
+  .transform((v) => v.toLowerCase());
 
 export const emailSchema = z.string()
   .email("invalid email format")
@@ -23,7 +24,7 @@ export const signupSchema = z.object({
 });
 
 export const signinSchema = z.object({
-  username: z.string().min(1, "username is required"),
+  username: z.string().min(1, "username is required").transform((v) => v.toLowerCase()),
   password: z.string().min(1, "password is required"),
 });
 
@@ -130,7 +131,7 @@ export const updateReplySchema = z.object({
 });
 
 export const updateProfileSchema = z.object({
-  username: z.string().optional(),
+  username: z.string().transform((v) => v.toLowerCase()).optional(),
   bio: z.string().max(500).optional(),
   avatar: z.string().optional(),
   link: z.string().optional(),
