@@ -93,7 +93,6 @@ function ColumnFeed({
     hasNextPage,
     isFetchingNextPage,
     isLoading: isQuestionsLoading,
-    isFetched,
   } = useInfiniteQuestionsQuery(
     column.sortBy,
     column.chamberSource === "joined" && hasToken ? "joined" : column.chamberSource === "following" && hasToken ? "following" : undefined,
@@ -136,7 +135,7 @@ function ColumnFeed({
 
   const feedContent = (
     <>
-      {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 && chambersData ? (
+      {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 && chambers ? (
         <div className="space-y-6 px-4 py-4">
           <EmptyState
             title="No joined chambers yet"

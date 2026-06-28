@@ -413,7 +413,7 @@ export default function DMConversationPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Type a message..."
-              className="min-h-10 flex-1"
+              className="min-h-10 flex-1 max-sm:text-base sm:text-sm"
               rows={1}
               unstyled
               style={{ resize: "none" }}
