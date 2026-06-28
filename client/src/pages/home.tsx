@@ -79,6 +79,8 @@ function ColumnFeed({
   canDelete,
   isMobile = false,
 }: ColumnFeedProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const isSpecificChamber =
     column.chamberSource !== "joined" && column.chamberSource !== "following" && column.chamberSource !== "global";
   const selectedChamberObj = isSpecificChamber
@@ -91,6 +93,7 @@ function ColumnFeed({
     hasNextPage,
     isFetchingNextPage,
     isLoading: isQuestionsLoading,
+    isFetched,
   } = useInfiniteQuestionsQuery(
     column.sortBy,
     column.chamberSource === "joined" && hasToken ? "joined" : column.chamberSource === "following" && hasToken ? "following" : undefined,
@@ -133,7 +136,7 @@ function ColumnFeed({
 
   const feedContent = (
     <>
-      {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 ? (
+      {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 && chambersData ? (
         <div className="space-y-6 px-4 py-4">
           <EmptyState
             title="No joined chambers yet"
@@ -197,6 +200,8 @@ function ColumnFeed({
             </div>
           )}
         </div>
+      ) : !mounted ? (
+        <QuestionListSkeleton />
       ) : (
         <EmptyState
           title="No posts matching filters"

@@ -97,6 +97,8 @@ function formatMemberCount(count: number): string {
 }
 
 export default function ChamberPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
   const { data: chambersData, isLoading: isChamberLoading } = useListChambers();
@@ -742,6 +744,8 @@ export default function ChamberPage() {
                   </div>
                 )}
               </div>
+            ) : !mounted ? (
+              <QuestionListSkeleton />
             ) : (
               <EmptyState
                 title="No posts in this channel yet"
