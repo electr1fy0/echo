@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { requireAuth } from "../middleware/auth";
-import { rateLimit } from "../middleware/rateLimit";
+import { rateLimit, inMemoryRateLimit } from "../middleware/rateLimit";
 import { ApiError } from "../lib/errors";
 import { generatePresignedPutUrl } from "../lib/s3";
 import { safeParse, presignUploadSchema } from "../lib/validation";

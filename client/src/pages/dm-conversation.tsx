@@ -341,7 +341,7 @@ export default function DMConversationPage() {
                                     />
                                   </span>
                                 )}
-                                <span className="ml-auto">
+                                <span className={isMine ? "ml-auto" : ""}>
                                   {formatMessageTime(new Date(msg.timeCreated))}
                                 </span>
                               </MessageFooter>

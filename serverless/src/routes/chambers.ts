@@ -4,9 +4,14 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth, optionalAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import { listChambers, mapChamber, resolveChamber, generateChamberSlug } from "../services/questions";
 import { safeParse, createChamberSchema, updateChamberSchema, createChannelSchema, updateChannelSchema, deleteChamberSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
+
+const chamberCreateLimiter = inMemoryRateLimit("create-chamber", 3, 60);
+const chamberUpdateLimiter = inMemoryRateLimit("update-chamber", 5, 60);
+const chamberJoinLimiter = inMemoryRateLimit("join-chamber", 10, 60);
 
 export const chamberRoutes = new Hono<AppEnv>();
 
@@ -46,7 +51,7 @@ chamberRoutes.get("/all-channels", optionalAuth, async (c) => {
 chamberRoutes.use("*", requireAuth);
 
 
-chamberRoutes.post("/", async (c) => {
+chamberRoutes.post("/", chamberCreateLimiter, async (c) => {
   const body = safeParse(createChamberSchema, await c.req.json());
   const db = c.get("db");
   const slug = await generateChamberSlug(db, body.name);
@@ -132,7 +137,7 @@ chamberRoutes.post("/", async (c) => {
   }, 201);
 });
 
-chamberRoutes.delete("/", async (c) => {
+chamberRoutes.delete("/", chamberCreateLimiter, async (c) => {
   const body = safeParse(deleteChamberSchema, await c.req.json());
   const deleted = await c.get("db").delete(schema.chambers).where(
     and(eq(schema.chambers.creatorUsername, c.get("user")), eq(schema.chambers.name, body.name)),
@@ -145,7 +150,7 @@ chamberRoutes.delete("/", async (c) => {
   return c.json({ message: "chamber deleted" });
 });
 
-chamberRoutes.patch("/:uid", async (c) => {
+chamberRoutes.patch("/:uid", chamberUpdateLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const body = safeParse(updateChamberSchema, await c.req.json());
   const db = c.get("db");
@@ -180,7 +185,7 @@ chamberRoutes.patch("/:uid", async (c) => {
   return c.json({ message: "chamber updated" });
 });
 
-chamberRoutes.post("/:uid/join", async (c) => {
+chamberRoutes.post("/:uid/join", chamberJoinLimiter, async (c) => {
   const db = c.get("db");
   const chamber = await resolveChamber(db, c.req.param("uid"));
   await db.insert(schema.chamberMembers).values({
@@ -191,7 +196,7 @@ chamberRoutes.post("/:uid/join", async (c) => {
   return c.json({ message: "joined chamber" });
 });
 
-chamberRoutes.post("/:uid/leave", async (c) => {
+chamberRoutes.post("/:uid/leave", chamberJoinLimiter, async (c) => {
   const db = c.get("db");
   const chamber = await resolveChamber(db, c.req.param("uid"));
   await db.delete(schema.chamberMembers).where(
@@ -212,7 +217,7 @@ chamberRoutes.get("/:uid/channels", async (c) => {
   return c.json(rows);
 });
 
-chamberRoutes.post("/:uid/channels", async (c) => {
+chamberRoutes.post("/:uid/channels", chamberUpdateLimiter, async (c) => {
   const db = c.get("db");
   const chamber = await resolveChamber(db, c.req.param("uid"));
 
@@ -232,7 +237,7 @@ chamberRoutes.post("/:uid/channels", async (c) => {
   return c.json(created, 201);
 });
 
-chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
+chamberRoutes.patch("/:uid/channels/:channelUid", chamberUpdateLimiter, async (c) => {
   const channelUid = c.req.param("channelUid");
   const db = c.get("db");
 
@@ -262,7 +267,7 @@ chamberRoutes.patch("/:uid/channels/:channelUid", async (c) => {
   return c.json(updated);
 });
 
-chamberRoutes.delete("/:uid/channels/:channelUid", async (c) => {
+chamberRoutes.delete("/:uid/channels/:channelUid", chamberUpdateLimiter, async (c) => {
   const channelUid = c.req.param("channelUid");
   const db = c.get("db");
 

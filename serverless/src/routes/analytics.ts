@@ -3,6 +3,7 @@ import { eq, and, gte, sql, isNull, desc } from "drizzle-orm";
 
 import { schema } from "../db";
 import { requireAuth, optionalAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import {
   batchTrackEvents,
   trackPostView,
@@ -15,11 +16,13 @@ import type { AppEnv } from "../types/app";
 import { ApiError } from "../lib/errors";
 import { resolvePostUid } from "../services/questions";
 
+const analyticsLimiter = inMemoryRateLimit("track-events", 30, 60);
+
 export const analyticsRoutes = new Hono<AppEnv>();
 
 analyticsRoutes.use("*", requireAuth);
 
-analyticsRoutes.post("/events", async (c) => {
+analyticsRoutes.post("/events", analyticsLimiter, async (c) => {
   const body = safeParse(trackEventsSchema, await c.req.json());
   const user = c.get("user");
   const events = body.events;
@@ -49,7 +52,7 @@ analyticsRoutes.post("/events", async (c) => {
   return c.json({ message: "events tracked" });
 });
 
-analyticsRoutes.post("/session/heartbeat", async (c) => {
+analyticsRoutes.post("/session/heartbeat", analyticsLimiter, async (c) => {
   const user = c.get("user");
   const { sessionId, page, referrer } = await c.req.json();
 
@@ -141,7 +144,7 @@ analyticsRoutes.get("/questions/:uid", async (c) => {
   return c.json(data);
 });
 
-analyticsRoutes.post("/questions/:uid/view", optionalAuth, async (c) => {
+analyticsRoutes.post("/questions/:uid/view", optionalAuth, analyticsLimiter, async (c) => {
   const db = c.get("db");
   const uid = await resolvePostUid(db, c.req.param("uid"));
 

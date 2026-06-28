@@ -4,6 +4,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import { listNotifications, countUnreadNotifications, markNotificationsAsRead } from "../services/notifications";
 import { getPostItems, searchUsers } from "../services/questions";
 import { getProfileByUsername, computeBadges, followUser, unfollowUser, isFollowing, getFollowers, getFollowing } from "../services/users";
@@ -12,6 +13,10 @@ import { sendEmailChangeOtp, sendEmailChangeNotification } from "../lib/email";
 import { safeParse, updateProfileSchema, resolveUsernamesSchema, changeEmailSchema, confirmEmailChangeSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 import { parsePagination } from "../lib/utils";
+
+const profileUpdateLimiter = inMemoryRateLimit("update-profile", 10, 60);
+const emailChangeLimiter = inMemoryRateLimit("email-change", 5, 60);
+const followLimiter = inMemoryRateLimit("follow", 30, 60);
 
 export const userRoutes = new Hono<AppEnv>();
 
@@ -27,7 +32,7 @@ userRoutes.get("/me", async (c) => {
   return c.json({ ...profile, dmEnabled: userRow?.dmEnabled ?? true, badges });
 });
 
-userRoutes.patch("/me", async (c) => {
+userRoutes.patch("/me", profileUpdateLimiter, async (c) => {
   const body = safeParse(updateProfileSchema, await c.req.json());
   const currentUsername = c.get("user");
   const requestedUsername = body.username?.trim()?.toLowerCase();
@@ -58,7 +63,7 @@ userRoutes.patch("/me", async (c) => {
     : c.json({ token: await import("../lib/auth").then((m) => m.issueAuthToken(c.env.SECRET_KEY, nextUsername)) });
 });
 
-userRoutes.delete("/me", async (c) => {
+userRoutes.delete("/me", profileUpdateLimiter, async (c) => {
   await c.get("db").update(schema.users).set({
     deletedAt: new Date(),
     password: null,
@@ -71,7 +76,7 @@ userRoutes.delete("/me", async (c) => {
   return c.json({ message: "Account deleted successfully" });
 });
 
-userRoutes.post("/me/email-change", async (c) => {
+userRoutes.post("/me/email-change", emailChangeLimiter, async (c) => {
   const body = safeParse(changeEmailSchema, await c.req.json());
   const username = c.get("user");
   const newEmail = body.new_email;
@@ -114,7 +119,7 @@ userRoutes.post("/me/email-change", async (c) => {
   return c.json({ message: "OTP sent to your current email" });
 });
 
-userRoutes.post("/me/email-change/confirm", async (c) => {
+userRoutes.post("/me/email-change/confirm", emailChangeLimiter, async (c) => {
   const body = safeParse(confirmEmailChangeSchema, await c.req.json());
   const username = c.get("user");
 
@@ -169,7 +174,7 @@ userRoutes.get("/me/notifications", async (c) => {
   return c.json(await listNotifications(c.get("db"), c.get("user"), limit, offset));
 });
 
-userRoutes.post("/me/notifications/read", async (c) => {
+userRoutes.post("/me/notifications/read", profileUpdateLimiter, async (c) => {
   await markNotificationsAsRead(c.get("db"), c.get("user"));
   return c.json({ success: true });
 });
@@ -216,13 +221,13 @@ userRoutes.get("/:username", async (c) => {
   return c.json({ ...profile, badges, isFollowing: isUserFollowing });
 });
 
-userRoutes.post("/:username/follow", requireAuth, async (c) => {
+userRoutes.post("/:username/follow", requireAuth, followLimiter, async (c) => {
   const target = c.req.param("username");
   const result = await followUser(c.get("db"), c.get("user"), target);
   return c.json(result);
 });
 
-userRoutes.delete("/:username/follow", requireAuth, async (c) => {
+userRoutes.delete("/:username/follow", requireAuth, followLimiter, async (c) => {
   const target = c.req.param("username");
   const result = await unfollowUser(c.get("db"), c.get("user"), target);
   return c.json(result);

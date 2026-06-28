@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import {
   getConversations,
   getOrCreateConversation,
@@ -16,6 +17,10 @@ import {
 import { parsePagination } from "../lib/utils";
 import { safeParse, createMessageSchema, createConversationSchema, updateMessageSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
+
+const dmConversationLimiter = inMemoryRateLimit("create-conversation", 10, 60);
+const dmMessageLimiter = inMemoryRateLimit("send-message", 20, 60);
+const dmEditLimiter = inMemoryRateLimit("edit-message", 10, 60);
 
 export const dmRoutes = new Hono<AppEnv>();
 
@@ -31,7 +36,7 @@ dmRoutes.get("/unread-count", async (c) => {
   return c.json({ count });
 });
 
-dmRoutes.post("/conversations/:uid/read", async (c) => {
+dmRoutes.post("/conversations/:uid/read", dmMessageLimiter, async (c) => {
   await markConversationAsRead(c.get("db"), c.req.param("uid"), c.get("user"));
   return c.json({ success: true });
 });
@@ -50,7 +55,7 @@ dmRoutes.get("/conversations/:uid/messages", async (c) => {
   return c.json(messages);
 });
 
-dmRoutes.post("/conversations/:uid/messages", async (c) => {
+dmRoutes.post("/conversations/:uid/messages", dmMessageLimiter, async (c) => {
   const body = safeParse(createMessageSchema, await c.req.json());
 
   const msg = await createMessage(
@@ -67,20 +72,20 @@ dmRoutes.post("/conversations/:uid/messages", async (c) => {
   return c.json(msg, 201);
 });
 
-dmRoutes.patch("/conversations/:convUid/messages/:msgUid", async (c) => {
+dmRoutes.patch("/conversations/:convUid/messages/:msgUid", dmEditLimiter, async (c) => {
   const body = safeParse(updateMessageSchema, await c.req.json());
   const msg = await editMessage(c.get("db"), c.req.param("convUid"), c.req.param("msgUid"), c.get("user"), body.content);
   if (!msg) throw new ApiError(404, "message not found or not yours");
   return c.json(msg);
 });
 
-dmRoutes.delete("/conversations/:convUid/messages/:msgUid", async (c) => {
+dmRoutes.delete("/conversations/:convUid/messages/:msgUid", dmEditLimiter, async (c) => {
   const ok = await deleteMessage(c.get("db"), c.req.param("convUid"), c.req.param("msgUid"), c.get("user"));
   if (!ok) throw new ApiError(404, "message not found or not yours");
   return c.json({ success: true });
 });
 
-dmRoutes.post("/conversations", async (c) => {
+dmRoutes.post("/conversations", dmConversationLimiter, async (c) => {
   const body = safeParse(createConversationSchema, await c.req.json());
   const otherUsername = body.username;
 

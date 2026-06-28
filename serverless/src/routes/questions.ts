@@ -4,6 +4,7 @@ import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth, optionalAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import { createNotification, notifyMentions } from "../services/notifications";
 import { trackEvent } from "../services/analytics";
 import { recomputeReputation } from "../services/users";
@@ -41,7 +42,14 @@ questionRoutes.get("/", optionalAuth, async (c) => {
   }));
 });
 
-questionRoutes.post("/", requireAuth, async (c) => {
+const postCreateLimiter = inMemoryRateLimit("create-post", 5, 60);
+const postUpdateLimiter = inMemoryRateLimit("update-post", 5, 60);
+const postDeleteLimiter = inMemoryRateLimit("delete-post", 5, 60);
+const replyLimiter = inMemoryRateLimit("create-reply", 10, 60);
+const voteLimiter = inMemoryRateLimit("vote", 30, 60);
+const applyLimiter = inMemoryRateLimit("partner-apply", 5, 60);
+
+questionRoutes.post("/", requireAuth, postCreateLimiter, async (c) => {
   const body = safeParse(createPostSchema, await c.req.json());
 
   if (body.content && countWords(body.content) > MAX_POST_WORDS) {
@@ -221,7 +229,7 @@ questionRoutes.get("/:uid", optionalAuth, async (c) => {
   return c.json(mapPostItem(row));
 });
 
-questionRoutes.patch("/:uid", requireAuth, async (c) => {
+questionRoutes.patch("/:uid", requireAuth, postUpdateLimiter, async (c) => {
   const body = safeParse(updatePostSchema, await c.req.json());
   if (body.content !== undefined && countWords(body.content) > MAX_POST_WORDS) {
     throw new ApiError(400, `post content exceeds ${MAX_POST_WORDS} word limit`);
@@ -253,7 +261,7 @@ questionRoutes.patch("/:uid", requireAuth, async (c) => {
   return c.json({ message: "post updated" });
 });
 
-questionRoutes.delete("/:uid", requireAuth, async (c) => {
+questionRoutes.delete("/:uid", requireAuth, postDeleteLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const post = await ensurePostExists(c.get("db"), identifier);
   if (post.author !== c.get("user")) {
@@ -275,7 +283,7 @@ questionRoutes.delete("/:uid", requireAuth, async (c) => {
   return c.json({ message: "post deleted" });
 });
 
-questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
+questionRoutes.post("/:uid/votes", requireAuth, voteLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const currentUser = c.get("user");
   const db = c.get("db");
@@ -328,7 +336,7 @@ questionRoutes.post("/:uid/votes", requireAuth, async (c) => {
   return c.json({ message: "vote updated" });
 });
 
-questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
+questionRoutes.post("/:uid/pin", requireAuth, postUpdateLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const db = c.get("db");
   const [post] = await db.select({
@@ -346,7 +354,7 @@ questionRoutes.post("/:uid/pin", requireAuth, async (c) => {
   return c.json({ message: "post pinned" });
 });
 
-questionRoutes.delete("/:uid/pin", requireAuth, async (c) => {
+questionRoutes.delete("/:uid/pin", requireAuth, postUpdateLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const db = c.get("db");
   const [post] = await db.select({
@@ -371,7 +379,7 @@ questionRoutes.get("/:uid/replies", optionalAuth, async (c) => {
   return c.json(await getReplies(db, c.get("user"), uid, limit, offset));
 });
 
-questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
+questionRoutes.post("/:uid/replies", requireAuth, replyLimiter, async (c) => {
   const body = safeParse(createReplySchema, await c.req.json());
   const db = c.get("db");
   const uid = await resolvePostUid(db, c.req.param("uid"));
@@ -420,7 +428,7 @@ questionRoutes.post("/:uid/replies", requireAuth, async (c) => {
   }, 201);
 });
 
-questionRoutes.patch("/:uid/replies/:ruid", requireAuth, async (c) => {
+questionRoutes.patch("/:uid/replies/:ruid", requireAuth, replyLimiter, async (c) => {
   const body = safeParse(updateReplySchema, await c.req.json());
   const updated = await c.get("db").update(schema.replies).set({ content: body.content }).where(
     and(eq(schema.replies.uid, c.req.param("ruid")), eq(schema.replies.author, c.get("user"))),
@@ -433,7 +441,7 @@ questionRoutes.patch("/:uid/replies/:ruid", requireAuth, async (c) => {
   return c.json({ message: "reply updated" });
 });
 
-questionRoutes.delete("/:uid/replies/:ruid", requireAuth, async (c) => {
+questionRoutes.delete("/:uid/replies/:ruid", requireAuth, replyLimiter, async (c) => {
   const db = c.get("db");
   const result = await db.update(schema.replies).set({
     content: "[deleted]",
@@ -449,7 +457,7 @@ questionRoutes.delete("/:uid/replies/:ruid", requireAuth, async (c) => {
   return c.json({ message: "reply deleted" });
 });
 
-questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
+questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, voteLimiter, async (c) => {
   const db = c.get("db");
   const currentUser = c.get("user");
   const ruid = c.req.param("ruid");
@@ -495,7 +503,7 @@ questionRoutes.post("/:uid/replies/:ruid/votes", requireAuth, async (c) => {
   return c.json({ message: "vote updated" });
 });
 
-questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
+questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, postUpdateLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const ruid = c.req.param("ruid");
   const post = await ensurePostExists(c.get("db"), identifier);
@@ -530,7 +538,7 @@ questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
   return c.json({ message: "reply accepted" });
 });
 
-questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
+questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, postUpdateLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const ruid = c.req.param("ruid");
   const post = await ensurePostExists(c.get("db"), identifier);
@@ -556,7 +564,7 @@ questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, async (c) => {
 });
 
 // Poll vote route
-questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
+questionRoutes.post("/:uid/poll/vote", requireAuth, voteLimiter, async (c) => {
   const db = c.get("db");
   const uid = await resolvePostUid(db, c.req.param("uid"));
   const currentUser = c.get("user");
@@ -625,7 +633,7 @@ questionRoutes.post("/:uid/poll/vote", requireAuth, async (c) => {
 });
 
 // Partner application routes
-questionRoutes.post("/:uid/apply", requireAuth, async (c) => {
+questionRoutes.post("/:uid/apply", requireAuth, applyLimiter, async (c) => {
   const db = c.get("db");
   const postUid = await resolvePostUid(db, c.req.param("uid"));
   const applicantUsername = c.get("user");
@@ -681,7 +689,7 @@ questionRoutes.get("/:uid/applications", requireAuth, async (c) => {
   return c.json(apps);
 });
 
-questionRoutes.patch("/:uid/applications/:appUid", requireAuth, async (c) => {
+questionRoutes.patch("/:uid/applications/:appUid", requireAuth, applyLimiter, async (c) => {
   const appUid = c.req.param("appUid");
   const currentUser = c.get("user");
   const body = safeParse(updateApplicationSchema, await c.req.json());

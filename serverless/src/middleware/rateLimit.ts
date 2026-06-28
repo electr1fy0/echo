@@ -6,7 +6,7 @@ import type { AppEnv } from "../types/app";
 const MAX_MEMORY_LIMITER_KEYS = 10000;
 const memoryLimiters = new Map<string, number[]>();
 
-function checkInMemoryLimit(key: string, limit: number, periodSeconds: number): boolean {
+export function checkInMemoryLimit(key: string, limit: number, periodSeconds: number): boolean {
   const now = Date.now();
   const windowStart = now - periodSeconds * 1000;
 
@@ -45,7 +45,7 @@ export const rateLimit = (
 ) => {
   const {
     keyPrefix = "global",
-    limitFallback = limiterName === "AUTH_LIMITER" ? 500 : 2000,
+    limitFallback = limiterName === "AUTH_LIMITER" ? 20 : 100,
     periodFallback = 60,
   } = options;
 
@@ -100,6 +100,29 @@ export const rateLimit = (
       if (!allowed) {
         throw new ApiError(429, "Too many requests. Please try again later.");
       }
+    }
+
+    await next();
+  });
+};
+
+export const inMemoryRateLimit = (keyPrefix: string, limit: number, periodSeconds: number) => {
+  return createMiddleware<AppEnv>(async (c, next) => {
+    if (c.req.method === "OPTIONS") {
+      return next();
+    }
+
+    const authHeader = c.req.header("Authorization");
+    let identifier = "";
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      identifier = authHeader;
+    } else {
+      identifier = c.req.header("CF-Connecting-IP") || "127.0.0.1";
+    }
+
+    const key = `${keyPrefix}:${identifier}`;
+    if (!checkInMemoryLimit(key, limit, periodSeconds)) {
+      throw new ApiError(429, "Too many requests. Please try again later.");
     }
 
     await next();

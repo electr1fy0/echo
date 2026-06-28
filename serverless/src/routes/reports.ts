@@ -4,12 +4,15 @@ import { eq, and } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import { safeParse, createReportSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
+const reportLimiter = inMemoryRateLimit("create-report", 5, 60);
+
 export const reportRoutes = new Hono<AppEnv>();
 
-reportRoutes.post("/", requireAuth, async (c) => {
+reportRoutes.post("/", requireAuth, reportLimiter, async (c) => {
   const user = c.get("user");
   const body = safeParse(createReportSchema, await c.req.json());
   const db = c.get("db");

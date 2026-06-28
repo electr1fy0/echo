@@ -4,9 +4,12 @@ import { and, desc, eq } from "drizzle-orm";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
+import { inMemoryRateLimit } from "../middleware/rateLimit";
 import { getPostItems } from "../services/questions";
 import { parsePagination } from "../lib/utils";
 import type { AppEnv } from "../types/app";
+
+const bookmarkLimiter = inMemoryRateLimit("bookmark", 30, 60);
 
 export const bookmarkRoutes = new Hono<AppEnv>();
 
@@ -37,7 +40,7 @@ bookmarkRoutes.get("/", requireAuth, async (c) => {
   }));
 });
 
-bookmarkRoutes.post("/:postUid", requireAuth, async (c) => {
+bookmarkRoutes.post("/:postUid", requireAuth, bookmarkLimiter, async (c) => {
   const db = c.get("db");
   const currentUser = c.get("user");
   const postUid = c.req.param("postUid");
@@ -65,7 +68,7 @@ bookmarkRoutes.post("/:postUid", requireAuth, async (c) => {
   return c.json({ message: "bookmarked" }, 201);
 });
 
-bookmarkRoutes.delete("/:postUid", requireAuth, async (c) => {
+bookmarkRoutes.delete("/:postUid", requireAuth, bookmarkLimiter, async (c) => {
   const db = c.get("db");
   const postUid = c.req.param("postUid");
 
