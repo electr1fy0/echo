@@ -54,6 +54,7 @@ export function useInfiniteQuestionsQuery(
   searchQuery?: string,
   channelUid?: string,
   channelName?: string,
+  enabled?: boolean,
 ) {
   return useInfiniteQuery({
     queryKey: ["questions", "infinite", sort, filter, chamberId, author, pageSize, postType, pinned, searchQuery, channelUid, channelName],
@@ -65,6 +66,7 @@ export function useInfiniteQuestionsQuery(
       return allPages.length * pageSize;
     },
     staleTime: 60_000,
+    enabled,
   });
 }
 

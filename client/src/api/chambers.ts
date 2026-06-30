@@ -14,6 +14,17 @@ export async function createChamber(chamber: Chamber): Promise<Chamber> {
   if (!res.ok) await parseApiError(res);
   return res.json();
 }
+export async function fetchChamber(identifier: string): Promise<Chamber> {
+  const res = await fetch(`${API_URL}/chambers/${encodeURIComponent(identifier)}`, {
+    method: "GET",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+  if (!res.ok) await parseApiError(res);
+  return res.json();
+}
+
 export async function listChambers(query?: string): Promise<Chamber[]> {
   const url = query
     ? `${API_URL}/chambers?q=${encodeURIComponent(query)}`

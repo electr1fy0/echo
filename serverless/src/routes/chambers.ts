@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
@@ -18,6 +18,44 @@ export const chamberRoutes = new Hono<AppEnv>();
 chamberRoutes.get("/", optionalAuth, async (c) => {
   const rows = await listChambers(c.get("db"), c.get("user"), c.req.query("q") ?? "");
   return c.json(rows.map(mapChamber));
+});
+
+chamberRoutes.get("/:uid", optionalAuth, async (c) => {
+  const db = c.get("db");
+  const currentUser = c.get("user");
+  const identifier = c.req.param("uid");
+  const chamber = await resolveChamber(db, identifier);
+
+  const [row] = await db
+    .select({
+      uid: schema.chambers.uid,
+      slug: schema.chambers.slug,
+      name: schema.chambers.name,
+      description: sql<string>`coalesce(${schema.chambers.description}, '')`,
+      creatorUsername: schema.chambers.creatorUsername,
+      colorIndex: schema.chambers.colorIndex,
+      timeCreated: schema.chambers.createdAt,
+      picture: schema.chambers.picture,
+      icon: schema.chambers.icon,
+      memberCount: sql<number>`(
+        select count(*)::int from chamber_members cm
+        where cm.chamber_uid = ${schema.chambers.uid}
+      )`,
+      isJoined: sql<boolean>`exists(
+        select 1 from chamber_members cm
+        where cm.chamber_uid = ${schema.chambers.uid}
+          and cm.username = ${currentUser || ""}
+      )`,
+    })
+    .from(schema.chambers)
+    .where(eq(schema.chambers.uid, chamber.uid))
+    .limit(1);
+
+  if (!row) {
+    throw new ApiError(404, "chamber not found");
+  }
+
+  return c.json(row);
 });
 
 chamberRoutes.get("/all-channels", optionalAuth, async (c) => {

@@ -17,7 +17,7 @@ import { QuestionListSkeleton } from "@/components/questions/question-skeleton";
 import {
   useJoinChamber,
   useLeaveChamber,
-  useListChambers,
+  useChamber,
   useDeleteChamber,
   useListChannels,
   useCreateChannel,
@@ -101,14 +101,10 @@ export default function ChamberPage() {
   useEffect(() => { setMounted(true); }, []);
   const { chamberId } = useParams<{ chamberId: string }>();
   const navigate = useNavigate();
-  const { data: chambersData, isLoading: isChamberLoading } = useListChambers();
+  const { data: chamber, isLoading: isChamberLoading, isError: isChamberError } = useChamber(chamberId);
   const { data: user } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const { setActiveChamberId, setActiveChannelId } = useCreatePostModal();
-  const chambers = chambersData || [];
-  const chamber = chambers.find(
-    (c) => c.slug === chamberId || c.name.toLowerCase() === chamberId?.toLowerCase() || c.uid === chamberId,
-  );
   const { mutate: deleteQn } = useDeleteQuestion();
   const deleteChamberMutation = useDeleteChamber();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -116,7 +112,7 @@ export default function ChamberPage() {
   // Channels state
   const { data: channelsData = [], isLoading: isChannelsLoading } =
     useListChannels(chamber?.uid || "");
-  const [selectedChannelUid, setSelectedChannelUid] = useState<string>("");
+  const [selectedChannelUid, setSelectedChannelUid] = useState<string>("all");
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
 
   const [newChannelName, setNewChannelName] = useState("");
@@ -266,6 +262,8 @@ export default function ChamberPage() {
     false,
     debouncedSearch || undefined,
     selectedChannel?.uid === "all" ? undefined : selectedChannel?.uid,
+    undefined,
+    !!chamber?.uid,
   );
   const questions = questionsData ? questionsData.pages.flat() : [];
   const { data: pinnedPosts = [] } = usePinnedQuestionsQuery(
@@ -315,6 +313,23 @@ export default function ChamberPage() {
   const leaveMutation = useLeaveChamber();
   const isPending = joinMutation.isPending || leaveMutation.isPending;
   const [isEditOpen, setIsEditOpen] = useState(false);
+
+  if (isChamberError) {
+    return (
+      <div className="max-w-xl w-full mt-40 px-4">
+        <p className="text-neutral-500">Failed to load chamber. It may not exist or there was a network error.</p>
+        <div className="flex gap-2 mt-4">
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            <HugeiconsIcon icon={ArrowLeft02Icon} className="mr-2 size-4" />
+            Go back
+          </Button>
+          <Button variant="default" onClick={() => window.location.reload()}>
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isChamberLoading) {
     return (

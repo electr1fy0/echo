@@ -1,5 +1,6 @@
 import {
   createChamber,
+  fetchChamber,
   listChambers,
   joinChamber,
   leaveChamber,
@@ -28,6 +29,15 @@ export function useListChambers(query?: string) {
   return useQuery({
     queryFn: () => listChambers(query),
     queryKey: ["chambers", token, query],
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useChamber(identifier: string | undefined) {
+  return useQuery({
+    queryFn: () => fetchChamber(identifier!),
+    queryKey: ["chamber", identifier],
+    enabled: !!identifier,
     staleTime: 2 * 60 * 1000,
   });
 }
