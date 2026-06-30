@@ -26,6 +26,7 @@ import { TextFlip } from "@/components/text-flip";
 import { PageTransition } from "@/components/page-transition";
 import { EmptyState } from "@/components/ui/dashed-empty-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 
 import {
@@ -822,8 +823,22 @@ export default function Home() {
 
         {/* Desktop logged-out: CTA card on the right */}
         {!isMobile && !user && !isAuthLoading && (
-          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-11">
-            <div className="space-y-1">
+          <div className="flex-shrink-0 w-80 sm:w-96 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1D1D1D] p-8 flex flex-col gap-5 self-start mt-11 relative overflow-hidden">
+            <DottedGlowBackground
+              className="pointer-events-none mask-radial-to-90% mask-radial-at-center"
+              opacity={0.3}
+              gap={10}
+              radius={1.6}
+              colorLightVar="--color-neutral-500"
+              glowColorLightVar="--color-neutral-600"
+              colorDarkVar="--color-neutral-500"
+              glowColorDarkVar="--color-sky-800"
+              backgroundOpacity={0}
+              speedMin={0.3}
+              speedMax={1.6}
+              speedScale={1}
+            />
+            <div className="space-y-1 relative z-10">
               <h1 className="text-neutral-800 dark:text-neutral-200 text-lg">
                 TurnsOut
               </h1>
@@ -840,7 +855,7 @@ export default function Home() {
                 </TextFlip>
               </h2>
             </div>
-            <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400 relative z-10">
               <li className="flex items-start gap-2">
                 <span className="text-neutral-300 dark:text-neutral-600 mt-0.5">•</span>
                 <span>Explore topic-specific chambers and channels</span>
@@ -868,7 +883,7 @@ export default function Home() {
             </ul>
             <Button
               variant="default"
-              className="w-full mt-auto"
+              className="w-full mt-auto relative z-10"
               onClick={() => openAuthModal()}
             >
               Get started
