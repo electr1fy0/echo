@@ -17,6 +17,7 @@ import { parsePagination } from "../lib/utils";
 const profileUpdateLimiter = inMemoryRateLimit("update-profile", 30, 60);
 const emailChangeLimiter = inMemoryRateLimit("email-change", 10, 60);
 const followLimiter = inMemoryRateLimit("follow", 60, 60);
+const accountDeleteLimiter = inMemoryRateLimit("delete-account", 60, 60);
 
 export const userRoutes = new Hono<AppEnv>();
 
@@ -63,7 +64,7 @@ userRoutes.patch("/me", profileUpdateLimiter, async (c) => {
     : c.json({ token: await import("../lib/auth").then((m) => m.issueAuthToken(c.env.SECRET_KEY, nextUsername)) });
 });
 
-userRoutes.delete("/me", profileUpdateLimiter, async (c) => {
+userRoutes.delete("/me", accountDeleteLimiter, async (c) => {
   await c.get("db").update(schema.users).set({
     deletedAt: new Date(),
     password: null,

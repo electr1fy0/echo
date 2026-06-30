@@ -21,6 +21,7 @@ import type { AppEnv } from "../types/app";
 const dmConversationLimiter = inMemoryRateLimit("create-conversation", 30, 60);
 const dmMessageLimiter = inMemoryRateLimit("send-message", 60, 60);
 const dmEditLimiter = inMemoryRateLimit("edit-message", 30, 60);
+const dmDeleteLimiter = inMemoryRateLimit("delete-message", 60, 60);
 
 export const dmRoutes = new Hono<AppEnv>();
 
@@ -79,7 +80,7 @@ dmRoutes.patch("/conversations/:convUid/messages/:msgUid", dmEditLimiter, async 
   return c.json(msg);
 });
 
-dmRoutes.delete("/conversations/:convUid/messages/:msgUid", dmEditLimiter, async (c) => {
+dmRoutes.delete("/conversations/:convUid/messages/:msgUid", dmDeleteLimiter, async (c) => {
   const ok = await deleteMessage(c.get("db"), c.req.param("convUid"), c.req.param("msgUid"), c.get("user"));
   if (!ok) throw new ApiError(404, "message not found or not yours");
   return c.json({ success: true });

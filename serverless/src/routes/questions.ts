@@ -44,8 +44,10 @@ questionRoutes.get("/", optionalAuth, async (c) => {
 
 const postCreateLimiter = inMemoryRateLimit("create-post", 20, 60);
 const postUpdateLimiter = inMemoryRateLimit("update-post", 20, 60);
-const postDeleteLimiter = inMemoryRateLimit("delete-post", 20, 60);
+const postDeleteLimiter = inMemoryRateLimit("delete-post", 60, 60);
+const postPinDeleteLimiter = inMemoryRateLimit("unpin-post", 60, 60);
 const replyLimiter = inMemoryRateLimit("create-reply", 30, 60);
+const replyDeleteLimiter = inMemoryRateLimit("delete-reply", 60, 60);
 const voteLimiter = inMemoryRateLimit("vote", 60, 60);
 const applyLimiter = inMemoryRateLimit("partner-apply", 20, 60);
 
@@ -354,7 +356,7 @@ questionRoutes.post("/:uid/pin", requireAuth, postUpdateLimiter, async (c) => {
   return c.json({ message: "post pinned" });
 });
 
-questionRoutes.delete("/:uid/pin", requireAuth, postUpdateLimiter, async (c) => {
+questionRoutes.delete("/:uid/pin", requireAuth, postPinDeleteLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const db = c.get("db");
   const [post] = await db.select({
@@ -441,7 +443,7 @@ questionRoutes.patch("/:uid/replies/:ruid", requireAuth, replyLimiter, async (c)
   return c.json({ message: "reply updated" });
 });
 
-questionRoutes.delete("/:uid/replies/:ruid", requireAuth, replyLimiter, async (c) => {
+questionRoutes.delete("/:uid/replies/:ruid", requireAuth, replyDeleteLimiter, async (c) => {
   const db = c.get("db");
   const result = await db.update(schema.replies).set({
     content: "[deleted]",
@@ -538,7 +540,7 @@ questionRoutes.post("/:uid/replies/:ruid/accept", requireAuth, postUpdateLimiter
   return c.json({ message: "reply accepted" });
 });
 
-questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, postUpdateLimiter, async (c) => {
+questionRoutes.delete("/:uid/replies/:ruid/accept", requireAuth, postPinDeleteLimiter, async (c) => {
   const identifier = c.req.param("uid");
   const ruid = c.req.param("ruid");
   const post = await ensurePostExists(c.get("db"), identifier);

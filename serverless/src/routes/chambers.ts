@@ -12,6 +12,7 @@ import type { AppEnv } from "../types/app";
 const chamberCreateLimiter = inMemoryRateLimit("create-chamber", 10, 60);
 const chamberUpdateLimiter = inMemoryRateLimit("update-chamber", 20, 60);
 const chamberJoinLimiter = inMemoryRateLimit("join-chamber", 30, 60);
+const chamberDeleteLimiter = inMemoryRateLimit("delete-chamber", 60, 60);
 
 export const chamberRoutes = new Hono<AppEnv>();
 
@@ -175,7 +176,7 @@ chamberRoutes.post("/", chamberCreateLimiter, async (c) => {
   }, 201);
 });
 
-chamberRoutes.delete("/", chamberCreateLimiter, async (c) => {
+chamberRoutes.delete("/", chamberDeleteLimiter, async (c) => {
   const body = safeParse(deleteChamberSchema, await c.req.json());
   const deleted = await c.get("db").delete(schema.chambers).where(
     and(eq(schema.chambers.creatorUsername, c.get("user")), eq(schema.chambers.name, body.name)),
@@ -305,7 +306,7 @@ chamberRoutes.patch("/:uid/channels/:channelUid", chamberUpdateLimiter, async (c
   return c.json(updated);
 });
 
-chamberRoutes.delete("/:uid/channels/:channelUid", chamberUpdateLimiter, async (c) => {
+chamberRoutes.delete("/:uid/channels/:channelUid", chamberDeleteLimiter, async (c) => {
   const channelUid = c.req.param("channelUid");
   const db = c.get("db");
 
