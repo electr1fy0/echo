@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import { ImageCarousel } from "@/components/image-carousel";
@@ -95,12 +95,15 @@ function tokenize(content: string): Segment[] {
 function useLinkPreview(url: string) {
   const [data, setData] = useState<LinkPreviewData | null>(null);
   const [loading, setLoading] = useState(true);
-  const fetchedRef = useRef<string | null>(null);
+  const [prevUrl, setPrevUrl] = useState(url);
+
+  if (url !== prevUrl) {
+    setPrevUrl(url);
+    setData(null);
+    setLoading(true);
+  }
 
   useEffect(() => {
-    if (fetchedRef.current === url) return;
-    fetchedRef.current = url;
-    setLoading(true);
     fetchLinkPreview(url).then((d) => {
       setData(d);
       setLoading(false);

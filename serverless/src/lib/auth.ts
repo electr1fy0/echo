@@ -24,7 +24,7 @@ export const issueAuthToken = async (secret: string, username: string) =>
       role: "user",
       access: ["view", "create"],
       iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 48 * 60 * 60,
+      exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
     } satisfies AuthTokenPayload,
     secret,
     "HS256",

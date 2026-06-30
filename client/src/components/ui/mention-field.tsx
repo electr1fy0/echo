@@ -48,14 +48,10 @@ export function MentionField({
   );
   const query = mentionContext?.query || "";
   const { data: suggestions = [], isFetching } = useMentionUsers(query);
+  const [prevMentionContext, setPrevMentionContext] = useState(mentionContext);
 
-  useEffect(() => {
-    return () => {
-      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
+  if (mentionContext !== prevMentionContext) {
+    setPrevMentionContext(mentionContext);
     if (mentionContext && suggestions.length > 0) {
       setIsOpen(true);
       setActiveIndex((prev) =>
@@ -64,7 +60,13 @@ export function MentionField({
     } else if (!mentionContext) {
       setIsOpen(false);
     }
-  }, [mentionContext, suggestions.length]);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
 
   const activeRef = multiline ? textareaRef : inputRef;
 

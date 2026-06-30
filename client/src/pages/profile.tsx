@@ -928,6 +928,7 @@ export default function Profile() {
                             {editForm.avatar ? (
                               <img
                                 src={editForm.avatar}
+                                alt=""
                                 className="size-10 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-800"
                               />
                             ) : (

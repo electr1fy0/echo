@@ -27,14 +27,12 @@ function FollowButton({ username, isFollowing: initial }: { username: string; is
   const { mutate: doFollow, isPending: isFollowPending } = useFollowUser();
   const { mutate: doUnfollow, isPending: isUnfollowPending } = useUnfollowUser();
   const [optimistic, setOptimistic] = useState(initial ?? false);
-  const [initialLoaded, setInitialLoaded] = useState(false);
+  const [prevInitial, setPrevInitial] = useState(initial);
 
-  useEffect(() => {
-    if (!initialLoaded && initial !== undefined) {
-      setOptimistic(initial);
-      setInitialLoaded(true);
-    }
-  }, [initial, initialLoaded]);
+  if (initial !== prevInitial && initial !== undefined) {
+    setPrevInitial(initial);
+    setOptimistic(initial);
+  }
 
   const isPending = isFollowPending || isUnfollowPending;
 

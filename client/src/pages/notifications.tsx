@@ -102,7 +102,7 @@ function NotificationItem({ notification }: { notification: Notification }) {
     <div
       onClick={handleClick}
       className={cn(
-        "flex gap-3 py-3.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0 -mx-4 px-4 transition-colors",
+        "flex gap-3 py-3.5 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 px-4 transition-colors",
         threadLink &&
           "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30",
       )}
@@ -283,7 +283,7 @@ function GroupedNotificationItem({ group }: { group: GroupedNotification }) {
     <div
       onClick={handleClick}
       className={cn(
-        "flex gap-3 py-3.5 border-b border-neutral-100 dark:border-neutral-800 last:border-0 -mx-4 px-4 transition-colors",
+        "flex gap-3 py-3.5 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 px-4 transition-colors",
         threadLink &&
           "cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/30",
       )}
@@ -572,7 +572,7 @@ export default function Notifications() {
         </Tabs>
       </div>
 
-      <div className="bg-white dark:bg-neutral-900/50 rounded-2xl border border-neutral-200 dark:border-neutral-800 px-4 overflow-hidden">
+      <div className="bg-white dark:bg-[#1D1D1D] rounded-2xl border border-neutral-200 dark:border-neutral-800/80 overflow-hidden">
         {isLoading ? (
           <NotificationListSkeleton count={8} />
         ) : hasItems ? (
@@ -586,7 +586,7 @@ export default function Notifications() {
             {activeTab === "all" && hasNextPage && (
               <div
                 ref={loadMoreCallbackRef}
-                className="flex justify-center py-4 border-t border-neutral-100 dark:border-neutral-800 -mx-4 px-4"
+                className="flex justify-center py-4 border-t border-neutral-100 dark:border-neutral-800 px-4"
               >
                 <Button
                   variant="outline"

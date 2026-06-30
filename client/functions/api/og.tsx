@@ -82,7 +82,7 @@ let resvgInitPromise: Promise<void> | null = null;
 let fontBuffer: ArrayBuffer | null = null;
 
 function fetchWithTimeout(url: string, ms: number): Promise<Response> {
-  return fetch(url, { signal: AbortSignal.timeout(ms) });
+  return fetch(url, { signal: AbortSignal.timeout(ms), redirect: "manual" });
 }
 
 async function ensureDeps(url: URL) {

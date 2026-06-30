@@ -69,11 +69,6 @@ export default function Onboarding() {
   const chambers = chambersData || [];
   const { mutate: joinChamber, isPending: joinPending } = useJoinChamber();
 
-  if (!onboardingToken && step !== "chambers") {
-    navigate("/", { replace: true });
-    return null;
-  }
-
   const nextUsername = normalizeUsername(username);
   const clientError = validateClientSide(nextUsername);
 
@@ -106,6 +101,11 @@ export default function Onboarding() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [nextUsername]);
+
+  if (!onboardingToken && step !== "chambers") {
+    navigate("/", { replace: true });
+    return null;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

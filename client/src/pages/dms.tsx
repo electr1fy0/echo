@@ -86,12 +86,12 @@ export default function DMsPage() {
           ))}
         </div>
       ) : conversations && conversations.length > 0 ? (
-        <div className="border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-transparent rounded-2xl overflow-hidden divide-y divide-neutral-100 dark:divide-neutral-800/60">
+        <div className="border border-neutral-200 dark:border-neutral-800/80 bg-white dark:bg-[#1D1D1D] rounded-2xl overflow-hidden">
           {conversations.map((conv) => (
             <button
               key={conv.uid}
               onClick={() => navigate(`/dm/${conv.uid}`)}
-              className="group flex items-center gap-3 w-full text-left p-4 hover:bg-[#FAFAFA] dark:hover:bg-[#222] transition-all duration-200 active:scale-[0.98] cursor-pointer"
+              className="group flex items-center gap-3 w-full text-left p-4 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 hover:bg-[#FAFAFA] dark:hover:bg-[#222] transition-all duration-200 active:scale-[0.98] cursor-pointer"
             >
               <div className="relative shrink-0">
                 <UserAvatar

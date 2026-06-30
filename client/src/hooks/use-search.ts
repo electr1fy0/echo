@@ -12,11 +12,11 @@ const normalizeSearchResponse = (
 });
 
 export function useGlobalSearch(query: string) {
-  const result = useQuery({
+  const { data, ...rest } = useQuery({
     queryKey: ["search", query],
     queryFn: () => globalSearch(query),
     enabled: query.length > 0,
     staleTime: 1000 * 60 * 2,
   });
-  return { ...result, data: normalizeSearchResponse(result.data) };
+  return { ...rest, data: normalizeSearchResponse(data) };
 }
