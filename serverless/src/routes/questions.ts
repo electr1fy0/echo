@@ -42,12 +42,12 @@ questionRoutes.get("/", optionalAuth, async (c) => {
   }));
 });
 
-const postCreateLimiter = inMemoryRateLimit("create-post", 5, 60);
-const postUpdateLimiter = inMemoryRateLimit("update-post", 5, 60);
-const postDeleteLimiter = inMemoryRateLimit("delete-post", 5, 60);
-const replyLimiter = inMemoryRateLimit("create-reply", 10, 60);
-const voteLimiter = inMemoryRateLimit("vote", 30, 60);
-const applyLimiter = inMemoryRateLimit("partner-apply", 5, 60);
+const postCreateLimiter = inMemoryRateLimit("create-post", 20, 60);
+const postUpdateLimiter = inMemoryRateLimit("update-post", 20, 60);
+const postDeleteLimiter = inMemoryRateLimit("delete-post", 20, 60);
+const replyLimiter = inMemoryRateLimit("create-reply", 30, 60);
+const voteLimiter = inMemoryRateLimit("vote", 60, 60);
+const applyLimiter = inMemoryRateLimit("partner-apply", 20, 60);
 
 questionRoutes.post("/", requireAuth, postCreateLimiter, async (c) => {
   const body = safeParse(createPostSchema, await c.req.json());

@@ -18,9 +18,9 @@ import { parsePagination } from "../lib/utils";
 import { safeParse, createMessageSchema, createConversationSchema, updateMessageSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
-const dmConversationLimiter = inMemoryRateLimit("create-conversation", 10, 60);
-const dmMessageLimiter = inMemoryRateLimit("send-message", 20, 60);
-const dmEditLimiter = inMemoryRateLimit("edit-message", 10, 60);
+const dmConversationLimiter = inMemoryRateLimit("create-conversation", 30, 60);
+const dmMessageLimiter = inMemoryRateLimit("send-message", 60, 60);
+const dmEditLimiter = inMemoryRateLimit("edit-message", 30, 60);
 
 export const dmRoutes = new Hono<AppEnv>();
 

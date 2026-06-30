@@ -16,7 +16,7 @@ import type { AppEnv } from "../types/app";
 import { ApiError } from "../lib/errors";
 import { resolvePostUid } from "../services/questions";
 
-const analyticsLimiter = inMemoryRateLimit("track-events", 30, 60);
+const analyticsLimiter = inMemoryRateLimit("track-events", 60, 60);
 
 export const analyticsRoutes = new Hono<AppEnv>();
 

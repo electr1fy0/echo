@@ -9,9 +9,9 @@ import { listChambers, mapChamber, resolveChamber, generateChamberSlug } from ".
 import { safeParse, createChamberSchema, updateChamberSchema, createChannelSchema, updateChannelSchema, deleteChamberSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
-const chamberCreateLimiter = inMemoryRateLimit("create-chamber", 3, 60);
-const chamberUpdateLimiter = inMemoryRateLimit("update-chamber", 5, 60);
-const chamberJoinLimiter = inMemoryRateLimit("join-chamber", 10, 60);
+const chamberCreateLimiter = inMemoryRateLimit("create-chamber", 10, 60);
+const chamberUpdateLimiter = inMemoryRateLimit("update-chamber", 20, 60);
+const chamberJoinLimiter = inMemoryRateLimit("join-chamber", 30, 60);
 
 export const chamberRoutes = new Hono<AppEnv>();
 

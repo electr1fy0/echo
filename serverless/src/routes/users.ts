@@ -14,9 +14,9 @@ import { safeParse, updateProfileSchema, resolveUsernamesSchema, changeEmailSche
 import type { AppEnv } from "../types/app";
 import { parsePagination } from "../lib/utils";
 
-const profileUpdateLimiter = inMemoryRateLimit("update-profile", 10, 60);
-const emailChangeLimiter = inMemoryRateLimit("email-change", 5, 60);
-const followLimiter = inMemoryRateLimit("follow", 30, 60);
+const profileUpdateLimiter = inMemoryRateLimit("update-profile", 30, 60);
+const emailChangeLimiter = inMemoryRateLimit("email-change", 10, 60);
+const followLimiter = inMemoryRateLimit("follow", 60, 60);
 
 export const userRoutes = new Hono<AppEnv>();
 

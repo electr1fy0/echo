@@ -9,7 +9,7 @@ import { getPostItems } from "../services/questions";
 import { parsePagination } from "../lib/utils";
 import type { AppEnv } from "../types/app";
 
-const bookmarkLimiter = inMemoryRateLimit("bookmark", 30, 60);
+const bookmarkLimiter = inMemoryRateLimit("bookmark", 60, 60);
 
 export const bookmarkRoutes = new Hono<AppEnv>();
 

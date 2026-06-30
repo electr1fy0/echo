@@ -35,7 +35,8 @@ export type LimiterName = "API_LIMITER" | "AUTH_LIMITER";
 
 interface RateLimitOptions {
   keyPrefix?: string;
-  limitFallback?: number; // fallback limit for in-memory
+  limitFallback?: number; // fallback limit for in-memory writes
+  readLimitFallback?: number; // fallback limit for in-memory reads (higher)
   periodFallback?: number; // fallback period in seconds
 }
 
@@ -46,6 +47,7 @@ export const rateLimit = (
   const {
     keyPrefix = "global",
     limitFallback = limiterName === "AUTH_LIMITER" ? 20 : 100,
+    readLimitFallback = limiterName === "AUTH_LIMITER" ? 60 : 500,
     periodFallback = 60,
   } = options;
 
@@ -53,6 +55,8 @@ export const rateLimit = (
     if (c.req.method === "OPTIONS") {
       return next();
     }
+
+    const isRead = c.req.method === "GET" || c.req.method === "HEAD";
 
     const url = new URL(c.req.url);
     if (
@@ -73,7 +77,9 @@ export const rateLimit = (
       identifier = c.req.header("CF-Connecting-IP") || "127.0.0.1";
     }
 
-    const key = `${keyPrefix}:${limiterName}:${identifier}`;
+    const methodSuffix = isRead ? ":read" : ":write";
+    const key = `${keyPrefix}:${limiterName}:${identifier}${methodSuffix}`;
+    const effectiveLimit = isRead ? readLimitFallback : limitFallback;
     
     const binding = c.env ? c.env[limiterName] : undefined;
     if (binding && typeof binding.limit === "function") {
@@ -89,14 +95,14 @@ export const rateLimit = (
         }
         // Otherwise, log binding error and fallback to in-memory so the app doesn't fail
         console.error(`Rate limiter binding ${limiterName} error:`, err);
-        const allowed = checkInMemoryLimit(key, limitFallback, periodFallback);
+        const allowed = checkInMemoryLimit(key, effectiveLimit, periodFallback);
         if (!allowed) {
           throw new ApiError(429, "Too many requests. Please try again later.");
         }
       }
     } else {
       // Fallback to in-memory rate limiting
-      const allowed = checkInMemoryLimit(key, limitFallback, periodFallback);
+      const allowed = checkInMemoryLimit(key, effectiveLimit, periodFallback);
       if (!allowed) {
         throw new ApiError(429, "Too many requests. Please try again later.");
       }

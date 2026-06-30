@@ -35,9 +35,9 @@ function createMockContext(options: {
   } as any;
 }
 
-function uniqueRequest(ip?: string) {
+function uniqueRequest(ip?: string, method = "POST") {
   const actualIp = ip ?? `test-${Math.random().toString(36).slice(2, 10)}`;
-  const c = createMockContext({ cfConnectingIp: actualIp });
+  const c = createMockContext({ method, cfConnectingIp: actualIp });
   const n = vi.fn();
   return { c, next: n, ip: actualIp };
 }
@@ -64,13 +64,13 @@ describe("rateLimit", () => {
       ["/api/chats/read", "http://example.com/api/chats/read"],
     ])("skips %s path", async (_label, url) => {
       const mw = rateLimit("API_LIMITER");
-      const c = createMockContext({ url });
+      const c = createMockContext({ method: "POST", url });
       const next = vi.fn();
       await mw(c, next);
       expect(next).toHaveBeenCalledOnce();
     });
 
-    it("does not skip non-excluded paths", async () => {
+    it("does not skip non-excluded paths with POST", async () => {
       const mw = rateLimit("API_LIMITER", { limitFallback: 100, periodFallback: 60 });
       const { c, next } = uniqueRequest("skip-non-excluded");
       await mw(c, next);
@@ -83,33 +83,35 @@ describe("rateLimit", () => {
       const limit = vi.fn().mockResolvedValue({ success: true });
       const mw = rateLimit("API_LIMITER");
       const c = createMockContext({
+        method: "GET",
         authorization: "Bearer token-abc-123",
         env: { API_LIMITER: { limit } },
       });
       const next = vi.fn();
       await mw(c, next);
-      expect(limit).toHaveBeenCalledWith({ key: expect.stringContaining("Bearer token-abc-123") });
+      expect(limit).toHaveBeenCalledWith({ key: expect.stringContaining("Bearer token-abc-123:read") });
     });
 
     it("uses CF-Connecting-IP when no auth header", async () => {
       const limit = vi.fn().mockResolvedValue({ success: true });
       const mw = rateLimit("API_LIMITER");
       const c = createMockContext({
+        method: "GET",
         cfConnectingIp: "203.0.113.42",
         env: { API_LIMITER: { limit } },
       });
       const next = vi.fn();
       await mw(c, next);
-      expect(limit).toHaveBeenCalledWith({ key: expect.stringContaining("203.0.113.42") });
+      expect(limit).toHaveBeenCalledWith({ key: expect.stringContaining("203.0.113.42:read") });
     });
 
     it("falls back to 127.0.0.1 when no auth or IP header", async () => {
       const limit = vi.fn().mockResolvedValue({ success: true });
       const mw = rateLimit("API_LIMITER");
-      const c = createMockContext({ env: { API_LIMITER: { limit } } });
+      const c = createMockContext({ method: "GET", env: { API_LIMITER: { limit } } });
       const next = vi.fn();
       await mw(c, next);
-      expect(limit).toHaveBeenCalledWith({ key: expect.stringContaining("127.0.0.1") });
+      expect(limit).toHaveBeenCalledWith({ key: expect.stringContaining("127.0.0.1:read") });
     });
   });
 
@@ -138,6 +140,32 @@ describe("rateLimit", () => {
       expect(r3.next).not.toHaveBeenCalled();
     });
 
+    it("uses higher limit for reads than writes", async () => {
+      const mw = rateLimit("API_LIMITER", { limitFallback: 5, readLimitFallback: 100, periodFallback: 10 });
+      const ip = "read-write-diff";
+
+      // Reads (GET) can do many more requests than writes (POST)
+      for (let i = 0; i < 50; i++) {
+        const c = createMockContext({ method: "GET", cfConnectingIp: ip });
+        const next = vi.fn();
+        await mw(c, next);
+        expect(next).toHaveBeenCalled();
+      }
+
+      // Writes (POST) hit the lower limit quickly
+      for (let i = 0; i < 5; i++) {
+        const c = createMockContext({ method: "POST", cfConnectingIp: ip });
+        const next = vi.fn();
+        await mw(c, next);
+        expect(next).toHaveBeenCalled();
+      }
+
+      // 6th write should be blocked
+      const c = createMockContext({ method: "POST", cfConnectingIp: ip });
+      const next = vi.fn();
+      await expect(mw(c, next)).rejects.toThrow("Too many requests. Please try again later.");
+    });
+
     it("different keys are tracked independently", async () => {
       const mw = rateLimit("API_LIMITER", { limitFallback: 1, periodFallback: 10 });
 
@@ -156,6 +184,7 @@ describe("rateLimit", () => {
       const limit = vi.fn().mockResolvedValue({ success: true });
       const mw = rateLimit("API_LIMITER");
       const c = createMockContext({
+        method: "POST",
         cfConnectingIp: "binding-pass",
         env: { API_LIMITER: { limit } },
       });
@@ -169,6 +198,7 @@ describe("rateLimit", () => {
       const limit = vi.fn().mockResolvedValue({ success: false });
       const mw = rateLimit("API_LIMITER");
       const c = createMockContext({
+        method: "POST",
         cfConnectingIp: "binding-block",
         env: { API_LIMITER: { limit } },
       });
@@ -193,6 +223,7 @@ describe("rateLimit", () => {
       const limit = vi.fn().mockResolvedValue({ success: true });
       const mw = rateLimit("AUTH_LIMITER");
       const c = createMockContext({
+        method: "POST",
         cfConnectingIp: "auth-binding",
         env: { API_LIMITER: { limit: vi.fn() }, AUTH_LIMITER: { limit } },
       });
@@ -205,12 +236,13 @@ describe("rateLimit", () => {
       const limit = vi.fn().mockResolvedValue({ success: true });
       const mw = rateLimit("AUTH_LIMITER", { keyPrefix: "auth" });
       const c = createMockContext({
+        method: "POST",
         authorization: "Bearer test-token",
         env: { AUTH_LIMITER: { limit } },
       });
       const next = vi.fn();
       await mw(c, next);
-      expect(limit).toHaveBeenCalledWith({ key: "auth:AUTH_LIMITER:Bearer test-token" });
+      expect(limit).toHaveBeenCalledWith({ key: "auth:AUTH_LIMITER:Bearer test-token:write" });
     });
   });
 });

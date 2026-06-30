@@ -8,7 +8,7 @@ import { inMemoryRateLimit } from "../middleware/rateLimit";
 import { safeParse, createReportSchema } from "../lib/validation";
 import type { AppEnv } from "../types/app";
 
-const reportLimiter = inMemoryRateLimit("create-report", 5, 60);
+const reportLimiter = inMemoryRateLimit("create-report", 20, 60);
 
 export const reportRoutes = new Hono<AppEnv>();
 
