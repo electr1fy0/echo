@@ -66,6 +66,7 @@ interface ColumnFeedProps {
   deleteQuestion: (id: string) => void;
   canDelete: boolean;
   isMobile?: boolean;
+  isChambersLoading?: boolean;
 }
 
 function ColumnFeed({
@@ -79,6 +80,7 @@ function ColumnFeed({
   deleteQuestion,
   canDelete,
   isMobile = false,
+  isChambersLoading = false,
 }: ColumnFeedProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -136,7 +138,7 @@ function ColumnFeed({
 
   const feedContent = (
     <>
-      {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 && chambers ? (
+      {column.chamberSource === "joined" && JOINED_CHAMBERS.length === 0 && !isChambersLoading && chambers ? (
         <div className="space-y-6 px-4 py-4">
           <EmptyState
             title="No joined chambers yet"
@@ -754,7 +756,7 @@ export default function Home() {
 
   const { mutate: deleteQuestion } = useDeleteQuestion();
 
-  const { data: chambersData } = useListChambers();
+  const { data: chambersData, isLoading: isChambersLoading } = useListChambers();
   const chambers = chambersData || [];
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
   const visibleColumns = isMobile ? columns.slice(0, 1) : columns;
@@ -817,6 +819,7 @@ export default function Home() {
               deleteQuestion={deleteQuestion}
               canDelete={columns.length > 1}
               isMobile={isMobile}
+              isChambersLoading={isChambersLoading}
             />
           </div>
         ))}
