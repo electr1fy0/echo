@@ -4,6 +4,7 @@ import { createMiddleware } from "hono/factory";
 
 import { createDb } from "./db";
 import { handleAppError } from "./lib/http";
+import { resolveCorsOrigin } from "./lib/cors-origin";
 import { authRoutes } from "./routes/auth";
 import { chamberRoutes } from "./routes/chambers";
 import { questionRoutes } from "./routes/questions";
@@ -48,7 +49,7 @@ app.use("*", async (c, next) => {
 app.use(
   "*",
   cors({
-    origin: (origin, c) => origin || c.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: (origin, c) => resolveCorsOrigin(origin, c.env.CORS_ORIGIN),
     allowHeaders: ["Content-Type", "Authorization"],
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     credentials: true,
@@ -83,4 +84,3 @@ app.route("/reports", reportRoutes);
 app.route("/bookmarks", bookmarkRoutes);
 
 export default app;
-
