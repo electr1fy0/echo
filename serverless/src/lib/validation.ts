@@ -3,6 +3,9 @@ import { ApiError } from "./errors";
 
 const RESERVED_USERNAMES = ["anonymous", "admin", "moderator", "system", "opencode"];
 
+const nonBlankString = (message: string, max: number) =>
+  z.string().max(max).refine((value) => value.trim().length > 0, message);
+
 export const usernameSchema = z.string()
   .min(3, "username must be at least 3 characters")
   .max(20, "username must be at most 20 characters")
@@ -79,7 +82,7 @@ export const updateChannelSchema = z.object({
   schema: z.array(z.any()).optional(),
 });
 
-export const createPostSchema = z.object({
+const createPostBaseSchema = z.object({
   content: z.string().max(100000).optional().default(""),
   chamberUid: z.string().min(1, "chamber uid is required"),
   channelUid: z.string().optional(),
@@ -89,26 +92,56 @@ export const createPostSchema = z.object({
   ttlHours: z.number().positive().optional(),
   partnerTargetGrade: z.string().optional(),
   partnerWorkstyle: z.string().optional(),
-  partnerSlotsNeeded: z.number().int().optional(),
-  tradePrice: z.number().int().optional(),
+  partnerSlotsNeeded: z.number().int().positive().optional(),
+  tradePrice: z.number().int().nonnegative().optional(),
   tradeCondition: z.string().optional(),
   tradeBookIsbn: z.string().optional(),
   taxiDeparture: z.string().optional(),
   taxiDestination: z.string().optional(),
   taxiDatetime: z.string().optional(),
-  taxiSeatsAvailable: z.number().int().optional(),
-  pollQuestion: z.string().optional(),
-  pollOptions: z.array(z.string().min(1)).min(2, "poll must have at least 2 options").optional(),
+  taxiSeatsAvailable: z.number().int().positive().optional(),
+  pollQuestion: z.string().max(500).optional(),
+  pollOptions: z.array(nonBlankString("poll option cannot be blank", 200)).min(2, "poll must have at least 2 options").max(20, "poll cannot have more than 20 options").optional(),
   acceptsAnswers: z.boolean().optional().default(false),
+});
+
+export const createPostSchema = createPostBaseSchema.superRefine((body, ctx) => {
+  if (body.postType !== "poll") return;
+
+  if (!body.pollQuestion?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["pollQuestion"],
+      message: "poll question is required",
+    });
+  }
+
+  if (!body.pollOptions) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["pollOptions"],
+      message: "poll options are required",
+    });
+    return;
+  }
+
+  const normalized = body.pollOptions.map((option) => option.trim().toLowerCase());
+  if (new Set(normalized).size !== normalized.length) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["pollOptions"],
+      message: "poll options must be unique",
+    });
+  }
 });
 
 export const updatePostSchema = z.object({
   content: z.string().max(100000).optional(),
   customFields: z.record(z.string(), z.any()).optional(),
   tradeStatus: z.string().optional(),
-  partnerSlotsNeeded: z.number().int().optional(),
+  partnerSlotsNeeded: z.number().int().positive().optional(),
   partnerStatus: z.string().optional(),
-  tradePrice: z.number().int().optional(),
+  tradePrice: z.number().int().nonnegative().optional(),
   tradeCondition: z.string().optional(),
   tradeBookIsbn: z.string().optional(),
   partnerTargetGrade: z.string().optional(),
@@ -116,18 +149,18 @@ export const updatePostSchema = z.object({
   taxiDeparture: z.string().optional(),
   taxiDestination: z.string().optional(),
   taxiDatetime: z.string().optional(),
-  taxiSeatsAvailable: z.number().int().optional(),
+  taxiSeatsAvailable: z.number().int().positive().optional(),
   taxiStatus: z.string().optional(),
 });
 
 export const createReplySchema = z.object({
-  content: z.string().min(1, "content is required").max(100000),
+  content: nonBlankString("content is required", 100000),
   parentReplyUid: z.string().optional(),
   isAnonymous: z.boolean().optional().default(false),
 });
 
 export const updateReplySchema = z.object({
-  content: z.string().min(1, "content is required").max(100000),
+  content: nonBlankString("content is required", 100000),
 });
 
 export const updateProfileSchema = z.object({
@@ -140,7 +173,7 @@ export const updateProfileSchema = z.object({
 });
 
 export const createMessageSchema = z.object({
-  content: z.string().min(1, "content is required").max(10000),
+  content: nonBlankString("content is required", 10000),
 });
 
 export const createConversationSchema = z.object({
@@ -148,7 +181,7 @@ export const createConversationSchema = z.object({
 });
 
 export const updateMessageSchema = z.object({
-  content: z.string().min(1, "content is required").max(10000),
+  content: nonBlankString("content is required", 10000),
 });
 
 export const sendOtpSchema = z.object({
@@ -170,7 +203,7 @@ export const pollVoteSchema = z.object({
 });
 
 export const partnerApplySchema = z.object({
-  pitch: z.string().min(1, "pitch is required").max(5000),
+  pitch: nonBlankString("pitch is required", 5000),
 });
 
 export const updateApplicationSchema = z.object({
