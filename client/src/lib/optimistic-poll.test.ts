@@ -76,4 +76,39 @@ describe("applyOptimisticPollVote", () => {
 
     expect(applyOptimisticPollVote(item, 0)).toBe(item);
   });
+
+  it("double-clicking the same option restores a consistent no-vote state", () => {
+    const initial = pollItem([{ optionIndex: 0, count: 7 }]);
+    const voted = applyOptimisticPollVote(initial, 1);
+    const unvoted = applyOptimisticPollVote(voted, 1);
+
+    expect(unvoted.question.userPollVote).toBeNull();
+    expect(unvoted.question.pollVotes).toEqual([{ optionIndex: 0, count: 7 }]);
+  });
+
+  it("preserves sorted unique non-negative counts across every 4-click sequence", () => {
+    const options = [0, 1, 2];
+    const sequences: number[][] = [];
+    for (const a of options) for (const b of options) for (const c of options) for (const d of options) {
+      sequences.push([a, b, c, d]);
+    }
+
+    for (const sequence of sequences) {
+      let state = pollItem([
+        { optionIndex: 0, count: 2 },
+        { optionIndex: 2, count: 3 },
+      ]);
+
+      for (const option of sequence) {
+        state = applyOptimisticPollVote(state, option);
+        const votes = state.question.pollVotes ?? [];
+        expect(votes.every((vote) => vote.count > 0)).toBe(true);
+        expect(new Set(votes.map((vote) => vote.optionIndex)).size).toBe(votes.length);
+        expect(votes.map((vote) => vote.optionIndex)).toEqual(
+          [...votes.map((vote) => vote.optionIndex)].sort((a, b) => a - b),
+        );
+        expect(state.question.userPollVote === null || options.includes(state.question.userPollVote)).toBe(true);
+      }
+    }
+  });
 });
