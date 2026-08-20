@@ -77,9 +77,13 @@ linkPreviewRoutes.get("/", async (c) => {
     const html = await response.text();
 
     const data: LinkPreviewData = {
-      title: extractMeta(html, "og:title") || extractTitle(html),
-      description: extractMeta(html, "og:description") || extractMeta(html, "name", "description"),
-      image: resolveUrl(extractMeta(html, "og:image"), finalUrl) || resolveUrl(extractMeta(html, "name", "twitter:image"), finalUrl),
+      title: extractMeta(html, "property", "og:title") || extractTitle(html),
+      description:
+        extractMeta(html, "property", "og:description") ||
+        extractMeta(html, "name", "description"),
+      image:
+        resolveUrl(extractMeta(html, "property", "og:image"), finalUrl) ||
+        resolveUrl(extractMeta(html, "name", "twitter:image"), finalUrl),
       url,
     };
 
