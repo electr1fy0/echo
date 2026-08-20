@@ -25,7 +25,11 @@ async function uploadImagePresignedRaw(file: File): Promise<string> {
   if (!presignRes.ok) await parseApiError(presignRes);
   const { url: presignedUrl, publicUrl } = await presignRes.json();
 
-  const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file });
+  const uploadRes = await fetch(presignedUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
   if (!uploadRes.ok) throw new Error("upload to R2 failed");
   return publicUrl;
 }
