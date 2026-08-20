@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  confirmEmailChangeSchema,
   createPostSchema,
   createReplySchema,
   partnerApplySchema,
   safeParse,
   usernameSchema,
+  verifyOtpSchema,
 } from "./validation";
 
 describe("validation edge cases", () => {
@@ -61,5 +63,16 @@ describe("validation edge cases", () => {
   it("rejects whitespace-only replies and partner pitches", () => {
     expect(() => safeParse(createReplySchema, { content: "   " })).toThrow();
     expect(() => safeParse(partnerApplySchema, { pitch: "\n\t " })).toThrow();
+  });
+
+  it("accepts exactly six numeric OTP digits", () => {
+    expect(verifyOtpSchema.parse({ email: "alice@example.com", otp: "012345" }).otp).toBe("012345");
+    expect(confirmEmailChangeSchema.parse({ otp: "999999" }).otp).toBe("999999");
+  });
+
+  it("rejects alphabetic, short, and overlong OTP values", () => {
+    expect(() => verifyOtpSchema.parse({ email: "alice@example.com", otp: "abcdef" })).toThrow("otp must be 6 digits");
+    expect(() => verifyOtpSchema.parse({ email: "alice@example.com", otp: "12345" })).toThrow("otp must be 6 digits");
+    expect(() => confirmEmailChangeSchema.parse({ otp: "1234567" })).toThrow("otp must be 6 digits");
   });
 });
