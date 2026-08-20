@@ -12,6 +12,28 @@ import {
 import { useAuth, useToken } from "@/hooks/use-auth";
 import type { Conversation, Message } from "@/types";
 
+export function reconcileSentMessage(
+  messages: Message[] | undefined,
+  optimisticUid: string | undefined,
+  newMessage: Message,
+): Message[] {
+  const withoutResolved = (messages ?? []).filter(
+    (message) => message.uid !== optimisticUid && message.uid !== newMessage.uid,
+  );
+
+  return [...withoutResolved, newMessage].sort(
+    (a, b) => new Date(a.timeCreated).getTime() - new Date(b.timeCreated).getTime(),
+  );
+}
+
+export function removeOptimisticMessage(
+  messages: Message[] | undefined,
+  optimisticUid: string | undefined,
+): Message[] | undefined {
+  if (!messages || !optimisticUid) return messages;
+  return messages.filter((message) => message.uid !== optimisticUid);
+}
+
 export function useConversations() {
   return useQuery({
     queryKey: ["conversations"],
@@ -173,9 +195,9 @@ export function useSendMessage(conversationUid: string | undefined) {
     mutationFn: (content: string) => sendMessage(conversationUid!, content),
     onMutate: async (content) => {
       await queryClient.cancelQueries({ queryKey: ["messages", conversationUid] });
-      const previousMessages = queryClient.getQueryData<Message[]>(["messages", conversationUid]);
+      const optimisticUid = `optimistic-${crypto.randomUUID()}`;
       const optimisticMessage: Message = {
-        uid: `optimistic-${crypto.randomUUID()}`,
+        uid: optimisticUid,
         conversationUid: conversationUid!,
         sender: user?.username ?? "",
         content,
@@ -184,21 +206,18 @@ export function useSendMessage(conversationUid: string | undefined) {
       queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
         old ? [...old, optimisticMessage] : [optimisticMessage],
       );
-      return { previousMessages };
+      return { optimisticUid };
     },
-    onSuccess: (newMsg) => {
-      queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) => {
-        if (!old) return [newMsg];
-        const filtered = old.filter((m) => !m.uid.startsWith("optimistic-"));
-        if (filtered.some((m) => m.uid === newMsg.uid)) return filtered;
-        return [...filtered, newMsg];
-      });
+    onSuccess: (newMsg, _content, context) => {
+      queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
+        reconcileSentMessage(old, context?.optimisticUid, newMsg),
+      );
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (_err, _vars, context) => {
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["messages", conversationUid], context.previousMessages);
-      }
+      queryClient.setQueryData<Message[]>(["messages", conversationUid], (old) =>
+        removeOptimisticMessage(old, context?.optimisticUid),
+      );
     },
   });
 }
