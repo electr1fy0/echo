@@ -6,13 +6,29 @@ import type { QuestionItem, AnswerItem } from "@/types";
 
 export const REPLY_UPVOTE_MUTATION_KEY = ["reply-upvote"];
 
-function toggleQuestionItem(item: QuestionItem): QuestionItem {
+export function toggleQuestionItem(item: QuestionItem): QuestionItem {
   return {
     ...item,
     question: {
       ...item.question,
       isUpvoted: !item.question.isUpvoted,
-      upvotes: item.question.isUpvoted ? item.question.upvotes - 1 : item.question.upvotes + 1,
+      upvotes: item.question.isUpvoted
+        ? Math.max(0, item.question.upvotes - 1)
+        : item.question.upvotes + 1,
+    },
+  };
+}
+
+export function toggleReplyItem(item: AnswerItem): AnswerItem {
+  const isUpvoted = !item.answer.isUpvoted;
+  return {
+    ...item,
+    answer: {
+      ...item.answer,
+      isUpvoted,
+      upvotes: isUpvoted
+        ? item.answer.upvotes + 1
+        : Math.max(0, item.answer.upvotes - 1),
     },
   };
 }
@@ -50,11 +66,6 @@ export function useUpdateVote() {
         queryClient.cancelQueries({ queryKey: ["question", qid] }),
       ]);
 
-      const previousQuestions = queryClient.getQueriesData({ queryKey: ["questions"] });
-      const previousUserQuestions = queryClient.getQueriesData({ queryKey: ["user-questions"] });
-      const previousSearchQuestions = queryClient.getQueriesData({ queryKey: ["search-questions"] });
-      const previousQuestion = queryClient.getQueryData<QuestionItem>(["question", qid]);
-
       const updater = makeUpdater(qid);
       queryClient.setQueriesData({ queryKey: ["questions"] }, updater);
       queryClient.setQueriesData({ queryKey: ["user-questions"] }, updater);
@@ -62,23 +73,15 @@ export function useUpdateVote() {
       queryClient.setQueryData(["question", qid], (old: QuestionItem | undefined) =>
         old ? toggleQuestionItem(old) : old,
       );
-
-      return { previousQuestions, previousUserQuestions, previousSearchQuestions, previousQuestion };
     },
-    onError: (_err, qid, context) => {
-      if (!context) return;
-      for (const [key, data] of context.previousQuestions ?? []) {
-        if (data !== undefined) queryClient.setQueryData(key, data);
-      }
-      for (const [key, data] of context.previousUserQuestions ?? []) {
-        if (data !== undefined) queryClient.setQueryData(key, data);
-      }
-      for (const [key, data] of context.previousSearchQuestions ?? []) {
-        if (data !== undefined) queryClient.setQueryData(key, data);
-      }
-      if (context.previousQuestion !== undefined) {
-        queryClient.setQueryData(["question", qid], context.previousQuestion);
-      }
+    onError: (_err, qid) => {
+      const rollback = makeUpdater(qid);
+      queryClient.setQueriesData({ queryKey: ["questions"] }, rollback);
+      queryClient.setQueriesData({ queryKey: ["user-questions"] }, rollback);
+      queryClient.setQueriesData({ queryKey: ["search-questions"] }, rollback);
+      queryClient.setQueryData(["question", qid], (old: QuestionItem | undefined) =>
+        old ? toggleQuestionItem(old) : old,
+      );
     },
     onSettled: (_data, err, qid) => {
       if (!err) {
@@ -101,38 +104,22 @@ export function useReplyUpdateVote() {
     onMutate: async ({ qid, rid, queryKey }: { qid: string; rid: string; queryKey?: string }) => {
       const key = queryKey ?? qid;
       await queryClient.cancelQueries({ queryKey: ["replies", key] });
-      const previousReplies = queryClient.getQueryData<AnswerItem[]>([
-        "replies",
-        key,
-      ]);
       queryClient.setQueryData<AnswerItem[]>(["replies", key], (old) => {
         if (!old) return undefined;
-        return old.map((item) => {
-          if (item.answer.uid === rid) {
-            const isUpvoted = !item.answer.isUpvoted;
-            return {
-              ...item,
-              answer: {
-                ...item.answer,
-                isUpvoted,
-                upvotes: isUpvoted
-                  ? item.answer.upvotes + 1
-                  : item.answer.upvotes - 1,
-              },
-            };
-          }
-          return item;
-        });
-      });
-      return { previousReplies, queryKey: key };
-    },
-    onError: (_err, _vars, context) => {
-      if (context?.previousReplies) {
-        queryClient.setQueryData(
-          ["replies", context.queryKey],
-          context.previousReplies,
+        return old.map((item) =>
+          item.answer.uid === rid ? toggleReplyItem(item) : item,
         );
-      }
+      });
+      return { queryKey: key };
+    },
+    onError: (_err, { rid }, context) => {
+      if (!context?.queryKey) return;
+      queryClient.setQueryData<AnswerItem[]>(["replies", context.queryKey], (old) => {
+        if (!old) return undefined;
+        return old.map((item) =>
+          item.answer.uid === rid ? toggleReplyItem(item) : item,
+        );
+      });
     },
     onSettled: (_data, err, vars) => {
       if (!err) {

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import type { QuestionDraft, QuestionItem } from "@/types";
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
 import { track } from "@/lib/analytics";
+import { applyOptimisticPollVote } from "@/lib/optimistic-poll";
 import {
   fetchQuestion,
   fetchQuestions,
@@ -298,47 +299,6 @@ export function useUpdatePartnerApplicationStatus() {
       queryClient.invalidateQueries({ queryKey: ["partner-applications", questionId] });
     },
   });
-}
-
-function applyOptimisticPollVote(
-  item: QuestionItem,
-  optionIndex: number,
-): QuestionItem {
-  const q = item.question;
-  if (q.postType !== "poll" || !q.pollVotes) return item;
-
-  const oldUserVote = q.userPollVote;
-  let newVotes = [...q.pollVotes];
-
-  if (oldUserVote === null) {
-    newVotes = newVotes.map((v) =>
-      v.optionIndex === optionIndex ? { ...v, count: v.count + 1 } : v,
-    );
-  } else if (oldUserVote === optionIndex) {
-    newVotes = newVotes.map((v) =>
-      v.optionIndex === optionIndex
-        ? { ...v, count: Math.max(0, v.count - 1) }
-        : v,
-    );
-    newVotes = newVotes.filter((v) => v.count > 0);
-  } else {
-    newVotes = newVotes.map((v) => {
-      if (v.optionIndex === oldUserVote)
-        return { ...v, count: Math.max(0, v.count - 1) };
-      if (v.optionIndex === optionIndex) return { ...v, count: v.count + 1 };
-      return v;
-    });
-    newVotes = newVotes.filter((v) => v.count > 0);
-  }
-
-  return {
-    ...item,
-    question: {
-      ...q,
-      pollVotes: newVotes,
-      userPollVote: oldUserVote === optionIndex ? null : optionIndex,
-    },
-  };
 }
 
 export function useVotePoll() {

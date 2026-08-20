@@ -11,6 +11,14 @@ import type { AnswerItem } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 import { track } from "@/lib/analytics";
 
+export function removeOptimisticReply(
+  replies: AnswerItem[] | undefined,
+  optimisticUid: string | undefined,
+): AnswerItem[] | undefined {
+  if (!replies || !optimisticUid) return replies;
+  return replies.filter((item) => item.answer.uid !== optimisticUid);
+}
+
 export function useRepliesQuery(questionId: string | undefined) {
   return useQuery({
     queryKey: ["replies", questionId],
@@ -39,18 +47,14 @@ export function useCreateReply() {
     onMutate: async ({ questionId, content, parentReplyUid, isAnonymous }) => {
       await queryClient.cancelQueries({ queryKey: ["replies", questionId] });
 
-      const previousReplies = queryClient.getQueryData<AnswerItem[]>([
-        "replies",
-        questionId,
-      ]);
-
+      const optimisticUid = `temp-${crypto.randomUUID()}`;
       queryClient.setQueryData<AnswerItem[]>(
         ["replies", questionId],
         (old) => {
           if (!user) return old;
           const optimisticReply: AnswerItem = {
             answer: {
-              uid: `temp-${Date.now()}`,
+              uid: optimisticUid,
               content,
               questionUid: questionId,
               parentReplyUid,
@@ -67,15 +71,12 @@ export function useCreateReply() {
         }
       );
 
-      return { previousReplies };
+      return { optimisticUid };
     },
     onError: (_err, { questionId }, context) => {
-      if (context?.previousReplies) {
-        queryClient.setQueryData(
-          ["replies", questionId],
-          context.previousReplies
-        );
-      }
+      queryClient.setQueryData<AnswerItem[]>(["replies", questionId], (old) =>
+        removeOptimisticReply(old, context?.optimisticUid),
+      );
     },
     onSuccess: () => {
       track("reply_create");
