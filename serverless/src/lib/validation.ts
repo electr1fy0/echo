@@ -190,7 +190,7 @@ export const sendOtpSchema = z.object({
 
 export const verifyOtpSchema = z.object({
   email: emailSchema,
-  otp: z.string().length(6, "otp must be 6 digits"),
+  otp: z.string().regex(/^\d{6}$/, "otp must be 6 digits"),
 });
 
 export const googleOnboardingSchema = z.object({
@@ -215,7 +215,7 @@ export const changeEmailSchema = z.object({
 });
 
 export const confirmEmailChangeSchema = z.object({
-  otp: z.string().length(6, "otp must be 6 digits"),
+  otp: z.string().regex(/^\d{6}$/, "otp must be 6 digits"),
 });
 
 export const resolveUsernamesSchema = z.object({
