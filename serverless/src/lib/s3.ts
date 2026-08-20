@@ -25,6 +25,7 @@ export const generatePresignedPutUrl = async (
   bucket: string,
   key: string,
   expiresIn = 3600,
+  contentType?: string,
 ): Promise<string> => {
   const region = "auto";
   const service = "s3";
@@ -36,21 +37,25 @@ export const generatePresignedPutUrl = async (
   const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
 
   const canonicalUri = `/${bucket}/${key}`;
-  const signedHeaders = "host";
+  const normalizedContentType = contentType?.trim();
+  const signedHeaders = normalizedContentType ? "content-type;host" : "host";
+  const canonicalHeaders = normalizedContentType
+    ? `content-type:${normalizedContentType}\nhost:${host}\n`
+    : `host:${host}\n`;
 
   const canonicalQuery = [
     `X-Amz-Algorithm=AWS4-HMAC-SHA256`,
     `X-Amz-Credential=${encodeURIComponent(`${accessKeyId}/${credentialScope}`)}`,
     `X-Amz-Date=${amzDate}`,
     `X-Amz-Expires=${expiresIn}`,
-    `X-Amz-SignedHeaders=${signedHeaders}`,
+    `X-Amz-SignedHeaders=${encodeURIComponent(signedHeaders)}`,
   ].join("&");
 
   const canonicalRequest = [
     "PUT",
     canonicalUri,
     canonicalQuery,
-    `host:${host}\n`,
+    canonicalHeaders,
     signedHeaders,
     "UNSIGNED-PAYLOAD",
   ].join("\n");
