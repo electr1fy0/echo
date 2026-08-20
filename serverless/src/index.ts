@@ -19,6 +19,7 @@ import { bookmarkRoutes } from "./routes/bookmarks";
 import type { AppEnv } from "./types/app";
 import { rateLimit } from "./middleware/rateLimit";
 import { cacheControl } from "./middleware/cache";
+import { redactAnonymousPostResponses } from "./middleware/privacy";
 import { registerWelcomeDmHandler } from "./events/welcome-dm";
 import { ensureTurnsOutUser } from "./db/seed";
 
@@ -60,6 +61,14 @@ app.use(
 app.use("*", seedOnStartup);
 app.use("*", rateLimit("API_LIMITER"));
 app.use("*", cacheControl);
+
+app.use("/questions", redactAnonymousPostResponses);
+app.use("/questions/*", redactAnonymousPostResponses);
+app.use("/search", redactAnonymousPostResponses);
+app.use("/search/*", redactAnonymousPostResponses);
+app.use("/bookmarks", redactAnonymousPostResponses);
+app.use("/bookmarks/*", redactAnonymousPostResponses);
+app.use("/users/me/questions", redactAnonymousPostResponses);
 
 app.onError(handleAppError);
 
