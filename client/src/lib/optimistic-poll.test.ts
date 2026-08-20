@@ -107,7 +107,8 @@ describe("applyOptimisticPollVote", () => {
         expect(votes.map((vote) => vote.optionIndex)).toEqual(
           [...votes.map((vote) => vote.optionIndex)].sort((a, b) => a - b),
         );
-        expect(state.question.userPollVote === null || options.includes(state.question.userPollVote)).toBe(true);
+        const currentVote = state.question.userPollVote ?? null;
+        expect(currentVote === null || options.includes(currentVote)).toBe(true);
       }
     }
   });
