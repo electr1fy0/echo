@@ -66,4 +66,84 @@ describe("link preview route security", () => {
     expect(body.title).toBe("Hello");
     expect(body.image).toBe("https://public.example/cover.png");
   });
+
+  it("parses Open Graph meta tags when content appears before property", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        '<html><head><meta content="Reverse order" property="og:title"><meta content="Summary &amp; more" property="og:description"></head></html>',
+        { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
+      ),
+    );
+
+    const response = await createApp().request(
+      "/link-previews?url=https%3A%2F%2Freverse.example%2Fpage",
+    );
+    const body = await response.json() as { title: string; description: string };
+
+    expect(body.title).toBe("Reverse order");
+    expect(body.description).toBe("Summary & more");
+  });
+
+  it("falls back to the title element and decodes HTML entities", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response("<html><head><title>Fallback &amp; Title</title></head></html>", {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      }),
+    );
+
+    const response = await createApp().request(
+      "/link-previews?url=https%3A%2F%2Ftitle.example%2Fpage",
+    );
+    const body = await response.json() as { title: string };
+
+    expect(body.title).toBe("Fallback & Title");
+  });
+
+  it("returns an empty preview for non-HTML content", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response("binary-ish", {
+        status: 200,
+        headers: { "content-type": "application/pdf" },
+      }),
+    );
+
+    const response = await createApp().request(
+      "/link-previews?url=https%3A%2F%2Ffiles.example%2Fmanual.pdf",
+    );
+    const body = await response.json() as { title: null; description: null; image: null };
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ title: null, description: null, image: null });
+  });
+
+  it("returns an empty preview for upstream error responses", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response("not found", { status: 404, headers: { "content-type": "text/html" } }),
+    );
+
+    const response = await createApp().request(
+      "/link-previews?url=https%3A%2F%2Fmissing.example%2Fpage",
+    );
+    const body = await response.json() as { title: null; description: null; image: null };
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ title: null, description: null, image: null });
+  });
+
+  it("rejects redirect chains beyond the configured limit", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    for (let i = 0; i < 5; i++) {
+      fetchSpy.mockResolvedValueOnce(
+        new Response(null, { status: 302, headers: { location: `/hop-${i + 1}` } }),
+      );
+    }
+
+    const response = await createApp().request(
+      "/link-previews?url=https%3A%2F%2Floopy.example%2Fstart",
+    );
+
+    expect(response.status).toBe(400);
+    expect(fetchSpy).toHaveBeenCalledTimes(5);
+  });
 });
