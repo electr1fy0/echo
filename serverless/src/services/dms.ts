@@ -3,6 +3,20 @@ import type { DB } from "../db";
 import { schema } from "../db";
 import { ApiError } from "../lib/errors";
 
+export const normalizeConversationParticipants = (first: string, second: string): [string, string] =>
+  first < second ? [first, second] : [second, first];
+
+export const parseSinceDate = (since?: string): Date | undefined => {
+  if (!since) return undefined;
+  const value = new Date(since);
+  if (Number.isNaN(value.getTime())) {
+    throw new ApiError(400, "invalid since timestamp");
+  }
+  return value;
+};
+
+export const messagePreview = (content: string): string => content.slice(0, 100);
+
 export const getConversations = async (db: DB, username: string) => {
   const convs = await db
     .select()
@@ -34,7 +48,6 @@ export const getConversations = async (db: DB, username: string) => {
 
   const userMap = new Map(userRows.map((u) => [u.username, u]));
 
-  // Batch fetch unread counts for all conversations in a single query
   const convUids = convs.map((c) => c.uid);
   const unreadRows = await db
     .select({
@@ -97,10 +110,7 @@ export const getOrCreateConversation = async (
   currentUsername: string,
   otherUsername: string,
 ) => {
-  const [a, b] =
-    currentUsername < otherUsername
-      ? [currentUsername, otherUsername]
-      : [otherUsername, currentUsername];
+  const [a, b] = normalizeConversationParticipants(currentUsername, otherUsername);
 
   const [existing] = await db
     .select()
@@ -143,8 +153,9 @@ export const getMessages = async (
   }
 
   const conditions = [eq(schema.messages.conversationUid, conversationUid)];
-  if (since) {
-    conditions.push(gt(schema.messages.timeCreated, new Date(since)));
+  const sinceDate = parseSinceDate(since);
+  if (sinceDate) {
+    conditions.push(gt(schema.messages.timeCreated, sinceDate));
   }
 
   const rows = await db
@@ -192,7 +203,7 @@ export const createMessage = async (
     .update(schema.conversations)
     .set({
       lastMessageAt: new Date(),
-      lastMessagePreview: content.slice(0, 100),
+      lastMessagePreview: messagePreview(content),
       lastMessageSender: sender,
     })
     .where(eq(schema.conversations.uid, conversationUid));
@@ -293,7 +304,6 @@ export const deleteMessage = async (
     .delete(schema.messages)
     .where(eq(schema.messages.uid, messageUid));
 
-  // If this was the last message, update the conversation preview
   const [newLast] = await db
     .select()
     .from(schema.messages)
@@ -306,7 +316,7 @@ export const deleteMessage = async (
       .update(schema.conversations)
       .set({
         lastMessageAt: newLast.timeCreated,
-        lastMessagePreview: newLast.content.slice(0, 100),
+        lastMessagePreview: messagePreview(newLast.content),
         lastMessageSender: newLast.sender,
       })
       .where(eq(schema.conversations.uid, conversationUid));
