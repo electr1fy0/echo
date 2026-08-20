@@ -3,7 +3,7 @@ name: Test
 on:
   pull_request:
   push:
-    branches: ["main", "test-hardening-p2"]
+    branches: ["main"]
 
 concurrency:
   group: tests-${{ github.event.pull_request.number || github.ref }}
