@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { ApiError } from "../lib/errors";
+import { isSafeExternalHttpUrl } from "../lib/url-safety";
 import type { AppEnv } from "../types/app";
 
 interface LinkPreviewData {
@@ -11,8 +13,39 @@ interface LinkPreviewData {
 const cache = new Map<string, { data: LinkPreviewData; expiry: number }>();
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 const MAX_CACHE_SIZE = 500;
+const MAX_REDIRECTS = 4;
 
 export const linkPreviewRoutes = new Hono<AppEnv>();
+
+async function fetchExternalUrl(url: string): Promise<{ response: Response; finalUrl: string }> {
+  let currentUrl = url;
+
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
+    if (!isSafeExternalHttpUrl(currentUrl)) {
+      throw new ApiError(400, "url is not allowed");
+    }
+
+    const response = await fetch(currentUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; EchoBot/1.0; +https://turnsout.xyz)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      redirect: "manual",
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (![301, 302, 303, 307, 308].includes(response.status)) {
+      return { response, finalUrl: currentUrl };
+    }
+
+    const location = response.headers.get("location");
+    if (!location) return { response, finalUrl: currentUrl };
+
+    currentUrl = new URL(location, currentUrl).href;
+  }
+
+  throw new ApiError(400, "too many redirects");
+}
 
 linkPreviewRoutes.get("/", async (c) => {
   const url = c.req.query("url");
@@ -20,14 +53,8 @@ linkPreviewRoutes.get("/", async (c) => {
     return c.json({ error: "url query parameter is required" }, 400);
   }
 
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      return c.json({ error: "invalid url protocol" }, 400);
-    }
-  } catch {
-    return c.json({ error: "invalid url" }, 400);
+  if (!isSafeExternalHttpUrl(url)) {
+    return c.json({ error: "url is not allowed" }, 400);
   }
 
   const cached = cache.get(url);
@@ -36,13 +63,7 @@ linkPreviewRoutes.get("/", async (c) => {
   }
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; EchoBot/1.0; +https://turnsout.xyz)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-      signal: AbortSignal.timeout(5000),
-    });
+    const { response, finalUrl } = await fetchExternalUrl(url);
 
     if (!response.ok) {
       return c.json({ title: null, description: null, image: null, url });
@@ -58,7 +79,7 @@ linkPreviewRoutes.get("/", async (c) => {
     const data: LinkPreviewData = {
       title: extractMeta(html, "og:title") || extractTitle(html),
       description: extractMeta(html, "og:description") || extractMeta(html, "name", "description"),
-      image: resolveUrl(extractMeta(html, "og:image"), url) || resolveUrl(extractMeta(html, "name", "twitter:image"), url),
+      image: resolveUrl(extractMeta(html, "og:image"), finalUrl) || resolveUrl(extractMeta(html, "name", "twitter:image"), finalUrl),
       url,
     };
 
@@ -68,7 +89,8 @@ linkPreviewRoutes.get("/", async (c) => {
     }
     cache.set(url, { data, expiry: Date.now() + CACHE_TTL });
     return c.json(data);
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
     return c.json({ title: null, description: null, image: null, url });
   }
 });
