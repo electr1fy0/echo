@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { redactAnonymousPostAuthors } from "./privacy";
+import { Hono } from "hono";
+import type { AppEnv } from "../types/app";
+import { redactAnonymousPostAuthors, redactAnonymousPostResponses } from "./privacy";
 
 describe("redactAnonymousPostAuthors", () => {
   it("removes real author identity from anonymous post payloads", () => {
@@ -53,5 +55,20 @@ describe("redactAnonymousPostAuthors", () => {
 
     expect(result.question.authorUsername).toBe("[deleted]");
     expect(result.author.username).toBe("[deleted]");
+  });
+
+  it("redacts an actual Hono JSON response", async () => {
+    const app = new Hono<AppEnv>();
+    app.use("*", redactAnonymousPostResponses);
+    app.get("/", (c) => c.json({
+      question: { uid: "post-1", isAnonymous: true, authorUsername: "alice" },
+      author: { username: "alice", avatar: "avatar" },
+    }));
+
+    const response = await app.request("/");
+    const body = await response.json() as any;
+
+    expect(body.question.authorUsername).toBe("Anonymous");
+    expect(body.author).toEqual({ username: "Anonymous", avatar: "" });
   });
 });
