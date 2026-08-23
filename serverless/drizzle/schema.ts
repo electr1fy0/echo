@@ -43,7 +43,7 @@ export const users = pgTable("users", {
 	answered: integer().default(0),
 	posted: integer().default(0),
 	verificationToken: text("verification_token"),
-	isVerified: boolean("is_verified").default(false),
+	isVerified: boolean("is_verified").default(true),
 	links: text(),
 	resetToken: text("reset_token"),
 	resetExpiry: timestamp("reset_expiry", { mode: 'string' }),

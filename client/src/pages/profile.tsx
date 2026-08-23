@@ -48,8 +48,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { OTPField, OTPFieldInput, OTPFieldSeparator } from "@/components/ui/otp-field";
-import { useFetchProfile, useUpdateProfile, useEmailChange, useConfirmEmailChange } from "@/hooks/use-profile";
+import { useFetchProfile, useUpdateProfile, useEmailChange } from "@/hooks/use-profile";
 import { useDeleteAccount, useSignout } from "@/hooks/use-auth";
 import type { User } from "@/types";
 import { useListChambers } from "@/hooks/use-chamber";
@@ -253,11 +252,8 @@ export default function Profile() {
     dmEnabled: true,
   });
   const { mutate: sendOtp, isPending: isSendingOtp } = useEmailChange();
-  const { mutate: confirmOtp, isPending: isConfirmingOtp } = useConfirmEmailChange();
   const [showEmailChange, setShowEmailChange] = useState(false);
   const [newEmail, setNewEmail] = useState("");
-  const [, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const { data: chambers = [], isLoading: isChambersLoading } =
     useListChambers();
   const JOINED_CHAMBERS = chambers.filter((c) => c.isJoined);
@@ -807,8 +803,6 @@ export default function Profile() {
                     size="sm"
                               onClick={() => {
                                 setNewEmail("");
-                                setOtp("");
-                                setOtpSent(false);
                                 setShowEmailChange(!showEmailChange);
                               }}
                             >
@@ -817,82 +811,34 @@ export default function Profile() {
                           </div>
                           {showEmailChange && (
                             <div className="space-y-3">
-                              {!otpSent ? (
-                                <>
-                                  <Input
-                                    type="email"
-                                    placeholder="New email address"
-                                    value={newEmail}
-                                    onChange={(e) => setNewEmail(e.target.value)}
-                                    disabled={isSendingOtp}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="default"
-                  size="sm"
-                                    disabled={isSendingOtp || !newEmail}
-                                    onClick={() => {
-                                      sendOtp(newEmail, {
-                                        onSuccess: () => {
-                                          setOtpSent(true);
-                                          toastManager.add({ title: "OTP sent to your current email", type: "success" });
-                                        },
-                                        onError: (err) => {
-                                          handleApiError(err, "Failed to send OTP");
-                                        },
-                                      });
-                                    }}
-                                  >
-                                    {isSendingOtp ? "Sending..." : "Send OTP"}
-                                  </Button>
-                                </>
-                              ) : (
-                                <div className="space-y-4">
-                                  <p className="text-xs text-neutral-500">OTP sent to your current email. Enter it below.</p>
-                                  <div className="flex justify-center py-1">
-                                    <OTPField
-                                      length={6}
-                                      validationType="numeric"
-                                      onValueChange={(value: string) => {
-                                        setOtp(value);
-                                        if (value.length === 6 && !isConfirmingOtp) {
-                                          confirmOtp(value, {
-                                            onSuccess: () => {
-                                              toastManager.add({ title: "Email updated successfully", type: "success" });
-                                              setShowEmailChange(false);
-                                              setOtpSent(false);
-                                              refetchProfile();
-                                            },
-                                            onError: (err) => {
-                                              handleApiError(err, "Failed to confirm email change");
-                                            },
-                                          });
-                                        }
-                                      }}
-                                    >
-                                      <OTPFieldInput aria-label="Character 1 of 6" />
-                                      <OTPFieldInput aria-label="Character 2 of 6" />
-                                      <OTPFieldInput aria-label="Character 3 of 6" />
-                                      <OTPFieldSeparator />
-                                      <OTPFieldInput aria-label="Character 4 of 6" />
-                                      <OTPFieldInput aria-label="Character 5 of 6" />
-                                      <OTPFieldInput aria-label="Character 6 of 6" />
-                                    </OTPField>
-                                  </div>
-                                  <div className="flex justify-center gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setOtpSent(false);
-                                        setOtp("");
-                                      }}
-                                      className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                                    >
-                                      Back
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
+                              <Input
+                                type="email"
+                                placeholder="New email address"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                                disabled={isSendingOtp}
+                              />
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                disabled={isSendingOtp || !newEmail}
+                                onClick={() => {
+                                  sendOtp(newEmail, {
+                                    onSuccess: () => {
+                                      toastManager.add({ title: "Email updated successfully", type: "success" });
+                                      setShowEmailChange(false);
+                                      setNewEmail("");
+                                      refetchProfile();
+                                    },
+                                    onError: (err) => {
+                                      handleApiError(err, "Failed to update email");
+                                    },
+                                  });
+                                }}
+                              >
+                                {isSendingOtp ? "Updating..." : "Save Email"}
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -1194,9 +1140,7 @@ export default function Profile() {
             if (!open) {
               setEditPage("profile");
               setShowEmailChange(false);
-              setOtpSent(false);
               setNewEmail("");
-              setOtp("");
             }
           };
 

@@ -165,6 +165,7 @@ export const updateReplySchema = z.object({
 
 export const updateProfileSchema = z.object({
   username: z.string().transform((v) => v.toLowerCase()).optional(),
+  email: emailSchema.optional(),
   bio: z.string().max(500).optional(),
   avatar: z.string().optional(),
   link: z.string().optional(),

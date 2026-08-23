@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import bcrypt from "bcryptjs";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { Hono } from "hono";
-import { and, eq, gt, desc } from "drizzle-orm";
+import { and, eq, gt, desc, or } from "drizzle-orm";
 
 import { schema } from "../db";
 import { issueAuthToken, issueGoogleOnboardingToken, issueOnboardingToken, verifyGoogleOnboardingToken, verifyOnboardingToken } from "../lib/auth";
@@ -109,15 +109,13 @@ authRoutes.post("/signup", async (c) => {
   const username = body.username;
   const email = body.email;
   const passwordHash = await bcrypt.hash(body.password, 10);
-  const verificationToken = randomToken(32);
 
   try {
     await db.insert(schema.users).values({
       username,
       email,
       password: passwordHash,
-      verificationToken,
-      isVerified: false,
+      isVerified: true,
     });
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
@@ -128,14 +126,13 @@ authRoutes.post("/signup", async (c) => {
           .where(eq(schema.users.email, email))
           .limit(1);
 
-        if (existing && !existing.isVerified) {
+        if (existing) {
           await db
             .update(schema.users)
             .set({
               username,
               password: passwordHash,
-              verificationToken,
-              isVerified: false,
+              isVerified: true,
             })
             .where(eq(schema.users.email, email));
         } else {
@@ -149,18 +146,19 @@ authRoutes.post("/signup", async (c) => {
     }
   }
 
-  c.executionCtx.waitUntil(
-    sendVerificationEmail(c.env, email, username, verificationToken).catch((error) => {
-      console.error("failed to send verification email", error);
-    }),
-  );
+  eventBus.emit(Events.UserRegistered, { username }, {
+    db: c.get("db"),
+    env: c.env,
+    waitUntil: (p) => c.executionCtx.waitUntil(p),
+  });
 
-  return c.json({ message: "Please check your email to verify your account" }, 201);
+  const token = await issueAuthToken(c.env.SECRET_KEY, username);
+  return c.json({ token, message: "Account created successfully" }, 201);
 });
 
 authRoutes.post("/signin", async (c) => {
   const body = safeParse(signinSchema, await c.req.json());
-  const username = body.username.toLowerCase();
+  const identifier = body.username.toLowerCase();
 
   const [user] = await c
     .get("db")
@@ -171,19 +169,19 @@ authRoutes.post("/signin", async (c) => {
       deletedAt: schema.users.deletedAt,
     })
     .from(schema.users)
-    .where(eq(schema.users.username, username))
+    .where(or(eq(schema.users.username, identifier), eq(schema.users.email, identifier)))
     .limit(1);
 
   if (!user?.password || !(await bcrypt.compare(body.password ?? "", user.password))) {
     throw new ApiError(401, "incorrect username or password");
   }
 
-  if (!user.isVerified) {
-    throw new ApiError(403, "please verify your email before signing in");
-  }
-
   if (user.deletedAt) {
     throw new ApiError(403, "this account has been deleted");
+  }
+
+  if (!user.isVerified) {
+    await c.get("db").update(schema.users).set({ isVerified: true }).where(eq(schema.users.username, user.username));
   }
 
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, user.username) });
@@ -207,71 +205,17 @@ authRoutes.post("/verify-email", async (c) => {
   const username = result[0].username;
   const authToken = await issueAuthToken(c.env.SECRET_KEY, username);
 
-  eventBus.emit(Events.UserRegistered, { username }, {
-    db: c.get("db"),
-    env: c.env,
-    waitUntil: (p) => c.executionCtx.waitUntil(p),
-  });
-
   return c.json({ token: authToken, message: "Email verified successfully" });
 });
 
 authRoutes.post("/resend-verification", async (c) => {
-  const body = safeParse(resendVerificationSchema, await c.req.json());
-  const email = body.email;
-
-  const [user] = await c
-    .get("db")
-    .select({ username: schema.users.username, isVerified: schema.users.isVerified })
-    .from(schema.users)
-    .where(eq(schema.users.email, email))
-    .limit(1);
-
-  if (user) {
-    if (user.isVerified) {
-      throw new ApiError(400, "account is already verified");
-    }
-
-    const verificationToken = randomToken(32);
-    await c.get("db").update(schema.users).set({ verificationToken }).where(eq(schema.users.email, email));
-
-    c.executionCtx.waitUntil(
-      sendVerificationEmail(c.env, email, user.username, verificationToken).catch((error) => {
-        console.error("failed to resend verification email", error);
-      }),
-    );
-  }
-
   return c.json({
-    message: "If an account exists and is not verified, a verification email has been sent",
+    message: "Email verification is not required. You can sign in directly.",
   });
 });
 
 authRoutes.post("/request-password-reset", async (c) => {
-  const body = safeParse(requestPasswordResetSchema, await c.req.json());
-  const email = body.email;
-
-  const [user] = await c
-    .get("db")
-    .select({ username: schema.users.username })
-    .from(schema.users)
-    .where(eq(schema.users.email, email))
-    .limit(1);
-
-  if (user) {
-    const resetToken = randomToken(32);
-    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    await c.get("db").update(schema.users).set({ resetToken, resetExpiry }).where(eq(schema.users.email, email));
-
-    c.executionCtx.waitUntil(
-      sendPasswordResetEmail(c.env, email, user.username, resetToken).catch((error) => {
-        console.error("failed to send password reset email", error);
-      }),
-    );
-  }
-
-  return c.json({ message: "If an account exists, a reset email has been sent" });
+  throw new ApiError(400, "Password reset via email is disabled. Please sign in with your password or Google.");
 });
 
 authRoutes.post("/reset-password", async (c) => {
@@ -407,55 +351,8 @@ authRoutes.post("/onboarding", async (c) => {
   return c.json({ token: await issueAuthToken(c.env.SECRET_KEY, username) });
 });
 
-authRoutes.post("/send-otp", async (c) => {
-  const body = safeParse(sendOtpSchema, await c.req.json());
-  const email = body.email;
-
-  // Check if a code was sent in the last 60 seconds to prevent spamming
-  const [lastOtp] = await c
-    .get("db")
-    .select({ createdAt: schema.otpCodes.createdAt })
-    .from(schema.otpCodes)
-    .where(
-      and(
-        eq(schema.otpCodes.email, email),
-        gt(schema.otpCodes.createdAt, new Date(Date.now() - 60 * 1000))
-      )
-    )
-    .orderBy(desc(schema.otpCodes.createdAt))
-    .limit(1);
-
-  if (lastOtp) {
-    throw new ApiError(429, "Please wait at least 60 seconds before requesting another code.");
-  }
-
-  const [user] = await c
-    .get("db")
-    .select({ username: schema.users.username })
-    .from(schema.users)
-    .where(eq(schema.users.email, email))
-    .limit(1);
-
-  const username = user?.username ?? email.split("@")[0];
-
-  const otp = randomOtp();
-  const magicLinkToken = randomToken(32);
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-  await c.get("db").insert(schema.otpCodes).values({
-    email,
-    otp,
-    magicLinkToken,
-    expiresAt,
-  });
-
-  c.executionCtx.waitUntil(
-    sendOtpEmail(c.env, email, username, otp, magicLinkToken).catch((error) => {
-      console.error("failed to send OTP email", error);
-    }),
-  );
-
-  return c.json({ message: "Check your email for the sign-in code" });
+authRoutes.post("/send-otp", async () => {
+  throw new ApiError(400, "Email OTP sign-in is disabled. Please sign in with username/password or Google.");
 });
 
 authRoutes.post("/verify-otp", async (c) => {
